@@ -178,7 +178,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
 
     public bool Remove(E? e) {
         if (e == null) return false;
-        int i = helper.CollectionIndex(this, e);
+        int i = CheckedIndexOf(e);
         if (i >= 0) {
             Set(i, null);
             return true;
@@ -188,7 +188,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
 
     public bool RemoveRef(E? e) {
         if (e == null) return false;
-        int i = helper.CollectionIndex(this, e);
+        int i = CheckedIndexOf(e);
         if (i >= 0) {
             Set(i, null);
             return true;
@@ -244,28 +244,38 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         if (e == null) {
             return FirstNullIndex();
         }
-        return helper.CollectionIndex(this, e);
+        return CheckedIndexOf(e);
     }
 
     public int LastIndexOf(E? e) {
         if (e == null) {
             return LastNullIndex();
         }
-        return helper.CollectionIndex(this, e);
+        return CheckedIndexOf(e);
     }
 
     public int IndexOfRef(E? e) {
         if (e == null) {
             return FirstNullIndex();
         }
-        return helper.CollectionIndex(this, e);
+        return CheckedIndexOf(e);
     }
 
     public int LastIndexOfRef(E? e) {
         if (e == null) {
             return LastNullIndex();
         }
-        return helper.CollectionIndex(this, e);
+        return CheckedIndexOf(e);
+    }
+
+    /** 用户的helper可能不标准，需要校验 -- 当元素可能处于多个队列时 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int CheckedIndexOf(E? e) {
+        int index = helper.CollectionIndex(this, e);
+        if (index >= 0 && index < elements.Length && elements[index] == e) {
+            return index;
+        }
+        return -1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

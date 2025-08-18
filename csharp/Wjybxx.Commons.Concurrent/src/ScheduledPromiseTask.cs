@@ -53,7 +53,6 @@ public static class ScheduledPromiseTask
         return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise, delay);
     }
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<object, T> action, object ctx, int options,
                                                         ValuePromise<T> promise,

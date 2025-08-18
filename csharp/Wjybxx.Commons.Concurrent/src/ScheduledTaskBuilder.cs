@@ -64,11 +64,11 @@ public static class ScheduledTaskBuilder
     /// <summary>
     /// 创建一个异步任务
     /// 
-    /// 异步任务必须是周期性任务，事件循环会定期检查任务是否完成和取消信号，默认每0.1秒检查一次。
+    /// 异步任务必须是周期性任务，事件循环会定期检查任务是否完成和取消信号，默认50毫秒检查一次。
     /// (这只是一个简单的类协程任务实现，真实的协程任务由用户扩展 -- 因为调度需求不能统一)
     /// </summary>
-    /// <param name="task"></param>
-    /// <param name="checkPeriod"></param>
+    /// <param name="task">要调度的异步任务</param>
+    /// <param name="checkPeriod">检查取消信号和结果的间隔</param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     public static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task, long checkPeriod = 50) {
@@ -209,9 +209,6 @@ public struct ScheduledTaskBuilder<T>
     /// </summary>
     /// <param name="delay">触发延迟</param>
     public void SetOnlyOnce(long delay) {
-        if (Type == TaskBuilder.TYPE_ASYNC_TASK) {
-            throw new InvalidOperationException();
-        }
         this.scheduleType = ScheduledTaskBuilder.SCHEDULE_ONCE;
         this.initialDelay = delay;
         this.period = 0;

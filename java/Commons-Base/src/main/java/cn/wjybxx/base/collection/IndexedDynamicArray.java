@@ -194,7 +194,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
     @Override
     public boolean remove(E e) {
         if (e == null) return false;
-        int i = helper.collectionIndex(this, e);
+        int i = checkedIndexOf(e);
         if (i >= 0) {
             set(i, null);
             return true;
@@ -205,7 +205,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
     @Override
     public boolean removeRef(E e) {
         if (e == null) return false;
-        int i = helper.collectionIndex(this, e);
+        int i = checkedIndexOf(e);
         if (i >= 0) {
             set(i, null);
             return true;
@@ -264,7 +264,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         if (e == null) {
             return firstNullIndex();
         }
-        return helper.collectionIndex(this, e);
+        return checkedIndexOf(e);
     }
 
     @Override
@@ -272,7 +272,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         if (e == null) {
             return lastNullIndex();
         }
-        return helper.collectionIndex(this, e);
+        return checkedIndexOf(e);
     }
 
     @Override
@@ -280,7 +280,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         if (e == null) {
             return firstNullIndex();
         }
-        return helper.collectionIndex(this, e);
+        return checkedIndexOf(e);
     }
 
     @Override
@@ -288,7 +288,16 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         if (e == null) {
             return lastNullIndex();
         }
-        return helper.collectionIndex(this, e);
+        return checkedIndexOf(e);
+    }
+
+    /** 用户的helper可能不标准，需要校验 -- 当元素可能处于多个队列时 */
+    private int checkedIndexOf(E e) {
+        int index = helper.collectionIndex(this, e);
+        if (index >= 0 && index < elements.length && elements[index] == e) {
+            return index;
+        }
+        return -1;
     }
 
     private int firstNullIndex() {
