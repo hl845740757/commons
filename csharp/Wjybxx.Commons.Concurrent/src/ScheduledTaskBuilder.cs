@@ -68,12 +68,13 @@ public static class ScheduledTaskBuilder
     /// (这只是一个简单的类协程任务实现，真实的协程任务由用户扩展 -- 因为调度需求不能统一)
     /// </summary>
     /// <param name="task"></param>
+    /// <param name="checkPeriod"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task) {
+    public static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task, long checkPeriod = 50) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewAsyncTask(task);
         ScheduledTaskBuilder<T> builder = new ScheduledTaskBuilder<T>(ref taskBuilder);
-        builder.SetFixedDelay(0, 50, TimeSpan.FromMilliseconds(1));
+        builder.SetFixedDelay(0, checkPeriod, TimeSpan.FromMilliseconds(1));
         return builder;
     }
 

@@ -25,6 +25,8 @@ import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * 定时任务的Task抽象
@@ -432,10 +434,24 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 delay, timeUnit);
     }
 
+    public static ScheduledPromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options,
+                                                   IScheduledPromise<?> promise,
+                                                   long delay, TimeUnit timeUnit) {
+        return acquire(TaskBuilder.TYPE_ACTION_CTX, action, ctx, options, promise,
+                delay, timeUnit);
+    }
+
     public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options,
                                                          IScheduledPromise<V> promise,
                                                          long delay, TimeUnit timeUnit) {
         return acquire(TaskBuilder.TYPE_FUNC, action, cancelToken, options, promise,
+                delay, timeUnit);
+    }
+
+    public static <V> ScheduledPromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options,
+                                                         IScheduledPromise<V> promise,
+                                                         long delay, TimeUnit timeUnit) {
+        return acquire(TaskBuilder.TYPE_FUNC_CTX, action, ctx, options, promise,
                 delay, timeUnit);
     }
 

@@ -112,8 +112,16 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().ScheduleAction(action, delay, cancelToken);
     }
 
+    public ValueFuture ScheduleAction(Action<object> action, object ctx, TimeSpan delay) {
+        return Select().ScheduleAction(action, ctx, delay);
+    }
+
     public virtual ValueFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
         return Select().ScheduleFunc(action, delay, cancelToken);
+    }
+
+    public ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object ctx, TimeSpan delay) {
+        return Select().ScheduleFunc(action, ctx, delay);
     }
 
     public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {

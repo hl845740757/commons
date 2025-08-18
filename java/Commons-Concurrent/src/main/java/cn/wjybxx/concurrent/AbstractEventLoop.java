@@ -228,6 +228,20 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
+    public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, delay, unit));
+        return promise;
+    }
+
+    @Override
+    public IScheduledFuture<?> scheduleAction(Consumer<Object> task, Object ctx, long delay, TimeUnit unit) {
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofAction(task, ctx, 0, promise, delay, unit));
+        return promise;
+    }
+
+    @Override
     public <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         IScheduledPromise<V> promise = newScheduledPromise();
         execute(ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise, delay, unit));
@@ -235,9 +249,9 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
-        IScheduledPromise<Object> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, delay, unit));
+    public <V> IScheduledFuture<V> scheduleFunc(Function<Object, V> task, Object ctx, long delay, TimeUnit unit) {
+        IScheduledPromise<V> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofFunction(task, ctx, 0, promise, delay, unit));
         return promise;
     }
 

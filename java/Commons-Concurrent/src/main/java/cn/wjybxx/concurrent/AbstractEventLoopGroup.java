@@ -133,8 +133,18 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
     }
 
     @Override
+    public IScheduledFuture<?> scheduleAction(Consumer<Object> task, Object ctx, long delay, TimeUnit unit) {
+        return select().scheduleAction(task, ctx, delay, unit);
+    }
+
+    @Override
     public <T> IScheduledFuture<T> scheduleFunc(Callable<T> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         return select().scheduleFunc(task, delay, unit, cancelToken);
+    }
+
+    @Override
+    public <V> IScheduledFuture<V> scheduleFunc(Function<Object, V> task, Object ctx, long delay, TimeUnit unit) {
+        return select().scheduleFunc(task, ctx, delay, unit);
     }
 
     @Nonnull

@@ -207,9 +207,21 @@ public abstract class AbstractEventLoop : IEventLoop
         return promise.VoidFuture;
     }
 
+    public ValueFuture ScheduleAction(Action<object> action, object ctx, TimeSpan delay) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
+        Execute(ScheduledPromiseTask.OfAction(action, ctx, 0, promise, delay));
+        return promise.VoidFuture;
+    }
+
     public virtual ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, ICancelToken? cancelToken = null) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
         Execute(ScheduledPromiseTask.OfFunction(action, cancelToken, 0, promise, delay));
+        return promise.Future;
+    }
+
+    public ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object ctx, TimeSpan delay) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
+        Execute(ScheduledPromiseTask.OfFunction(action, ctx, 0, promise, delay));
         return promise.Future;
     }
 

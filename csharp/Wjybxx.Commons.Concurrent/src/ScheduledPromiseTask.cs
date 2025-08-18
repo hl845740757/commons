@@ -40,10 +40,25 @@ public static class ScheduledPromiseTask
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ScheduledPromiseTask<int> OfAction(Action<object> action, object ctx, int options,
+                                                     ValuePromise<int> promise,
+                                                     TimeSpan delay) {
+        return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION_CTX, action, ctx, options, promise, delay);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options,
                                                         ValuePromise<T> promise,
                                                         TimeSpan delay) {
         return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise, delay);
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<object, T> action, object ctx, int options,
+                                                        ValuePromise<T> promise,
+                                                        TimeSpan delay) {
+        return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC_CTX, action, ctx, options, promise, delay);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
