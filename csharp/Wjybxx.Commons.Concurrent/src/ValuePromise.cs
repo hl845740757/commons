@@ -367,6 +367,9 @@ public class ValuePromise<T> : IValuePromise<T>
             default: {
                 // 添加回调
                 Promise<U> promise = new Promise<U>(_executor);
+                if (status == TaskStatus.Computing) {
+                    promise.TrySetComputing();
+                }
                 SetCompletion(TYPE_SET_PROMISE_U, promise, null, null, 0);
                 return promise;
             }
@@ -394,6 +397,9 @@ public class ValuePromise<T> : IValuePromise<T>
             default: {
                 // 添加回调
                 Promise<T> promise = new Promise<T>(_executor);
+                if (status == TaskStatus.Computing) {
+                    promise.TrySetComputing();
+                }
                 SetCompletion(TYPE_SET_PROMISE_T, promise, null, null, 0);
                 return promise;
             }
@@ -717,7 +723,7 @@ public class ValuePromise<T> : IValuePromise<T>
     /// <param name="rid">接收Promise的重入版本id</param>
     /// <param name="executor">任务关联的线程</param>
     /// <returns></returns>
-    public static ValuePromise<T> Acquire(out int rid, IExecutor? executor) {
+    public static ValuePromise<T> Acquire(out int rid, IExecutor? executor = null) {
         ValuePromise<T> promise = POOL.Acquire();
         rid = promise.IncReentryId();
         promise._executor = executor;

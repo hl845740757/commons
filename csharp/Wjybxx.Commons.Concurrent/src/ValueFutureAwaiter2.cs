@@ -68,13 +68,16 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void OnCompleted(Action<object> continuation, object state) {
+        _future.OnCompleted(continuation, state, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 }
 
@@ -119,13 +122,16 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void OnCompleted(Action<object> continuation, object state) {
+        _future.OnCompleted(continuation, state, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 }
 }

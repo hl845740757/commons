@@ -24,7 +24,10 @@ using Wjybxx.Commons.Attributes;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 
+/// 1.框架会默认缓存await创建的状态机，可通过<see cref="TaskPoolConfig"/>调整池大小。
+/// 2.状态机默认会在用户获取执行结果的时候回收，因此不可在await返回之后继续使用该Future对象 。
+/// 3.如果用户不需要任务的执行结果，需调用<see cref="Forget"/>告知Promise在任务完成后自动回收。
+/// 4.如果需要返回装箱的结果，可通过带有<see cref="SuppressedTypes"/>的GetAwaiter方法进行等待和获取结果。
 /// </summary>
 [AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder))]
 public readonly struct ValueFuture
@@ -34,6 +37,7 @@ public readonly struct ValueFuture
 
     private readonly object? _future;
     private readonly int _reentryId;
+
     private readonly object? _result;
     private readonly object? _ex;
 
@@ -67,13 +71,15 @@ public readonly struct ValueFuture
         => new(this, requireResult, null, (int)suppressedTypes);
 
     /// <summary>
-    /// <see cref="IFuture.GetAwaitable"/>
+    /// 
     /// </summary>
+    /// <param name="executor">回调线程</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable GetAwaitable(IExecutor? executor, int options = 0) => new(this, executor, options);
 
     /// <summary>
-    /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="suppressedTypes">需要压栈的异常</param>
@@ -85,10 +91,6 @@ public readonly struct ValueFuture
                                               bool requireResult = false) =>
         new(this, requireResult, executor, (int)suppressedTypes | options);
 
-    /// <summary>
-    /// <see cref="IFuture.GetAwaitable"/>
-    /// 我们在大量的场景仅仅想禁用取消异常，因此提供快捷方法
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable2 GetAwaitable(SuppressedTypes suppressedTypes, bool requireResult = false) =>
         new(this, requireResult, null, (int)suppressedTypes);
@@ -329,25 +331,21 @@ public readonly struct ValueFuture
         }
     }
 
-    internal static readonly Action<object> invoker = (state) => ((Action)state).Invoke();
-
-    internal void OnCompleted(Action action, IExecutor? executor, int options) {
-        if (_future == null) {
-            throw new IllegalStateException();
-        }
+    internal void OnCompleted(Action<object> action, object state, IExecutor? executor, int options) {
+        if (_future == null) throw new InvalidOperationException();
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise valuePromise) {
             if (executor != null) {
-                valuePromise.OnCompletedAsync(_reentryId, executor, invoker, action, options);
+                valuePromise.OnCompletedAsync(_reentryId, executor, action, state, options);
             } else {
-                valuePromise.OnCompleted(_reentryId, invoker, action, options);
+                valuePromise.OnCompleted(_reentryId, action, state, options);
             }
         } else {
             IFuture future = (IFuture)_future;
             if (executor != null) {
-                future.OnCompletedAsync(executor, invoker, action, options);
+                future.OnCompletedAsync(executor, action, state, options);
             } else {
-                future.OnCompleted(invoker, action, options);
+                future.OnCompleted(action, state, options);
             }
         }
     }
@@ -356,7 +354,9 @@ public readonly struct ValueFuture
 }
 
 /// <summary>
-///
+/// 1.框架会默认缓存await创建的状态机，可通过<see cref="TaskPoolConfig"/>调整池大小。
+/// 2.状态机默认会在用户获取执行结果的时候回收，因此不可在await返回之后继续使用该Future对象 。
+/// 3.如果用户不需要任务的执行结果，需调用<see cref="Forget"/>告知Promise在任务完成后自动回收。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder<>))]
@@ -567,8 +567,8 @@ public readonly struct ValueFuture<T>
     }
 
     /// <summary>
-    /// 如果用户不需要结果，可以调用该函数，告知Promise在任务完成后自动回收。
-    /// 也用于压制警告
+    /// 1.忽略执行结果
+    /// 2.也用于压制警告
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Forget() {
@@ -671,23 +671,21 @@ public readonly struct ValueFuture<T>
         return TaskResult<T>.FromResult(future.Get());
     }
 
-    internal void OnCompleted(Action action, IExecutor? executor, int options) {
-        if (_future == null) {
-            throw new IllegalStateException();
-        }
+    internal void OnCompleted(Action<object> action, object state, IExecutor? executor, int options) {
+        if (_future == null) throw new InvalidOperationException();
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise valuePromise) {
             if (executor != null) {
-                valuePromise.OnCompletedAsync(_reentryId, executor, ValueFuture.invoker, action, options);
+                valuePromise.OnCompletedAsync(_reentryId, executor, action, state, options);
             } else {
-                valuePromise.OnCompleted(_reentryId, ValueFuture.invoker, action, options);
+                valuePromise.OnCompleted(_reentryId, action, state, options);
             }
         } else {
             IFuture future = (IFuture)_future;
             if (executor != null) {
-                future.OnCompletedAsync(executor, ValueFuture.invoker, action, options);
+                future.OnCompletedAsync(executor, action, state, options);
             } else {
-                future.OnCompleted(ValueFuture.invoker, action, options);
+                future.OnCompleted(action, state, options);
             }
         }
     }

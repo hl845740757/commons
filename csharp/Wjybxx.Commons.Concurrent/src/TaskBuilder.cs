@@ -26,31 +26,35 @@ namespace Wjybxx.Commons.Concurrent
 public static class TaskBuilder
 {
     /// <summary>
+    /// 空任务(用于延时任务占位)
+    /// </summary>
+    public const int TYPE_EMPTY = 0;
+    /// <summary>
     /// 表示委托类型为<see cref="Action"/>
     /// </summary>
-    public const int TYPE_ACTION = 0;
+    public const int TYPE_ACTION = 1;
     /// <summary>
     /// 表示委托类型为<see cref="Action{T}"/>
     /// </summary>
-    public const int TYPE_ACTION_CTX = 1;
+    public const int TYPE_ACTION_CTX = 2;
 
     /// <summary>
     /// 表示委托类型为<see cref="Func{TResult}"/>
     /// </summary>
-    public const int TYPE_FUNC = 2;
+    public const int TYPE_FUNC = 3;
     /// <summary>
     /// 表示委托类型为<see cref="Func{T,R}"/>
     /// </summary>
-    public const int TYPE_FUNC_CTX = 3;
+    public const int TYPE_FUNC_CTX = 4;
 
     /// <summary>
     /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
     /// </summary>
-    public const int TYPE_TASK = 4;
+    public const int TYPE_TASK = 5;
     /// <summary>
     /// 异步任务<see cref="Func{AsyncTaskContext, ValueFuture}"/>
     /// </summary>
-    public const int TYPE_ASYNC_TASK = 5;
+    public const int TYPE_ASYNC_TASK = 6;
 
     #region factory
 

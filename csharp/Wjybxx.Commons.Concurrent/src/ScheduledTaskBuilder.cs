@@ -73,7 +73,7 @@ public static class ScheduledTaskBuilder
     public static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewAsyncTask(task);
         ScheduledTaskBuilder<T> builder = new ScheduledTaskBuilder<T>(ref taskBuilder);
-        builder.SetFixedDelay(0, 100, TimeSpan.FromMilliseconds(1));
+        builder.SetFixedDelay(0, 50, TimeSpan.FromMilliseconds(1));
         return builder;
     }
 

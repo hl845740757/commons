@@ -167,19 +167,22 @@ public class PromiseTask<T> : IFutureTask
     protected T RunTask() {
         int type = (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
         switch (type) {
+            case TYPE_EMPTY: {
+                return default;
+            }
             case TYPE_ACTION: {
                 Action task = (Action)this.task;
                 task();
                 return default;
             }
-            case TYPE_FUNC: {
-                Func<T> task = (Func<T>)this.task;
-                return task();
-            }
             case TYPE_ACTION_CTX: {
                 Action<object> task = (Action<object>)this.task;
                 task(ctx);
                 return default;
+            }
+            case TYPE_FUNC: {
+                Func<T> task = (Func<T>)this.task;
+                return task();
             }
             case TYPE_FUNC_CTX: {
                 Func<object, T> task = (Func<object, T>)this.task;

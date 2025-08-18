@@ -31,12 +31,13 @@ import java.util.function.Function;
 @NotThreadSafe
 public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
-    public static final int TYPE_ACTION = 0;
-    public static final int TYPE_ACTION_CTX = 1;
-    public static final int TYPE_FUNC = 2;
-    public static final int TYPE_FUNC_CTX = 3;
+    public static final int TYPE_EMPTY = 0;
+    public static final int TYPE_ACTION = 1;
+    public static final int TYPE_ACTION_CTX = 2;
+    public static final int TYPE_FUNC = 3;
+    public static final int TYPE_FUNC_CTX = 4;
     @Deprecated
-    private static final int TYPE_TASK = 4; // java端不使用，用于C#
+    private static final int TYPE_TASK = 5; // java端不使用，用于C#
 
     private final int type;
     private final Object task;

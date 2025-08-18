@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons.Ex;
 using Wjybxx.Commons.Logger;
 
 namespace Wjybxx.Commons.Concurrent
@@ -35,7 +36,7 @@ public sealed class FutureLogger
     /// <summary>
     /// 默认日志等级
     /// </summary>
-    private static volatile Level logLevel = Level.Warn;
+    private static volatile Level logLevel = Level.Info;
 
     public static Level GetLogLevel() => logLevel;
 
@@ -47,6 +48,14 @@ public sealed class FutureLogger
         _handler = handler;
     }
 
+    private static bool TestException(Exception ex) {
+        if (ex is OperationCanceledException
+            || ex is NoLogRequiredException) {
+            return false;
+        }
+        return true;
+    }
+
     /// <summary>
     /// 记录Future框架出现的异常
     /// </summary>
@@ -54,10 +63,13 @@ public sealed class FutureLogger
     /// <param name="message">信息</param>
     public static void LogCause(Exception ex, string? message = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
+        if (!logger.IsEnabled(logLevel) || !TestException(ex)) {
+            return;
+        }
         message = message ?? "Task caught exception";
         try {
             if (_handler != null) {
-                _handler.LogCause(ex, message);
+                _handler.LogCause(logLevel, ex, message);
                 return;
             }
             logger.Log(logLevel, ex, message);
@@ -76,9 +88,10 @@ public sealed class FutureLogger
         /// <summary>
         /// 一定不能抛出异常！！！！
         /// </summary>
+        /// <param name="level"></param>
         /// <param name="ex">底层运算产生的异常</param>
         /// <param name="message">额外消息</param>
-        void LogCause(Exception ex, string message);
+        void LogCause(Level level, Exception ex, string message);
     }
 }
 }

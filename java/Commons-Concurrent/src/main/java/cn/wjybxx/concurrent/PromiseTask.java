@@ -137,9 +137,17 @@ public class PromiseTask<V> implements IFutureTask<V> {
     protected final V runTask() throws Exception {
         int type = (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
         switch (type) {
+            case TaskBuilder.TYPE_EMPTY -> {
+                return null;
+            }
             case TaskBuilder.TYPE_ACTION -> {
                 Runnable task = (Runnable) this.task;
                 task.run();
+                return null;
+            }
+            case TaskBuilder.TYPE_ACTION_CTX -> {
+                Consumer<Object> task = (Consumer<Object>) this.task;
+                task.accept(ctx);
                 return null;
             }
             case TaskBuilder.TYPE_FUNC -> {
@@ -149,11 +157,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
             case TaskBuilder.TYPE_FUNC_CTX -> {
                 Function<Object, V> task = (Function<Object, V>) this.task;
                 return task.apply(ctx);
-            }
-            case TaskBuilder.TYPE_ACTION_CTX -> {
-                Consumer<Object> task = (Consumer<Object>) this.task;
-                task.accept(ctx);
-                return null;
             }
             default -> {
                 throw new AssertionError("type: " + type);

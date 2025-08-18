@@ -117,12 +117,11 @@ public final class FutureLogger {
 
     public static void logCause(Throwable ex, String message) {
         Objects.requireNonNull(ex);
-        if (message == null) message = "task caught exception";
-
         Level logLevel = ex instanceof VirtualMachineError ? Level.ERROR : FutureLogger.logLevel;
         if (!logger.isEnabledForLevel(logLevel) || !testException(ex)) {
             return;
         }
+        if (message == null) message = "task caught exception";
         try {
             LogHandler handler = FutureLogger.handler;
             if (handler != null) {

@@ -47,8 +47,9 @@ public static class TaskPoolConfig
         // 通常使用int代替void，而object适用装箱场景
         bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
         if (poolType == TaskPoolType.ValuePromise
-            || poolType == TaskPoolType.PromiseMoveNext) {
-            return isIntOrObject ? 1000 : 50;
+            || poolType == TaskPoolType.PromiseMoveNext // await Future
+            || poolType == TaskPoolType.ValueFutureStateMachineTask) { // await ValueFuture
+            return isIntOrObject ? 500 : 50;
         }
         if (poolType == TaskPoolType.CtsCompletion
             || poolType == TaskPoolType.Coroutine) {

@@ -72,20 +72,19 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (_executor == null) {
-            _future.OnCompleted(invoker, continuation, _options);
-        } else {
-            _future.OnCompletedAsync(_executor, invoker, continuation, _options);
-        }
+        OnCompleted(invoker, continuation);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
+        OnCompleted(invoker, continuation);
+    }
+
+    public void OnCompleted(Action<object> continuation, object state) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(invoker, continuation, _options);
+            _future.OnCompleted(continuation, state, _options);
         } else {
-            _future.OnCompletedAsync(_executor, invoker, continuation, _options);
+            _future.OnCompletedAsync(_executor, continuation, state, _options);
         }
     }
 }
@@ -139,20 +138,19 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (_executor == null) {
-            _future.OnCompleted(FutureAwaiter.invoker, continuation, _options);
-        } else {
-            _future.OnCompletedAsync(_executor, FutureAwaiter.invoker, continuation, _options);
-        }
+        OnCompleted(FutureAwaiter.invoker, continuation);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
+        OnCompleted(FutureAwaiter.invoker, continuation);
+    }
+
+    public void OnCompleted(Action<object> continuation, object state) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(FutureAwaiter.invoker, continuation, _options);
+            _future.OnCompleted(continuation, state, _options);
         } else {
-            _future.OnCompletedAsync(_executor, FutureAwaiter.invoker, continuation, _options);
+            _future.OnCompletedAsync(_executor, continuation, state, _options);
         }
     }
 }
