@@ -313,7 +313,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         // 检测次数限制
         if (hasCountdown() && (--countdown < 1)) {
-            promise.trySetException(StacklessCancellationException.TRIGGER_COUNT_LIMIT);
+            promise.trySetException(StacklessCancellationException.COUNT_LIMIT);
             return false;
         }
         setNextRunTime(tickTime, scheduleType);

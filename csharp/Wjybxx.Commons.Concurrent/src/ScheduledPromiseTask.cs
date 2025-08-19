@@ -341,7 +341,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         }
         // 检测次数限制
         if (HasCountdown && (--countdown < 1)) {
-            promise.Internal_TrySetException(StacklessCancellationException.TriggerCountLimit);
+            promise.Internal_TrySetException(StacklessCancellationException.CountLimit);
             return false;
         }
         SetNextRunTime(tickTime, scheduleType);

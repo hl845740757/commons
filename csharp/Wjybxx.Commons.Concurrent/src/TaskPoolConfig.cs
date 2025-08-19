@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -26,16 +27,80 @@ namespace Wjybxx.Commons.Concurrent
 public static class TaskPoolConfig
 {
     private static volatile Func<TaskPoolType, Type, int>? poolSizeCalculator;
-
+    private static readonly ConcurrentDictionary<Key, Item> configDic = new();
     public static Func<TaskPoolType, Type, int>? PoolSizeCalculator {
         get => poolSizeCalculator;
         set => poolSizeCalculator = value;
     }
 
     /// <summary>
-    /// 计算给定类型对象池的缓存池大小。
+    /// 本库统一使用int代替void，因此当T为int类型时，应当分配更大的池。
+    /// </summary>
+    /// <param name="poolType">对象池类型</param>
+    /// <param name="poolSize">int和object类型的池大小</param>
+    /// <param name="poolSize2">其它类型的池大小</param>
+    public static void AddPoolConfig(TaskPoolType poolType, int poolSize, int? poolSize2 = null) {
+        Key key = new Key(poolType, null);
+        Item item = new Item(poolSize, poolSize2 ?? poolSize / 4);
+        configDic[key] = item;
+    }
+
+    /// <summary>
+    /// 通过命名空间或类全限定名设置对象池的大小，适用于状态机
+    /// </summary>
+    /// <param name="poolType">对象池类型</param>
+    /// <param name="ns">结果命名空间或状态机顶层类的命名空间</param>
+    /// <param name="poolSize">int和object类型的池大小</param>
+    /// <param name="poolSize2">其它类型的池大小</param>
+    public static void AddPoolConfig(TaskPoolType poolType, string ns, int poolSize, int? poolSize2 = null) {
+        if (ns == null) throw new ArgumentNullException(nameof(ns));
+        Key key = new Key(poolType, ns, null);
+        Item item = new Item(poolSize, poolSize2 ?? poolSize / 4);
+        configDic[key] = item;
+    }
+
+    /// <summary>
+    /// 精确设置某类池的大小
+    /// </summary>
+    /// <param name="poolType">对象池类型</param>
+    /// <param name="poolSize">int和object类型的池大小</param>
+    /// <param name="poolSize2">其它类型的池大小</param>
+    /// <typeparam name="T">如果是状态机池，泛型参数为状态机的顶级类</typeparam>
+    public static void AddPoolConfig<T>(TaskPoolType poolType, int poolSize, int? poolSize2 = null) {
+        Type type = typeof(T);
+        if (poolType == TaskPoolType.ValueFutureStateMachineTask) {
+            while (type.IsNested) {
+                type = type.DeclaringType!;
+            }
+            string ns = type.Namespace + "." + ObjectUtil.GetSimpleName(type);
+            AddPoolConfig(poolType, ns, poolSize, poolSize2);
+            return;
+        }
+        Key key = new Key(poolType, type);
+        Item item = new Item(poolSize, 0);
+        configDic[key] = item;
+    }
+
+    /// <summary>
     /// 
-    /// 注意：本库统一使用int代替void，因此当T为int类型时，应当分配更大的池。
+    /// </summary>
+    /// <param name="poolType">对象池类型</param>
+    /// <param name="poolSize">对象池大小</param>
+    /// <typeparam name="S">状态机归属的顶层类</typeparam>
+    /// <typeparam name="T">状态机执行结果</typeparam>
+    public static void AddPoolConfig<S, T>(TaskPoolType poolType, int poolSize) {
+        Type topLevelType = typeof(S);
+        while (topLevelType.IsNested) {
+            topLevelType = topLevelType.DeclaringType!;
+        }
+        string ns = topLevelType.Namespace + "." + ObjectUtil.GetSimpleName(topLevelType);
+        Key key = new Key(poolType, ns, typeof(T));
+        Item item = new Item(poolSize, 0);
+        configDic[key] = item;
+    }
+
+    /// <summary>
+    /// 获取对象池的缓存池大小。
     /// </summary>
     /// <param name="poolType">对象池类型</param>
     /// <typeparam name="T">对象的泛型参数类型</typeparam>
@@ -45,10 +110,14 @@ public static class TaskPoolConfig
             return func.Invoke(poolType, typeof(T));
         }
         // 通常使用int代替void，而object适用装箱场景
-        bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
+        Type type = typeof(T);
+        bool isIntOrObject = type == typeof(int) || type == typeof(object);
+        if (GetItem(poolType, type, out Item item, out bool precise)) {
+            return (precise || isIntOrObject) ? item.poolSize : item.poolSize2;
+        }
+        // 保底方案
         if (poolType == TaskPoolType.ValuePromise
-            || poolType == TaskPoolType.PromiseMoveNext // await Future
-            || poolType == TaskPoolType.ValueFutureStateMachineTask) { // await ValueFuture
+            || poolType == TaskPoolType.PromiseMoveNext) { // await Future
             return isIntOrObject ? 500 : 50;
         }
         if (poolType == TaskPoolType.CtsCompletion
@@ -56,6 +125,117 @@ public static class TaskPoolConfig
             return 500; // 非泛型类
         }
         return isIntOrObject ? 100 : 20;
+    }
+
+    /// <summary>
+    /// 获取对象池的缓存池大小。
+    /// </summary>
+    /// <param name="poolType">对象池类型</param>
+    /// <typeparam name="S">状态机或状态机归属的顶层类</typeparam>
+    /// <typeparam name="T">状态机执行结果</typeparam>
+    /// <returns></returns>
+    public static int GetPoolSize<S, T>(TaskPoolType poolType) {
+        bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
+        if (poolType == TaskPoolType.ValueFutureStateMachineTask) { // await ValueFuture
+            Type topLevelType = typeof(S);
+            while (topLevelType.IsNested) {
+                topLevelType = topLevelType.DeclaringType!;
+            }
+            if (GetItem(poolType, topLevelType, typeof(T), out Item item, out bool precise)) {
+                return (precise || isIntOrObject) ? item.poolSize : item.poolSize2;
+            }
+            return isIntOrObject ? 500 : 50;
+        }
+        return isIntOrObject ? 100 : 20;
+    }
+
+    private static bool GetItem(TaskPoolType poolType, Type resultType,
+                                out Item item, out bool precise) {
+        precise = false;
+        if (configDic.TryGetValue(new Key(poolType, resultType), out item)) { // 精确查询
+            precise = true;
+            return true;
+        }
+        if (configDic.TryGetValue(new Key(poolType, resultType.Namespace!, null), out item)) { // 模糊查询 - 暂不递归
+            return true;
+        }
+        if (configDic.TryGetValue(new Key(poolType, null), out item)) { // 模糊查询
+            return true;
+        }
+        item = default;
+        return false;
+    }
+
+    private static bool GetItem(TaskPoolType poolType, Type topLevelType, Type resultType,
+                                out Item item, out bool precise) {
+        string fullName = topLevelType.Namespace + "." + ObjectUtil.GetSimpleName(topLevelType);
+        precise = false;
+        // 根据顶级类类名查询
+        if (configDic.TryGetValue(new Key(poolType, fullName, resultType), out item)) { // 精确查询
+            precise = true;
+            return true;
+        }
+        if (configDic.TryGetValue(new Key(poolType, fullName, null), out item)) { // 模糊查询
+            return true;
+        }
+        // 根据命名空间查询
+        string ns = topLevelType.Namespace!;
+        if (configDic.TryGetValue(new Key(poolType, ns, resultType), out item)) { // 精确查询
+            precise = true;
+            return true;
+        }
+        if (configDic.TryGetValue(new Key(poolType, ns, null), out item)) { // 模糊查询
+            return true;
+        }
+        item = default;
+        return false;
+    }
+
+    private readonly struct Item
+    {
+        public readonly int poolSize;
+        public readonly int poolSize2;
+
+        public Item(int poolSize, int poolSize2) {
+            this.poolSize = poolSize;
+            this.poolSize2 = poolSize2;
+        }
+    }
+
+    private readonly struct Key : IEquatable<Key>
+    {
+        private readonly TaskPoolType _poolType;
+        private readonly Type? _type;
+        private readonly string? _name;
+
+        public Key(TaskPoolType poolType, Type? type) : this() {
+            _poolType = poolType;
+            _type = type;
+            _name = null;
+        }
+
+        public Key(TaskPoolType poolType, string name, Type? type) {
+            _poolType = poolType;
+            _name = name;
+            _type = type;
+        }
+
+        public bool Equals(Key other) {
+            return _poolType == other._poolType
+                   && _type == other._type
+                   && _name == other._name;
+        }
+
+        public override bool Equals(object? obj) {
+            return obj is Key other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            int hashCode = (int)_poolType;
+            hashCode = (hashCode * 397) ^ (_type != null ? _type.GetHashCode() : 0);
+            hashCode = (hashCode * 397) ^ (_name != null ? _name.GetHashCode() : 0);
+            return hashCode;
+        }
     }
 }
 

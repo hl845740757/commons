@@ -25,11 +25,12 @@ namespace Wjybxx.Commons.Concurrent
 ///
 /// 1.调度器什么时候响应取消信号，是不确定的。
 /// 2.定时任务可通过<see cref="TaskResultException"/>返回结果。
+/// 3.需要结果的任务，更推荐通过异步任务实现 —— <see cref="ScheduledTaskBuilder.NewAsyncTask{T}"/>。
 /// </summary>
 public interface IScheduledExecutorService : IExecutorService
 {
     /// <summary>
-    /// 提交一个任务
+    /// 创建一个高度定制的Timer
     /// </summary>
     /// <param name="builder">任务构建器</param>
     /// <typeparam name="T">结果类型</typeparam>
@@ -76,8 +77,9 @@ public interface IScheduledExecutorService : IExecutorService
     ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object ctx, TimeSpan delay);
 
     /// <summary>
-    /// 以固定延迟执行给定的任务(少执行了就少执行了)
-    /// FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
+    /// 以固定延迟执行给定的任务
+    /// 
+    /// 注：FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
     /// </summary>
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">首次执行延迟</param>
@@ -87,7 +89,9 @@ public interface IScheduledExecutorService : IExecutorService
     ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     /// <summary>
-    /// 以固定频率执行给定的任务（少执行了会补-慎用）
+    /// 以固定频率执行给定的任务（慎用）
+    ///
+    /// 注：FixedRate会尽可能保证总的执行次数。
     /// </summary>
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">首次执行延迟</param>

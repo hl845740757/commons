@@ -58,7 +58,7 @@ public final class CancelCodes {
     /** Executor关闭 -- Executor关闭不一定会取消任务 */
     public static final int REASON_SHUTDOWN = 3;
     /** 执行超时，触发次数限制 */
-    public static final int REASON_TRIGGER_COUNT_LIMIT = 4;
+    public static final int REASON_COUNT_LIMIT = 4;
 
     private CancelCodes() {
     }

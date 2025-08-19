@@ -121,6 +121,13 @@ public static class ObjectUtil
         return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string GetSimpleName(Type namedType) {
+        string name = namedType.Name;
+        int index = name.LastIndexOf('`');
+        return index > 0 ? name.Substring2(0, index) : name;
+    }
+
     #region string
 
     /// <summary>

@@ -29,7 +29,7 @@ public final class StacklessCancellationException extends BetterCancellationExce
 
     public static final StacklessCancellationException DEFAULT;
     public static final StacklessCancellationException TIMEOUT;
-    public static final StacklessCancellationException TRIGGER_COUNT_LIMIT;
+    public static final StacklessCancellationException COUNT_LIMIT;
 
     static {
         for (int idx = 0; idx < INST_CACHE.length; idx++) {
@@ -37,7 +37,7 @@ public final class StacklessCancellationException extends BetterCancellationExce
         }
         DEFAULT = INST_CACHE[0];
         TIMEOUT = INST_CACHE[CancelCodes.REASON_TIMEOUT - 1];
-        TRIGGER_COUNT_LIMIT = INST_CACHE[CancelCodes.REASON_TRIGGER_COUNT_LIMIT - 1];
+        COUNT_LIMIT = INST_CACHE[CancelCodes.REASON_COUNT_LIMIT - 1];
     }
 
     public StacklessCancellationException(int code) {

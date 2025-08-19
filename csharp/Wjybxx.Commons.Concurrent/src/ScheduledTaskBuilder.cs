@@ -84,15 +84,11 @@ public static class ScheduledTaskBuilder
 
     /** 适用于禁止初始延迟小于0的情况 */
     public static void ValidateInitialDelay(long initialDelay) {
-        if (initialDelay < 0) {
-            throw new ArgumentException($"initialDelay: {initialDelay} (expected: >= 0)");
-        }
+        if (initialDelay < 0) throw new ArgumentException($"initialDelay: {initialDelay} (expected: >= 0)");
     }
 
     public static void ValidatePeriod(long period) {
-        if (period <= 0) {
-            throw new ArgumentException("period: 0 (expected: != 0)");
-        }
+        if (period <= 0) throw new ArgumentException("period: 0 (expected: != 0)");
     }
 
     #endregion

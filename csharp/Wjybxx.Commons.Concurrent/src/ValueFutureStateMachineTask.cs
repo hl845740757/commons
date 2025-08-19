@@ -27,9 +27,9 @@ namespace Wjybxx.Commons.Concurrent
 /// 2.用户在获取结果时触发回收。
 /// 3.该实现并不是严格线程安全的，用在非StateMachine场景可能导致错误。
 /// </summary>
-/// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
-internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValueFutureStateMachineTask<T>
+/// <typeparam name="T">任务的结果类型</typeparam>
+internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValueFutureStateMachineTask<T>
     where S : IAsyncStateMachine
 {
     /// <summary>
@@ -60,17 +60,26 @@ internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValu
     }
 
     protected override void PrepareToRecycle() {
-        POOL.Release(this);
+        if (POOL != null) {
+            POOL.Release(this);
+        }
     }
 
     #region factory
 
-    private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<T, S>> POOL =
-        new(() => new ValueFutureStateMachineTask<T, S>(), task => task.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValueFutureStateMachineTask));
+    private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>? POOL;
+
+    static ValueFutureStateMachineTask() {
+        int poolSize = TaskPoolConfig.GetPoolSize<S, T>(TaskPoolType.ValueFutureStateMachineTask);
+        if (poolSize > 0) {
+            POOL = new ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>(
+                () => new ValueFutureStateMachineTask<S, T>(),
+                task => task.Reset(), poolSize);
+        }
+    }
 
     public static void SetStateMachine(ref S stateMachine, out IValueFutureStateMachineTask<T> task, out int reentryId) {
-        ValueFutureStateMachineTask<T, S> result = POOL.Acquire();
+        ValueFutureStateMachineTask<S, T> result = POOL != null ? POOL.Acquire() : new ValueFutureStateMachineTask<S, T>();
 
         // task和reentryId是builder的属性，而builder是状态机的属性，需要在拷贝状态机之前完成初始化
         // init builder before copy state machine
