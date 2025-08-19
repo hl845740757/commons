@@ -159,13 +159,5 @@ public struct TaskBuilder<T>
     public void Disable(int optionMask) {
         options &= ~optionMask;
     }
-
-    /// <summary>
-    /// 设置任务的优先级
-    /// </summary>
-    public int Priority {
-        get => TaskOptions.GetPriority(options);
-        set => options = TaskOptions.SetPriority(options, value);
-    }
 }
 }

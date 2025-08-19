@@ -42,7 +42,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     private final int type;
     private final Object task;
     private Object ctx;
-    private int options;
+    protected int options;
 
     protected TaskBuilder(int type, Object task) {
         this.task = Objects.requireNonNull(task);
@@ -61,48 +61,6 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         this.ctx = taskBuilder.ctx;
         this.options = taskBuilder.options;
     }
-
-    // region factory
-
-    public static TaskBuilder<Object> newAction(Runnable task) {
-        return new TaskBuilder<>(TYPE_ACTION, task);
-    }
-
-    public static TaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
-        return new TaskBuilder<>(TYPE_ACTION, task, cancelToken);
-    }
-
-    public static TaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
-        return new TaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
-    }
-
-    public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task) {
-        return new TaskBuilder<>(TYPE_FUNC, task);
-    }
-
-    public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
-        return new TaskBuilder<>(TYPE_FUNC, task, cancelToken);
-    }
-
-    public static <V> TaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
-        return new TaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
-    }
-
-
-    /** 任务是否接收context类型参数 */
-    public static boolean isTaskAcceptContext(int type) {
-        switch (type) {
-            case TYPE_ACTION_CTX,
-                 TYPE_FUNC_CTX -> {
-                return true;
-            }
-            default -> {
-                return false;
-            }
-        }
-    }
-
-    // endregion
 
     // region props
 
@@ -147,17 +105,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return this;
     }
 
-    /** 获取任务优先级 */
-    public int getPriority() {
-        return TaskOptions.getPriority(options);
-    }
-
-    /** 设置任务的优先级 */
-    public TaskBuilder<V> setPriority(int priority) {
-        options = TaskOptions.setPriority(options, priority);
-        return this;
-    }
-
+    /** 最终options */
     public int getOptions() {
         return options;
     }
@@ -169,10 +117,37 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     // endregion
 
+    // region factory
+
+    public static TaskBuilder<Object> newAction(Runnable task) {
+        return new TaskBuilder<>(TYPE_ACTION, task);
+    }
+
+    public static TaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
+        return new TaskBuilder<>(TYPE_ACTION, task, cancelToken);
+    }
+
+    public static TaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
+        return new TaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
+    }
+
+    public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task) {
+        return new TaskBuilder<>(TYPE_FUNC, task);
+    }
+
+    public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
+        return new TaskBuilder<>(TYPE_FUNC, task, cancelToken);
+    }
+
+    public static <V> TaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
+        return new TaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
+    }
+
     public ScheduledTaskBuilder<V> toScheduledBuilder() {
         if (this instanceof ScheduledTaskBuilder<V> sb) {
             return sb;
         }
         return new ScheduledTaskBuilder<>(this);
     }
+    // endregion
 }

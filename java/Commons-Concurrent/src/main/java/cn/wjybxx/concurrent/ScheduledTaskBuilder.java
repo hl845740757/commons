@@ -61,48 +61,6 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         super(taskBuilder);
     }
 
-    // region factory
-
-    public static ScheduledTaskBuilder<Object> newAction(Runnable task) {
-        return new ScheduledTaskBuilder<>(TYPE_ACTION, task);
-    }
-
-    public static ScheduledTaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
-        return new ScheduledTaskBuilder<>(TYPE_ACTION, task, cancelToken);
-    }
-
-    public static ScheduledTaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNC, task);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNC, task, cancelToken);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
-    }
-
-    /** 适用于禁止初始延迟小于0的情况 */
-    public static void validateInitialDelay(long initialDelay) {
-        if (initialDelay < 0) {
-            throw new IllegalArgumentException(
-                    String.format("initialDelay: %d (expected: >= 0)", initialDelay));
-        }
-    }
-
-    public static void validatePeriod(long period) {
-        if (period <= 0) {
-            throw new IllegalArgumentException("period: 0 (expected: != 0)");
-        }
-    }
-
-    // endregion
-
     // region 调度方式
 
     public TimeUnit getTimeUnit() {
@@ -186,7 +144,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     /** 是否设置了超时时间 */
     public boolean hasTimeout() {
-        return isEnabled(TaskOptions.MASK_HAS_TIMEOUT);
+        return isEnabled(TaskOptions.HAS_TIMEOUT);
     }
 
     public long getTimeout() {
@@ -204,7 +162,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
             throw new IllegalArgumentException("invalid timeout " + timeout);
         }
         this.timeout = timeout;
-        enable(TaskOptions.MASK_HAS_TIMEOUT);
+        enable(TaskOptions.HAS_TIMEOUT);
         return this;
     }
 
@@ -224,13 +182,13 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         } else {
             this.timeout = Math.max(0, initialDelay + (count - 1) * period);
         }
-        enable(TaskOptions.MASK_HAS_TIMEOUT);
+        enable(TaskOptions.HAS_TIMEOUT);
         return this;
     }
 
     /** 是否设置了次数限制 */
     public boolean hasCountLimit() {
-        return isEnabled(TaskOptions.MASK_HAS_COUNTDOWN);
+        return isEnabled(TaskOptions.HAS_COUNTDOWN);
     }
 
     public int getCountLimit() {
@@ -250,10 +208,21 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
             throw new IllegalArgumentException("invalid count " + countLimit);
         }
         this.countLimit = countLimit;
-        enable(TaskOptions.MASK_HAS_COUNTDOWN);
+        enable(TaskOptions.HAS_COUNTDOWN);
         return this;
     }
 
+    /** 获取任务优先级 */
+    public int getPriority() {
+        return TaskOptions.getPriority(options);
+    }
+
+    /** 设置任务的优先级 */
+    public TaskBuilder<V> setPriority(int priority) {
+        options = TaskOptions.setPriority(options, priority);
+        enable(TaskOptions.HAS_PRIORITY);
+        return this;
+    }
     // endregion
 
     // region overrides
@@ -270,11 +239,6 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
-    public ScheduledTaskBuilder<V> setPriority(int priority) {
-        super.setPriority(priority);
-        return this;
-    }
-
     @Override
     public ScheduledTaskBuilder<V> setOptions(int options) {
         super.setOptions(options);
@@ -288,6 +252,45 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
     // endregion
 
-    // endregion
+    // region factory
 
+    public static ScheduledTaskBuilder<Object> newAction(Runnable task) {
+        return new ScheduledTaskBuilder<>(TYPE_ACTION, task);
+    }
+
+    public static ScheduledTaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
+        return new ScheduledTaskBuilder<>(TYPE_ACTION, task, cancelToken);
+    }
+
+    public static ScheduledTaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
+        return new ScheduledTaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
+    }
+
+    public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task) {
+        return new ScheduledTaskBuilder<>(TYPE_FUNC, task);
+    }
+
+    public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
+        return new ScheduledTaskBuilder<>(TYPE_FUNC, task, cancelToken);
+    }
+
+    public static <V> ScheduledTaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
+        return new ScheduledTaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
+    }
+
+    /** 适用于禁止初始延迟小于0的情况 */
+    public static void validateInitialDelay(long initialDelay) {
+        if (initialDelay < 0) {
+            throw new IllegalArgumentException(
+                    String.format("initialDelay: %d (expected: >= 0)", initialDelay));
+        }
+    }
+
+    public static void validatePeriod(long period) {
+        if (period <= 0) {
+            throw new IllegalArgumentException("period: 0 (expected: != 0)");
+        }
+    }
+
+    // endregion
 }

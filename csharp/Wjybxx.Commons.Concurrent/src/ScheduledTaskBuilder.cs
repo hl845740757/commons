@@ -161,14 +161,6 @@ public struct ScheduledTaskBuilder<T>
         _core.Disable(taskOption);
     }
 
-    /// <summary>
-    /// 设置任务的优先级
-    /// </summary>
-    public int Priority {
-        get => _core.Priority;
-        set => _core.Priority = value;
-    }
-
     #endregion
 
     #region schedule
@@ -274,7 +266,7 @@ public struct ScheduledTaskBuilder<T>
     /// <summary>
     /// 是否设置了超时时间
     /// </summary>
-    public bool HasTimeout => _core.IsEnabled(TaskOptions.MASK_HAS_TIMEOUT);
+    public bool HasTimeout => _core.IsEnabled(TaskOptions.HAS_TIMEOUT);
 
     /// <summary>
     /// 1. 默认只在执行任务后检查是否超时，以确保至少会执行一次
@@ -290,7 +282,7 @@ public struct ScheduledTaskBuilder<T>
                 throw new ArgumentException("invalid timeout: " + value);
             }
             timeout = value;
-            _core.Enable(TaskOptions.MASK_HAS_TIMEOUT);
+            _core.Enable(TaskOptions.HAS_TIMEOUT);
         }
     }
 
@@ -308,13 +300,13 @@ public struct ScheduledTaskBuilder<T>
         } else {
             this.timeout = Math.Max(0, initialDelay + (count - 1) * Period);
         }
-        Enable(TaskOptions.MASK_HAS_TIMEOUT);
+        Enable(TaskOptions.HAS_TIMEOUT);
     }
 
     /// <summary>
     /// 是否包含执行次数限制
     /// </summary>
-    public bool HasCountLimit => _core.IsEnabled(TaskOptions.MASK_HAS_COUNT_LIMIT);
+    public bool HasCountLimit => _core.IsEnabled(TaskOptions.HAS_COUNT_LIMIT);
 
     /// <summary>
     /// 设置任务的执行次数限制
@@ -330,7 +322,18 @@ public struct ScheduledTaskBuilder<T>
                 throw new ArgumentException("invalid count limit: " + value);
             }
             _countLimit = value;
-            _core.Enable(TaskOptions.MASK_HAS_COUNT_LIMIT);
+            _core.Enable(TaskOptions.HAS_COUNT_LIMIT);
+        }
+    }
+
+    /// <summary>
+    /// 设置任务的优先级
+    /// </summary>
+    public int Priority {
+        get => TaskOptions.GetPriority(_core.Options);
+        set {
+            _core.Options = TaskOptions.SetPriority(_core.Options, value);
+            Enable(TaskOptions.HAS_PRIORITY);
         }
     }
 

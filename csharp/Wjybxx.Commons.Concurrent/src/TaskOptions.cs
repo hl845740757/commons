@@ -47,37 +47,35 @@ public static class TaskOptions
     public const int MASK_PRIORITY = MAX_PRIORITY << OFFSET_PRIORITY;
 
     /// <summary>
+    /// 延时任务：包含优先级
+    /// </summary>
+    public const int HAS_PRIORITY = 14; // 预留1位给优先级
+    /// <summary>
+    /// 延时任务：包含调度阶段
+    /// </summary>
+    /// <returns></returns>
+    public const int HAS_SCHEDULE_PHASE = 15;
+    /// <summary>
     /// 延时任务：包含次数限制
     /// </summary>
-    public const int MASK_HAS_COUNT_LIMIT = 1 << 14; // 预留1位给优先级
+    public const int HAS_COUNT_LIMIT = 1 << 16;
     /// <summary>
     /// 延时任务：包含超时时间（执行时间限制）
     /// </summary>
-    public const int MASK_HAS_TIMEOUT = 1 << 15;
-    /// <summary>
-    /// 延时任务：在执行任务前检测超时
-    /// 1. 也就是说在已经超时的情况下不执行任务。
-    /// 2. 在执行后一定会检测一次超时。
-    ///</summary>
-    public const int TIMEOUT_BEFORE_RUN = 1 << 16;
+    public const int HAS_TIMEOUT = 1 << 17;
     /// <summary>
     /// 延时任务：在出现异常后继续执行。
     /// 1. 只适用无需结果的周期性任务 -- 分时任务会失败。
     /// 2. 如果需要取消任务，需通过取消令牌实现。
     ///</summary>
-    public const int CAUGHT_EXCEPTION = 1 << 17;
+    public const int CAUGHT_EXCEPTION = 1 << 18;
 
     /// <summary>
     /// 事件循环在执行该任务前必须先处理一次定时任务队列。
     /// 1. EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
     /// 2. 该选项不一定能保证时序，因为存在时序依赖的任务可能同时提交成功。
     ///</summary>
-    public const int SCHEDULE_BARRIER = 1 << 18;
-    /// <summary>
-    /// 本地序（可以与其它线程无序）
-    /// 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
-    ///</summary>
-    public const int LOCAL_ORDER = 1 << 19;
+    public const int SCHEDULE_BARRIER = 1 << 19;
     /// <summary>
     /// 唤醒事件循环线程
     /// 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
