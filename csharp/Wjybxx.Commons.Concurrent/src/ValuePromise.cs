@@ -138,7 +138,7 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     private bool InternalSetException(object ex) {
-        object result = ex is ExceptionDispatchInfo ? ex : AbstractPromise.WrapException(ex);
+        object result = AbstractPromise.WrapException(ex);
         // Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object? preEx = Interlocked.CompareExchange(ref _ex, result, null);
@@ -236,6 +236,16 @@ public class ValuePromise<T> : IValuePromise<T>
         if (cause == null) throw new ArgumentNullException(nameof(cause));
         if (InternalSetException(cause)) {
             FutureLogger.LogCause(cause); // 记录日志
+            PostComplete();
+            return true;
+        }
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool Internal_TrySetException(ExceptionDispatchInfo dispatchInfo) {
+        if (dispatchInfo == null) throw new ArgumentNullException(nameof(dispatchInfo));
+        if (InternalSetException(dispatchInfo)) {
             PostComplete();
             return true;
         }
@@ -355,10 +365,8 @@ public class ValuePromise<T> : IValuePromise<T>
                 return Promise<U>.FromResult(castR);
             }
             case TaskStatus.Cancelled: {
-                Exception ex = GetException(reentryId); // 触发回收-可能是子类异常
-                return ex.GetType() == typeof(OperationCanceledException)
-                    ? Promise<U>.CANCELLED
-                    : Promise<U>.FromException(ex);
+                Exception ex = GetException(reentryId); // 触发回收
+                return Promise<U>.FromException(ex);
             }
             case TaskStatus.Failed: {
                 object ex = GetExceptionOrDispatchInfo(reentryId);
@@ -386,9 +394,7 @@ public class ValuePromise<T> : IValuePromise<T>
             }
             case TaskStatus.Cancelled: {
                 Exception ex = GetException(reentryId); // 触发回收-可能是子类异常
-                return ex.GetType() == typeof(OperationCanceledException)
-                    ? Promise<T>.CANCELLED
-                    : Promise<T>.FromException(ex);
+                return Promise<T>.FromException(ex);
             }
             case TaskStatus.Failed: {
                 object ex = GetExceptionOrDispatchInfo(reentryId);
@@ -524,6 +530,18 @@ public class ValuePromise<T> : IValuePromise<T>
     public void SetException(int reentryId, Exception cause) {
         ValidateReentryId(reentryId);
         if (!Internal_TrySetException(cause)) {
+            throw new IllegalStateException("Already complete");
+        }
+    }
+
+    public bool TrySetException(int reentryId, ExceptionDispatchInfo dispatchInfo) {
+        ValidateReentryId(reentryId);
+        return Internal_TrySetException(dispatchInfo);
+    }
+
+    public void SetException(int reentryId, ExceptionDispatchInfo dispatchInfo) {
+        ValidateReentryId(reentryId);
+        if (!Internal_TrySetException(dispatchInfo)) {
             throw new IllegalStateException("Already complete");
         }
     }

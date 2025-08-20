@@ -40,6 +40,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /// <summary>
     /// 已被取消的Promise常量实例
     /// </summary>
+    [Obsolete("C#异常不适合共享")]
     public static readonly Promise<T> CANCELLED = new Promise<T>(null, default, StacklessCancellationException.Default);
 
     /** 任务成功执行时的结果 -- 可见性由<see cref="_ex"/>保证 */
@@ -141,7 +142,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     private bool InternalSetException(object ex) {
-        object result = ex is ExceptionDispatchInfo ? ex : AbstractPromise.WrapException(ex);
+        object result = AbstractPromise.WrapException(ex);
         // Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object preEx = Interlocked.CompareExchange(ref _ex, result, null);
@@ -280,6 +281,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public void SetException(Exception cause) {
         if (!TrySetException(cause)) {
+            throw new IllegalStateException("Already complete");
+        }
+    }
+
+    public bool TrySetException(ExceptionDispatchInfo dispatchInfo) {
+        if (dispatchInfo == null) throw new ArgumentNullException(nameof(dispatchInfo));
+        if (InternalSetException(dispatchInfo)) {
+            OnCompleted();
+            PostComplete(this);
+            return true;
+        }
+        return false;
+    }
+
+    public void SetException(ExceptionDispatchInfo dispatchInfo) {
+        if (!TrySetException(dispatchInfo)) {
             throw new IllegalStateException("Already complete");
         }
     }

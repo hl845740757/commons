@@ -249,15 +249,14 @@ public abstract class AbstractPromise
         if (ex is OperationCanceledException) {
             return ex;
         }
-        if (ex is Exception ex2) {
-            return ExceptionDispatchInfo.Capture(ex2);
+        if (ex is ExceptionDispatchInfo dispatchInfo) {
+            // 恢复取消异常
+            if (dispatchInfo.SourceException is OperationCanceledException) {
+                return dispatchInfo.SourceException;
+            }
+            return dispatchInfo;
         }
-        // 恢复取消异常
-        ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)ex;
-        if (dispatchInfo.SourceException is OperationCanceledException) {
-            return dispatchInfo.SourceException;
-        }
-        return ex;
+        return ExceptionDispatchInfo.Capture((Exception)ex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

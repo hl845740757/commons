@@ -61,6 +61,8 @@ public static class CancelCodes
     public const int REASON_SHUTDOWN = 3;
     /** 执行超时，触发次数限制 */
     public const int REASON_COUNT_LIMIT = 4;
+    /** 任务被中断 */
+    public const int REASON_INTERRUPTED = 5;
 
     #region query
 

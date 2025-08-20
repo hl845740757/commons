@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -78,6 +79,19 @@ public interface IPromise : IFuture
     /// <param name="cause">任务失败的原因，如果为<see cref="OperationCanceledException"/>，则等同于取消</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
     void SetException(Exception cause);
+
+    /// <summary>
+    /// 尝试将future置为失败完成状态，如果future已进入完成状态，则返回false
+    /// </summary>
+    /// <param name="dispatchInfo">异常信息</param>
+    /// <returns></returns>
+    bool TrySetException(ExceptionDispatchInfo dispatchInfo);
+
+    /// <summary>
+    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// </summary>
+    /// <param name="dispatchInfo">异常信息</param>
+    void SetException(ExceptionDispatchInfo dispatchInfo);
 
     /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则返回false

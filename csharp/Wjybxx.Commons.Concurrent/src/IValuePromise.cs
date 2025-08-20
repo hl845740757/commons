@@ -174,6 +174,23 @@ public interface IValuePromise
     void SetException(int reentryId, Exception cause);
 
     /// <summary>
+    /// 尝试将future置为失败完成状态，如果future已进入完成状态，则返回false
+    ///
+    /// 注：该接口主要用于避免途中处理异常
+    /// </summary>
+    /// <param name="reentryId">重入id，校验是否被重用</param>
+    /// <param name="dispatchInfo">异常信息</param>
+    /// <returns></returns>
+    bool TrySetException(int reentryId, ExceptionDispatchInfo dispatchInfo);
+
+    /// <summary>
+    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// </summary>
+    /// <param name="reentryId">重入id，校验是否被重用</param>
+    /// <param name="dispatchInfo">异常信息</param>
+    void SetException(int reentryId, ExceptionDispatchInfo dispatchInfo);
+
+    /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则返回false
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>

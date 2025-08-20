@@ -32,9 +32,6 @@ namespace Wjybxx.Commons.Concurrent
 [AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder))]
 public readonly struct ValueFuture
 {
-    public static readonly ValueFuture COMPLETED = new ValueFuture();
-    public static readonly ValueFuture CANCELLED = new ValueFuture(null, StacklessCancellationException.Default);
-
     private readonly object? _future;
     private readonly int _reentryId;
 
@@ -115,7 +112,7 @@ public readonly struct ValueFuture
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ValueFuture FromCancelled(int cancelCode = 1) {
+    public static ValueFuture FromCancelled(int cancelCode = CancelCodes.REASON_DEFAULT) {
         Exception ex = StacklessCancellationException.InstOf(cancelCode);
         return new ValueFuture(null, ex);
     }
@@ -187,10 +184,7 @@ public readonly struct ValueFuture
                     : Promise<object>.FromResult(_result);
             }
             if (_ex is OperationCanceledException canceledException) {
-                // 可能是子类，子类有额外数据 -- 避免创建额外实例
-                return _ex.GetType() == typeof(OperationCanceledException)
-                    ? Promise<object>.CANCELLED
-                    : Promise<object>.FromException(canceledException);
+                return Promise<object>.FromException(canceledException);
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             return Promise<object>.FromException(dispatchInfo);
@@ -362,8 +356,6 @@ public readonly struct ValueFuture
 [AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder<>))]
 public readonly struct ValueFuture<T>
 {
-    public static readonly ValueFuture<T> COMPLETED = new ValueFuture<T>(default, null);
-    public static readonly ValueFuture<T> CANCELLED = new ValueFuture<T>(default, StacklessCancellationException.Default);
     private static readonly bool IsReferenceType = typeof(T).IsClass;
 
     private readonly object? _future;
@@ -447,7 +439,7 @@ public readonly struct ValueFuture<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ValueFuture<T> FromCancelled(int cancelCode = 1) {
+    public static ValueFuture<T> FromCancelled(int cancelCode = CancelCodes.REASON_DEFAULT) {
         Exception ex = StacklessCancellationException.InstOf(cancelCode);
         return new ValueFuture<T>(default, ex);
     }
@@ -534,10 +526,7 @@ public readonly struct ValueFuture<T>
                     : Promise<T>.FromResult(_result);
             }
             if (_ex is OperationCanceledException canceledException) {
-                // 可能是子类，有特殊数据 -- 避免创建额外实例
-                return _ex.GetType() == typeof(OperationCanceledException)
-                    ? Promise<T>.CANCELLED
-                    : Promise<T>.FromException(canceledException);
+                return Promise<T>.FromException(canceledException);
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             return Promise<T>.FromException(dispatchInfo);
