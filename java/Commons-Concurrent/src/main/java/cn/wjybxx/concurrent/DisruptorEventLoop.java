@@ -566,8 +566,10 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         int type = event.getType();
         if (type == TYPE_REMOVE_SCHEDULE) {
             // 删除延时任务
+            ScheduledPromiseTask<?> task = (ScheduledPromiseTask<?>) event.getObj1();
             long taskId = event.getLongVal1();
-            schedulerHelper.removeTask(taskId);
+            int cancelCode = (int) event.getLongVal2();
+            schedulerHelper.cancel(task, taskId, cancelCode);
         }
     }
 

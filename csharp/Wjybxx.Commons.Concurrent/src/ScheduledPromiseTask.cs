@@ -17,7 +17,9 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.PromiseTask;
@@ -71,8 +73,9 @@ public static class ScheduledPromiseTask
 
 /// <summary>
 /// 1.该类的数据是（部分）开放的，以支持不同的扩展。
-/// 2.未继承<see cref="ValuePromise{T}"/>，各执行各的池化
-/// 3.该对象不可返回给用户！否则可能导致内存泄漏，复用错误。
+/// 2.该对象不可返回给用户！否则可能导致内存泄漏，复用错误。
+/// 3.Task不可主动调用回收，应当由调度器触发回收。
+/// 4.由于存在多处修改<see cref="ValuePromise{T}"/>状态的情况，因此需要校验rid -- 但都在EventLoop线程更新Promise。
 ///
 /// TODO 或可不继承<see cref="PromiseTask{T}"/>，而是统一装箱结果。
 /// </summary>
@@ -98,8 +101,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     private int qIndex = IIndexedElement.IndexNotFound;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private Registration cancelRegistration;
-    /** 异步任务的结果 */
-    private ValueFuture<T> asyncResult;
 #nullable restore
 
     private ScheduledPromiseTask() {
@@ -108,14 +109,14 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /// <summary>
     /// 用于简单情况下的Init
     /// </summary>
-    internal void Init(int taskType, object action, object? ctx, int options,
-                       ValuePromise<T> promise, TimeSpan delay) {
+    private void Init(int taskType, object action, object? ctx, int options,
+                      ValuePromise<T> promise, TimeSpan delay) {
         base.Init(taskType, action, ctx, options, promise);
         this.triggerTime = delay.Ticks; // 先记录为Tick数
         this.period = 0;
     }
 
-    internal void Init(in ScheduledTaskBuilder<T> builder, ValuePromise<T> promise) {
+    private void Init(in ScheduledTaskBuilder<T> builder, ValuePromise<T> promise) {
         base.Init(builder.Type, builder.Task, builder.Context, builder.Options, promise);
         ScheduleType = builder.ScheduleType;
         // 时间戳先保存为ticks单位
@@ -196,14 +197,14 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
 
     private bool HasCountdown => (ctl & MASK_HAS_COUNTDOWN) != 0;
 
+    public Registration CancelRegistration {
+        get => cancelRegistration;
+        set => cancelRegistration = value;
+    }
+
     #endregion
 
     #region core
-
-    protected override void PrepareToRecycle() {
-        CloseRegistration();
-        POOL.Release(this); // sealed class
-    }
 
     protected override void Reset() {
         base.Reset();
@@ -214,16 +215,19 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         countdown = 0;
         helper = null;
         cancelRegistration = default;
-        asyncResult = default;
     }
 
-    public void Cancel(int code) {
+    public void Release() {
+        POOL.Release(this);
+    }
+
+    public void Cancel(int cancelCode) {
         // 只支持在EventLoop线程主动取消，否则存在数据可见性问题
-        if (helper == null || !helper.InEventLoop()) {
+        if (helper == null) {
             throw new IllegalStateException();
         }
-        TrySetCancelled(promise, GetCancelToken(), code);
-        PrepareToRecycle();
+        Debug.Assert(helper.InEventLoop());
+        TrySetCancelled(cancelCode);
     }
 
     /** 该方法在任务出队列的时候调用 */
@@ -231,21 +235,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         if (helper == null) {
             throw new IllegalStateException("helper is uninitialized");
         }
-        // 该方法只能执行一次
-        if ((ctl & MASK_STARTED) != 0) {
-            throw new IllegalStateException();
-        }
-        ctl |= MASK_STARTED;
-
-        // 检测取消和关闭，避免不必要的启动和停止(监听器)
-        ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken.IsCancelRequested || helper.IsShutdown) {
-            TrySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
-            PrepareToRecycle();
-            return;
-        }
-        // 先监听取消信号
-        RegisterCancellation();
         helper.DoSchedule(this);
     }
 
@@ -258,58 +247,52 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         if (Trigger0(tickTime)) {
             return true;
         }
-        PrepareToRecycle();
+        CloseRegistration();
         return false;
     }
 
-    /** 返回false的情况下需要调用stop方法 */
     private bool Trigger0(long tickTime) {
         // 标记为已触发
         bool firstTrigger = (ctl & MASK_TRIGGERED) == 0;
         if (firstTrigger) {
             ctl |= MASK_TRIGGERED;
         }
-        // 先检测取消
+        // 存在多处更新Promise的逻辑，因此先检测Promise的有效性 -- Promise可能会被提前回收
         ValuePromise<T> promise = this.promise;
+        if (IsRecycledOrCompleted(promise, promiseRid)) {
+            return false;
+        }
+        // 先检测取消
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelRequested) {
-            TrySetCancelled(promise, cancelToken);
+            TrySetCancelled(cancelToken.CancelCode);
             return false;
         }
         // 一次性任务 -- 不能调用基类的Run
         int scheduleType = ScheduleType;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
-            if (!promise.Internal_TrySetComputing()) {
+            if (!promise.TrySetComputing(promiseRid)) {
                 return false;
             }
             try {
                 T value = RunTask();
-                promise.Internal_TrySetResult(value);
+                TrySetResult(value);
             }
             catch (Exception e) {
-                promise.Internal_TrySetException(e);
+                TrySetException(e);
             }
             return false;
         }
-        // 周期性任务
+        // 周期性任务 -- 已检查Promise状态的情况下，TrySetComputing不会失败
         if (firstTrigger) {
-            if (!promise.Internal_TrySetComputing()) {
+            if (!promise.TrySetComputing(promiseRid)) {
                 return false;
             }
-        } else if (!promise.IsComputing) {
-            return false;
         }
         try {
             if (TaskType == TYPE_ASYNC_TASK) {
                 if (firstTrigger) {
-                    Func<AsyncTaskContext, ValueFuture<T>> task = (Func<AsyncTaskContext, ValueFuture<T>>)this.task;
-                    AsyncTaskContext context = new AsyncTaskContext(helper, ctx);
-                    asyncResult = task(context);
-                }
-                if (asyncResult.IsCompleted) {
-                    TaskResult<T> result = asyncResult.GetResult(SuppressedTypes.All);
-                    promise.Internal_TrySetResult(result);
-                    return false;
+                    StartAsyncTask().Forget();
                 }
             } else {
                 RunTask();
@@ -319,33 +302,47 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             // 通过异常传递结果
             if (ex is TaskResultException resultException) {
                 T? result = resultException.Cast<T>();
-                promise.Internal_TrySetResult(result);
+                TrySetResult(result);
                 return false;
             }
             ThreadUtil.RecoveryInterrupted(ex);
             if (!CanCaughtException(ex)) {
-                promise.Internal_TrySetException(ex);
+                TrySetException(ex);
                 return false;
             }
             FutureLogger.LogCause(ex, "periodic task caught exception");
         }
         // 任务执行后检测取消
-        if (cancelToken.IsCancelRequested || !promise.IsComputing) {
-            TrySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
+        if (cancelToken.IsCancelRequested || IsRecycledOrCompleted(promise, promiseRid)) {
+            TrySetCancelled(cancelToken, CancelCodes.REASON_DEFAULT);
             return false;
         }
         // 未被取消的情况下检测超时
         if (HasDeadline && deadline <= tickTime) {
-            promise.Internal_TrySetException(StacklessCancellationException.Timeout);
+            TrySetException(StacklessCancellationException.Timeout);
             return false;
         }
         // 检测次数限制
         if (HasCountdown && (--countdown < 1)) {
-            promise.Internal_TrySetException(StacklessCancellationException.CountLimit);
+            TrySetException(StacklessCancellationException.CountLimit);
             return false;
         }
         SetNextRunTime(tickTime, scheduleType);
         return true;
+    }
+
+    /// <summary>
+    /// 注意：我们用事件驱动代替心跳检测以后，如果当前事件循环是有界队列，任务在其它线程进入完成状态，提交回调到当前线程可能被阻塞
+    /// </summary>
+    private async ValueFuture StartAsyncTask() {
+        Func<AsyncTaskContext, ValueFuture<T>> task = (Func<AsyncTaskContext, ValueFuture<T>>)this.task;
+        ValueFuture<T> future = task(new AsyncTaskContext(helper, ctx));
+        long taskId = this.id;
+        TaskResult<T> taskResult = await future.GetAwaitable(helper.EventLoop, SuppressedTypes.All, TaskOptions.STAGE_TRY_INLINE);
+        if (taskId != this.id) {
+            return;
+        }
+        TrySetResult(taskResult);
     }
 
     private bool CanCaughtException(Exception ex) {
@@ -364,21 +361,51 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         }
     }
 
-    /** 监听取消令牌中的取消信号 -- 理论上由helper来监听更好 */
-    private void RegisterCancellation() {
-        // C# 的future中无取消方法，因此只需要监听取消令牌
-        // 注意：监听需要回调给Helper，参数为taskId -- 不能回调给自己，否则可能对象复用bug
-        ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken.CanBeCancelled) {
-            cancelRegistration = cancelToken.ThenNotify(helper, id);
-        }
-    }
-
-    /** 关闭取消令牌的监听 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CloseRegistration() {
         Registration registration = this.cancelRegistration;
         this.cancelRegistration = default;
         registration.Dispose();
+    }
+
+    #endregion
+
+    #region setResult
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsRecycledOrCompleted(ValuePromise<T> promise, int rid) {
+        return promise.IsRecycled(rid) || promise.GetStatus(rid).IsCompleted();
+    }
+
+    private bool TrySetResult(TaskResult<T> result) {
+        if (IsRecycledOrCompleted(promise, promiseRid)) {
+            return false;
+        }
+        if (result.IsSucceeded) {
+            return promise.TrySetResult(promiseRid, result.Result);
+        } else if (result.IsCancelled) {
+            return promise.TrySetException(promiseRid, result.Exception!);
+        } else {
+            return promise.TrySetException(promiseRid, result.ExceptionDispatchInfo!);
+        }
+    }
+
+    private bool TrySetResult(T value) {
+        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetResult(promiseRid, value);
+    }
+
+    private bool TrySetException(Exception ex) {
+        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetException(promiseRid, ex);
+    }
+
+    private bool TrySetCancelled(int cancelCode) {
+        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetCancelled(promiseRid, cancelCode);
+    }
+
+    private bool TrySetCancelled(ICancelToken cancelToken, int def) {
+        int cancelCode = cancelToken.CancelCode;
+        if (cancelCode == 0) cancelCode = def;
+        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetCancelled(promiseRid, cancelCode);
     }
 
     #endregion

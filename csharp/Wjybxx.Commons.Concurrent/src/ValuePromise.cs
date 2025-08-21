@@ -184,15 +184,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     #region promise
 
-    internal TaskStatus Status => (TaskStatus)PeekState(_ex);
-    internal bool IsPending => _ex == null;
-    internal bool IsComputing => _ex == EX_COMPUTING;
-    internal bool IsSucceeded => PeekState(_ex) == ST_SUCCESS;
-    internal bool IsFailed => PeekState(_ex) == ST_FAILED;
-    internal bool IsCancelled => PeekState(_ex) == ST_CANCELLED;
-
-    internal bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
-    internal bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
+    private TaskStatus Status => (TaskStatus)PeekState(_ex);
 
     private T ResultNow() {
         int state = PollState();
@@ -255,17 +247,6 @@ public class ValuePromise<T> : IValuePromise<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool Internal_TrySetCancelled(int cancelCode) {
         if (InternalSetException(StacklessCancellationException.InstOf(cancelCode))) {
-            PostComplete();
-            return true;
-        }
-        return false;
-    }
-
-    internal bool Internal_TrySetResult(TaskResult<T> result) {
-        result.Deconstruct(out T r, out object? ex);
-        // 这里失败不打印日志，因为前面的Future已经打印过，这里直接以原始信息完成 -- CompleteRelay
-        bool success = ex == null ? InternalSetResult(r) : InternalSetException(ex);
-        if (success) {
             PostComplete();
             return true;
         }

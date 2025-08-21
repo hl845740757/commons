@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.TaskBuilder;
 
@@ -110,6 +111,8 @@ public class PromiseTask<T> : IFutureTask
     protected int options;
     /** 任务关联的promise -- 不会返回给用户 */
     protected ValuePromise<T> promise;
+    /** promise关联的重入id -- 其实仅子类需要 */
+    protected int promiseRid;
     /** 任务的控制标记 */
     protected int ctl;
 #nullable restore
@@ -122,6 +125,7 @@ public class PromiseTask<T> : IFutureTask
         this.ctx = ctx;
         this.options = options;
         this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
+        this.promiseRid = promise.ReentryId;
 
         // this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
         this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
@@ -135,21 +139,14 @@ public class PromiseTask<T> : IFutureTask
         this.ctl = 0;
     }
 
-    /** 准备回收 */
-    protected virtual void PrepareToRecycle() {
-        if (GetType() == typeof(PromiseTask<T>)) {
-            POOL.Release(this);
-        }
-    }
-
     #region Props
 
     public int Options => options;
 
-    /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
-    public int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
+    /** 任务的类型 */
+    protected int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
 
-    /** 任务是否启用了指定选项 */
+    //** 任务是否启用了指定选项 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsEnabled(int taskOption) {
         return TaskOptions.IsEnabled(options, taskOption);
@@ -159,7 +156,7 @@ public class PromiseTask<T> : IFutureTask
 
     /** 获取上下文中的取消令牌 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected ICancelToken GetCancelToken() {
+    public ICancelToken GetCancelToken() {
         return ExecutorUtil.GetCancelToken(ctx, options);
     }
 
@@ -201,10 +198,11 @@ public class PromiseTask<T> : IFutureTask
 
     /** 子类不要调用该方法，会导致自动回收 */
     public virtual void Run() {
+        // 超类可以直接调用Internal方法，因为不会有其它地方更新Promise
         ValuePromise<T> promise = this.promise;
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelRequested) {
-            TrySetCancelled(promise, cancelToken);
+            promise.Internal_TrySetCancelled(cancelToken.CancelCode);
             return;
         }
         if (!promise.Internal_TrySetComputing()) {
@@ -217,26 +215,11 @@ public class PromiseTask<T> : IFutureTask
         catch (Exception e) {
             promise.Internal_TrySetException(e);
         }
-        PrepareToRecycle();
+        // 要求外部已不持有该对象引用
+        if (GetType() == typeof(PromiseTask<T>)) {
+            POOL.Release(this);
+        }
     }
-
-    #region util
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static bool TrySetCancelled(ValuePromise<T> promise, ICancelToken cancelToken) {
-        int cancelCode = cancelToken.CancelCode;
-        Debug.Assert(cancelCode != 0);
-        return promise.Internal_TrySetCancelled(cancelCode);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static bool TrySetCancelled(ValuePromise<T> promise, ICancelToken cancelToken, int def) {
-        int cancelCode = cancelToken.CancelCode;
-        if (cancelCode == 0) cancelCode = def;
-        return promise.Internal_TrySetCancelled(cancelCode);
-    }
-
-    #endregion
 
     #region factory
 

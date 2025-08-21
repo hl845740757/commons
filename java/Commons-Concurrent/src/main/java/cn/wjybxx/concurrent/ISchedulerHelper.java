@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/8/9
  */
-public interface ISchedulerHelper extends ICancelTokenListener {
+public interface ISchedulerHelper {
 
     /**
      * 当前线程的时间
@@ -38,7 +38,7 @@ public interface ISchedulerHelper extends ICancelTokenListener {
      * 事件循环是否进入了关闭状态
      * 1.Task在检测事件循环进入关闭状态后，将自动放弃提交任务
      */
-    boolean isShutDown();
+    boolean isShutdown();
 
     /** 是否处于事件循环线程 */
     boolean inEventLoop();

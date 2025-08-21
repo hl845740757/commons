@@ -30,8 +30,9 @@ import java.util.function.Function;
 
 /**
  * 定时任务的Task抽象
- * (promise只可以在EventLoop下完成)
- * (如果Task是可能被池化的，那么不应该监听用户的取消令牌，只能在心跳中检查取消信号)
+ * <p>
+ * 1.promise只可以在EventLoop下完成。
+ * 2.Task不可主动调用回收，应当由调度器触发回收。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -179,15 +180,17 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         return (ctl & PromiseTask.MASK_HAS_COUNTDOWN) != 0;
     }
 
+    public IRegistration getCancelRegistration() {
+        return cancelRegistration;
+    }
+
+    public void setCancelRegistration(IRegistration cancelRegistration) {
+        this.cancelRegistration = cancelRegistration;
+    }
+
     // endregion
 
     // region core
-
-    @Override
-    protected void prepareToRecycle() {
-        closeRegistration();
-        POOL.release(this); // sealed class
-    }
 
     @Override
     protected void reset() {
@@ -202,13 +205,13 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     @Override
-    public void cancel(int code) {
+    public void cancel(int cancelCode) {
         // 只支持在EventLoop线程主动取消，否则存在数据可见性问题
-        if (helper == null || !helper.inEventLoop()) {
+        if (helper == null) {
             throw new IllegalStateException();
         }
-        trySetCancelled(promise, getCancelToken(), code);
-        prepareToRecycle();
+        assert helper.inEventLoop();
+        trySetCancelled(promise, cancelCode);
     }
 
     @Override
@@ -216,21 +219,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (helper == null) {
             throw new IllegalStateException("helper is uninitialized");
         }
-        // 该方法只能执行一次
-        if ((ctl & MASK_STARTED) != 0) {
-            throw new IllegalStateException();
-        }
-        ctl |= MASK_STARTED;
-
-        // 检测取消和关闭，避免不必要的启动和停止(监听器)
-        ICancelToken cancelToken = getCancelToken();
-        if (cancelToken.isCancelRequested() || helper.isShutDown()) {
-            trySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
-            prepareToRecycle();
-            return;
-        }
-        // 先监听取消信号
-        registerCancellation();
         helper.doSchedule(this);
     }
 
@@ -245,11 +233,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (trigger0(tickTime)) {
             return true;
         }
-        prepareToRecycle();
+        closeRegistration();
         return false;
     }
 
-    /** 返回false的情况下需要调用stop方法 */
     private boolean trigger0(long tickTime) {
         boolean firstTrigger = (ctl & MASK_TRIGGERED) == 0;
         if (firstTrigger) {
@@ -259,7 +246,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.isCancelRequested()) {
-            trySetCancelled(promise, cancelToken);
+            trySetCancelled(promise, cancelToken.cancelCode());
             return false;
         }
         // 一次性任务 -- 不能调用基类的Run
@@ -335,21 +322,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             triggerTime = tickTime + Math.min(period, maxDelay); // 真实时间
         }
     }
-    // endregion
 
-    // region cancel
-
-    /** 监听取消令牌中的取消信号 -- 理论上由helper来监听更好 */
-    private void registerCancellation() {
-        // java端放弃监听future的完成事件，延迟删除
-        // 注意：监听需要回调给Helper，参数为taskId -- 不能回调给自己，否则可能对象复用bug
-        ICancelToken cancelToken = getCancelToken();
-        if (cancelToken.canBeCancelled()) {
-            cancelRegistration = cancelToken.thenNotify(helper, id);
-        }
-    }
-
-    /** 关闭取消令牌的监听 */
     private void closeRegistration() {
         IRegistration cancelRegistration = this.cancelRegistration;
         if (cancelRegistration != null) {
@@ -357,7 +330,19 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             cancelRegistration.close();
         }
     }
+    // endregion
 
+    // region cancel
+
+    private static boolean trySetCancelled(IPromise<?> promise, int cancelCode) {
+        return promise.trySetCancelled(cancelCode);
+    }
+
+    private static boolean trySetCancelled(IPromise<?> promise, ICancelToken cancelToken, int def) {
+        int cancelCode = cancelToken.cancelCode();
+        if (cancelCode == 0) cancelCode = def;
+        return promise.trySetCancelled(cancelCode);
+    }
     // endregion
 
     @Override
@@ -401,6 +386,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     private static final ConcurrentObjectPool<ScheduledPromiseTask<?>> POOL = new ConcurrentObjectPool<>(
             ScheduledPromiseTask::new, ScheduledPromiseTask::reset,
             TaskPoolConfig.getPoolSize(TaskPoolType.SCHEDULED_PROMISE_TASK));
+
+    public static void release(ScheduledPromiseTask<?> task) {
+        POOL.release(task);
+    }
 
     /**
      * 申请一个Task对象，Task在进入完成状态后会自动回收。

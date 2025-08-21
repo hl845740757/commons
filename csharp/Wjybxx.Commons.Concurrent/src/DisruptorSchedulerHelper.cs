@@ -28,6 +28,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
 {
     private readonly IDisruptorEventLoop<T> _eventLoop;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> _taskQueue;
+    private readonly Action<ICancelToken, object> _onCancelRequested;
 
     private long _nextInstructionId;
     private readonly IndexedPriorityQueue<AsyncInstruction> _instructionQueue;
@@ -36,6 +37,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     public DisruptorSchedulerHelper(IDisruptorEventLoop<T> eventLoop) {
         _eventLoop = eventLoop ?? throw new ArgumentNullException(nameof(eventLoop));
         _taskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
+        _onCancelRequested = OnCancelRequested;
 
         _instructionQueue = new IndexedPriorityQueue<AsyncInstruction>(InstructionComparer.Inst, 64);
         _instructionPool = new ObjectPool<AsyncInstruction>(AsyncInstruction.Factory, AsyncInstruction.Cleaner);
@@ -59,6 +61,8 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                 break;
             }
             taskQueue.Dequeue();
+
+            bool enqueued = false;
             if (shuttingDownMode) {
                 // 关闭模式下，不再重复执行任务
                 if (futureTask.IsTriggered || futureTask.Trigger(tickTime)) {
@@ -70,7 +74,11 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                     futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
                 } else {
                     taskQueue.Enqueue(futureTask);
+                    enqueued = true;
                 }
+            }
+            if (!enqueued) {
+                futureTask.Release();
             }
         }
         // 检测异步任务辅助命令
@@ -81,8 +89,10 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                 break;
             }
             instructionQueue.Dequeue();
-            if (instruction.cancelToken != null && instruction.cancelToken.IsCancelRequested) {
-                instruction.promise.Internal_TrySetCancelled(instruction.cancelToken.CancelCode);
+            //
+            ICancelToken cancelToken = instruction.cancelToken;
+            if (cancelToken != null && cancelToken.IsCancelRequested) {
+                instruction.promise.Internal_TrySetCancelled(cancelToken.CancelCode);
             } else {
                 instruction.promise.Internal_TrySetResult(0);
             }
@@ -92,6 +102,18 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
 
     public void DoSchedule(IScheduledFutureTask futureTask) {
         Debug.Assert(_eventLoop.InEventLoop() && futureTask.Id >= 0);
+        // 检测取消和关闭，避免不必要的启动和停止
+        ICancelToken cancelToken = futureTask.GetCancelToken();
+        if (_eventLoop.IsShutdown || cancelToken.IsCancelRequested) {
+            int cancelCode = _eventLoop.IsShutdown ? CancelCodes.REASON_SHUTDOWN : cancelToken.CancelCode;
+            futureTask.Cancel(cancelCode);
+            futureTask.Release();
+            return;
+        }
+        if (cancelToken.CanBeCancelled) {
+            futureTask.CancelRegistration = cancelToken.ThenAccept(_onCancelRequested, new Canceller(futureTask, futureTask.Id));
+        }
+
         long tickTime = _eventLoop.TickTime;
         if (tickTime < futureTask.TriggerTime) {
             _taskQueue.Enqueue(futureTask);
@@ -107,15 +129,10 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         }
     }
 
-    public void OnCancelRequested(ICancelToken cancelToken, object ctx) {
-        int cancelCode = cancelToken.CancelCode;
-        long taskId = (long)ctx;
+    private void OnCancelRequested(ICancelToken cancelToken, object ctx) {
+        Canceller canceller = (Canceller)ctx;
         if (_eventLoop.InEventLoop()) {
-            // 如果不在调度队列，应当正在执行Trigger方法，在执行完用户回调后会检测到取消信号
-            IScheduledFutureTask task = RemoveTask(taskId);
-            if (task != null) {
-                task.Cancel(cancelCode);
-            }
+            Cancel(canceller.futureTask, canceller.taskId, cancelToken.CancelCode);
         } else {
             // 如果在其它线程，尝试发布一个删除任务（能收到取消信号，通常证明Task还未结束）
             long sequence = _eventLoop.TryNextSequence(1);
@@ -124,8 +141,21 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             }
             ref T evt = ref _eventLoop.GetEventRef(sequence);
             evt.Type = DisruptorEventLoop<T>.TYPE_REMOVE_SCHEDULE;
-            evt.LongVal1 = taskId;
+            evt.Obj1 = canceller.futureTask;
+            evt.LongVal1 = canceller.taskId;
+            evt.LongVal2 = cancelToken.CancelCode;
             _eventLoop.Publish(sequence);
+        }
+    }
+
+    public void Cancel(IScheduledFutureTask futureTask, long taskId, int cancelCode) {
+        if (futureTask.Id != taskId) {
+            return;
+        }
+        // 如果不在调度队列，应当正在执行Trigger方法，在执行完用户回调后会检测到取消信号
+        if (_taskQueue.Remove(futureTask)) {
+            futureTask.Cancel(cancelCode);
+            futureTask.Release();
         }
     }
 
@@ -133,7 +163,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         if (!_eventLoop.InEventLoop()) {
             throw new GuardedOperationException();
         }
-        long delay = Math.Max(0, Normalize(1, timeSpan)); // delay最小为0
+        long delay = Math.Max(1, Normalize(1, timeSpan)); // 强制跳过当前帧
         ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
 
         AsyncInstruction instruction = _instructionPool.Acquire();
@@ -143,21 +173,6 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         instruction.promise = promise;
         _instructionQueue.Enqueue(instruction);
         return promise.VoidFuture;
-    }
-
-    /// <summary>
-    /// 删除指定id的任务
-    /// </summary>
-    /// <param name="taskId"></param>
-    public IScheduledFutureTask? RemoveTask(long taskId) {
-        // 暂时迭代处理
-        foreach (IScheduledFutureTask task in _taskQueue) {
-            if (task.Id == taskId) {
-                _taskQueue.Remove(task);
-                return task;
-            }
-        }
-        return null;
     }
 
     /// <summary>
@@ -194,5 +209,16 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     }
 
     #endregion
+
+    private class Canceller
+    {
+        public readonly IScheduledFutureTask futureTask;
+        public readonly long taskId; // 校验是否已回收，只能在EventLoop线程校验
+
+        public Canceller(IScheduledFutureTask futureTask, long taskId) {
+            this.futureTask = futureTask;
+            this.taskId = taskId;
+        }
+    }
 }
 }

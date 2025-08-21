@@ -84,6 +84,15 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.ctl |= (taskType << OFFSET_TASK_TYPE);
     }
 
+    /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
+    protected void reset() {
+        task = null;
+        ctx = null;
+        options = 0;
+        promise = null;
+        ctl = 0;
+    }
+
     // endregion
 
     // region open
@@ -98,8 +107,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return promise;
     }
 
-    /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
-    public final int getTaskType() {
+    /** 任务的类型 */
+    protected final int getTaskType() {
         return (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
     }
 
@@ -112,23 +121,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     // region core
 
-    protected void prepareToRecycle() {
-        if (getClass() == PromiseTask.class) {
-            POOL.release(this);
-        }
-    }
-
-    /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
-    protected void reset() {
-        task = null;
-        ctx = null;
-        options = 0;
-        promise = null;
-        ctl = 0;
-    }
-
     /** 获取关联的取消令牌 */
-    protected final ICancelToken getCancelToken() {
+    public final ICancelToken getCancelToken() {
         return ExecutorUtils.getCancelToken(ctx, options);
     }
 
@@ -170,7 +164,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.isCancelRequested()) {
-            trySetCancelled(promise, cancelToken);
+            promise.trySetCancelled(cancelToken.cancelCode());
             return;
         }
         if (!promise.trySetComputing()) {
@@ -182,24 +176,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
         } catch (Throwable e) {
             promise.trySetException(e);
         }
-        prepareToRecycle();
+        // 要求外部已不持有该对象引用
+        if (getClass() == PromiseTask.class) {
+            POOL.release(this);
+        }
     }
-
-    // region util
-
-    protected static boolean trySetCancelled(IPromise<?> promise, ICancelToken cancelToken) {
-        int cancelCode = cancelToken.cancelCode();
-        assert cancelCode != 0;
-        return promise.trySetCancelled(cancelCode);
-    }
-
-    protected static boolean trySetCancelled(IPromise<?> promise, ICancelToken cancelToken, int def) {
-        int cancelCode = cancelToken.cancelCode();
-        if (cancelCode == 0) cancelCode = def;
-        return promise.trySetCancelled(cancelCode);
-    }
-
-    // endregion
 
     // region factory
     private static final ConcurrentObjectPool<PromiseTask<?>> POOL = new ConcurrentObjectPool<>(

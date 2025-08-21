@@ -584,8 +584,10 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         int type = evt.Type;
         if (type == TYPE_REMOVE_SCHEDULE) {
             // 删除延时任务
+            IScheduledFutureTask futureTask = (IScheduledFutureTask)evt.Obj1;
             long taskId = evt.LongVal1;
-            schedulerHelper.RemoveTask(taskId);
+            int cancelCode = (int)evt.LongVal2;
+            schedulerHelper.Cancel(futureTask, taskId, cancelCode);
         }
     }
 

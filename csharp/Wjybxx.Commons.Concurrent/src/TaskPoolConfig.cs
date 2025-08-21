@@ -28,6 +28,7 @@ public static class TaskPoolConfig
 {
     private static volatile Func<TaskPoolType, Type, int>? poolSizeCalculator;
     private static readonly ConcurrentDictionary<Key, Item> configDic = new();
+
     public static Func<TaskPoolType, Type, int>? PoolSizeCalculator {
         get => poolSizeCalculator;
         set => poolSizeCalculator = value;
@@ -118,7 +119,7 @@ public static class TaskPoolConfig
         // 保底方案
         if (poolType == TaskPoolType.ValuePromise
             || poolType == TaskPoolType.PromiseMoveNext) { // await Future
-            return isIntOrObject ? 500 : 50;
+            return isIntOrObject ? 200 : 50;
         }
         if (poolType == TaskPoolType.CtsCompletion
             || poolType == TaskPoolType.Coroutine) {
@@ -144,7 +145,7 @@ public static class TaskPoolConfig
             if (GetItem(poolType, topLevelType, typeof(T), out Item item, out bool precise)) {
                 return (precise || isIntOrObject) ? item.poolSize : item.poolSize2;
             }
-            return isIntOrObject ? 500 : 50;
+            return isIntOrObject ? 200 : 50;
         }
         return isIntOrObject ? 100 : 20;
     }

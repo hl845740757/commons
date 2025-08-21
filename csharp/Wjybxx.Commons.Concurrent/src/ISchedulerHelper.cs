@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 该接口用户不可调用，否则可能产生错误
 /// </summary>
-public interface ISchedulerHelper : ICancelTokenListener
+public interface ISchedulerHelper
 {
     /// <summary>
     /// 当前线程的时间

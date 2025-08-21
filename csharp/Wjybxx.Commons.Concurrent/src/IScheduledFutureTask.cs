@@ -25,8 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 定时任务
 ///
-/// 1.如果是可重用的对象，不可以监听用户的取消令牌，否则事件循环处理
-/// 2.部分属性定义在这里，以支持排序等
+/// 注：主要用于解决泛型问题。
 /// </summary>
 public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
@@ -40,7 +39,6 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 
     /// <summary>
     /// 任务的唯一id，不同的任务之间id不可重复
-    /// (执行清理后应该为0)
     /// </summary>
     long Id { get; set; }
 
@@ -79,7 +77,23 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
     /// 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
     /// </summary>
-    void Cancel(int code);
+    void Cancel(int cancelCode);
+
+    /// <summary>
+    /// 关联的取消令牌
+    /// </summary>
+    /// <returns></returns>
+    ICancelToken GetCancelToken();
+
+    /// <summary>
+    /// 取消令牌的监听句柄
+    /// </summary>
+    Registration CancelRegistration { get; set; }
+
+    /// <summary>
+    /// 归还到对象池（解决泛型问题）
+    /// </summary>
+    void Release();
 }
 
 /// <summary>
