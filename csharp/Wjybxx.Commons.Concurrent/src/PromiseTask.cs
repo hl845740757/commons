@@ -120,8 +120,9 @@ public class PromiseTask<T> : IFutureTask
     protected PromiseTask() {
     }
 
-    protected void Init(int taskType, object action, object? ctx, int options, ValuePromise<T> promise) {
-        this.task = action ?? throw new ArgumentNullException(nameof(action));
+    protected void Init(int taskType, object task, object? ctx, int options, ValuePromise<T> promise) {
+        if (task == null && taskType != 0) throw new ArgumentNullException(nameof(task));
+        this.task = task;
         this.ctx = ctx;
         this.options = options;
         this.promise = promise ?? throw new ArgumentNullException(nameof(promise));

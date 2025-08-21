@@ -21,6 +21,7 @@ import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
 /**
@@ -146,6 +147,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
         ScheduledPromiseTask<?> futureTask;
         while ((futureTask = taskQueue.poll()) != null) {
             futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
+            ScheduledPromiseTask.release(futureTask);
         }
     }
 
@@ -154,18 +156,18 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
     // region simple
 
     @Override
-    public long tickTime() {
-        return eventLoop.tickTime();
-    }
-
-    @Override
-    public boolean isShutdown() {
-        return eventLoop.isShutdown();
+    public IEventLoop eventLoop() {
+        return eventLoop;
     }
 
     @Override
     public boolean inEventLoop() {
         return eventLoop.inEventLoop();
+    }
+
+    @Override
+    public long tickTime() {
+        return eventLoop.tickTime();
     }
 
     @Override
@@ -177,7 +179,19 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
     public long denormalize(long localTime, TimeUnit timeUnit) {
         return timeUnit.convert(localTime, TimeUnit.NANOSECONDS);
     }
+
+    @Override
+    public long nextId() {
+        return idGenerator.incrementAndGet();
+    }
+
     // endregion
+
+    /**
+     * 1.改用该id方案后，先进入到Disruptor队列的任务可能有更大的Id —— 先提交任务的线程，在这里不一定先手。
+     * 2.改用该id方案后，可以自由创建定时任务 —— 不再需要竞争Disruptor队列。
+     */
+    private static final AtomicLong idGenerator = new AtomicLong();
 
     private static class Canceller {
 

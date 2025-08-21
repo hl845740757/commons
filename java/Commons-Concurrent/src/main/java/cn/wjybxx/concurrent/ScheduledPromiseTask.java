@@ -46,7 +46,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     private long triggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
-
     /** 截止时间 -- 有效性见{@link #MASK_HAS_DEADLINE} */
     private long deadline;
     /** 剩余次数 -- 有效性见{@link #MASK_HAS_COUNTDOWN} */
@@ -100,7 +99,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
      * @param helper 事件循环的helper
      */
     public void inject(ISchedulerHelper helper) {
+        this.id = helper.nextId();
         this.helper = helper;
+
         this.triggerTime = helper.triggerTime(triggerTime, TimeUnit.NANOSECONDS);
         if (isPeriodic()) {
             this.period = helper.triggerPeriod(period, TimeUnit.NANOSECONDS);
@@ -111,10 +112,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
     }
 
-    /** 添加到队列之前赋值id */
-    public void setId(long id) {
-        this.id = id;
-    }
     // endregion
 
     // region api-对EventLoop开放
@@ -159,7 +156,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     @Override
     public boolean isPeriodic() {
-        return (ctl & MASK_SCHEDULE_TYPE) != 0; // 无需位移
+        return (ctl & MASK_SCHEDULE_TYPE) != 0;
     }
 
     @Override
@@ -201,6 +198,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         deadline = 0;
         countdown = 0;
         helper = null;
+        qIndex = INDEX_NOT_FOUND;
         cancelRegistration = null;
     }
 
@@ -271,7 +269,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         } else if (!promise.isComputing()) {
             return false;
         }
-
         try {
             runTask();
         } catch (Throwable ex) {
@@ -414,6 +411,13 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         @SuppressWarnings("unchecked") ScheduledPromiseTask<V> promiseTask = (ScheduledPromiseTask<V>) POOL.acquire();
         promiseTask.init(builder, promise);
         return promiseTask;
+    }
+
+    public static ScheduledPromiseTask<?> ofEmpty(ICancelToken cancelToken, int options,
+                                                  IScheduledPromise<?> promise,
+                                                  long delay, TimeUnit timeUnit) {
+        return acquire(TaskBuilder.TYPE_EMPTY, null, cancelToken, options, promise,
+                delay, timeUnit);
     }
 
     public static ScheduledPromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options,

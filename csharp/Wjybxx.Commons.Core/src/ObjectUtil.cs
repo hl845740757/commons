@@ -103,6 +103,8 @@ public static class ObjectUtil
     /// </summary>
     private static readonly double s_tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
 
+    #region type
+
     /// <summary>
     /// 是否是可空类型（引用类型或<see cref="Nullable{T}"/>）
     /// </summary>
@@ -127,6 +129,8 @@ public static class ObjectUtil
         int index = name.LastIndexOf('`');
         return index > 0 ? name.Substring2(0, index) : name;
     }
+
+    #endregion
 
     #region string
 

@@ -489,7 +489,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         } else {
             // 如果目标令牌是池化的对象，可能添加到目标CTS新的生命周期，导致内存泄漏...不过，并发库的CTS是不能重用的
             if (cancelToken.canBeCancelled() &&
-                    TaskOptions.isEnabled(newHead.options, TaskOptions.STAGE_LISTEN_CANCEL_TOKEN)) {
+                    TaskOptions.isEnabled(newHead.options, TaskOptions.LISTEN_CANCEL_TOKEN)) {
                 cancelToken.thenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);
             }
         }

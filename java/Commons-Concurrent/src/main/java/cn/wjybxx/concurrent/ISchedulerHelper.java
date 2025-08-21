@@ -28,20 +28,17 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ISchedulerHelper {
 
+    /** 绑定的事件循环 */
+    IEventLoop eventLoop();
+
+    /** 是否处于事件循环线程 */
+    boolean inEventLoop();
+
     /**
      * 当前线程的时间
      * {@link IEventLoop#tickTime()}
      */
     long tickTime();
-
-    /**
-     * 事件循环是否进入了关闭状态
-     * 1.Task在检测事件循环进入关闭状态后，将自动放弃提交任务
-     */
-    boolean isShutdown();
-
-    /** 是否处于事件循环线程 */
-    boolean inEventLoop();
 
     /**
      * 规格化：将指定时间转换为tick同单位的时间
@@ -71,6 +68,9 @@ public interface ISchedulerHelper {
      * 定时任务会检测关闭状态，以避免不必要的初始化
      */
     void doSchedule(ScheduledPromiseTask<?> futureTask);
+
+    /** 分配下一个任务id */
+    long nextId();
 
     /** 计算任务的触发时间 -- 允许修正 */
     default long triggerTime(long delay, TimeUnit timeUnit) {

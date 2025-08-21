@@ -19,28 +19,38 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Concurrent
 {
+/// <summary>
+/// 用于实现全局Id分配
+///
+/// 注：
+/// 1.改用该id方案后，先进入到Disruptor队列的任务可能有更大的Id —— 先提交任务的线程，在这里不一定先手。
+/// 2.改用该id方案后，可以自由创建定时任务 —— 不再需要竞争Disruptor队列。
+/// </summary>
+internal static class DisruptorSchedulerHelper
+{
+    private static long _nextId;
+
+    internal static long NextId() {
+        return Interlocked.Increment(ref _nextId);
+    }
+}
+
 public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEvent
 {
     private readonly IDisruptorEventLoop<T> _eventLoop;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> _taskQueue;
     private readonly Action<ICancelToken, object> _onCancelRequested;
 
-    private long _nextInstructionId;
-    private readonly IndexedPriorityQueue<AsyncInstruction> _instructionQueue;
-    private readonly ObjectPool<AsyncInstruction> _instructionPool;
-
     public DisruptorSchedulerHelper(IDisruptorEventLoop<T> eventLoop) {
         _eventLoop = eventLoop ?? throw new ArgumentNullException(nameof(eventLoop));
         _taskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
         _onCancelRequested = OnCancelRequested;
-
-        _instructionQueue = new IndexedPriorityQueue<AsyncInstruction>(InstructionComparer.Inst, 64);
-        _instructionPool = new ObjectPool<AsyncInstruction>(AsyncInstruction.Factory, AsyncInstruction.Cleaner);
     }
 
     #region core
@@ -80,23 +90,6 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             if (!enqueued) {
                 futureTask.Release();
             }
-        }
-        // 检测异步任务辅助命令
-        IndexedPriorityQueue<AsyncInstruction> instructionQueue = this._instructionQueue;
-        AsyncInstruction instruction;
-        while (instructionQueue.TryPeekHead(out instruction) && !eventLoop.IsShutdown) {
-            if (tickTime < instruction.triggerTime) {
-                break;
-            }
-            instructionQueue.Dequeue();
-            //
-            ICancelToken cancelToken = instruction.cancelToken;
-            if (cancelToken != null && cancelToken.IsCancelRequested) {
-                instruction.promise.Internal_TrySetCancelled(cancelToken.CancelCode);
-            } else {
-                instruction.promise.Internal_TrySetResult(0);
-            }
-            _instructionPool.Release(instruction);
         }
     }
 
@@ -163,15 +156,13 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         if (!_eventLoop.InEventLoop()) {
             throw new GuardedOperationException();
         }
-        long delay = Math.Max(1, Normalize(1, timeSpan)); // 强制跳过当前帧
+        if (timeSpan.Ticks == 0) { // 强制跳过当前帧
+            timeSpan = new TimeSpan(1);
+        }
         ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
-
-        AsyncInstruction instruction = _instructionPool.Acquire();
-        instruction.id = _nextInstructionId++;
-        instruction.triggerTime = _eventLoop.TickTime + delay;
-        instruction.cancelToken = cancelToken;
-        instruction.promise = promise;
-        _instructionQueue.Enqueue(instruction);
+        ScheduledPromiseTask<int> task = ScheduledPromiseTask.OfEmpty(cancelToken, 0, promise, timeSpan);
+        task.Inject(this);
+        DoSchedule(task);
         return promise.VoidFuture;
     }
 
@@ -183,22 +174,19 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         IScheduledFutureTask futureTask;
         while (_taskQueue.TryDequeue(out futureTask)) {
             futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
+            futureTask.Release();
         }
-        _instructionQueue.Clear();
-        _instructionPool.Clear();
     }
 
     #endregion
 
     #region simple
 
-    public long TickTime => _eventLoop.TickTime;
-
-    public bool IsShutdown => _eventLoop.IsShutdown;
-
     public IEventLoop EventLoop => _eventLoop;
 
     public bool InEventLoop() => _eventLoop.InEventLoop();
+
+    public long TickTime => _eventLoop.TickTime;
 
     public long Normalize(long worldTime, TimeSpan timeUnit) {
         return worldTime * timeUnit.Ticks;
@@ -206,6 +194,10 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
 
     public long Denormalize(long localTime, TimeSpan timeUnit) {
         return localTime / timeUnit.Ticks;
+    }
+
+    public long NextId() {
+        return DisruptorSchedulerHelper.NextId();
     }
 
     #endregion

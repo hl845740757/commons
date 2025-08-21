@@ -88,7 +88,7 @@ public final class TaskOptions {
      * 1.该选项用于延时任务或监听器列表管理。
      * 2.如果调度器默认不会监听CTX中的取消令牌，那么应当响应用户的该选项。
      */
-    public static final int STAGE_LISTEN_CANCEL_TOKEN = 1 << 23;
+    public static final int LISTEN_CANCEL_TOKEN = 1 << 23;
 
     /**
      * C#：抑制await抛出取消异常(性能因素)

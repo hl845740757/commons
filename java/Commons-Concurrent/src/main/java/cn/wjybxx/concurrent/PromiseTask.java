@@ -75,7 +75,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 用于池化 */
     protected final void init(int taskType, Object task, Object ctx, int options, IPromise<V> promise) {
-        this.task = Objects.requireNonNull(task, "action");
+        if (task == null && taskType != 0) throw new NullPointerException("task");
+        this.task = task;
         this.ctx = ctx;
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");

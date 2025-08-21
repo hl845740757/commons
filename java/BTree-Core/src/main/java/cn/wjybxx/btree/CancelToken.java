@@ -451,7 +451,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
         listeners.add(newHead);
 
         if (cancelToken.canBeCancelled() &&
-                TaskOptions.isEnabled(newHead.options, TaskOptions.STAGE_LISTEN_CANCEL_TOKEN)) {
+                TaskOptions.isEnabled(newHead.options, TaskOptions.LISTEN_CANCEL_TOKEN)) {
             cancelToken.thenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);
         }
         return registration;

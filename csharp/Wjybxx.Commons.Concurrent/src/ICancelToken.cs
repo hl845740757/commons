@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 ///
 /// <h3>监听器管理</h3>
 /// 用户除了可以通过返回的<see cref="Registration"/>删除监听器外，
-/// 还可以通过调度选项<see cref="TaskOptions.STAGE_LISTEN_CANCEL_TOKEN"/>要求当前取消令牌监听用户上下文中的取消令牌，
+/// 还可以通过调度选项<see cref="TaskOptions.LISTEN_CANCEL_TOKEN"/>要求当前取消令牌监听用户上下文中的取消令牌，
 /// 以及时删除不再需要执行的回调 -- 可以实现批量删除。
 ///
 /// 差异的源头：

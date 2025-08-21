@@ -210,18 +210,13 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     public final void execute(Runnable command, int options) {
         Objects.requireNonNull(command, "command");
         // 在申请序号之前注入Helper（初始化任务的调度时间，避免被阻塞导致延迟）
-        ScheduledPromiseTask<?> promiseTask = null;
-        if (command instanceof ScheduledPromiseTask<?> promiseTask2) {
-            promiseTask = promiseTask2;
+        if (command instanceof ScheduledPromiseTask<?> promiseTask) {
             promiseTask.inject(schedulerHelper);
         }
         long sequence = nextSequence(1);
         if (sequence < 0) {
             rejectedExecutionHandler.rejected(command, this);
             return;
-        }
-        if (promiseTask != null) {
-            promiseTask.setId(sequence); // nice
         }
         publishTask(command, sequence, options);
     }

@@ -26,20 +26,7 @@ namespace Wjybxx.Commons.Concurrent
 public interface ISchedulerHelper
 {
     /// <summary>
-    /// 当前线程的时间
-    /// <see cref="IEventLoop.TickTime"/>
-    /// </summary>
-    /// <returns></returns>
-    long TickTime { get; }
-
-    /// <summary>
-    /// 事件循环是否进入了关闭状态
-    /// 1.Task在检测事件循环进入关闭状态后，将自动放弃提交任务
-    /// </summary>
-    bool IsShutdown { get; }
-
-    /// <summary>
-    /// 
+    /// 绑定的事件循环
     /// </summary>
     IEventLoop EventLoop { get; }
 
@@ -48,6 +35,13 @@ public interface ISchedulerHelper
     /// </summary>
     /// <returns></returns>
     bool InEventLoop();
+
+    /// <summary>
+    /// 当前线程的时间
+    /// <see cref="IEventLoop.TickTime"/>
+    /// </summary>
+    /// <returns></returns>
+    long TickTime { get; }
 
     /// <summary>
     /// 规格化：将指定时间转换为tick同单位的时间
@@ -81,6 +75,12 @@ public interface ISchedulerHelper
     /// <param name="cancelToken"></param>
     /// <returns></returns>
     ValueFuture Sleep(TimeSpan timeSpan, ICancelToken? cancelToken);
+
+    /// <summary>
+    /// 分配一个任务id
+    /// </summary>
+    /// <returns></returns>
+    long NextId();
 
     /** 计算任务的触发时间 -- 允许修正 */
     long TriggerTime(long delay, TimeSpan timeUnit) {

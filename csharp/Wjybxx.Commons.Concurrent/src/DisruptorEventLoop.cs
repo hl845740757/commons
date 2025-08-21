@@ -186,17 +186,13 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     public override void Execute(ITask task) {
         if (task == null) throw new ArgumentNullException(nameof(task));
         // 在申请序号之前注入Helper（初始化任务的调度时间，避免被阻塞导致延迟）
-        IScheduledFutureTask? promiseTask = task as IScheduledFutureTask;
-        if (promiseTask != null) {
+        if (task is IScheduledFutureTask promiseTask) {
             promiseTask.Inject(schedulerHelper);
         }
         long sequence = NextSequence(1);
         if (sequence < 0) {
             rejectedExecutionHandler.Rejected(task, this);
             return;
-        }
-        if (promiseTask != null) {
-            promiseTask.Id = sequence; // nice
         }
         PublishTask(task, sequence, task.Options);
     }

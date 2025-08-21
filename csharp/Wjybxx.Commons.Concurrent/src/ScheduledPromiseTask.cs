@@ -35,6 +35,13 @@ public static class ScheduledPromiseTask
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ScheduledPromiseTask<int> OfEmpty(ICancelToken? cancelToken, int options,
+                                                    ValuePromise<int> promise,
+                                                    TimeSpan delay) {
+        return ScheduledPromiseTask<int>.Acquire(TYPE_EMPTY, null!, cancelToken, options, promise, delay);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options,
                                                      ValuePromise<int> promise,
                                                      TimeSpan delay) {
@@ -142,7 +149,9 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /// </summary>
     /// <param name="helper">事件循环的helper</param>
     public void Inject(ISchedulerHelper helper) {
+        this.id = helper.NextId();
         this.helper = helper;
+
         TimeSpan timeUnit = new TimeSpan(1);
         this.triggerTime = helper.TriggerTime(triggerTime, timeUnit);
         if (IsPeriodic) {
@@ -214,6 +223,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         deadline = 0;
         countdown = 0;
         helper = null;
+        qIndex = IIndexedElement.IndexNotFound;
         cancelRegistration = default;
     }
 
