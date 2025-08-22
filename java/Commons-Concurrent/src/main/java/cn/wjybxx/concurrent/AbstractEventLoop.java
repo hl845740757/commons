@@ -220,59 +220,101 @@ public abstract class AbstractEventLoop implements IEventLoop {
         return new ScheduledPromise<>(this);
     }
 
+    protected abstract ISchedulerHelper schedulerHelper();
+
+    private void initTriggerTime(ScheduledPromiseTask<?> promiseTask, long delay, TimeUnit timeUnit) {
+        ISchedulerHelper helper = schedulerHelper();
+        promiseTask.setHelper(helper);
+        promiseTask.setId(helper.nextId());
+        promiseTask.setTriggerTime(helper.triggerTime(delay, timeUnit));
+    }
+
     @Override
     public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
         IScheduledPromise<V> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofBuilder(builder, promise));
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofBuilder(builder, promise);
+        //
+        ISchedulerHelper helper = schedulerHelper();
+        promiseTask.setHelper(helper);
+        promiseTask.setId(helper.nextId());
+        promiseTask.setTriggerTime(helper.triggerTime(builder.getInitialDelay(), builder.getTimeUnit()));
+        //
+        promiseTask.setScheduleType(builder.getScheduleType());
+        if (builder.isPeriodic()) {
+            promiseTask.setPeriod(helper.triggerPeriod(builder.getPeriod(), builder.getTimeUnit()));
+        }
+        if (builder.hasTimeout()) {
+            promiseTask.setDeadline(helper.triggerTime(builder.getTimeout(), builder.getTimeUnit()));
+        }
+        if (builder.hasCountLimit()) {
+            promiseTask.setCountdown(builder.getCountLimit());
+        }
+        execute(promiseTask); // 可能会立即完成
         return promise;
     }
 
     @Override
     public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         IScheduledPromise<Object> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, delay, unit));
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise);
+        initTriggerTime(promiseTask, delay, unit);
+
+        execute(promiseTask);
         return promise;
     }
 
     @Override
     public IScheduledFuture<?> scheduleAction(Consumer<Object> task, Object ctx, long delay, TimeUnit unit) {
         IScheduledPromise<Object> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofAction(task, ctx, 0, promise, delay, unit));
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, ctx, 0, promise);
+        initTriggerTime(promiseTask, delay, unit);
+
+        execute(promiseTask);
         return promise;
     }
 
     @Override
     public <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         IScheduledPromise<V> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise, delay, unit));
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise);
+        initTriggerTime(promiseTask, delay, unit);
+
+        execute(promiseTask);
         return promise;
     }
 
     @Override
     public <V> IScheduledFuture<V> scheduleFunc(Function<Object, V> task, Object ctx, long delay, TimeUnit unit) {
         IScheduledPromise<V> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofFunction(task, ctx, 0, promise, delay, unit));
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, ctx, 0, promise);
+        initTriggerTime(promiseTask, delay, unit);
+
+        execute(promiseTask);
         return promise;
     }
 
     @Override
     public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken) {
-        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
-                .setFixedDelay(initialDelay, delay, unit);
+        return schedule(ScheduledTaskBuilder.newAction(task, cancelToken)
+                .setFixedDelay(initialDelay, delay, unit));
+    }
 
-        IScheduledPromise<Object> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofBuilder(builder, promise));
-        return promise;
+    @Override
+    public final IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        return schedule(ScheduledTaskBuilder.newAction(task, null)
+                .setFixedDelay(initialDelay, delay, unit));
     }
 
     @Override
     public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit, ICancelToken cancelToken) {
-        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
-                .setFixedRate(initialDelay, period, unit);
+        return schedule(ScheduledTaskBuilder.newAction(task, cancelToken)
+                .setFixedRate(initialDelay, period, unit));
+    }
 
-        IScheduledPromise<Object> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofBuilder(builder, promise));
-        return promise;
+    @Override
+    public final IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return schedule(ScheduledTaskBuilder.newAction(task, null)
+                .setFixedRate(initialDelay, period, unit));
     }
 
     @Override
@@ -285,15 +327,6 @@ public abstract class AbstractEventLoop implements IEventLoop {
         return scheduleFunc(task, delay, unit, ICancelToken.NONE);
     }
 
-    @Override
-    public final IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        return scheduleWithFixedDelay(task, initialDelay, delay, unit, ICancelToken.NONE);
-    }
-
-    @Override
-    public final IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        return scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
-    }
     // endregion
 
     // region invoke

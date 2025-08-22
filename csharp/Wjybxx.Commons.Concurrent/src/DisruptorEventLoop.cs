@@ -160,6 +160,11 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         return tickTime;
     }
 
+    protected override ISchedulerHelper SchedulerHelper {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => schedulerHelper;
+    }
+
     #region 状态查询
 
     public sealed override EventLoopState State => (EventLoopState)state;
@@ -185,9 +190,11 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     public override void Execute(ITask task) {
         if (task == null) throw new ArgumentNullException(nameof(task));
-        // 在申请序号之前注入Helper（初始化任务的调度时间，避免被阻塞导致延迟）
-        if (task is IScheduledFutureTask promiseTask) {
-            promiseTask.Inject(schedulerHelper);
+        if ((task.Options & TaskOptions.LOCAL_ORDER) != 0 
+            && task is IScheduledFutureTask futureTask
+            && InEventLoop()) {
+            schedulerHelper.DoSchedule(futureTask);
+            return;
         }
         long sequence = NextSequence(1);
         if (sequence < 0) {

@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.BitFlags;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
@@ -31,8 +32,9 @@ import java.util.function.Function;
 /**
  * 定时任务的Task抽象
  * <p>
- * 1.promise只可以在EventLoop下完成。
- * 2.Task不可主动调用回收，应当由调度器触发回收。
+ * 1.不论有多少处更新promise状态的逻辑，都必须在EventLoop下完成。
+ * 2.由于存在多处修改Promise状态的逻辑，因此执行时需要先校验Promise的状态。
+ * 3.因此Task不主动调用回收，而是由调度器确定没有持有者后再触发回收。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -51,105 +53,93 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 剩余次数 -- 有效性见{@link #MASK_HAS_COUNTDOWN} */
     private int countdown;
 
-    /** 用于避免具体类型依赖 */
-    private ISchedulerHelper helper;
     /** 在队列中的下标 */
     private int qIndex = INDEX_NOT_FOUND;
+    /** 用于避免具体类型依赖 */
+    private ISchedulerHelper helper;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private IRegistration cancelRegistration;
 
     private ScheduledPromiseTask() {
     }
 
-    // region init
+    @Override
+    protected void reset() {
+        super.reset();
+        id = -1;
+        triggerTime = 0;
+        period = 0;
+        deadline = 0;
+        countdown = 0;
 
-    /** 用于简单情况下的对象创建 -- 非周期性任务 */
-    private void init(int taskType, Object action, Object ctx, int options, IScheduledPromise<V> promise,
-                      long firstDelay, TimeUnit timeUnit) {
-        init(taskType, action, ctx, options, promise);
-        // 时间戳先保存为nanos单位
-        this.triggerTime = timeUnit.toNanos(firstDelay);
-        this.period = 0;
-    }
-
-    private void init(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {
-        init(builder.getType(), builder.getTask(), builder.getCtx(), builder.getOptions(), promise);
-        setScheduleType(builder.getScheduleType());
-        // 时间戳先保存为nanos单位
-        TimeUnit timeUnit = builder.getTimeUnit();
-        this.triggerTime = timeUnit.toNanos(builder.getInitialDelay());
-        this.period = timeUnit.toNanos(builder.getPeriod());
-        // 初始化周期任务数据
-        if (builder.isPeriodic()) {
-            if (period < 0) throw new RuntimeException("period: " + period);
-            if (builder.hasTimeout()) {
-                ctl |= PromiseTask.MASK_HAS_DEADLINE;
-                this.deadline = timeUnit.toNanos(builder.getTimeout());
-            }
-            if (builder.hasCountLimit()) {
-                ctl |= PromiseTask.MASK_HAS_COUNTDOWN;
-                this.countdown = builder.getCountLimit();
-            }
-        }
-    }
-
-    /**
-     * 事件循环在将任务插入到队列时调用该方法初始化任务
-     *
-     * @param helper 事件循环的helper
-     */
-    public void inject(ISchedulerHelper helper) {
-        this.id = helper.nextId();
-        this.helper = helper;
-
-        this.triggerTime = helper.triggerTime(triggerTime, TimeUnit.NANOSECONDS);
-        if (isPeriodic()) {
-            this.period = helper.triggerPeriod(period, TimeUnit.NANOSECONDS);
-        }
-        // 这里第二次读取TickTime，Deadline可能大于预期值，问题不大
-        if (hasDeadline()) {
-            this.deadline = helper.triggerTime(deadline, TimeUnit.NANOSECONDS);
-        }
+        qIndex = INDEX_NOT_FOUND;
+        cancelRegistration = null;
+        helper = null;
     }
 
     // endregion
 
-    // region api-对EventLoop开放
+    // region 属性
+
+    public ISchedulerHelper getHelper() {
+        return helper;
+    }
+
+    public void setHelper(ISchedulerHelper helper) {
+        this.helper = helper;
+    }
 
     public long getId() {
         return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public int getScheduleType() {
+        return (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
+    }
+
+    public void setScheduleType(int scheduleType) {
+        ctl = BitFlags.setField(ctl, MASK_SCHEDULE_TYPE, OFFSET_SCHEDULE_TYPE, scheduleType);
     }
 
     public long getTriggerTime() {
         return triggerTime;
     }
 
-    /** 保留set以允许外部调整优先级 */
     public void setTriggerTime(long triggerTime) {
         this.triggerTime = triggerTime;
     }
 
-    /** 获取任务的调度类型 */
-    private int getScheduleType() {
-        return (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
+    public long getPeriod() {
+        return period;
     }
 
-    /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
-    private void setScheduleType(int scheduleType) {
-        ctl |= (scheduleType << OFFSET_SCHEDULE_TYPE);
+    public void setPeriod(long period) {
+        this.period = period;
     }
 
-    /** 设置任务的优先级 */
-    public int getPriority() {
-        return TaskOptions.getPriority(options);
+    public long getDeadline() {
+        return deadline;
     }
 
-    /** @param priority 任务的优先级，范围 [0, 31] */
-    public void setPriority(int priority) {
-        options = TaskOptions.setPriority(options, priority);
+    public void setDeadline(long deadline) {
+        this.deadline = deadline;
+        setCtlBit(MASK_HAS_DEADLINE, true);
     }
 
-    /** 任务是否触发过 -- 通常用于降低优先级 */
+    public int getCountdown() {
+        return countdown;
+    }
+
+    public void setCountdown(int countdown) {
+        this.countdown = countdown;
+        setCtlBit(MASK_HAS_COUNTDOWN, true);
+    }
+
+    @Override
     public boolean isTriggered() {
         return (ctl & MASK_TRIGGERED) != 0;
     }
@@ -169,12 +159,20 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         this.qIndex = index;
     }
 
-    private boolean hasDeadline() {
+    public boolean hasDeadline() {
         return (ctl & PromiseTask.MASK_HAS_DEADLINE) != 0;
     }
 
-    private boolean hasCountdown() {
+    public void hasDeadline(boolean value) {
+        setCtlBit(MASK_HAS_DEADLINE, value);
+    }
+
+    public boolean hasCountdown() {
         return (ctl & PromiseTask.MASK_HAS_COUNTDOWN) != 0;
+    }
+
+    public void hasCountdown(boolean value) {
+        setCtlBit(MASK_HAS_COUNTDOWN, value);
     }
 
     public IRegistration getCancelRegistration() {
@@ -185,29 +183,19 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         this.cancelRegistration = cancelRegistration;
     }
 
+    private void setCtlBit(int mask, boolean enable) {
+        if (enable) {
+            ctl |= mask;
+        } else {
+            ctl &= ~mask;
+        }
+    }
     // endregion
 
     // region core
 
     @Override
-    protected void reset() {
-        super.reset();
-        id = -1;
-        triggerTime = 0;
-        period = 0;
-        deadline = 0;
-        countdown = 0;
-        helper = null;
-        qIndex = INDEX_NOT_FOUND;
-        cancelRegistration = null;
-    }
-
-    @Override
     public void cancel(int cancelCode) {
-        // 只支持在EventLoop线程主动取消，否则存在数据可见性问题
-        if (helper == null) {
-            throw new IllegalStateException();
-        }
         assert helper.inEventLoop();
         trySetCancelled(promise, cancelCode);
     }
@@ -365,12 +353,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (r != 0) {
             return r;
         }
-        // 再按优先级排序
-        r = Integer.compare(getPriority(), other.getPriority());
-        if (r != 0) {
-            return r;
-        }
-        // 再按id排序
         r = Long.compare(id, other.id);
         if (r == 0) {
             throw new IllegalStateException("lhs.id: %d, rhs.id: %d".formatted(id, other.id));
@@ -384,72 +366,43 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             ScheduledPromiseTask::new, ScheduledPromiseTask::reset,
             TaskPoolConfig.getPoolSize(TaskPoolType.SCHEDULED_PROMISE_TASK));
 
+    private static <V> ScheduledPromiseTask<V> acquire(int taskType, Object task, Object ctx, int options, IScheduledPromise<V> promise) {
+        @SuppressWarnings("unchecked") ScheduledPromiseTask<V> promiseTask = (ScheduledPromiseTask<V>) POOL.acquire();
+        promiseTask.init(taskType, task, ctx, options, promise);
+        return promiseTask;
+    }
+
     public static void release(ScheduledPromiseTask<?> task) {
         POOL.release(task);
     }
 
-    /**
-     * 申请一个Task对象，Task在进入完成状态后会自动回收。
-     * 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
-     *
-     * @param taskType 任务类型 -- 注意上下文的类型
-     * @param task     用户的任务，支持的类型见{@link TaskBuilder}
-     * @param ctx      任务关联的上下文
-     * @param options  任务的调度选项
-     * @param promise  任务关联的promise
-     * @param delay    触发延迟
-     * @param timeUnit 时间单位
-     */
-    public static <V> ScheduledPromiseTask<V> acquire(int taskType, Object task, Object ctx, int options, IScheduledPromise<V> promise,
-                                                      long delay, TimeUnit timeUnit) {
-        @SuppressWarnings("unchecked") ScheduledPromiseTask<V> promiseTask = (ScheduledPromiseTask<V>) POOL.acquire();
-        promiseTask.init(taskType, task, ctx, options, promise, delay, timeUnit);
-        return promiseTask;
-    }
-
-    public static <V> ScheduledPromiseTask<V> acquire(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {
-        @SuppressWarnings("unchecked") ScheduledPromiseTask<V> promiseTask = (ScheduledPromiseTask<V>) POOL.acquire();
-        promiseTask.init(builder, promise);
-        return promiseTask;
-    }
-
     public static ScheduledPromiseTask<?> ofEmpty(ICancelToken cancelToken, int options,
-                                                  IScheduledPromise<?> promise,
-                                                  long delay, TimeUnit timeUnit) {
-        return acquire(TaskBuilder.TYPE_EMPTY, null, cancelToken, options, promise,
-                delay, timeUnit);
+                                                  IScheduledPromise<?> promise) {
+        return acquire(TaskBuilder.TYPE_EMPTY, null, cancelToken, options, promise);
     }
 
     public static ScheduledPromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options,
-                                                   IScheduledPromise<?> promise,
-                                                   long delay, TimeUnit timeUnit) {
-        return acquire(TaskBuilder.TYPE_ACTION, action, cancelToken, options, promise,
-                delay, timeUnit);
+                                                   IScheduledPromise<?> promise) {
+        return acquire(TaskBuilder.TYPE_ACTION, action, cancelToken, options, promise);
     }
 
     public static ScheduledPromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options,
-                                                   IScheduledPromise<?> promise,
-                                                   long delay, TimeUnit timeUnit) {
-        return acquire(TaskBuilder.TYPE_ACTION_CTX, action, ctx, options, promise,
-                delay, timeUnit);
+                                                   IScheduledPromise<?> promise) {
+        return acquire(TaskBuilder.TYPE_ACTION_CTX, action, ctx, options, promise);
     }
 
     public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options,
-                                                         IScheduledPromise<V> promise,
-                                                         long delay, TimeUnit timeUnit) {
-        return acquire(TaskBuilder.TYPE_FUNC, action, cancelToken, options, promise,
-                delay, timeUnit);
+                                                         IScheduledPromise<V> promise) {
+        return acquire(TaskBuilder.TYPE_FUNC, action, cancelToken, options, promise);
     }
 
     public static <V> ScheduledPromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options,
-                                                         IScheduledPromise<V> promise,
-                                                         long delay, TimeUnit timeUnit) {
-        return acquire(TaskBuilder.TYPE_FUNC_CTX, action, ctx, options, promise,
-                delay, timeUnit);
+                                                         IScheduledPromise<V> promise) {
+        return acquire(TaskBuilder.TYPE_FUNC_CTX, action, ctx, options, promise);
     }
 
     public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {
-        return acquire(builder, promise);
+        return acquire(builder.getType(), builder.getTask(), builder.getCtx(), builder.getOptions(), promise);
     }
 
     // endregion

@@ -178,7 +178,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
             promise.trySetException(e);
         }
         // 要求外部已不持有该对象引用
-        if (getClass() == PromiseTask.class) {
+        if ((options & TaskOptions.MANUAL_RELEASE) == 0 && getClass() == PromiseTask.class) {
             POOL.release(this);
         }
     }
@@ -197,11 +197,14 @@ public class PromiseTask<V> implements IFutureTask<V> {
      * @param options  任务的调度选项
      * @param promise  任务关联的promise
      */
-    public static <V> PromiseTask<V> acquire(int taskType, Object task, Object ctx, int options,
-                                             IPromise<V> promise) {
+    private static <V> PromiseTask<V> acquire(int taskType, Object task, Object ctx, int options, IPromise<V> promise) {
         @SuppressWarnings("unchecked") PromiseTask<V> promiseTask = (PromiseTask<V>) POOL.acquire();
         promiseTask.init(taskType, task, ctx, options, promise);
         return promiseTask;
+    }
+
+    public static PromiseTask<?> ofEmpty(ICancelToken cancelToken, int options, IPromise<?> promise) {
+        return acquire(TaskBuilder.TYPE_EMPTY, null, cancelToken, options, promise);
     }
 
     public static PromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options, IPromise<?> promise) {

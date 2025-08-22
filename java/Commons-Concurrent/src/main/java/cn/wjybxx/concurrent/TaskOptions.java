@@ -54,41 +54,42 @@ public final class TaskOptions {
     public static final int HAS_COUNTDOWN = 1 << 16;
     /** 延时任务：包含超时时间（执行时间限制） */
     public static final int HAS_TIMEOUT = 1 << 17;
+    /** 延时任务：包含额外延迟帧 */
+    public static final int HAS_DELAY_FRAME = 1 << 18;
     /**
      * 延时任务：在出现异常后继续执行。
      * 1.只适用无需结果的周期性任务 -- 分时任务会失败。
      * 2.如果需要取消任务，需通过取消令牌实现。
      */
-    public static final int CAUGHT_EXCEPTION = 1 << 18;
+    public static final int CAUGHT_EXCEPTION = 1 << 20;
 
     /**
-     * 事件循环在执行该任务前必须先处理一次定时任务队列。
-     * 1. EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
-     * 2. 该选项不一定能保证时序，因为存在时序依赖的任务可能同时提交成功。
+     * 本地序（可以与其它线程无序）
+     * 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
      */
-    public static final int SCHEDULE_BARRIER = 1 << 19;
+    public static final int LOCAL_ORDER = 1 << 21;
     /**
      * 唤醒事件循环线程
      * 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
      */
-    public static final int WAKEUP_THREAD = 1 << 20;
+    public static final int WAKEUP_THREAD = 1 << 22;
 
     /**
      * 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
      */
-    public static final int STAGE_TRY_INLINE = 1 << 21;
+    public static final int STAGE_TRY_INLINE = 1 << 23;
     /**
      * 默认情况下，Stage会在触发回调之前检测ctx否为{@link IContext}或{@link ICancelToken}类型，并检测取消信号。
      * 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
      */
-    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 22;
+    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 24;
     /**
      * 监听用户上下文中包含的取消令牌
      * <p>
      * 1.该选项用于延时任务或监听器列表管理。
      * 2.如果调度器默认不会监听CTX中的取消令牌，那么应当响应用户的该选项。
      */
-    public static final int LISTEN_CANCEL_TOKEN = 1 << 23;
+    public static final int LISTEN_CANCEL_TOKEN = 1 << 25;
 
     /**
      * C#：抑制await抛出取消异常(性能因素)
@@ -98,6 +99,11 @@ public final class TaskOptions {
      * C#：抑制await抛出失败异常(性能因素)
      */
     private static final int SUPPRESS_ERROR_THROW = 1 << 27;
+
+    /**
+     * 任务不自动归还到对象池，手动释放
+     */
+    public static final int MANUAL_RELEASE = 1 << 28;
 
     // region util
 

@@ -217,7 +217,7 @@ public class PromiseTask<T> : IFutureTask
             promise.Internal_TrySetException(e);
         }
         // 要求外部已不持有该对象引用
-        if (GetType() == typeof(PromiseTask<T>)) {
+        if ((options & TaskOptions.MANUAL_RELEASE) == 0 && GetType() == typeof(PromiseTask<T>)) {
             POOL.Release(this);
         }
     }
@@ -239,11 +239,24 @@ public class PromiseTask<T> : IFutureTask
     /// <param name="promise">关联的Promise</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<T> Acquire(int taskType, object action, object? ctx, int options,
-                                         ValuePromise<T> promise) {
+    internal static PromiseTask<T> Acquire(int taskType, object action, object? ctx, int options,
+                                           ValuePromise<T> promise) {
         PromiseTask<T> promiseTask = POOL.Acquire();
         promiseTask.Init(taskType, action, ctx, options, promise);
         return promiseTask;
+    }
+
+    /// <summary>
+    /// 归还Promise
+    /// </summary>
+    /// <param name="promiseTask"></param>
+    /// <exception cref="ArgumentException"></exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Release(PromiseTask<T> promiseTask) {
+        if (promiseTask.GetType() != typeof(PromiseTask<T>)) {
+            throw new ArgumentException("promiseTask");
+        }
+        POOL.Release(promiseTask);
     }
 
     #endregion

@@ -144,6 +144,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         return tickTime;
     }
 
+    @Override
+    protected final ISchedulerHelper schedulerHelper() {
+        return schedulerHelper;
+    }
+
     // region 状态查询
 
     @Override
@@ -209,9 +214,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     @Override
     public final void execute(Runnable command, int options) {
         Objects.requireNonNull(command, "command");
-        // 在申请序号之前注入Helper（初始化任务的调度时间，避免被阻塞导致延迟）
-        if (command instanceof ScheduledPromiseTask<?> promiseTask) {
-            promiseTask.inject(schedulerHelper);
+        if ((options & TaskOptions.LOCAL_ORDER) != 0
+                && command instanceof ScheduledPromiseTask<?> futureTask
+                && inEventLoop()) {
+            schedulerHelper.doSchedule(futureTask);
+            return;
         }
         long sequence = nextSequence(1);
         if (sequence < 0) {

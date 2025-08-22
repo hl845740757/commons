@@ -19,6 +19,7 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
+import cn.wjybxx.base.time.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -66,7 +67,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
                     futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
                 }
             } else if (futureTask.trigger(tickTime)) {
-                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 和下面相同
+                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
                 if (eventLoop.isShuttingDown()) {
                     futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
                 } else {
@@ -91,7 +92,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
             ScheduledPromiseTask.release(futureTask);
             return;
         }
-        if (cancelToken.canBeCancelled()) {
+        if (cancelToken.canBeCancelled() && needListenCancelToken(futureTask)) {
             IRegistration registration = cancelToken.thenAccept(_onCancelRequested, new Canceller(futureTask, futureTask.getId()));
             futureTask.setCancelRegistration(registration);
         }
@@ -109,6 +110,13 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
                 taskQueue.add(futureTask);
             }
         }
+    }
+
+    private boolean needListenCancelToken(ScheduledPromiseTask<?> futureTask) {
+        // 执行间隔短的任务就不主动注册监听器，以避免不必要的开销，暂定5S
+        return (futureTask.getOptions() & TaskOptions.LISTEN_CANCEL_TOKEN) != 0
+                || futureTask.getTriggerTime() - eventLoop.tickTime() > 5 * TimeUtils.NANOS_PER_SECOND
+                || futureTask.getPeriod() > 5 * 5 * TimeUtils.NANOS_PER_SECOND;
     }
 
     private void onCancelRequested(ICancelToken cancelToken, Object ctx) {

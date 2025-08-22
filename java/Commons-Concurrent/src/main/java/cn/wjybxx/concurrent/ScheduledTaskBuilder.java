@@ -40,7 +40,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     /** 固定频率 -- 执行次数 */
     public static final byte SCHEDULE_FIXED_RATE = 2;
     /** 动态延迟 -- 每次执行后计算下一次的延迟 */
-    public static final byte SCHEDULE_DYNAMIC_DELAY = 3;
+    private static final byte SCHEDULE_DYNAMIC_DELAY = 3;
 
     private byte scheduleType = 0;
     private long initialDelay;
@@ -72,7 +72,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
-    public int getScheduleType() {
+    public byte getScheduleType() {
         return scheduleType;
     }
 

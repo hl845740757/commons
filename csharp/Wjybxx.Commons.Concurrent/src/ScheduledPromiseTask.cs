@@ -35,54 +35,42 @@ public static class ScheduledPromiseTask
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfEmpty(ICancelToken? cancelToken, int options,
-                                                    ValuePromise<int> promise,
-                                                    TimeSpan delay) {
-        return ScheduledPromiseTask<int>.Acquire(TYPE_EMPTY, null!, cancelToken, options, promise, delay);
+    public static ScheduledPromiseTask<int> OfEmpty(ICancelToken? cancelToken, int options, ValuePromise<int> promise) {
+        return ScheduledPromiseTask<int>.Acquire(TYPE_EMPTY, null!, cancelToken, options, promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options,
-                                                     ValuePromise<int> promise,
-                                                     TimeSpan delay) {
-        return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise, delay);
+    public static ScheduledPromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options, ValuePromise<int> promise) {
+        return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfAction(Action<object> action, object ctx, int options,
-                                                     ValuePromise<int> promise,
-                                                     TimeSpan delay) {
-        return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION_CTX, action, ctx, options, promise, delay);
+    public static ScheduledPromiseTask<int> OfAction(Action<object> action, object ctx, int options, ValuePromise<int> promise) {
+        return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION_CTX, action, ctx, options, promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options,
-                                                        ValuePromise<T> promise,
-                                                        TimeSpan delay) {
-        return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise, delay);
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options, ValuePromise<T> promise) {
+        return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<object, T> action, object ctx, int options,
-                                                        ValuePromise<T> promise,
-                                                        TimeSpan delay) {
-        return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC_CTX, action, ctx, options, promise, delay);
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<object, T> action, object ctx, int options, ValuePromise<T> promise) {
+        return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC_CTX, action, ctx, options, promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder,
-                                                       ValuePromise<T> promise) {
-        return ScheduledPromiseTask<T>.Acquire(in builder, promise);
+    public static ScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder, ValuePromise<T> promise) {
+        return ScheduledPromiseTask<T>.Acquire(builder.Type, builder.Task, builder.Context, builder.Options, promise);
     }
 
     #endregion
 }
 
 /// <summary>
-/// 1.该类的数据是（部分）开放的，以支持不同的扩展。
-/// 2.该对象不可返回给用户！否则可能导致内存泄漏，复用错误。
-/// 3.Task不可主动调用回收，应当由调度器触发回收。
-/// 4.由于存在多处修改<see cref="ValuePromise{T}"/>状态的情况，因此需要校验rid -- 但都在EventLoop线程更新Promise。
+/// 1.不论有多少处更新promise状态的逻辑，都必须在EventLoop下完成。
+/// 2.由于存在多处修改<see cref="ValuePromise{T}"/>状态的情况，因此需要校验rid -- 但都在EventLoop线程更新Promise。
+/// 3.因此Task不主动调用回收，而是由调度器确定没有持有者后再触发回收。
 ///
 /// TODO 或可不继承<see cref="PromiseTask{T}"/>，而是统一装箱结果。
 /// </summary>
@@ -96,78 +84,49 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     private long triggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
-
     /** 截止时间 -- 有效性见<see cref="PromiseTask.MASK_HAS_DEADLINE"/> */
     private long deadline;
     /** 剩余次数 -- 有效性见<see cref="PromiseTask.MASK_HAS_COUNTDOWN"/> */
     private int countdown;
 
-    /** 用于避免具体类型依赖 */
-    private ISchedulerHelper helper;
     /** 在队列中的下标 */
     private int qIndex = IIndexedElement.IndexNotFound;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private Registration cancelRegistration;
+    /** 用于避免具体类型依赖 */
+    private ISchedulerHelper helper;
 #nullable restore
 
     private ScheduledPromiseTask() {
     }
 
-    /// <summary>
-    /// 用于简单情况下的Init
-    /// </summary>
-    private void Init(int taskType, object action, object? ctx, int options,
-                      ValuePromise<T> promise, TimeSpan delay) {
-        base.Init(taskType, action, ctx, options, promise);
-        this.triggerTime = delay.Ticks; // 先记录为Tick数
-        this.period = 0;
+    protected override void Reset() {
+        base.Reset();
+        id = -1;
+        triggerTime = 0;
+        period = 0;
+        deadline = 0;
+        countdown = 0;
+
+        qIndex = IIndexedElement.IndexNotFound;
+        cancelRegistration = default;
+        helper = null;
     }
 
-    private void Init(in ScheduledTaskBuilder<T> builder, ValuePromise<T> promise) {
-        base.Init(builder.Type, builder.Task, builder.Context, builder.Options, promise);
-        ScheduleType = builder.ScheduleType;
-        // 时间戳先保存为ticks单位
-        long timeUnit = builder.TimeUnit.Ticks;
-        this.triggerTime = builder.InitialDelay * timeUnit;
-        this.period = builder.Period * timeUnit;
-        // 初始化周期任务数据
-        if (builder.IsPeriodic) {
-            if (period <= 0) throw new Exception("period: " + period);
-            if (builder.HasTimeout) {
-                ctl |= MASK_HAS_DEADLINE;
-                this.deadline = builder.Timeout * timeUnit;
-            }
-            if (builder.HasCountLimit) {
-                ctl |= MASK_HAS_COUNTDOWN;
-                this.countdown = builder.CountLimit;
-            }
-        }
+    #region 基础属性
+
+    public ISchedulerHelper Helper {
+        get => helper;
+        set => helper = value;
     }
-
-    /// <summary>
-    /// 事件循环在将任务插入到队列时调用该方法初始化任务
-    /// </summary>
-    /// <param name="helper">事件循环的helper</param>
-    public void Inject(ISchedulerHelper helper) {
-        this.id = helper.NextId();
-        this.helper = helper;
-
-        TimeSpan timeUnit = new TimeSpan(1);
-        this.triggerTime = helper.TriggerTime(triggerTime, timeUnit);
-        if (IsPeriodic) {
-            this.period = helper.TriggerPeriod(period, timeUnit);
-        }
-        // 这里第二次读取TickTime，Deadline可能大于预期值，问题不大
-        if (HasDeadline) {
-            this.deadline = helper.TriggerTime(deadline, timeUnit);
-        }
-    }
-
-    #region internal
-
     public long Id {
         get => id;
         set => id = value;
+    }
+
+    public int ScheduleType {
+        get => (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
+        set => ctl = BitFlags.SetField(ctl, MASK_SCHEDULE_TYPE, OFFSET_SCHEDULE_TYPE, value);
     }
 
     public long TriggerTime {
@@ -175,24 +134,43 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         set => triggerTime = value;
     }
 
-    /** 任务的调度类型 -- 应该在添加到队列之前设置 */
-    private int ScheduleType {
-        get => (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
-        set => ctl |= (value << OFFSET_SCHEDULE_TYPE);
+    public long Period {
+        get => period;
+        set => period = value;
     }
 
-    /// <summary>
-    /// 任务的优先级，范围 [0, 31]
-    /// </summary>
-    /// <exception cref="ArgumentException"></exception>
-    public int Priority {
-        get => TaskOptions.GetPriority(options);
-        set => options = TaskOptions.SetPriority(options, value);
+    public long Deadline {
+        get => deadline;
+        set {
+            deadline = value;
+            SetCtlBit(MASK_HAS_DEADLINE, true);
+        }
+    }
+    public int Countdown {
+        get => countdown;
+        set {
+            countdown = value;
+            SetCtlBit(MASK_HAS_COUNTDOWN, true);
+        }
     }
 
-    public bool IsTriggered => (ctl & MASK_TRIGGERED) != 0;
+    public bool HasDeadline {
+        get => (ctl & MASK_HAS_DEADLINE) != 0;
+        set => SetCtlBit(MASK_HAS_DEADLINE, value);
+    }
+
+    public bool HasCountdown {
+        get => (ctl & MASK_HAS_COUNTDOWN) != 0;
+        set => SetCtlBit(MASK_HAS_COUNTDOWN, value);
+    }
 
     public bool IsPeriodic => ScheduleType != 0;
+    public bool IsTriggered => (ctl & MASK_TRIGGERED) != 0;
+
+    public Registration CancelRegistration {
+        get => cancelRegistration;
+        set => cancelRegistration = value;
+    }
 
     public int CollectionIndex(object collection) {
         return qIndex;
@@ -202,45 +180,25 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         this.qIndex = index;
     }
 
-    private bool HasDeadline => (ctl & MASK_HAS_DEADLINE) != 0;
-
-    private bool HasCountdown => (ctl & MASK_HAS_COUNTDOWN) != 0;
-
-    public Registration CancelRegistration {
-        get => cancelRegistration;
-        set => cancelRegistration = value;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetCtlBit(int mask, bool enable) {
+        if (enable) {
+            ctl |= mask;
+        } else {
+            ctl &= ~mask;
+        }
     }
 
     #endregion
 
     #region core
 
-    protected override void Reset() {
-        base.Reset();
-        id = -1;
-        triggerTime = 0;
-        period = 0;
-        deadline = 0;
-        countdown = 0;
-        helper = null;
-        qIndex = IIndexedElement.IndexNotFound;
-        cancelRegistration = default;
-    }
-
-    public void Release() {
-        POOL.Release(this);
-    }
-
     public void Cancel(int cancelCode) {
-        // 只支持在EventLoop线程主动取消，否则存在数据可见性问题
-        if (helper == null) {
-            throw new IllegalStateException();
-        }
         Debug.Assert(helper.InEventLoop());
         TrySetCancelled(cancelCode);
     }
 
-    /** 该方法在任务出队列的时候调用 */
+    /** 该方法仅在任务出队列的时候调用 */
     public override void Run() {
         if (helper == null) {
             throw new IllegalStateException("helper is uninitialized");
@@ -267,7 +225,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         if (firstTrigger) {
             ctl |= MASK_TRIGGERED;
         }
-        // 存在多处更新Promise的逻辑，因此先检测Promise的有效性 -- Promise可能会被提前回收
+        // 由于存在多处更新Promise的逻辑，因此先检测Promise的有效性
         ValuePromise<T> promise = this.promise;
         if (IsRecycledOrCompleted(promise, promiseRid)) {
             return false;
@@ -293,7 +251,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             }
             return false;
         }
-        // 周期性任务 -- 已检查Promise状态的情况下，TrySetComputing不会失败
+        // 周期性任务 -- 已检查Promise状态的情况下，TrySetComputing不应该失败
         if (firstTrigger) {
             if (!promise.TrySetComputing(promiseRid)) {
                 return false;
@@ -393,25 +351,29 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         }
         if (result.IsSucceeded) {
             return promise.TrySetResult(promiseRid, result.Result);
-        } else if (result.IsCancelled) {
+        } else if (result.IsCancelled) { // 避免不必要的异常堆栈恢复
             return promise.TrySetException(promiseRid, result.Exception!);
         } else {
             return promise.TrySetException(promiseRid, result.ExceptionDispatchInfo!);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TrySetResult(T value) {
         return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetResult(promiseRid, value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TrySetException(Exception ex) {
         return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetException(promiseRid, ex);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TrySetCancelled(int cancelCode) {
         return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetCancelled(promiseRid, cancelCode);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TrySetCancelled(ICancelToken cancelToken, int def) {
         int cancelCode = cancelToken.CancelCode;
         if (cancelCode == 0) cancelCode = def;
@@ -435,22 +397,16 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /// <param name="ctx">任务关联上下文</param>
     /// <param name="options">任务调度选项</param>
     /// <param name="promise">关联的Promise</param>
-    /// <param name="delay">延迟时间</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> Acquire(int taskType, object action, object? ctx, int options,
-                                                  ValuePromise<T> promise,
-                                                  TimeSpan delay) {
+    internal new static ScheduledPromiseTask<T> Acquire(int taskType, object action, object? ctx, int options, ValuePromise<T> promise) {
         ScheduledPromiseTask<T> promiseTask = POOL.Acquire();
-        promiseTask.Init(taskType, action, ctx, options, promise, delay);
+        promiseTask.Init(taskType, action, ctx, options, promise);
         return promiseTask;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> Acquire(in ScheduledTaskBuilder<T> builder, ValuePromise<T> promise) {
-        ScheduledPromiseTask<T> promiseTask = POOL.Acquire();
-        promiseTask.Init(builder, promise);
-        return promiseTask;
+    public void Release() {
+        POOL.Release(this);
     }
 
     #endregion

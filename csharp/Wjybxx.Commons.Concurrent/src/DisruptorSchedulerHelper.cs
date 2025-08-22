@@ -79,7 +79,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                     futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
                 }
             } else if (futureTask.Trigger(tickTime)) {
-                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 和下面相同
+                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
                 if (eventLoop.IsShuttingDown) {
                     futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
                 } else {
@@ -103,7 +103,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             futureTask.Release();
             return;
         }
-        if (cancelToken.CanBeCancelled) {
+        if (cancelToken.CanBeCancelled && NeedListenCancelToken(futureTask)) {
             futureTask.CancelRegistration = cancelToken.ThenAccept(_onCancelRequested, new Canceller(futureTask, futureTask.Id));
         }
 
@@ -120,6 +120,13 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                 _taskQueue.Enqueue(futureTask);
             }
         }
+    }
+
+    private bool NeedListenCancelToken(IScheduledFutureTask futureTask) {
+        // 执行间隔短的任务就不主动注册监听器，以避免不必要的开销，暂定5S
+        return (futureTask.Options & TaskOptions.LISTEN_CANCEL_TOKEN) != 0
+               || futureTask.TriggerTime - _eventLoop.TickTime > 5 * TimeSpan.TicksPerSecond
+               || futureTask.Period > 5 * TimeSpan.TicksPerSecond;
     }
 
     private void OnCancelRequested(ICancelToken cancelToken, object ctx) {
@@ -160,8 +167,11 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             timeSpan = new TimeSpan(1);
         }
         ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
-        ScheduledPromiseTask<int> task = ScheduledPromiseTask.OfEmpty(cancelToken, 0, promise, timeSpan);
-        task.Inject(this);
+        ScheduledPromiseTask<int> task = ScheduledPromiseTask.OfEmpty(cancelToken, 0, promise);
+        ISchedulerHelper helper = this;
+        task.Helper = helper;
+        task.Id = NextId();
+        task.TriggerTime = helper.TriggerTime(1, timeSpan);
         DoSchedule(task);
         return promise.VoidFuture;
     }

@@ -49,7 +49,7 @@ public class TaskPoolConfig {
         if (poolType == TaskPoolType.PROMISE_TASK
                 || poolType == TaskPoolType.SCHEDULED_PROMISE_TASK
                 || poolType == TaskPoolType.CTS_COMPLETION) {
-            return 500;
+            return 8192;
         }
         return 100;
     }

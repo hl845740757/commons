@@ -83,6 +83,12 @@ public interface ISchedulerHelper
     long NextId();
 
     /** 计算任务的触发时间 -- 允许修正 */
+    long TriggerTime(TimeSpan delay) {
+        if (delay.Ticks <= 0) return TickTime;
+        return TickTime + Normalize(1, delay);
+    }
+
+    /** 计算任务的触发时间 -- 允许修正 */
     long TriggerTime(long delay, TimeSpan timeUnit) {
         if (delay <= 0) return TickTime;
         if (timeUnit.Ticks < 1) throw new ArgumentException("timeUnit.Ticks < 1");

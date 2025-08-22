@@ -32,7 +32,7 @@ public static class ScheduledTaskBuilder
     /** 固定频率 -- 执行次数 */
     public const byte SCHEDULE_FIXED_RATE = 2;
     /** 动态延迟 -- 每次执行后计算下一次的延迟 */
-    public const byte SCHEDULE_DYNAMIC_DELAY = 3;
+    private const byte SCHEDULE_DYNAMIC_DELAY = 3;
 
     #region factory
 

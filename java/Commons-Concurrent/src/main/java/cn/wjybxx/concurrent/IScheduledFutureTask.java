@@ -31,11 +31,12 @@ public interface IScheduledFutureTask<V> extends IFutureTask<V>, Delayed {
     /** 关联的任务是否是周期性任务 */
     boolean isPeriodic();
 
+    /** 是否已完成首次触发 -- 通常用于降低优先级 */
+    boolean isTriggered();
+
     /**
      * 取消执行
      * 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
-     * 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
-     * 如果task已进入完成状态。可忽略该请求。
      */
     void cancel(int code);
 

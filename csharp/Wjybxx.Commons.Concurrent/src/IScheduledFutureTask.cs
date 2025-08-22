@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Concurrent
@@ -31,11 +32,9 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
 #nullable disable
 
-    /// <summary>
-    /// 初始化
-    /// </summary>
-    /// <param name="helper"></param>
-    void Inject(ISchedulerHelper helper);
+    #region 基础属性设置
+
+    ISchedulerHelper Helper { get; set; }
 
     /// <summary>
     /// 任务的唯一id，不同的任务之间id不可重复
@@ -43,15 +42,44 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     long Id { get; set; }
 
     /// <summary>
-    /// 是否是周期性任务
+    /// 调度类型
     /// </summary>
-    bool IsPeriodic { get; }
+    int ScheduleType { get; set; }
 
     /// <summary>
     /// 下次触发时间
-    /// (保留set以允许外部调整优先级)
     /// </summary>
     long TriggerTime { get; set; }
+
+    /// <summary>
+    /// 触发周期
+    /// </summary>
+    long Period { get; set; }
+
+    /// <summary>
+    /// 截止时间
+    /// </summary>
+    long Deadline { get; set; }
+
+    /// <summary>
+    /// 剩余执行次数
+    /// </summary>
+    int Countdown { get; set; }
+
+    /// <summary>
+    /// 是否包含截止时间限制
+    /// </summary>
+    bool HasDeadline { get; set; }
+
+    /// <summary>
+    /// 是否包含次数限制
+    /// </summary>
+    bool HasCountdown { get; set; }
+
+    /// <summary>
+    /// 是否是周期性任务
+    /// </summary>
+    bool IsPeriodic { get; }
 
     /// <summary>
     /// 是否已完成首次触发(通常用于降低优先级)
@@ -59,9 +87,17 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     bool IsTriggered { get; }
 
     /// <summary>
-    /// 任务的优先级
+    /// 取消令牌的监听句柄
     /// </summary>
-    int Priority { get; set; }
+    Registration CancelRegistration { get; set; }
+
+    /// <summary>
+    /// 关联的取消令牌
+    /// </summary>
+    /// <returns></returns>
+    ICancelToken GetCancelToken();
+
+    #endregion
 
     /// <summary>
     /// 外部确定性触发
@@ -75,20 +111,8 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// <summary>
     /// 取消执行
     /// 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
-    /// 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
     /// </summary>
     void Cancel(int cancelCode);
-
-    /// <summary>
-    /// 关联的取消令牌
-    /// </summary>
-    /// <returns></returns>
-    ICancelToken GetCancelToken();
-
-    /// <summary>
-    /// 取消令牌的监听句柄
-    /// </summary>
-    Registration CancelRegistration { get; set; }
 
     /// <summary>
     /// 归还到对象池（解决泛型问题）
@@ -116,12 +140,6 @@ public sealed class ScheduledTaskComparator : IComparer<IScheduledFutureTask>
         if (r != 0) {
             return r;
         }
-        // 再按优先级排序
-        r = lhs.Priority.CompareTo(rhs.Priority);
-        if (r != 0) {
-            return r;
-        }
-        // 再按id排序
         r = lhs.Id.CompareTo(rhs.Id);
         if (r == 0) {
             throw new InvalidOperationException($"lhs.id: {lhs.Id}, rhs.id: {rhs.Id}");
