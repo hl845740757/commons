@@ -63,7 +63,9 @@ public static class TaskOptions
     /// 延时任务：包含超时时间（执行时间限制）
     /// </summary>
     public const int HAS_TIMEOUT = 1 << 17;
-    /** 延时任务：包含额外延迟帧 */
+    /// <summary>
+    /// 延时任务：包含额外延迟帧
+    /// </summary>
     public const int HAS_DELAY_FRAME = 1 << 18;
     /// <summary>
     /// 延时任务：在出现异常后继续执行。
@@ -116,6 +118,13 @@ public static class TaskOptions
     /// 任务不自动归还到对象池，手动释放
     /// </summary>
     public const int MANUAL_RELEASE = 1 << 28;
+    /// <summary>
+    /// 还有更多的事件（MF标识位）
+    ///
+    /// 1.当用户提交多个任务时，可以在前置任务上打上该标记，有利于部分IO逻辑。
+    /// 2.该标记仅适用Disruptor框架，且必须通过TryNext(int)接口批量申请。
+    /// </summary>
+    public const int HAS_MORE_EVENT = 1 << 29;
 
     #region util
 

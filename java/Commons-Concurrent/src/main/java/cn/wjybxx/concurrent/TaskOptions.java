@@ -104,7 +104,13 @@ public final class TaskOptions {
      * 任务不自动归还到对象池，手动释放
      */
     public static final int MANUAL_RELEASE = 1 << 28;
-
+    /**
+     * 还有更多的事件（MF标识位）
+     * <p>
+     * 1.当用户提交多个任务时，可以在前置任务上打上该标记，有利于部分IO逻辑。
+     * 2.该标记仅适用Disruptor框架，且必须通过TryNext(int)接口批量申请。
+     */
+    public static final int HAS_MORE_EVENT = 1 << 29;
     // region util
 
     /** 是否启用了所有选项 */

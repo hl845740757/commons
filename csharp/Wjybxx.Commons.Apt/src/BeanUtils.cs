@@ -183,17 +183,33 @@ public static class BeanUtils
     #region fields-props
 
     /// <summary>
+    /// 查找关联属性时默认忽略大小写，因为有部分场景使用的是小驼峰属性名
+    /// 究其原因，还是因为属性的定位存在模糊，有人将其视作字段的代替（应用角度），有人将其视作方法（底层角度）
+    /// </summary>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <param name="ignoreCase"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool Equals(string value1, string value2, bool ignoreCase) {
+        return string.Equals(value1, value2, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// 查询字段关联的属性(支持非public)
     /// </summary>
     /// <param name="fieldInfo"></param>
     /// <param name="allMembers"></param>
+    /// <param name="ignoreCase"></param>
     /// <returns></returns>
     public static PropertyInfo? FindProperty(FieldInfo fieldInfo,
-                                             List<MemberInfo> allMembers) {
+                                             List<MemberInfo> allMembers,
+                                             bool ignoreCase = true) {
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allMembers.Where(e => e.MemberType == MemberTypes.Property)
             .Cast<PropertyInfo>()
-            .FirstOrDefault(e => e.Name == propertyName && e.PropertyType == fieldInfo.FieldType);
+            .FirstOrDefault(e => Equals(e.Name, propertyName, ignoreCase)
+                                 && e.PropertyType == fieldInfo.FieldType);
     }
 
     /// <summary>
@@ -201,13 +217,16 @@ public static class BeanUtils
     /// </summary>
     /// <param name="fieldInfo"></param>
     /// <param name="allMembers"></param>
+    /// <param name="ignoreCase"></param>
     /// <returns></returns>
     public static IPropertySymbol? FindProperty(IFieldSymbol fieldInfo,
-                                                List<ISymbol> allMembers) {
+                                                List<ISymbol> allMembers,
+                                                bool ignoreCase = true) {
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allMembers.Where(e => e.Kind == SymbolKind.Property)
             .Cast<IPropertySymbol>()
-            .FirstOrDefault(e => e.Name == propertyName && e.Type.IsSameType(fieldInfo.Type));
+            .FirstOrDefault(e => Equals(e.Name, propertyName, ignoreCase)
+                                 && e.Type.IsSameType(fieldInfo.Type));
     }
 
     /// <summary>
@@ -215,13 +234,15 @@ public static class BeanUtils
     /// </summary>
     /// <param name="fieldName"></param>
     /// <param name="allMembers"></param>
+    /// <param name="ignoreCase"></param>
     /// <returns></returns>
     public static PropertyInfo? FindProperty(string fieldName,
-                                             List<MemberInfo> allMembers) {
+                                             List<MemberInfo> allMembers,
+                                             bool ignoreCase = true) {
         string propertyName = PropertyNameOfField(fieldName);
         return allMembers.Where(e => e.MemberType == MemberTypes.Property)
             .Cast<PropertyInfo>()
-            .FirstOrDefault(e => e.Name == propertyName);
+            .FirstOrDefault(e => Equals(e.Name, propertyName, ignoreCase));
     }
 
     /// <summary>
@@ -229,13 +250,15 @@ public static class BeanUtils
     /// </summary>
     /// <param name="fieldName"></param>
     /// <param name="allMembers"></param>
+    /// <param name="ignoreCase"></param>
     /// <returns></returns>
     public static IPropertySymbol? FindProperty(string fieldName,
-                                                List<ISymbol> allMembers) {
+                                                List<ISymbol> allMembers,
+                                                bool ignoreCase = true) {
         string propertyName = PropertyNameOfField(fieldName);
         return allMembers.Where(e => e.Kind == SymbolKind.Property)
             .Cast<IPropertySymbol>()
-            .FirstOrDefault(e => e.Name == propertyName);
+            .FirstOrDefault(e => Equals(e.Name, propertyName, ignoreCase));
     }
 
     /// <summary>

@@ -170,18 +170,27 @@ internal static class AptUtils
             .ToList();
     }
 
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool Equals(string value1, string value2, bool ignoreCase) {
+        return string.Equals(value1, value2, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+    }
+
     /// <summary>
     /// 查询字段关联的属性(支持非public)
     /// </summary>
     /// <param name="fieldInfo"></param>
     /// <param name="allMembers"></param>
+    /// <param name="ignoreCase"></param>
     /// <returns></returns>
     public static PropertyInfo? FindProperty(FieldInfo fieldInfo,
-                                             List<MemberInfo> allMembers) {
+                                             List<MemberInfo> allMembers,
+                                             bool ignoreCase = true) {
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allMembers.Where(e => e.MemberType == MemberTypes.Property)
             .Cast<PropertyInfo>()
-            .FirstOrDefault(e => e.Name == propertyName && fieldInfo.FieldType == e.PropertyType);
+            .FirstOrDefault(e => Equals(e.Name, propertyName, ignoreCase)
+                                 && fieldInfo.FieldType == e.PropertyType);
     }
 
     /// <summary>
