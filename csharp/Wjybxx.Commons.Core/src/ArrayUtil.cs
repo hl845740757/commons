@@ -413,6 +413,24 @@ public static class ArrayUtil
 
 #nullable disable
 
+    public static void Insert<T>(ref T[] array, int index, T value) {
+        T[] temp = new T[array.Length + 1];
+        Array.Copy(array, temp, index);
+        temp[index] = value;
+        // 允许直接插入到末尾
+        if (index < array.Length) {
+            Array.Copy(array, index, temp, index + 1, array.Length - index);
+        }
+        array = temp;
+    }
+
+    public static void RemoveAt<T>(ref T[] array, int index) {
+        T[] temp = new T[array.Length - 1];
+        Array.Copy(array, temp, index);
+        Array.Copy(array, index + 1, temp, index, array.Length - (index + 1));
+        array = temp;
+    }
+
     /// <summary>
     /// 拷贝数组
     /// </summary>
