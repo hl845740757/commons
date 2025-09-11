@@ -27,17 +27,15 @@ namespace Wjybxx.Dson
 /// 1.Header不可以再持有header，否则陷入死循环
 /// 2.Header的结构应该是简单清晰的，可简单编解码的 -- 不应该继承。
 /// 3.header的number编号不遵循<see cref="Dsons.MakeFullNumber"/>规则，而是每一个字段编号都是固定的。
-///
-/// TODO 如何降低Header的开销？定制基于数组的字典。
 /// </summary>
 public class DsonHeader<TK> : AbstractDsonObject<TK>
 {
     public DsonHeader()
-        : base(2) {
+        : base(new ArrayDictionary<TK, DsonValue>()) {
     }
 
     public DsonHeader(IDictionary<TK, DsonValue> valueMap)
-        : base(new LinkedDictionary<TK, DsonValue>(valueMap)) {
+        : base(new ArrayDictionary<TK, DsonValue>(valueMap)) {
     }
 
     public override DsonType DsonType => DsonType.Header;
