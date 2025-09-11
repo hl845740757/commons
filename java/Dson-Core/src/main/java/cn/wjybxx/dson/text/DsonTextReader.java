@@ -347,7 +347,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         // 处理header的特殊属性依赖
         if (context.contextType == DsonContextType.HEADER) {
             switch (nextName) {
-                case DsonHeader.NAMES_CLASS_NAME -> {
+                case DsonHeader.NAMES_CLASS_NAME, DsonHeader.NAMES_NAMESPACE -> {
                     pushNextValue(unquotedString);
                     return DsonType.STRING;
                 }

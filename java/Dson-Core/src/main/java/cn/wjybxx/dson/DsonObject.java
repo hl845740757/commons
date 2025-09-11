@@ -25,7 +25,6 @@ import java.util.LinkedHashMap;
  */
 public class DsonObject<K> extends AbstractDsonObject<K> {
 
-    // TODO 怎么优化下Header的开销?
     private final DsonHeader<K> header = new DsonHeader<>();
 
     public DsonObject() {

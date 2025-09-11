@@ -26,6 +26,8 @@ import java.util.Map;
  * 1.Header不可以再持有header，否则陷入死循环
  * 2.Header的结构应该是简单清晰的，可简单编解码的 -- 不应该继承。
  * 3.header的number编号不遵循{@link DsonLites#makeFullNumber(int, int)}规则，而是每一个字段编号都是固定的。
+ * <p>
+ * TODO 怎么优化下Header的开销？定制基于数组的字典。
  *
  * @author wjybxx
  * date - 2023/5/27
@@ -65,9 +67,11 @@ public class DsonHeader<K> extends AbstractDsonObject<K> {
     public static final String NAMES_CLASS_NAME = "clsName";
     public static final String NAMES_LOCAL_ID = "localId";
     public static final String NAMES_COUNT = "count";
+    public static final String NAMES_NAMESPACE = "ns";
 
     // header常见属性名的编号
     public static final int NUMBERS_CLASS_NAME = 1;
     public static final int NUMBERS_LOCAL_ID = 2;
     public static final int NUMBERS_COUNT = 3;
+    public static final int NUMBERS_NAMESPACE = 4;
 }

@@ -81,7 +81,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 1. 一般而言，建议使用该注解并遵循相关规范，由注解处理器生成的类负责解析，而不是手动实现<see cref="IDsonCodec{T}"/>。
 /// 2. 并不建议都实现为贫血模型。
 /// 3. 由于属性较多，因此属性都是get/set，但只应该初始化一次。
-/// ///
+///
 /// <h3>辅助类类名</h3>
 /// 生成的辅助类为{@code XXXCodec}
 /// </summary>

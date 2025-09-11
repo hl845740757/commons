@@ -32,8 +32,9 @@ namespace Wjybxx.Dson
 /// </summary>
 public static class DsonReaderUtils
 {
+    // 其实可以使用Bit位，但该数据访问频率低先不处理
     /** 支持读取为bytes和直接写入bytes的数据类型 -- 这些类型不可以存储额外数据在WireType上 */
-    public static readonly IList<DsonType> ValueBytesTypes = new[]
+    private static readonly ImmutableList<DsonType> ValueBytesTypes = new[]
     {
         DsonType.String, DsonType.Binary, DsonType.Array, DsonType.Object, DsonType.Header
     }.ToImmutableList2();

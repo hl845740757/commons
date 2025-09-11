@@ -59,20 +59,14 @@ public final class MarkableIterator<E> implements Iterator<E>, AutoCloseable {
         this.bufferOffset = 0;
     }
 
-    /**
-     * 是否处于干净的状态
-     * 1.返回true表示可替换外部迭代器{@link #setBaseIterator(Iterator)}
-     * 2.{@link #close()}后一定为true，用于复用对象
-     */
-    @Internal
-    public boolean isClean() {
-        return buffer.isEmpty();
+    public Iterator<E> getBaseIterator() {
+        return baseIterator;
     }
 
     @Internal
     public void setBaseIterator(Iterator<E> baseIterator) {
-        if (!isClean()) {
-            throw new IllegalStateException();
+        if (this.baseIterator != null) {
+            throw new IllegalStateException("dispose must be called before reuse");
         }
         this.baseIterator = Objects.requireNonNull(baseIterator);
     }

@@ -66,28 +66,13 @@ public struct MarkableIterator<T> : ISequentialEnumerator<T>
         _markedValue = default;
     }
 
-    /// <summary>
-    /// 当前是否是Null实例（默认实例）
-    /// </summary>
-    public bool IsNull => _buffer == null; // 测试readonly属性
-
-    /// <summary>
-    /// 迭代器是否处于干净状态
-    /// 1.返回true表示可替换外部迭代器<see cref="SetBaseIterator"/>
-    /// 2.<see cref="Dispose"/>后一定为true，用于复用对象
-    /// </summary>
-    /// <returns></returns>
-    public bool IsClean() => _buffer != null && _buffer.IsEmpty();
-
-    /// <summary>
-    /// 用于复用当前iterator
-    /// </summary>
+    public IEnumerator<T> GetBaseIterator() => _baseIterator;
+    
     public void SetBaseIterator(IEnumerator<T> baseIterator) {
-        if (baseIterator == null) throw new ArgumentNullException(nameof(baseIterator));
-        if (!IsClean()) {
-            throw new InvalidOperationException();
+        if (_baseIterator != null) {
+            throw new InvalidOperationException("dispose must be called before reuse");
         }
-        _baseIterator = baseIterator;
+        _baseIterator = baseIterator ?? throw new ArgumentNullException(nameof(baseIterator));
     }
 
     /// <summary>

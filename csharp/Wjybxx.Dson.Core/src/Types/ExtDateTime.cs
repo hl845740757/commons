@@ -69,10 +69,10 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
         if (seconds != 0 && (enables & MaskDatetime) == 0) {
             throw new ArgumentException("date and time are disabled, but seconds is not 0");
         }
-        if (nanos != 0 && !DsonInternals.IsSet(enables, MaskTime)) {
+        if (nanos != 0 && (enables & MaskTime) == 0) {
             throw new ArgumentException("time is disabled, but nanos is not 0");
         }
-        if (offset != 0 && !DsonInternals.IsSet(enables, MaskOffset)) {
+        if (offset != 0 && (enables & MaskOffset) == 0) {
             throw new ArgumentException("offset is disabled, but the value is not 0");
         }
         Timestamp.ValidateNanos(nanos);

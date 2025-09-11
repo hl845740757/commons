@@ -347,6 +347,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (context.contextType == DsonContextType.Header) {
             switch (_nextName) {
                 case DsonHeader.Names_ClassName:
+                case DsonHeader.Names_Namespace:
                     PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
                 case DsonHeader.Names_LocalId: {

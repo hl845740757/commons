@@ -50,10 +50,10 @@ public final class ExtDateTime {
         if (seconds != 0 && (enables & MASK_DATETIME) == 0) {
             throw new IllegalArgumentException("date and time are disabled, but seconds is not 0");
         }
-        if (nanos != 0 && !DsonInternals.isSet(enables, MASK_TIME)) {
+        if (nanos != 0 && (enables & MASK_TIME) == 0) {
             throw new IllegalArgumentException("time is disabled, but nanos is not 0");
         }
-        if (offset != 0 && !DsonInternals.isSet(enables, MASK_OFFSET)) {
+        if (offset != 0 && (enables & MASK_OFFSET) == 0) {
             throw new IllegalArgumentException("offset is disabled, but the value is not 0");
         }
         Timestamp.validateNanos(nanos);

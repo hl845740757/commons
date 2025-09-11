@@ -26,7 +26,6 @@ namespace Wjybxx.Dson
 /// </summary>
 public class DsonObject<TK> : AbstractDsonObject<TK>
 {
-    // TODO 如何降低Header的开销
     private readonly DsonHeader<TK> _header = new DsonHeader<TK>();
 
     public DsonObject(int capacity = 0)
