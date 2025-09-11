@@ -148,17 +148,17 @@ public class LinkedDictionaryTest
         LinkedDictionary<string, string> dictionary = TestStringDic(10000);
         var rawArray = dictionary.ToArray();
         {
-            dictionary.AdjustCapacity(15000);
+            dictionary.EnsureCapacity(15000);
             var copiedArray1 = dictionary.ToArray();
             ArrayUtil.Equals(rawArray, copiedArray1);
         }
         {
-            dictionary.AdjustCapacity(10001);
+            dictionary.EnsureCapacity(10001);
             var copiedArray2 = dictionary.ToArray();
             ArrayUtil.Equals(rawArray, copiedArray2);
         }
         {
-            dictionary.AdjustCapacity(10000);
+            dictionary.EnsureCapacity(10000);
             var copiedArray3 = dictionary.ToArray();
             ArrayUtil.Equals(rawArray, copiedArray3);
         }

@@ -440,31 +440,36 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         return true;
     }
 
-    public void AdjustCapacity(int expectedCount) {
-        if (expectedCount < _count) {
-            throw new ArgumentException($"expectedCount:{expectedCount} < count {_count}");
-        }
-        int newArraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
-        if (newArraySize <= HashCommon.DefaultInitialSize) {
-            return;
-        }
+    public void EnsureCapacity(int expectedCount) {
         int curArraySize = _mask + 1;
-        if (newArraySize == curArraySize) {
+        int newArraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
+        if (newArraySize <= curArraySize) {
             return;
-        }
-        if (newArraySize < curArraySize) {
-            if (_count > HashCommon.MaxFill(newArraySize, _loadFactor)) {
-                return; // 避免收缩后空间不足
-            }
-            if (Math.Abs(newArraySize - curArraySize) <= HashCommon.DefaultInitialSize) {
-                return; // 避免不必要的收缩
-            }
         }
         if (_table == null) {
             _mask = newArraySize - 1;
         } else {
             Rehash(newArraySize);
         }
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
+        if (_table == null) {
+            return;
+        }
+        if (expectedCount < _count) {
+            expectedCount = _count;
+        }
+        int curArraySize = _mask + 1;
+        int newArraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
+        if (newArraySize >= curArraySize) {
+            return;
+        }
+        // 避免调整后空间不足
+        if (_count > HashCommon.MaxFill(newArraySize, _loadFactor)) {
+            return;
+        }
+        Rehash(newArraySize);
     }
 
     #endregion
@@ -608,6 +613,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         }
         this._head = head;
         this._tail = preNodePos;
+        this._version++;
     }
 
     /** 如果是insert则返回true */
@@ -684,20 +690,6 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         int maxFill = HashCommon.MaxFill(_mask + 1, _loadFactor);
         if (_count >= maxFill) {
             Rehash(HashCommon.ArraySize(_count + 1, _loadFactor));
-        }
-    }
-
-    private void EnsureCapacity(int capacity) {
-        int arraySize = HashCommon.ArraySize(capacity, _loadFactor);
-        if (arraySize > _mask + 1) {
-            Rehash(arraySize);
-        }
-    }
-
-    private void TryCapacity(int capacity) {
-        int arraySize = HashCommon.TryArraySize(capacity, _loadFactor);
-        if (arraySize > _mask + 1) {
-            Rehash(arraySize);
         }
     }
 

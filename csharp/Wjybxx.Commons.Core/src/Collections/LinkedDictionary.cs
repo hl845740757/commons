@@ -105,7 +105,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public bool IsReadOnly => false;
     public int Count => _count;
     public bool IsEmpty => _count == 0;
-    internal int Capacity => _mask + 1;
 
     /// <summary>
     /// key不存在时的默认值，序列化由外部实现
@@ -114,6 +113,12 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         get => _defValue;
         set => _defValue = value;
     }
+
+    /** 用于子类感知数组大小 */
+    internal int Capacity => _mask + 1;
+
+    /** 用于子类更新版本号 */
+    protected void IncVersion() => _version++;
 #nullable disable
 
     #region keys/values
@@ -437,9 +442,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
     }
 
-    /** 用于子类更新版本号 */
-    protected void IncVersion() => _version++;
-
     #endregion
 
     #region sp
@@ -757,31 +759,36 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         return true;
     }
 
-    public void AdjustCapacity(int expectedCount) {
-        if (expectedCount < _count) {
-            throw new ArgumentException($"expectedCount:{expectedCount} < count {_count}");
-        }
-        int newArraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
-        if (newArraySize <= HashCommon.DefaultInitialSize) {
-            return;
-        }
+    public void EnsureCapacity(int expectedCount) {
         int curArraySize = _mask + 1;
-        if (newArraySize == curArraySize) {
+        int newArraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
+        if (newArraySize <= curArraySize) {
             return;
-        }
-        if (newArraySize < curArraySize) {
-            if (_count > HashCommon.MaxFill(newArraySize, _loadFactor)) {
-                return; // 避免收缩后空间不足
-            }
-            if (Math.Abs(newArraySize - curArraySize) <= HashCommon.DefaultInitialSize) {
-                return; // 避免不必要的收缩
-            }
         }
         if (_table == null) {
             _mask = newArraySize - 1;
         } else {
             Rehash(newArraySize);
         }
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
+        if (_table == null) {
+            return;
+        }
+        if (expectedCount < _count) {
+            expectedCount = _count;
+        }
+        int curArraySize = _mask + 1;
+        int newArraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
+        if (newArraySize >= curArraySize) {
+            return;
+        }
+        // 避免调整后空间不足
+        if (_count > HashCommon.MaxFill(newArraySize, _loadFactor)) {
+            return;
+        }
+        Rehash(newArraySize);
     }
 
     #endregion
@@ -893,7 +900,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /// 如果Table尚未初始化，固定返回-1；如果要插入元素，应当先初始化Table再查询。
     /// 如果key存在，则返回对应的下标(大于等于0)；
     /// 如果key不存在，则返回其hash应该存储的下标的负值再减1，以识别0 -- 或者说 下标 +1 再取相反数。
-    /// 该方法只有增删方法元素方法可调用，会导致初始化空间
     /// </summary>
     /// <param name="key"></param>
     /// <param name="hash">key的hash值</param>
@@ -963,6 +969,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
         this._head = head;
         this._tail = preNodePos;
+        this._version++;
     }
 
     /** 如果插入成功(新增元素)，则返回true */
@@ -1044,20 +1051,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         int maxFill = HashCommon.MaxFill(_mask + 1, _loadFactor);
         if (_count >= maxFill) {
             Rehash(HashCommon.ArraySize(_count + 1, _loadFactor));
-        }
-    }
-
-    private void EnsureCapacity(int capacity) {
-        int arraySize = HashCommon.ArraySize(capacity, _loadFactor);
-        if (arraySize > _mask + 1) {
-            Rehash(arraySize);
-        }
-    }
-
-    private void TryCapacity(int capacity) {
-        int arraySize = HashCommon.TryArraySize(capacity, _loadFactor);
-        if (arraySize > _mask + 1) {
-            Rehash(arraySize);
         }
     }
 
@@ -1242,7 +1235,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
         #region modify
 
-        public void AdjustCapacity(int expectedCount) {
+        public void EnsureCapacity(int expectedCount) {
+            throw new InvalidOperationException("NotSupported_KeyOrValueCollectionSet");
+        }
+
+        public void TrimCapacity(int expectedCount) {
             throw new InvalidOperationException("NotSupported_KeyOrValueCollectionSet");
         }
 
@@ -1346,13 +1343,13 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             : base(dictionary, reversed) {
         }
 
-        private TValue CheckNodeValue(int index) {
+        private TValue PeekNodeValue(int index) {
             if (index < 0) throw ThrowHelper.CollectionEmptyException();
             ref Node node = ref _dictionary._table[index];
             return node.value;
         }
 
-        private bool PeekNodeValue(int index, out TValue value) {
+        private bool TryPeekNodeValue(int index, out TValue value) {
             if (index < 0) {
                 value = default;
                 return false;
@@ -1362,16 +1359,16 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             return true;
         }
 
-        public override TValue PeekFirst() => _reversed ? CheckNodeValue(_dictionary._tail) : CheckNodeValue(_dictionary._head);
+        public override TValue PeekFirst() => _reversed ? PeekNodeValue(_dictionary._tail) : PeekNodeValue(_dictionary._head);
 
-        public override TValue PeekLast() => _reversed ? CheckNodeValue(_dictionary._head) : CheckNodeValue(_dictionary._tail);
+        public override TValue PeekLast() => _reversed ? PeekNodeValue(_dictionary._head) : PeekNodeValue(_dictionary._tail);
 
         public override bool TryPeekFirst(out TValue item) {
-            return _reversed ? PeekNodeValue(_dictionary._tail, out item) : PeekNodeValue(_dictionary._head, out item);
+            return _reversed ? TryPeekNodeValue(_dictionary._tail, out item) : TryPeekNodeValue(_dictionary._head, out item);
         }
 
         public override bool TryPeekLast(out TValue item) {
-            return _reversed ? PeekNodeValue(_dictionary._head, out item) : PeekNodeValue(_dictionary._tail, out item);
+            return _reversed ? TryPeekNodeValue(_dictionary._head, out item) : TryPeekNodeValue(_dictionary._tail, out item);
         }
 
         public override bool Contains(TValue item) {
@@ -1494,7 +1491,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
         public bool MoveNext() {
             if (_core.MoveNext()) {
-                _current = _core._currNode!.AsPair();
+                _current = _core._currNode.AsPair();
                 return true;
             }
             return false;
@@ -1517,7 +1514,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
     }
 
-    public struct KeyEnumerator : ISequentialEnumerator<TKey>
+    public struct KeyEnumerator : ISequentialEnumerator<TKey>, IUnsafeIterator<TKey>
     {
         private Enumerator _core;
         private TKey _current;
@@ -1533,7 +1530,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
         public bool MoveNext() {
             if (_core.MoveNext()) {
-                _current = _core._currNode!.key;
+                _current = _core._currNode.key;
                 return true;
             }
             return false;
@@ -1556,7 +1553,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
     }
 
-    public struct ValueEnumerator : ISequentialEnumerator<TValue>
+    public struct ValueEnumerator : ISequentialEnumerator<TValue>, IUnsafeIterator<TValue>
     {
         private Enumerator _core;
         private TValue _current;
@@ -1572,7 +1569,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
         public bool MoveNext() {
             if (_core.MoveNext()) {
-                _current = _core._currNode!.value;
+                _current = _core._currNode.value;
                 return true;
             }
             return false;
@@ -1602,11 +1599,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     private struct Node
     {
 #nullable disable
-        internal TKey key;
+        internal readonly TKey key;
         internal TValue value;
 
-        internal bool hasKey; // 判断node是否有效，代替将index封装为Nullable<int>
-        internal int hash; // Key的hash使用频率极高，缓存以减少求值开销
+        internal readonly bool hasKey; // 判断node是否有效，代替将index封装为Nullable<int>
+        internal readonly int hash; // Key的hash使用频率极高，缓存以减少求值开销
         internal int index;
         internal int prev;
         internal int next;

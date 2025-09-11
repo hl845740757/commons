@@ -283,15 +283,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         if (minCapacity <= oldCapacity) {
             return;
         }
-        // 监听器的数量增长是较慢的，因此不必按倍率扩容
-        int grow;
-        if (oldCapacity < 16) {
-            grow = 4;
-        } else if (oldCapacity < 32) {
-            grow = 8;
-        } else {
-            grow = 16;
-        }
+        int grow = oldCapacity < 16 ? 4 : 8;
         int newCapacity = MathCommon.clamp(oldCapacity + grow, minCapacity, MAX_CAPACITY);
         elements = Arrays.copyOf(elements, newCapacity);
     }

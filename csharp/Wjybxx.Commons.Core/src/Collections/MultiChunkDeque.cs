@@ -233,8 +233,10 @@ public class MultiChunkDeque<T> : IDeque<T>
         _count = 0;
     }
 
-    public void AdjustCapacity(int expectedCount) {
-        // 无需响应
+    public void EnsureCapacity(int expectedCount) {
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
     }
 
     /// <summary>

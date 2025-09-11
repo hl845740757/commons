@@ -37,7 +37,10 @@ public class EmptyDeque<T> : IDeque<T>
     public int Count => 0;
     public bool IsEmpty => true;
 
-    public void AdjustCapacity(int expectedCount) {
+    public void EnsureCapacity(int expectedCount) {
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
     }
 
     #region sequence

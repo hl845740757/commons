@@ -413,6 +413,26 @@ public static class ArrayUtil
 
 #nullable disable
 
+    /// <summary>
+    /// 将指定位置的元素移动到目标为止
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="index"></param>
+    /// <param name="newIndex"></param>
+    /// <typeparam name="T"></typeparam>
+    public static void MoveTo<T>(T[] array, int index, int newIndex) {
+        T element = array[index];
+        if (newIndex == index) return;
+        if (index < newIndex) {
+            // index后面的元素前移
+            Array.Copy(array, index + 1, array, index, newIndex - index);
+        } else {
+            // index前面的元素后移
+            Array.Copy(array, index - 1, array, index, index - newIndex);
+        }
+        array[newIndex] = element;
+    }
+
     public static void Insert<T>(ref T[] array, int index, T value) {
         T[] temp = new T[array.Length + 1];
         Array.Copy(array, temp, index);

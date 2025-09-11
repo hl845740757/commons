@@ -80,31 +80,6 @@ public class ArrayDeque<T> : IDeque<T>
         }
     }
 
-    private T[] Grow(int needed) {
-        // Double capacity if small; else grow by 50%
-        int oldCapacity = _elements.Length;
-        int growUp = oldCapacity < 64 ? oldCapacity : oldCapacity >> 1;
-        if (growUp < needed) {
-            growUp = needed;
-        }
-
-        T[] elements = new T[oldCapacity + growUp];
-        CopyTo(elements, 0);
-
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
-            Array.Fill(_elements, default); // help gc
-        }
-        _elements = elements;
-
-        int count = Count; // 修正head,tail
-        if (count > 0) {
-            _head = 0;
-            _tail = count - 1;
-        }
-        _version++;
-        return elements;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Length(int tail, int head, int modulus) {
         Debug.Assert(head >= 0);
@@ -192,7 +167,8 @@ public class ArrayDeque<T> : IDeque<T>
         if (head >= 0) {
             head = Dec(head, elements.Length);
             if (head == _tail) {
-                elements = Grow(1); // 扩展容量，tail和head会变更，要读取最新数据
+                EnsureCapacity(elements.Length + 1);
+                elements = _elements; // 扩展容量后tail和head会变更，要读取最新数据
                 head = Dec(_head, elements.Length);
             }
             elements[head] = item;
@@ -214,7 +190,8 @@ public class ArrayDeque<T> : IDeque<T>
         if (tail >= 0) {
             tail = Inc(tail, elements.Length);
             if (tail == _head) {
-                elements = Grow(1); // 扩展容量，tail和head会变更，要读取最新数据
+                EnsureCapacity(elements.Length + 1);
+                elements = _elements; // 扩展容量后tail和head会变更，要读取最新数据
                 tail = Inc(_tail, elements.Length);
             }
             elements[tail] = item;
@@ -295,15 +272,20 @@ public class ArrayDeque<T> : IDeque<T>
         if (_head < 0 || _elements.Length == 0) return;
         int head = _head;
         int tail = _tail;
-        if (head <= tail) {
-            Array.Fill(_elements, default, head, (tail - head + 1));
-        } else {
-            Array.Fill(_elements, default, 0, tail + 1);
-            Array.Fill(_elements, default, head, _elements.Length - head);
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+            Clear(_elements, head, tail);
         }
         _tail = _head = -1;
         _version++;
-        // Array.Fill(_elements, default);
+    }
+
+    internal static void Clear(T[] elements, int head, int tail) {
+        if (head <= tail) {
+            Array.Clear(elements, head, (tail - head + 1));
+        } else {
+            Array.Clear(elements, 0, tail + 1);
+            Array.Clear(elements, head, elements.Length - head);
+        }
     }
 
     private void RemoveAt(int index) {
@@ -521,10 +503,37 @@ public class ArrayDeque<T> : IDeque<T>
         return new ReversedDequeView<T>(this);
     }
 
-    public void AdjustCapacity(int expectedCount) {
-        int growUp = expectedCount - Count;
-        if (growUp > 0) {
-            Grow(growUp);
+    public void EnsureCapacity(int expectedCount) {
+        int minGrowUp = expectedCount - Count;
+        if (minGrowUp <= 0) {
+            return;
+        }
+        // Double capacity if small; else grow by 50%
+        int oldCapacity = _elements.Length;
+        int growUp = oldCapacity < 64 ? oldCapacity : oldCapacity >> 1;
+        if (growUp < minGrowUp) {
+            growUp = minGrowUp;
+        }
+        Resize(oldCapacity + growUp);
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
+        expectedCount = Math.Max(Count, expectedCount);
+        if (expectedCount < _elements.Length) {
+            Resize(expectedCount);
+        }
+    }
+
+    private void Resize(int newCapacity) {
+        T[] elements = new T[newCapacity];
+        CopyTo(elements, 0);
+        _elements = elements;
+        _version++;
+
+        int count = Count; // 修正head,tail
+        if (count > 0) {
+            _head = 0;
+            _tail = count - 1;
         }
     }
 

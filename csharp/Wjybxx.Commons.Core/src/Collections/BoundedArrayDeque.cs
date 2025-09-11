@@ -334,11 +334,8 @@ public class BoundedArrayDeque<T> : IDeque<T>
         if (_head < 0 || _elements.Length == 0) return;
         int head = _head;
         int tail = _tail;
-        if (head <= tail) {
-            Array.Fill(_elements, default, head, (tail - head + 1));
-        } else {
-            Array.Fill(_elements, default, 0, tail + 1);
-            Array.Fill(_elements, default, head, _elements.Length - head);
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+            ArrayDeque<T>.Clear(_elements, head, tail);
         }
         _tail = _head = -1;
         _version++;
@@ -560,7 +557,10 @@ public class BoundedArrayDeque<T> : IDeque<T>
         return new ReversedDequeView<T>(this);
     }
 
-    public void AdjustCapacity(int expectedCount) {
+    public void EnsureCapacity(int expectedCount) {
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
     }
 
     #endregion

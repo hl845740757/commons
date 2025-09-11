@@ -46,13 +46,23 @@ public interface IGenericCollection<T> : ICollection<T>, IReadOnlyCollection<T>
     /// <summary>
     /// 调整空间
     /// 1.该接口以允许用户触发扩容，通常用于批量添加元素之前;
+    /// 3.该接口不一定产生效用，与实现类相关（默认应该空实现，空实现是安全的方式）;
+    /// 4.不进行默认实现，以免代理类忘记转发;
+    /// 5.该接口可能有较大开销，应避免频繁调用;
+    /// </summary>
+    /// <param name="expectedCount">期望的元素数量，不是直接的空间大小</param>
+    void EnsureCapacity(int expectedCount);
+
+    /// <summary>
+    /// 调整空间
+    /// 1.该接口以允许用户触发收缩，通常用于删除元素之后。
     /// 2.Hash结构通常有较大的辅助空间，该接口以允许用户触发收缩;
     /// 3.该接口不一定产生效用，与实现类相关（默认应该空实现，空实现是安全的方式）;
     /// 4.不进行默认实现，以免代理类忘记转发;
     /// 5.该接口可能有较大开销，应避免频繁调用;
     /// </summary>
-    /// <param name="expectedCount">期望的元素数量，不是直接的空间大小，不可小于当前count</param>
-    void AdjustCapacity(int expectedCount);
+    /// <param name="expectedCount">期望的元素数量，不是直接的空间大小</param>
+    void TrimCapacity(int expectedCount = -1);
 
     #region 接口适配
 

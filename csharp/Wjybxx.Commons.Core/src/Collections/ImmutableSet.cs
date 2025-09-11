@@ -254,7 +254,10 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         return true;
     }
 
-    public void AdjustCapacity(int expectedCount) {
+    public void EnsureCapacity(int expectedCount) {
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
     }
 
     #endregion

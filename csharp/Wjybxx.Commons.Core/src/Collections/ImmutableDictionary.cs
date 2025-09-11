@@ -456,7 +456,10 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
         return true;
     }
 
-    public void AdjustCapacity(int expectedCount) {
+    public void EnsureCapacity(int expectedCount) {
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
     }
 
     #endregion
@@ -567,7 +570,6 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
     /// <summary>
     /// 如果key存在，则返回对应的下标(大于等于0)；
     /// 如果key不存在，则返回其hash应该存储的下标的负值再减1，以识别0 -- 或者说 下标 +1 再取相反数。
-    /// 该方法只有增删方法元素方法可调用，会导致初始化空间
     /// </summary>
     /// <param name="key"></param>
     /// <param name="hash">key的hash值</param>
@@ -651,7 +653,11 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
 
         #region modify
 
-        public void AdjustCapacity(int expectedCount) {
+        public void EnsureCapacity(int expectedCount) {
+            throw new InvalidOperationException("NotSupported_KeyOrValueCollectionSet");
+        }
+
+        public void TrimCapacity(int expectedCount) {
             throw new InvalidOperationException("NotSupported_KeyOrValueCollectionSet");
         }
 
@@ -755,13 +761,13 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
             : base(dictionary, reversed) {
         }
 
-        private TValue CheckNodeValue(int index) {
+        private TValue PeekNodeValue(int index) {
             if (index < 0) throw ThrowHelper.CollectionEmptyException();
             ref Node node = ref _dictionary._table[index];
             return node.value;
         }
 
-        private bool PeekNodeValue(int index, out TValue value) {
+        private bool TryPeekNodeValue(int index, out TValue value) {
             if (index < 0) {
                 value = default;
                 return false;
@@ -771,16 +777,16 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
             return true;
         }
 
-        public override TValue PeekFirst() => _reversed ? CheckNodeValue(_dictionary._tail) : CheckNodeValue(_dictionary._head);
+        public override TValue PeekFirst() => _reversed ? PeekNodeValue(_dictionary._tail) : PeekNodeValue(_dictionary._head);
 
-        public override TValue PeekLast() => _reversed ? CheckNodeValue(_dictionary._head) : CheckNodeValue(_dictionary._tail);
+        public override TValue PeekLast() => _reversed ? PeekNodeValue(_dictionary._head) : PeekNodeValue(_dictionary._tail);
 
         public override bool TryPeekFirst(out TValue item) {
-            return _reversed ? PeekNodeValue(_dictionary._tail, out item) : PeekNodeValue(_dictionary._head, out item);
+            return _reversed ? TryPeekNodeValue(_dictionary._tail, out item) : TryPeekNodeValue(_dictionary._head, out item);
         }
 
         public override bool TryPeekLast(out TValue item) {
-            return _reversed ? PeekNodeValue(_dictionary._head, out item) : PeekNodeValue(_dictionary._tail, out item);
+            return _reversed ? TryPeekNodeValue(_dictionary._head, out item) : TryPeekNodeValue(_dictionary._tail, out item);
         }
 
         public override bool Contains(TValue item) {

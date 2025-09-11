@@ -92,8 +92,7 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
             throw new InvalidOperationException($"item.Index: {item.CollectionIndex(this)}, expected: -1");
         }
         if (_count >= _items.Length) {
-            int grow = (_items.Length < 64) ? (_items.Length + 2) : (_items.Length >> 1);
-            Resize(grow + _items.Length);
+            EnsureCapacity(_items.Length + 1);
         }
         BubbleUp(_count++, item);
         return true;
@@ -161,24 +160,31 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         }
     }
 
-    public void AdjustCapacity(int expectedCount) {
-        if (expectedCount < _count) throw new ArgumentException(nameof(expectedCount));
-        int delta = expectedCount - _items.Length;
-        if (delta == 0) {
+    public void EnsureCapacity(int expectedCount) {
+        int minGrowUp = expectedCount - Count;
+        if (minGrowUp <= 0) {
             return;
         }
-        if (delta < 0) {
-            // 避免不必要的收缩
-            if (-delta >= 8) {
-                Resize(expectedCount);
-            }
-        } else {
-            // 避免过小的扩容
-            if (delta < 4) {
-                delta = 4;
-            }
-            Resize(_items.Length + delta);
+        // Double capacity if small; else grow by 50%
+        int oldCapacity = _items.Length;
+        int growUp = oldCapacity < 64 ? oldCapacity : oldCapacity >> 1;
+        if (growUp < minGrowUp) {
+            growUp = minGrowUp;
         }
+        Resize(oldCapacity + growUp);
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
+        expectedCount = Math.Max(Count, expectedCount);
+        if (expectedCount < _items.Length) {
+            Resize(expectedCount);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Resize(int newSize) {
+        Debug.Assert(newSize >= _count);
+        Array.Resize(ref _items, newSize);
     }
 
     #region itr
@@ -206,11 +212,6 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
     #endregion
 
     #region Internal
-
-    private void Resize(int newSize) {
-        Debug.Assert(newSize >= _count);
-        Array.Resize(ref _items, newSize);
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool Contains(T item, int idx) {

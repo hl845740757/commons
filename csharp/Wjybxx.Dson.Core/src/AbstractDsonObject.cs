@@ -120,7 +120,9 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
     public IGenericCollection<TK> Keys => _valueMap.Keys;
     public IGenericCollection<DsonValue> Values => _valueMap.Values;
 
-    public void AdjustCapacity(int expectedCount) => _valueMap.AdjustCapacity(expectedCount);
+    public void EnsureCapacity(int expectedCount) => _valueMap.EnsureCapacity(expectedCount);
+
+    public void TrimCapacity(int expectedCount = -1) => _valueMap.TrimCapacity(expectedCount);
 
     #endregion
 

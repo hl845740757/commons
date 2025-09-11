@@ -41,8 +41,12 @@ public class ReversedCollectionView<TKey> : ISequencedCollection<TKey>
         return delegated;
     }
 
-    public void AdjustCapacity(int expectedCount) {
-        delegated.AdjustCapacity(expectedCount);
+    public void EnsureCapacity(int expectedCount) {
+        delegated.EnsureCapacity(expectedCount);
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
+        delegated.TrimCapacity(expectedCount);
     }
 
     #region get

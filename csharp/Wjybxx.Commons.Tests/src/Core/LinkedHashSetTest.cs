@@ -142,17 +142,17 @@ public class LinkedHashSetTest
         LinkedHashSet<string> hashSet = TestStringSet(10000);
         string[] rawArray = hashSet.ToArray();
         {
-            hashSet.AdjustCapacity(15000);
+            hashSet.EnsureCapacity(15000);
             string[] copiedArray1 = hashSet.ToArray();
             ArrayUtil.Equals(rawArray, copiedArray1);
         }
         {
-            hashSet.AdjustCapacity(10001);
+            hashSet.EnsureCapacity(10001);
             string[] copiedArray2 = hashSet.ToArray();
             ArrayUtil.Equals(rawArray, copiedArray2);
         }
         {
-            hashSet.AdjustCapacity(10000);
+            hashSet.EnsureCapacity(10000);
             string[] copiedArray3 = hashSet.ToArray();
             ArrayUtil.Equals(rawArray, copiedArray3);
         }

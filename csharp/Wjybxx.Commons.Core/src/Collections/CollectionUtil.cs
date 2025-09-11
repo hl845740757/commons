@@ -59,20 +59,6 @@ public static partial class CollectionUtil
                || behavior == DequeOverflowBehavior.DiscardTail;
     }
 
-    /** 确保集合的空间足够 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void EnsureCapacity<T>(this IGenericCollection<T> self, int capacity) {
-        if (self.Count < capacity) {
-            self.AdjustCapacity(capacity);
-        }
-    }
-
-    /** 收缩空间 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void TrimExcess<T>(this IGenericCollection<T> self, int capacity = -1) {
-        self.AdjustCapacity(capacity <= self.Count ? self.Count : capacity);
-    }
-
     #region collection
 
     /// <summary>
@@ -102,7 +88,7 @@ public static partial class CollectionUtil
         } else if (c is HashSet<T> hashSet) {
             hashSet.TrimExcess();
         } else if (c is IGenericCollection<T> genericCollection) {
-            genericCollection.AdjustCapacity(c.Count);
+            genericCollection.EnsureCapacity(c.Count);
         }
     }
 
@@ -115,7 +101,7 @@ public static partial class CollectionUtil
         if (self is IGenericCollection<T> generic) {
             int itemsCount = PredicateCount(items) ?? 0;
             if (itemsCount > 0) {
-                generic.AdjustCapacity(generic.Count + itemsCount);
+                generic.EnsureCapacity(generic.Count + itemsCount);
             }
         }
         foreach (T item in items) {
@@ -196,7 +182,7 @@ public static partial class CollectionUtil
         if (dic is Dictionary<K, V> dictionary) {
             dictionary.TrimExcess();
         } else if (dic is IGenericDictionary<K, V> genericDictionary) {
-            genericDictionary.AdjustCapacity(dic.Count);
+            genericDictionary.EnsureCapacity(dic.Count);
         }
     }
 
@@ -209,7 +195,7 @@ public static partial class CollectionUtil
         if (self is IGenericDictionary<TKey, TValue> generic) {
             int itemsCount = PredicateCount(pairs) ?? 0;
             if (itemsCount > 0) {
-                generic.AdjustCapacity(generic.Count + itemsCount);
+                generic.EnsureCapacity(generic.Count + itemsCount);
             }
         }
         foreach (KeyValuePair<TKey, TValue> pair in pairs) {
@@ -226,7 +212,7 @@ public static partial class CollectionUtil
         if (self is IGenericDictionary<TKey, TValue> generic) {
             int itemsCount = PredicateCount(pairs) ?? 0;
             if (itemsCount > 0) {
-                generic.AdjustCapacity(generic.Count + itemsCount);
+                generic.EnsureCapacity(generic.Count + itemsCount);
             }
         }
         foreach (KeyValuePair<TKey, TValue> pair in pairs) {

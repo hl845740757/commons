@@ -169,7 +169,10 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
 
     #endregion
 
-    public void AdjustCapacity(int expectedCount) {
+    public void EnsureCapacity(int expectedCount) {
+    }
+
+    public void TrimCapacity(int expectedCount = -1) {
     }
 
     public void CopyTo(T[] array, int arrayIndex, bool reversed = false) {
