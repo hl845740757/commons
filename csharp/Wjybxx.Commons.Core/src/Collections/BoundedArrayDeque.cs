@@ -31,9 +31,6 @@ namespace Wjybxx.Commons.Collections
 [NotThreadSafe]
 public class BoundedArrayDeque<T> : IDeque<T>
 {
-    /** 元素类型是否是引用类型 */
-    private static readonly bool valueIsRefType = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
-
     private T[] _elements;
     private readonly DequeOverflowBehavior _overflowBehavior;
 
@@ -123,10 +120,6 @@ public class BoundedArrayDeque<T> : IDeque<T>
         } else {
             elements = new T[capacity];
             CopyTo(elements, 0);
-        }
-
-        if (valueIsRefType) {
-            Clear(); // help gc
         }
 
         _elements = elements;

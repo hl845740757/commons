@@ -27,11 +27,11 @@ namespace Wjybxx.Commons.Collections
 /// <summary>
 /// 非Hash结构的字典，适用于小数据量场景
 ///
-/// 注：未实现<see cref="ISequencedDictionary{TKey,TValue}"/>，因为可以直接按照数组方式迭代；也用于减少开销。
+/// 注：可通过<see cref="GetPair(int)"/>以数组方式迭代。
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
 /// <typeparam name="TValue"></typeparam>
-public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TValue>
+public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 {
 #nullable disable
     private Node[] _table;
@@ -72,19 +72,37 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
     [DebuggerHidden] IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => CachedKeys();
     [DebuggerHidden] IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => CachedValues();
 
+    [DebuggerHidden] ISequencedCollection<TKey> ISequencedDictionary<TKey, TValue>.SequencedKeys(bool reversed) {
+        return SequencedKeys(reversed);
+    }
+
+    [DebuggerHidden] ISequencedCollection<TValue> ISequencedDictionary<TKey, TValue>.SequencedValues(bool reversed) {
+        return SequencedValues(reversed);
+    }
+
     public KeyCollection Keys => CachedKeys();
     public ValueCollection Values => CachedValues();
 
-    private KeyCollection CachedKeys() {
+    public KeyCollection SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+
+    public ValueCollection SequencedValues(bool reversed = false) => CachedValues(reversed);
+
+    private KeyCollection CachedKeys(bool reversed = false) {
+        if (reversed) {
+            return new KeyCollection(this, true);
+        }
         if (_keys == null) {
-            _keys = new KeyCollection(this);
+            _keys = new KeyCollection(this, false);
         }
         return _keys;
     }
 
-    private ValueCollection CachedValues() {
+    private ValueCollection CachedValues(bool reversed = false) {
+        if (reversed) {
+            return new ValueCollection(this, true);
+        }
         if (_values == null) {
-            _values = new ValueCollection(this);
+            _values = new ValueCollection(this, false);
         }
         return _values;
     }
@@ -102,7 +120,6 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
     }
 
     #endregion
-
 
     #region peek
 
@@ -175,6 +192,43 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         }
         ref Node node = ref _table[_count - 1];
         key = node.key;
+        return true;
+    }
+
+    //
+    private TValue PeekFirstValue() {
+        if (_count == 0) {
+            throw ThrowHelper.CollectionEmptyException();
+        }
+        ref Node node = ref _table[0];
+        return node.value;
+    }
+
+    private bool TryPeekFirstValue(out TValue value) {
+        if (_count == 0) {
+            value = default;
+            return false;
+        }
+        ref Node node = ref _table[0];
+        value = node.value;
+        return true;
+    }
+
+    private TValue PeekLastValue() {
+        if (_count == 0) {
+            throw ThrowHelper.CollectionEmptyException();
+        }
+        ref Node node = ref _table[_count - 1];
+        return node.value;
+    }
+
+    private bool TryPeekLastValue(out TValue value) {
+        if (_count == 0) {
+            value = default;
+            return false;
+        }
+        ref Node node = ref _table[_count - 1];
+        value = node.value;
         return true;
     }
 
@@ -292,7 +346,7 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         if (index < 0) {
             return false;
         }
-        ref Node node = ref _table[index];
+        // ref Node node = ref _table[index];
         RemoveNode(index);
         return true;
     }
@@ -358,7 +412,7 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         if (count > 0) {
             _count = 0;
             _version++;
-            Array.Clear(_table, 0, _table.Length);
+            Array.Clear(_table, 0, _count);
         }
     }
 
@@ -425,11 +479,7 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
 
     #region copyto
 
-    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) {
-        CopyTo(array, arrayIndex, false);
-    }
-
-    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex, bool reversed) {
+    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex, bool reversed = false) {
         if (array == null) throw new ArgumentNullException(nameof(array));
         if (array.Length - arrayIndex < _count) throw new ArgumentException("Array is too small");
         if (_count == 0) {
@@ -486,12 +536,24 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
 
     #region itr
 
+    public ISequencedDictionary<TKey, TValue> Reversed() {
+        return new ReversedDictionaryView<TKey, TValue>(this);
+    }
+
     IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() {
         return GetEnumerator();
     }
 
+    IEnumerator<KeyValuePair<TKey, TValue>> ISequencedCollection<KeyValuePair<TKey, TValue>>.GetReversedEnumerator() {
+        return GetReversedEnumerator();
+    }
+
     public PairEnumerator GetEnumerator() {
-        return new PairEnumerator(this);
+        return new PairEnumerator(this, false);
+    }
+
+    public PairEnumerator GetReversedEnumerator() {
+        return new PairEnumerator(this, true);
     }
 
     #endregion
@@ -499,7 +561,6 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
     #region core
 
     private static IEqualityComparer<TValue> ValComparer => EqualityComparer<TValue>.Default;
-    private static readonly bool IsKeyValueType = typeof(TKey).IsValueType;
 
     /// <summary>
     /// 
@@ -511,8 +572,8 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         if (table == null) {
             return -1;
         }
-        // 顺序测试
-        if (!IsKeyValueType && key == null) {
+        // 测试是否为值类型，避免装箱
+        if (!typeof(TKey).IsValueType && key == null) {
             for (int index = _count - 1; index >= 0; index--) {
                 ref Node node = ref _table[index];
                 if (node.hasKey && node.key == null) return index;
@@ -626,9 +687,11 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
     public abstract class AbstractViewCollection<T>
     {
         protected readonly ArrayDictionary<TKey, TValue> _dictionary;
+        protected readonly bool _reversed;
 
-        internal AbstractViewCollection(ArrayDictionary<TKey, TValue> dictionary) {
+        internal AbstractViewCollection(ArrayDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
+            _reversed = reversed;
         }
 
         #region 查询
@@ -639,14 +702,25 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
 
         public abstract bool Contains(T item);
 
+        public abstract bool TryPeekFirst(out T item);
+
+        public abstract T PeekFirst();
+
+        public abstract bool TryPeekLast(out T item);
+
+        public abstract T PeekLast();
+
         #endregion
 
         #region itr
 
+        // public abstract ISequencedCollection<T> Reversed();
         //
         // public abstract IEnumerator<T> GetEnumerator();
         //
-        public abstract void CopyTo(T[] array, int arrayIndex);
+        // public abstract IEnumerator<T> GetReversedEnumerator();
+
+        public abstract void CopyTo(T[] array, int arrayIndex, bool reversed = false);
 
         #endregion
 
@@ -699,55 +773,111 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         #endregion
     }
 
-    public class KeyCollection : AbstractViewCollection<TKey>, IGenericCollection<TKey>
+    public class KeyCollection : AbstractViewCollection<TKey>, ISequencedCollection<TKey>
     {
-        internal KeyCollection(ArrayDictionary<TKey, TValue> dictionary)
-            : base(dictionary) {
+        internal KeyCollection(ArrayDictionary<TKey, TValue> dictionary, bool reversed)
+            : base(dictionary, reversed) {
+        }
+
+        public override TKey PeekFirst() => _reversed ? _dictionary.PeekLastKey() : _dictionary.PeekFirstKey();
+
+        public override TKey PeekLast() => _reversed ? _dictionary.PeekFirstKey() : _dictionary.PeekLastKey();
+
+        public override bool TryPeekFirst(out TKey item) {
+            return _reversed ? _dictionary.TryPeekLastKey(out item) : _dictionary.TryPeekFirstKey(out item);
+        }
+
+        public override bool TryPeekLast(out TKey item) {
+            return _reversed ? _dictionary.TryPeekFirstKey(out item) : _dictionary.TryPeekLastKey(out item);
         }
 
         public override bool Contains(TKey item) {
             return _dictionary.ContainsKey(item);
         }
 
-        public override void CopyTo(TKey[] array, int arrayIndex) {
-            _dictionary.CopyKeysTo(array, arrayIndex, false);
+        public override void CopyTo(TKey[] array, int arrayIndex, bool reversed = false) {
+            _dictionary.CopyKeysTo(array, arrayIndex, _reversed ^ reversed);
         }
 
         #region itr
 
+        public KeyCollection Reversed() {
+            return _dictionary.CachedKeys(_reversed);
+        }
+
         public KeyEnumerator GetEnumerator() {
-            return new KeyEnumerator(_dictionary);
+            return new KeyEnumerator(_dictionary, _reversed);
+        }
+
+        public KeyEnumerator GetReversedEnumerator() {
+            return new KeyEnumerator(_dictionary, !_reversed);
         }
 
         IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() {
             return GetEnumerator();
         }
 
+        ISequencedCollection<TKey> ISequencedCollection<TKey>.Reversed() {
+            return Reversed();
+        }
+
+        IEnumerator<TKey> ISequencedCollection<TKey>.GetReversedEnumerator() {
+            return GetReversedEnumerator();
+        }
+
         #endregion
     }
 
-    public class ValueCollection : AbstractViewCollection<TValue>, IGenericCollection<TValue>
+    public class ValueCollection : AbstractViewCollection<TValue>, ISequencedCollection<TValue>
     {
-        internal ValueCollection(ArrayDictionary<TKey, TValue> dictionary)
-            : base(dictionary) {
+        internal ValueCollection(ArrayDictionary<TKey, TValue> dictionary, bool reversed)
+            : base(dictionary, reversed) {
+        }
+
+        public override TValue PeekFirst() => _reversed ? _dictionary.PeekLastValue() : _dictionary.PeekFirstValue();
+
+        public override TValue PeekLast() => _reversed ? _dictionary.PeekFirstValue() : _dictionary.PeekLastValue();
+
+        public override bool TryPeekFirst(out TValue item) {
+            return _reversed ? _dictionary.TryPeekLastValue(out item) : _dictionary.TryPeekFirstValue(out item);
+        }
+
+        public override bool TryPeekLast(out TValue item) {
+            return _reversed ? _dictionary.TryPeekFirstValue(out item) : _dictionary.TryPeekLastValue(out item);
         }
 
         public override bool Contains(TValue item) {
             return _dictionary.ContainsValue(item);
         }
 
-        public override void CopyTo(TValue[] array, int arrayIndex) {
-            _dictionary.CopyValuesTo(array, arrayIndex, false);
+        public override void CopyTo(TValue[] array, int arrayIndex, bool reversed = false) {
+            _dictionary.CopyValuesTo(array, arrayIndex, _reversed ^ reversed);
         }
 
         #region itr
 
+        public ValueCollection Reversed() {
+            return _dictionary.CachedValues(_reversed);
+        }
+
         public ValueEnumerator GetEnumerator() {
-            return new ValueEnumerator(_dictionary);
+            return new ValueEnumerator(_dictionary, _reversed);
+        }
+
+        public ValueEnumerator GetReversedEnumerator() {
+            return new ValueEnumerator(_dictionary, !_reversed);
         }
 
         IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() {
             return GetEnumerator();
+        }
+
+        ISequencedCollection<TValue> ISequencedCollection<TValue>.Reversed() {
+            return Reversed();
+        }
+
+        IEnumerator<TValue> ISequencedCollection<TValue>.GetReversedEnumerator() {
+            return GetReversedEnumerator();
         }
 
         #endregion
@@ -763,32 +893,35 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
     private struct Enumerator
     {
         private readonly ArrayDictionary<TKey, TValue> _dictionary;
+        private readonly bool _reversed;
         private int _version;
 
         private int _nextNode;
         internal Node _currNode; // 支持remove
 
-        public Enumerator(ArrayDictionary<TKey, TValue> dictionary) {
+        public Enumerator(ArrayDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
+            _reversed = reversed;
             _version = dictionary._version;
 
-            _nextNode = 0;
+            _nextNode = reversed ? dictionary._count - 1 : 0;
             _currNode = default;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasNext() {
-            return _nextNode < _dictionary.Count;
+            return _nextNode > -1 && _nextNode < _dictionary.Count;
         }
 
         public bool MoveNext() {
             if (_version != _dictionary._version) {
                 throw new InvalidOperationException("EnumFailedVersion");
             }
-            if (_nextNode >= _dictionary.Count) {
+            if (_nextNode < 0 || _nextNode >= _dictionary.Count) {
                 return false;
             }
             _currNode = _dictionary._table[_nextNode];
-            _nextNode++;
+            _nextNode = _reversed ? _nextNode - 1 : _nextNode + 1;
             // 其实这期间node的value可能变化，安全的话应该每次创建新的Pair，但c#系统库没这么干 -- 保持不变也是一种策略
             // _current = CurrentOfNode(node);
             return true;
@@ -801,7 +934,8 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
             if (_currNode.IsNull()) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
-            _dictionary.RemoveNode(_nextNode - 1);
+            _nextNode = _reversed ? _nextNode + 1 : _nextNode - 1; // 回滚游标
+            _dictionary.RemoveNode(_nextNode);
             _currNode = default;
             _version = _dictionary._version;
         }
@@ -823,8 +957,8 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         private Enumerator _core;
         private KeyValuePair<TKey, TValue> _current;
 
-        public PairEnumerator(ArrayDictionary<TKey, TValue> dictionary) {
-            _core = new Enumerator(dictionary);
+        public PairEnumerator(ArrayDictionary<TKey, TValue> dictionary, bool reversed) {
+            _core = new Enumerator(dictionary, reversed);
             _current = default;
         }
 
@@ -862,8 +996,8 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         private Enumerator _core;
         private TKey _current;
 
-        public KeyEnumerator(ArrayDictionary<TKey, TValue> dictionary) {
-            _core = new Enumerator(dictionary);
+        public KeyEnumerator(ArrayDictionary<TKey, TValue> dictionary, bool reversed) {
+            _core = new Enumerator(dictionary, reversed);
             _current = default;
         }
 
@@ -901,8 +1035,8 @@ public sealed class ArrayDictionary<TKey, TValue> : IGenericDictionary<TKey, TVa
         private Enumerator _core;
         private TValue _current;
 
-        public ValueEnumerator(ArrayDictionary<TKey, TValue> dictionary) {
-            _core = new Enumerator(dictionary);
+        public ValueEnumerator(ArrayDictionary<TKey, TValue> dictionary, bool reversed) {
+            _core = new Enumerator(dictionary, reversed);
             _current = default;
         }
 

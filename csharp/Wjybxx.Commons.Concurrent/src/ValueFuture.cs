@@ -356,8 +356,6 @@ public readonly struct ValueFuture
 [AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder<>))]
 public readonly struct ValueFuture<T>
 {
-    private static readonly bool IsReferenceType = typeof(T).IsClass;
-
     private readonly object? _future;
     private readonly int _reentryId;
 
@@ -521,7 +519,7 @@ public readonly struct ValueFuture<T>
     public IFuture<T> AsFuture() {
         if (_future == null) {
             if (_ex == null) {
-                return (IsReferenceType && _result == null) // 避免测试null装箱
+                return (!typeof(T).IsValueType && _result == null) // 避免测试null装箱
                     ? Promise<T>.COMPLETED
                     : Promise<T>.FromResult(_result);
             }

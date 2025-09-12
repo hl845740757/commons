@@ -49,10 +49,8 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
 
     #region 元素检查
 
-    private static readonly bool isReferenceKey = !typeof(TK).IsValueType;
-
     protected static void CheckElement(TK? key, DsonValue? value) {
-        if (isReferenceKey && key == null) throw new ArgumentException("key cant be null");
+        if (!typeof(TK).IsValueType && key == null) throw new ArgumentException("key cant be null");
         if (value == null) throw new ArgumentException("value cant be null");
         if (value.DsonType == DsonType.Header) throw new ArgumentException("add Header");
     }

@@ -253,6 +253,43 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         return true;
     }
 
+    //
+    private TValue PeekFirstValue() {
+        if (_count == 0) {
+            throw ThrowHelper.CollectionEmptyException();
+        }
+        ref Node node = ref _table[_head];
+        return node.value;
+    }
+
+    private bool TryPeekFirstValue(out TValue value) {
+        if (_count == 0) {
+            value = default;
+            return false;
+        }
+        ref Node node = ref _table[_head];
+        value = node.value;
+        return true;
+    }
+
+    private TValue PeekLastValue() {
+        if (_count == 0) {
+            throw ThrowHelper.CollectionEmptyException();
+        }
+        ref Node node = ref _table[_tail];
+        return node.value;
+    }
+
+    private bool TryPeekLastValue(out TValue value) {
+        if (_count == 0) {
+            value = default;
+            return false;
+        }
+        ref Node node = ref _table[_tail];
+        value = node.value;
+        return true;
+    }
+
     #endregion
 
     #region contains/get
@@ -886,11 +923,10 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     #region core
 
     private static IEqualityComparer<TValue> ValComparer => EqualityComparer<TValue>.Default;
-    private static readonly bool IsKeyValueType = typeof(TKey).IsValueType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
-        if (!IsKeyValueType && key == null) { // 否则会装箱....不支持nullable
+        if (!typeof(TKey).IsValueType && key == null) { // 否则会装箱....不支持nullable
             return 0;
         }
         return HashCommon.Mix(keyComparer.GetHashCode(key));
@@ -909,7 +945,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         if (table == null) {
             return -1;
         }
-        if (!IsKeyValueType && key == null) {
+        if (!typeof(TKey).IsValueType && key == null) {
             Node nullNode = table[_mask + 1];
             return nullNode.IsNull() ? -(_mask + 2) : (_mask + 1);
         }
@@ -1343,32 +1379,16 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             : base(dictionary, reversed) {
         }
 
-        private TValue PeekNodeValue(int index) {
-            if (index < 0) throw ThrowHelper.CollectionEmptyException();
-            ref Node node = ref _dictionary._table[index];
-            return node.value;
-        }
+        public override TValue PeekFirst() => _reversed ? _dictionary.PeekLastValue() : _dictionary.PeekFirstValue();
 
-        private bool TryPeekNodeValue(int index, out TValue value) {
-            if (index < 0) {
-                value = default;
-                return false;
-            }
-            ref Node node = ref _dictionary._table[index];
-            value = node.value;
-            return true;
-        }
-
-        public override TValue PeekFirst() => _reversed ? PeekNodeValue(_dictionary._tail) : PeekNodeValue(_dictionary._head);
-
-        public override TValue PeekLast() => _reversed ? PeekNodeValue(_dictionary._head) : PeekNodeValue(_dictionary._tail);
+        public override TValue PeekLast() => _reversed ? _dictionary.PeekFirstValue() : _dictionary.PeekLastValue();
 
         public override bool TryPeekFirst(out TValue item) {
-            return _reversed ? TryPeekNodeValue(_dictionary._tail, out item) : TryPeekNodeValue(_dictionary._head, out item);
+            return _reversed ? _dictionary.TryPeekLastValue(out item) : _dictionary.TryPeekFirstValue(out item);
         }
 
         public override bool TryPeekLast(out TValue item) {
-            return _reversed ? TryPeekNodeValue(_dictionary._head, out item) : TryPeekNodeValue(_dictionary._tail, out item);
+            return _reversed ? _dictionary.TryPeekFirstValue(out item) : _dictionary.TryPeekLastValue(out item);
         }
 
         public override bool Contains(TValue item) {
@@ -1433,6 +1453,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             _currNode = default;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasNext() {
             return _nextNode != -1;
         }

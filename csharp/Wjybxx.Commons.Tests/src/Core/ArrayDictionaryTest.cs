@@ -88,5 +88,15 @@ public class ArrayDictionaryTest
                 throw new InvalidOperationException($"expectedKey:{expectedKey} == realKey:{realKey}");
             }
         }
+        // 逆序迭代测试
+        index = keyList.Count - 1;
+        var reversedEnumerator = dictionary.SequencedKeys().GetReversedEnumerator();
+        while (reversedEnumerator.MoveNext()) {
+            var expectedKey = keyList[index--];
+            string realKey = reversedEnumerator.Current;
+            if (expectedKey != realKey) {
+                throw new InvalidOperationException($"expectedKey:{expectedKey} == realKey:{realKey}");
+            }
+        }
     }
 }

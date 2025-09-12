@@ -30,7 +30,6 @@ namespace Wjybxx.Dson
 {
 public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName : IEquatable<TName>
 {
-    private static readonly bool isReferenceKey = !typeof(TName).IsValueType;
 #nullable disable
     protected readonly DsonWriterSettings settings;
     protected internal Context context;
@@ -81,7 +80,9 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     public bool IsAtName => context.state == DsonWriterState.Name;
 
     public void WriteName(TName name) {
-        if (isReferenceKey && name == null) throw new ArgumentNullException(nameof(name));
+        if (!typeof(TName).IsValueType && name == null) {
+            throw new ArgumentNullException(nameof(name));
+        }
         Context context = this.context;
         if (context.state != DsonWriterState.Name) {
             throw InvalidState(CollectionUtil.NewList(DsonWriterState.Name), context.state);

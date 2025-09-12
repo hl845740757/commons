@@ -529,11 +529,9 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 
     #region core
 
-    private static readonly bool IsKeyValueType = typeof(TKey).IsValueType;
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
-        if (!IsKeyValueType && key == null) { // 否则会装箱....不支持nullable
+        if (!typeof(TKey).IsValueType && key == null) { // 否则会装箱....不支持nullable
             return 0;
         }
         return HashCommon.Mix(keyComparer.GetHashCode(key));
@@ -553,7 +551,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         if (table == null) {
             return -1;
         }
-        if (!IsKeyValueType && key == null) {
+        if (!typeof(TKey).IsValueType && key == null) {
             Node nullNode = table[_mask + 1];
             return nullNode.IsNull() ? -(_mask + 2) : (_mask + 1);
         }
