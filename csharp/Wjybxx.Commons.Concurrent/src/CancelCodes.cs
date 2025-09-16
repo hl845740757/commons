@@ -55,7 +55,7 @@ public static class CancelCodes
 
     /** 默认原因 */
     public const int REASON_DEFAULT = 1;
-    /** 执行超时 -- {@link ICancelTokenSource#cancelAfter(int, long, TimeUnit)}就可使用 */
+    /** 执行超时 -- <see cref="CancelTokenSource.CancelAfter(int, long)"/>就可使用 */
     public const int REASON_TIMEOUT = 2;
     /** IExecutor关闭 -- IExecutor关闭不一定会取消任务 */
     public const int REASON_SHUTDOWN = 3;

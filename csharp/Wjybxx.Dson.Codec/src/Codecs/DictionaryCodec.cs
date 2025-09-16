@@ -68,6 +68,9 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         if (typeInfo == typeof(ConcurrentDictionary<K, V>)) {
             return FactoryKind.ConcurrentDictionary;
         }
+        if (typeInfo == typeof(ArrayDictionary<K, V>)) {
+            return FactoryKind.ArrayDictionary;
+        }
         // IDictionary接口类型根据配置决定
         return FactoryKind.Unknown;
     }
@@ -77,6 +80,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         Unknown,
         LinkedDictionary,
         ConcurrentDictionary,
+        ArrayDictionary
     }
 
     private enum KeyKind
@@ -101,6 +105,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         {
             FactoryKind.LinkedDictionary => new LinkedDictionary<K, V>(count),
             FactoryKind.ConcurrentDictionary => new ConcurrentDictionary<K, V>(),
+            FactoryKind.ArrayDictionary => new ArrayDictionary<K, V>(count),
             _ => new Dictionary<K, V>(count)
         };
     }

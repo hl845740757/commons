@@ -63,8 +63,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     private float _loadFactor;
     /** 用于代替key自身的equals和hashcode计算；这一点C#的设计做的要好些 */
     private IEqualityComparer<TKey> _keyComparer;
-
-    private ReversedSequenceSetView<TKey>? _reversed;
+    // private ReversedSequenceSetView<TKey>? _reversed;
 
     public LinkedHashSet()
         : this(0, HashCommon.DefaultLoadFactor) {
@@ -503,10 +502,11 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     #region itr
 
     public ISequencedSet<TKey> Reversed() {
-        if (_reversed == null) {
-            _reversed = new ReversedSequenceSetView<TKey>(this);
-        }
-        return _reversed;
+        return new ReversedSequenceSetView<TKey>(this);
+        // if (_reversed == null) {
+        //     _reversed = new ReversedSequenceSetView<TKey>(this);
+        // }
+        // return _reversed;
     }
 
     IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() {

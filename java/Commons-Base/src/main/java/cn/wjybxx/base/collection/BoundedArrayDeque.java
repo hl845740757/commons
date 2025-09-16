@@ -60,9 +60,7 @@ public class BoundedArrayDeque<E> implements Deque<E> {
             return;
         }
         if (capacity == 0) {
-            if (arrayDeque.size() > 0
-                    && overflowBehavior != DequeOverflowBehavior.DISCARD_HEAD
-                    && overflowBehavior != DequeOverflowBehavior.DISCARD_TAIL) {
+            if (arrayDeque.size() > 0 && overflowBehavior == DequeOverflowBehavior.THROW_EXCEPTION) {
                 throw new IllegalStateException("queue is full");
             }
             arrayDeque.clear();

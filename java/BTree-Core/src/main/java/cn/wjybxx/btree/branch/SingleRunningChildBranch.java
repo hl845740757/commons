@@ -75,15 +75,6 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
         return runningIndex + 1;
     }
 
-    /** 成功的子节点数量 */
-    public int getSucceededCount() {
-        int r = 0;
-        for (int i = 0; i < runningIndex; i++) {
-            if (children.get(i).isSucceeded()) r++;
-        }
-        return r;
-    }
-
     public final TaskInlineHelper<T> getInlineHelper() {
         return inlineHelper;
     }

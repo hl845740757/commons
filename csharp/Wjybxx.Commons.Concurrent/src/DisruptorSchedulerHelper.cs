@@ -17,11 +17,9 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Concurrent
 {

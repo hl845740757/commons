@@ -198,18 +198,21 @@ public sealed class TypeMetaConfig
         // 特殊组件
         config.Add(typeof(object), "Object", "object"); // object会作为泛型参数...
         config.Add(typeof(Nullable<>), "Nullable"); // Nullable
+        config.Add(typeof(KeyValuePair<,>), "KVPair"); // 字典Pair
 
         // 基础集合
-        config.Add(typeof(ICollection<>), "ICollection", "ICollection`1");
-        config.Add(typeof(IList<>), "IList", "IList`1");
-        config.Add(typeof(List<>), "List", "List`1");
+        if (includeCollections) {
+            config.Add(typeof(ICollection<>), "ICollection", "ICollection`1");
+            config.Add(typeof(IList<>), "IList", "IList`1");
+            config.Add(typeof(List<>), "List", "List`1");
 
-        config.Add(typeof(IDictionary<,>), "IDictionary", "IDictionary`2");
-        config.Add(typeof(Dictionary<,>), "Dictionary", "Dictionary`2");
-        config.Add(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2");
-        config.Add(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2");
+            config.Add(typeof(IDictionary<,>), "IDictionary", "IDictionary`2");
+            config.Add(typeof(Dictionary<,>), "Dictionary", "Dictionary`2");
+            config.Add(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2");
+            config.Add(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2");
 
-        config.Add(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy");
+            config.Add(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy");
+        }
         return config;
     }
 

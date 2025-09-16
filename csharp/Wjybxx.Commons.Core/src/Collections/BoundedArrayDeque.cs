@@ -104,9 +104,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         T[] elements;
         // 0
         if (capacity == 0) {
-            if (count > 0
-                && overflowBehavior != DequeOverflowBehavior.DiscardHead
-                && overflowBehavior != DequeOverflowBehavior.DiscardTail) {
+            if (count > 0 && overflowBehavior == DequeOverflowBehavior.ThrowException) {
                 throw new InvalidOperationException("capacity < Count");
             }
             elements = Array.Empty<T>();

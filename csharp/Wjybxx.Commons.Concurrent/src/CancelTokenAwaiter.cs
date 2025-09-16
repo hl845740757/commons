@@ -55,7 +55,7 @@ public readonly struct CancelTokenAwaiter : ICriticalNotifyCompletion
         return _cts.CancelCode;
     }
 
-    internal static readonly Action<object> invoker = state => ((Action)state).Invoke();
+    private static readonly Action<object> invoker = state => ((Action)state).Invoke();
 
     // 3. OnCompleted
     /// <summary>

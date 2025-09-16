@@ -52,7 +52,7 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     private readonly int _count;
     private readonly int _mask;
     private readonly IEqualityComparer<TKey> _keyComparer;
-    private ReversedSequenceSetView<TKey>? _reversed;
+    // private ReversedSequenceSetView<TKey>? _reversed;
 
     private ImmutableSet(TKey[] keyArray, IEqualityComparer<TKey>? keyComparer = null) {
         if (keyComparer == null) {
@@ -290,10 +290,11 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     #region itr
 
     public ISequencedSet<TKey> Reversed() {
-        if (_reversed == null) {
-            _reversed = new ReversedSequenceSetView<TKey>(this);
-        }
-        return _reversed;
+        return new ReversedSequenceSetView<TKey>(this);
+        // if (_reversed == null) {
+        //     _reversed = new ReversedSequenceSetView<TKey>(this);
+        // }
+        // return _reversed;
     }
 
     IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() {

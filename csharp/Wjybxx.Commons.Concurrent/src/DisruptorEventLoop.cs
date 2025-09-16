@@ -190,7 +190,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     public override void Execute(ITask task) {
         if (task == null) throw new ArgumentNullException(nameof(task));
-        if ((task.Options & TaskOptions.LOCAL_ORDER) != 0 
+        if ((task.Options & TaskOptions.LOCAL_ORDER) != 0
             && task is IScheduledFutureTask futureTask
             && InEventLoop()) {
             schedulerHelper.DoSchedule(futureTask);

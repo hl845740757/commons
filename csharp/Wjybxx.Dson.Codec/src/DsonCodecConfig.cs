@@ -481,6 +481,7 @@ public sealed class DsonCodecConfig
         // 特殊组件
         config.AddGenericCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
         config.AddGenericCodec(typeof(Nullable<>), typeof(NullableCodec<>));
+        config.AddGenericCodec(typeof(KeyValuePair<,>), typeof(PairCodec<,>));
 
         // readonly
         config.AddGenericCodec(typeof(IReadOnlyCollection<>), typeof(EnumerableCodec<>));
