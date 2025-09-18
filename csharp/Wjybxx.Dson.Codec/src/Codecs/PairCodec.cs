@@ -34,11 +34,20 @@ public class PairCodec<K, V> : IDsonCodec<KeyValuePair<K, V>>
     }
 
     public KeyValuePair<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        reader.ReadStartObject();
-        K key = reader.ReadObject<K>("key");
-        V value = reader.ReadObject<V>("value");
-        reader.ReadEndObject();
-        return new KeyValuePair<K, V>(key, value);
+        if (reader.CurrentDsonType == DsonType.Object) {
+            reader.ReadStartObject();
+            K key = reader.ReadObject<K>("key");
+            V value = reader.ReadObject<V>("value");
+            reader.ReadEndObject();
+            return new KeyValuePair<K, V>(key, value);
+        } else {
+            // Array
+            reader.ReadStartArray();
+            K key = reader.ReadObject<K>("key");
+            V value = reader.ReadObject<V>("value");
+            reader.ReadEndArray();
+            return new KeyValuePair<K, V>(key, value);
+        }
     }
 }
 }
