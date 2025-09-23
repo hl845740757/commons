@@ -22,12 +22,10 @@ import cn.wjybxx.dson.types.*;
 import java.util.Objects;
 
 /**
- * 0. Object/Header先写入name再写入value，数组直接写入value。
- * 1.写数组普通元素的时候，{@code name}传null或空字符串；
- * 2.写数组嵌套对象时使用无name参数的start方法（实在不想定义太多的方法）；
- * 3.为减少API数量，我们的所有简单值写入都是带有name参数的，在已经写入name的情况下，接口的name参数将被忽略。
- * 4.double、boolean、null由于可以从无符号字符串精确解析得出，因此可以总是不输出类型标签；
- * 5.内置结构体总是输出类型标签，且总是Flow模式，可以降低使用复杂度；
+ * 1.Object/Header先写入name再写入value，数组直接写入value。
+ * 2.已写入name的情况下，调用包含name的写入value方法时，name将被忽略。
+ * 3.double、boolean、null由于可以从无符号字符串精确解析得出，因此可以总是不输出类型标签；
+ * 4.内置结构体总是输出类型标签，且总是Flow模式，可以降低使用复杂度；
  *
  * @author wjybxx
  * date - 2023/4/20
@@ -86,31 +84,35 @@ public interface DsonWriter extends AutoCloseable {
 
     void writeTimestamp(String name, Timestamp timestamp);
 
-    // 快捷方法
+    // endregion
 
-    default void writeInt32(String name, int value) {
-        writeInt32(name, value, NumberStyle.TYPED);
-    }
+    // region 简单值(无name版)
 
-    default void writeInt64(String name, long value) {
-        writeInt64(name, value, NumberStyle.TYPED);
-    }
+    void writeInt32(int value, INumberStyle style);
 
-    default void writeFloat(String name, float value) {
-        writeFloat(name, value, NumberStyle.TYPED);
-    }
+    void writeInt64(long value, INumberStyle style);
 
-    default void writeDouble(String name, double value) {
-        writeDouble(name, value, NumberStyle.SIMPLE);
-    }
+    void writeFloat(float value, INumberStyle style);
 
-    default void writeString(String name, String value) {
-        writeString(name, value, StringStyle.AUTO);
-    }
+    void writeDouble(double value, INumberStyle style);
 
-    default void writeBinary(String name, byte[] bytes) {
-        writeBinary(name, bytes, 0, bytes.length);
-    }
+    void writeBool(boolean value);
+
+    void writeString(String value, StringStyle style);
+
+    void writeNull();
+
+    void writeBinary(Binary binary);
+
+    void writeBinary(byte[] bytes, int offset, int len);
+
+    void writePtr(ObjectPtr objectPtr);
+
+    void writeLitePtr(ObjectLitePtr objectLitePtr);
+
+    void writeDateTime(ExtDateTime dateTime);
+
+    void writeTimestamp(Timestamp timestamp);
 
     // endregion
 
@@ -198,4 +200,54 @@ public interface DsonWriter extends AutoCloseable {
 
     // endregion
 
+    // region 快捷方法
+
+    default void writeInt32(String name, int value) {
+        writeInt32(name, value, NumberStyle.TYPED);
+    }
+
+    default void writeInt64(String name, long value) {
+        writeInt64(name, value, NumberStyle.TYPED);
+    }
+
+    default void writeFloat(String name, float value) {
+        writeFloat(name, value, NumberStyle.TYPED);
+    }
+
+    default void writeDouble(String name, double value) {
+        writeDouble(name, value, NumberStyle.SIMPLE);
+    }
+
+    default void writeString(String name, String value) {
+        writeString(name, value, StringStyle.AUTO);
+    }
+
+    default void writeBinary(String name, byte[] bytes) {
+        writeBinary(name, bytes, 0, bytes.length);
+    }
+
+    default void writeInt32(int value) {
+        writeInt32(value, NumberStyle.TYPED);
+    }
+
+    default void writeInt64(long value) {
+        writeInt64(value, NumberStyle.TYPED);
+    }
+
+    default void writeFloat(float value) {
+        writeFloat(value, NumberStyle.TYPED);
+    }
+
+    default void writeDouble(double value) {
+        writeDouble(value, NumberStyle.SIMPLE);
+    }
+
+    default void writeString(String value) {
+        writeString(value, StringStyle.AUTO);
+    }
+
+    default void writeBinary(byte[] bytes) {
+        writeBinary(bytes, 0, bytes.length);
+    }
+    // endregion
 }

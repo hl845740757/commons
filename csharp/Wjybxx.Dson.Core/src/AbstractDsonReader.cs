@@ -294,6 +294,93 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    #region 无name版
+
+    public int ReadInt32() {
+        EnsureValueState(context, DsonType.Int32);
+        int value = DoReadInt32();
+        SetNextState();
+        return value;
+    }
+
+    public long ReadInt64() {
+        EnsureValueState(context, DsonType.Int64);
+        long value = DoReadInt64();
+        SetNextState();
+        return value;
+    }
+
+    public float ReadFloat() {
+        EnsureValueState(context, DsonType.Float);
+        float value = DoReadFloat();
+        SetNextState();
+        return value;
+    }
+
+    public double ReadDouble() {
+        EnsureValueState(context, DsonType.Double);
+        double value = DoReadDouble();
+        SetNextState();
+        return value;
+    }
+
+    public bool ReadBool() {
+        EnsureValueState(context, DsonType.Bool);
+        bool value = DoReadBool();
+        SetNextState();
+        return value;
+    }
+
+    public string ReadString() {
+        EnsureValueState(context, DsonType.String);
+        string value = DoReadString();
+        SetNextState();
+        return value;
+    }
+
+    public void ReadNull() {
+        EnsureValueState(context, DsonType.Null);
+        DoReadNull();
+        SetNextState();
+    }
+
+    public Binary ReadBinary() {
+        EnsureValueState(context, DsonType.Binary);
+        Binary value = DoReadBinary();
+        SetNextState();
+        return value;
+    }
+
+    public ObjectPtr ReadPtr() {
+        EnsureValueState(context, DsonType.Pointer);
+        ObjectPtr value = DoReadPtr();
+        SetNextState();
+        return value;
+    }
+
+    public ObjectLitePtr ReadLitePtr() {
+        EnsureValueState(context, DsonType.LitePointer);
+        ObjectLitePtr value = DoReadLitePtr();
+        SetNextState();
+        return value;
+    }
+
+    public ExtDateTime ReadDateTime() {
+        EnsureValueState(context, DsonType.DateTime);
+        ExtDateTime value = DoReadDateTime();
+        SetNextState();
+        return value;
+    }
+
+    public Timestamp ReadTimestamp() {
+        EnsureValueState(context, DsonType.Timestamp);
+        Timestamp value = DoReadTimestamp();
+        SetNextState();
+        return value;
+    }
+
+    #endregion
+
     protected abstract int DoReadInt32();
 
     protected abstract long DoReadInt64();

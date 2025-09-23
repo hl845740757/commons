@@ -417,40 +417,40 @@ public static class Dsons
         }
         switch (dsonValue.DsonType) {
             case DsonType.Int32:
-                writer.WriteInt32(name, dsonValue.AsInt32(), writer.Settings.numberStyle);
+                writer.WriteInt32(dsonValue.AsInt32(), writer.Settings.numberStyle);
                 break;
             case DsonType.Int64:
-                writer.WriteInt64(name, dsonValue.AsInt64(), writer.Settings.numberStyle);
+                writer.WriteInt64(dsonValue.AsInt64(), writer.Settings.numberStyle);
                 break;
             case DsonType.Float:
-                writer.WriteFloat(name, dsonValue.AsFloat(), writer.Settings.numberStyle);
+                writer.WriteFloat(dsonValue.AsFloat(), writer.Settings.numberStyle);
                 break;
             case DsonType.Double:
-                writer.WriteDouble(name, dsonValue.AsDouble(), NumberStyles.Simple);
+                writer.WriteDouble(dsonValue.AsDouble(), NumberStyles.Simple);
                 break;
             case DsonType.Bool:
-                writer.WriteBool(name, dsonValue.AsBool());
+                writer.WriteBool(dsonValue.AsBool());
                 break;
             case DsonType.String:
-                writer.WriteString(name, dsonValue.AsString());
+                writer.WriteString(dsonValue.AsString());
                 break;
             case DsonType.Null:
-                writer.WriteNull(name);
+                writer.WriteNull();
                 break;
             case DsonType.Binary:
-                writer.WriteBinary(name, dsonValue.AsBinary());
+                writer.WriteBinary(dsonValue.AsBinary());
                 break;
             case DsonType.Pointer:
-                writer.WritePtr(name, dsonValue.AsPointer());
+                writer.WritePtr(dsonValue.AsPointer());
                 break;
             case DsonType.LitePointer:
-                writer.WriteLitePtr(name, dsonValue.AsLitePointer());
+                writer.WriteLitePtr(dsonValue.AsLitePointer());
                 break;
             case DsonType.DateTime:
-                writer.WriteDateTime(name, dsonValue.AsDateTime());
+                writer.WriteDateTime(dsonValue.AsDateTime());
                 break;
             case DsonType.Timestamp: {
-                writer.WriteTimestamp(name, dsonValue.AsTimestamp());
+                writer.WriteTimestamp(dsonValue.AsTimestamp());
                 break;
             }
             case DsonType.Header:
@@ -471,23 +471,22 @@ public static class Dsons
     public static DsonValue ReadDsonValue<TName>(IDsonReader<TName> reader) where TName : IEquatable<TName> {
         DsonType dsonType = reader.CurrentDsonType;
         reader.SkipName();
-        TName name = default;
         switch (dsonType) {
-            case DsonType.Int32: return DsonInt32.ValueOf(reader.ReadInt32(name));
-            case DsonType.Int64: return DsonInt64.ValueOf(reader.ReadInt64(name));
-            case DsonType.Float: return DsonFloat.ValueOf(reader.ReadFloat(name));
-            case DsonType.Double: return DsonDouble.ValueOf(reader.ReadDouble(name));
-            case DsonType.Bool: return DsonBool.ValueOf(reader.ReadBool(name));
-            case DsonType.String: return new DsonString(reader.ReadString(name));
+            case DsonType.Int32: return DsonInt32.ValueOf(reader.ReadInt32());
+            case DsonType.Int64: return DsonInt64.ValueOf(reader.ReadInt64());
+            case DsonType.Float: return DsonFloat.ValueOf(reader.ReadFloat());
+            case DsonType.Double: return DsonDouble.ValueOf(reader.ReadDouble());
+            case DsonType.Bool: return DsonBool.ValueOf(reader.ReadBool());
+            case DsonType.String: return new DsonString(reader.ReadString());
             case DsonType.Null: {
-                reader.ReadNull(name);
+                reader.ReadNull();
                 return DsonNull.NULL;
             }
-            case DsonType.Binary: return new DsonBinary(reader.ReadBinary(name));
-            case DsonType.Pointer: return new DsonPointer(reader.ReadPtr(name));
-            case DsonType.LitePointer: return new DsonLitePointer(reader.ReadLitePtr(name));
-            case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime(name));
-            case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp(name));
+            case DsonType.Binary: return new DsonBinary(reader.ReadBinary());
+            case DsonType.Pointer: return new DsonPointer(reader.ReadPtr());
+            case DsonType.LitePointer: return new DsonLitePointer(reader.ReadLitePtr());
+            case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
+            case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());
             case DsonType.Header: {
                 DsonHeader<TName> header = new DsonHeader<TName>();
                 ReadHeader(reader, header);

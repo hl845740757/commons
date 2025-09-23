@@ -23,8 +23,8 @@ using Wjybxx.Dson.Types;
 namespace Wjybxx.Dson
 {
 /// <summary>
-/// 1. 读取数组内普通成员时，name传null或零值，读取嵌套对象时使用无name参数的start方法
-/// 2. 为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
+/// 1. Object/Header先读name再读value，数组直接读value。
+/// 2. 已读取name的情况下，使用包含name的方法，name将被忽略。
 /// </summary>
 /// <typeparam name="TName">name的类型，string或<see cref="int"/></typeparam>
 public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName>
@@ -138,6 +138,34 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     ExtDateTime ReadDateTime(TName name);
 
     Timestamp ReadTimestamp(TName name);
+
+    #endregion
+
+    #region 简单值(无name版)
+
+    int ReadInt32();
+
+    long ReadInt64();
+
+    float ReadFloat();
+
+    double ReadDouble();
+
+    bool ReadBool();
+
+    string ReadString();
+
+    void ReadNull();
+
+    Binary ReadBinary();
+
+    ObjectPtr ReadPtr();
+
+    ObjectLitePtr ReadLitePtr();
+
+    ExtDateTime ReadDateTime();
+
+    Timestamp ReadTimestamp();
 
     #endregion
 

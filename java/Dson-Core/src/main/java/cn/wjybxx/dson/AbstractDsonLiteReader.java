@@ -311,6 +311,103 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         return value;
     }
 
+    // region 无name版
+    @Override
+    public int readInt32() {
+        ensureValueState(context, DsonType.INT32);
+        int value = doReadInt32();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public long readInt64() {
+        ensureValueState(context, DsonType.INT64);
+        long value = doReadInt64();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public float readFloat() {
+        ensureValueState(context, DsonType.FLOAT);
+        float value = doReadFloat();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public double readDouble() {
+        ensureValueState(context, DsonType.DOUBLE);
+        double value = doReadDouble();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public boolean readBool() {
+        ensureValueState(context, DsonType.BOOL);
+        boolean value = doReadBool();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public String readString() {
+        ensureValueState(context, DsonType.STRING);
+        String value = doReadString();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public void readNull() {
+        ensureValueState(context, DsonType.NULL);
+        doReadNull();
+        setNextState();
+    }
+
+    @Override
+    public Binary readBinary() {
+        ensureValueState(context, DsonType.BINARY);
+        Binary value = doReadBinary();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public ObjectPtr readPtr() {
+        ensureValueState(context, DsonType.POINTER);
+        ObjectPtr value = doReadPtr();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public ObjectLitePtr readLitePtr() {
+        ensureValueState(context, DsonType.LITE_POINTER);
+        ObjectLitePtr value = doReadLitePtr();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public ExtDateTime readDateTime() {
+        ensureValueState(context, DsonType.DATETIME);
+        ExtDateTime value = doReadDateTime();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public Timestamp readTimestamp() {
+        ensureValueState(context, DsonType.TIMESTAMP);
+        Timestamp value = doReadTimestamp();
+        setNextState();
+        return value;
+    }
+    // endregion
+
     protected abstract int doReadInt32();
 
     protected abstract long doReadInt64();

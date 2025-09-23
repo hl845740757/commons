@@ -20,16 +20,10 @@ import cn.wjybxx.dson.types.*;
 
 /**
  * 由于java的泛型是擦除实现，我们为避免拆装箱开销，提供了几乎重复的实现。
- * <p>
- * 0.Object/Header先写入name再写入value，数组直接写入value。
- * 1.写数组简单元素的时候，name为字符串类型时，传null或空字符串，name为数字类型时传0；
- * 2.写数组对象元素时使用无name参数的start方法（实在不想定义太多的方法）；
- * 3.为减少API数量，我们的所有简单值写入都是带有name参数的，在已经写入name的情况下，接口的name参数将被忽略。
- * 4.double、boolean、null由于可以从无符号字符串精确解析得出，因此可以总是不输出类型标签，
- * 5.内置结构体总是输出类型标签，且总是Flow模式，可以降低使用复杂度；
  *
  * @author wjybxx
  * date - 2023/4/20
+ * @see DsonWriter
  */
 @SuppressWarnings("unused")
 public interface DsonLiteWriter extends AutoCloseable {
@@ -84,6 +78,37 @@ public interface DsonLiteWriter extends AutoCloseable {
     void writeDateTime(int name, ExtDateTime dateTime);
 
     void writeTimestamp(int name, Timestamp timestamp);
+
+    // endregion
+
+    // region 简单值(无name版)
+
+    void writeInt32(int value);
+
+    void writeInt64(long value);
+
+    void writeFloat(float value);
+
+    void writeDouble(double value);
+
+    void writeBool(boolean value);
+
+    void writeString(String value);
+
+    void writeNull();
+
+    void writeBinary(Binary binary);
+
+    void writeBinary(byte[] bytes, int offset, int len);
+
+    void writePtr(ObjectPtr objectPtr);
+
+    void writeLitePtr(ObjectLitePtr objectLitePtr);
+
+    void writeDateTime(ExtDateTime dateTime);
+
+    void writeTimestamp(Timestamp timestamp);
+
     // endregion
 
     // region 容器

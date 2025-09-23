@@ -231,18 +231,18 @@ public class DsonLites {
             writer.writeName(name);
         }
         switch (dsonValue.getDsonType()) {
-            case INT32 -> writer.writeInt32(name, dsonValue.asInt32());
-            case INT64 -> writer.writeInt64(name, dsonValue.asInt64());
-            case FLOAT -> writer.writeFloat(name, dsonValue.asFloat());
-            case DOUBLE -> writer.writeDouble(name, dsonValue.asDouble());
-            case BOOL -> writer.writeBool(name, dsonValue.asBool());
-            case STRING -> writer.writeString(name, dsonValue.asString());
-            case NULL -> writer.writeNull(name);
-            case BINARY -> writer.writeBinary(name, dsonValue.asBinary());
-            case POINTER -> writer.writePtr(name, dsonValue.asPointer());
-            case LITE_POINTER -> writer.writeLitePtr(name, dsonValue.asLitePointer());
-            case DATETIME -> writer.writeDateTime(name, dsonValue.asDateTime());
-            case TIMESTAMP -> writer.writeTimestamp(name, dsonValue.asTimestamp());
+            case INT32 -> writer.writeInt32(dsonValue.asInt32());
+            case INT64 -> writer.writeInt64(dsonValue.asInt64());
+            case FLOAT -> writer.writeFloat(dsonValue.asFloat());
+            case DOUBLE -> writer.writeDouble(dsonValue.asDouble());
+            case BOOL -> writer.writeBool(dsonValue.asBool());
+            case STRING -> writer.writeString(dsonValue.asString());
+            case NULL -> writer.writeNull();
+            case BINARY -> writer.writeBinary(dsonValue.asBinary());
+            case POINTER -> writer.writePtr(dsonValue.asPointer());
+            case LITE_POINTER -> writer.writeLitePtr(dsonValue.asLitePointer());
+            case DATETIME -> writer.writeDateTime(dsonValue.asDateTime());
+            case TIMESTAMP -> writer.writeTimestamp(dsonValue.asTimestamp());
             case HEADER -> writeHeader(writer, dsonValue.asHeaderLite());
             case ARRAY -> writeArray(writer, dsonValue.asArrayLite());
             case OBJECT -> writeObject(writer, dsonValue.asObjectLite());
@@ -253,23 +253,22 @@ public class DsonLites {
     public static DsonValue readDsonValue(DsonLiteReader reader) {
         DsonType dsonType = reader.getCurrentDsonType();
         reader.skipName();
-        final int name = 0;
         return switch (dsonType) {
-            case INT32 -> DsonInt32.valueOf(reader.readInt32(name));
-            case INT64 -> DsonInt64.valueOf(reader.readInt64(name));
-            case FLOAT -> DsonFloat.valueOf(reader.readFloat(name));
-            case DOUBLE -> DsonDouble.valueOf(reader.readDouble(name));
-            case BOOL -> DsonBool.valueOf(reader.readBool(name));
-            case STRING -> new DsonString(reader.readString(name));
+            case INT32 -> DsonInt32.valueOf(reader.readInt32());
+            case INT64 -> DsonInt64.valueOf(reader.readInt64());
+            case FLOAT -> DsonFloat.valueOf(reader.readFloat());
+            case DOUBLE -> DsonDouble.valueOf(reader.readDouble());
+            case BOOL -> DsonBool.valueOf(reader.readBool());
+            case STRING -> new DsonString(reader.readString());
             case NULL -> {
-                reader.readNull(name);
+                reader.readNull();
                 yield DsonNull.NULL;
             }
-            case BINARY -> new DsonBinary(reader.readBinary(name));
-            case POINTER -> new DsonPointer(reader.readPtr(name));
-            case LITE_POINTER -> new DsonLitePointer(reader.readLitePtr(name));
-            case DATETIME -> new DsonDateTime(reader.readDateTime(name));
-            case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp(name));
+            case BINARY -> new DsonBinary(reader.readBinary());
+            case POINTER -> new DsonPointer(reader.readPtr());
+            case LITE_POINTER -> new DsonLitePointer(reader.readLitePtr());
+            case DATETIME -> new DsonDateTime(reader.readDateTime());
+            case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp());
             case HEADER -> {
                 DsonHeader<Integer> header = new DsonHeader<>();
                 readHeader(reader, header);

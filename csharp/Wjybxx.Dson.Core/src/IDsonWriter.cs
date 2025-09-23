@@ -24,12 +24,10 @@ using Wjybxx.Dson.Types;
 namespace Wjybxx.Dson
 {
 /// <summary>
-/// 0. Object/Header先写入name再写入value，数组直接写入value。
-/// 1. 写数组简单元素的时候，name为字符串类型时，传null或空字符串，name为数字类型时传0；
-/// 2. 写数组对象元素时使用无name参数的start方法（实在不想定义太多的方法）；
-/// 3. 为减少API数量，我们的所有简单值写入都是带有name参数的，在已经写入name的情况下，接口的name参数将被忽略。
-/// 4. double、bool、null由于可以从无符号字符串精确解析得出，因此可以总是不输出类型标签；
-/// 5. 内置结构体总是输出类型标签，且总是Flow模式，可以降低使用复杂度；
+/// 1. Object/Header先写入name再写入value，数组直接写入value。
+/// 2. 已写入name的情况下，调用包含name的写入value方法时，name将被忽略。
+/// 3. double、bool、null由于可以从无符号字符串精确解析得出，因此可以总是不输出类型标签；
+/// 4. 内置结构体总是输出类型标签，且总是Flow模式，可以降低使用复杂度；
 /// </summary>
 /// <typeparam name="TName">name的类型，string或<see cref="int"/></typeparam>
 public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName>
@@ -64,7 +62,7 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     /// <param name="name"></param>
     void WriteName(TName name);
 
-    #region 简单值
+    #region 简单值(name版)
 
     /// <summary>
     /// 写入一个int值
@@ -98,32 +96,40 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteTimestamp(TName name, in Timestamp timestamp);
 
-    // 快捷方法
+    #endregion
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteInt32(TName name, int value) {
-        WriteInt32(name, value, NumberStyles.Typed);
-    }
+    #region 简单值(无Name版)
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteInt64(TName name, long value) {
-        WriteInt64(name, value, NumberStyles.Typed);
-    }
+    /// <summary>
+    /// 写入一个int值
+    /// </summary>
+    /// <param name="value">要写入的值</param>
+    /// <param name="style">数字的文本编码类型</param>
+    void WriteInt32(int value, INumberStyle style);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteFloat(TName name, float value) {
-        WriteFloat(name, value, NumberStyles.Typed);
-    }
+    void WriteInt64(long value, INumberStyle style);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteDouble(TName name, double value) {
-        WriteDouble(name, value, NumberStyles.Simple);
-    }
+    void WriteFloat(float value, INumberStyle style);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteBinary(TName name, byte[] bytes) {
-        WriteBinary(name, bytes, 0, bytes.Length);
-    }
+    void WriteDouble(double value, INumberStyle style);
+
+    void WriteBool(bool value);
+
+    void WriteString(string value, StringStyle style = StringStyle.Auto);
+
+    void WriteNull();
+
+    void WriteBinary(Binary binary);
+
+    void WriteBinary(byte[] bytes, int offset, int len);
+
+    void WritePtr(in ObjectPtr objectPtr);
+
+    void WriteLitePtr(in ObjectLitePtr objectLitePtr);
+
+    void WriteDateTime(in ExtDateTime dateTime);
+
+    void WriteTimestamp(in Timestamp timestamp);
 
     #endregion
 

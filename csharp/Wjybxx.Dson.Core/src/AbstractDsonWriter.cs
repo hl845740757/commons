@@ -114,7 +114,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void SetNextState() {
         switch (context.contextType) {
             case DsonContextType.Object:
@@ -221,6 +221,93 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         DoWriteTimestamp(in timestamp);
         SetNextState();
     }
+
+    #region 无name版
+
+    public void WriteInt32(int value, INumberStyle style) {
+        EnsureValueState(context);
+        DoWriteInt32(value, style);
+        SetNextState();
+    }
+
+    public void WriteInt64(long value, INumberStyle style) {
+        EnsureValueState(context);
+        DoWriteInt64(value, style);
+        SetNextState();
+    }
+
+    public void WriteFloat(float value, INumberStyle style) {
+        EnsureValueState(context);
+        DoWriteFloat(value, style);
+        SetNextState();
+    }
+
+    public void WriteDouble(double value, INumberStyle style) {
+        EnsureValueState(context);
+        DoWriteDouble(value, style);
+        SetNextState();
+    }
+
+    public void WriteBool(bool value) {
+        EnsureValueState(context);
+        DoWriteBool(value);
+        SetNextState();
+    }
+
+    public void WriteString(string value, StringStyle style = StringStyle.Auto) {
+        if (value == null) throw new ArgumentNullException(nameof(value));
+        EnsureValueState(context);
+        DoWriteString(value, style);
+        SetNextState();
+    }
+
+    public void WriteNull() {
+        EnsureValueState(context);
+        DoWriteNull();
+        SetNextState();
+    }
+
+    public void WriteBinary(Binary binary) {
+        if (binary == null) {
+            throw new ArgumentNullException(nameof(binary));
+        }
+        EnsureValueState(context);
+        DoWriteBinary(binary);
+        SetNextState();
+    }
+
+    public void WriteBinary(byte[] bytes, int offset, int len) {
+        ByteBufferUtil.CheckBuffer(bytes, offset, len);
+        EnsureValueState(context);
+        DoWriteBinary(bytes, offset, len);
+        SetNextState();
+    }
+
+    public void WritePtr(in ObjectPtr objectPtr) {
+        EnsureValueState(context);
+        DoWritePtr(in objectPtr);
+        SetNextState();
+    }
+
+    public void WriteLitePtr(in ObjectLitePtr objectLitePtr) {
+        EnsureValueState(context);
+        DoWriteLitePtr(in objectLitePtr);
+        SetNextState();
+    }
+
+    public void WriteDateTime(in ExtDateTime dateTime) {
+        EnsureValueState(context);
+        DoWriteDateTime(in dateTime);
+        SetNextState();
+    }
+
+    public void WriteTimestamp(in Timestamp timestamp) {
+        EnsureValueState(context);
+        DoWriteTimestamp(in timestamp);
+        SetNextState();
+    }
+
+    #endregion
 
     protected abstract void DoWriteInt32(int value, INumberStyle style);
 

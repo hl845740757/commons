@@ -420,6 +420,13 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
 
     #region sp
 
+    public void RemoveAt(int index) {
+        if (index < 0 || index >= _count) {
+            throw new ArgumentOutOfRangeException();
+        }
+        RemoveNode(index);
+    }
+
     public TKey GetKey(int index) {
         if (index < 0 || index >= _count) {
             throw new ArgumentOutOfRangeException();

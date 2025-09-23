@@ -223,6 +223,105 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
         setNextState();
     }
 
+    // region 无name版
+    @Override
+    public void writeInt32(int value) {
+        ensureValueState(context);
+        doWriteInt32(value);
+        setNextState();
+    }
+
+    @Override
+    public void writeInt64(long value) {
+        ensureValueState(context);
+        doWriteInt64(value);
+        setNextState();
+    }
+
+    @Override
+    public void writeFloat(float value) {
+        ensureValueState(context);
+        doWriteFloat(value);
+        setNextState();
+    }
+
+    @Override
+    public void writeDouble(double value) {
+        ensureValueState(context);
+        doWriteDouble(value);
+        setNextState();
+    }
+
+    @Override
+    public void writeBool(boolean value) {
+        ensureValueState(context);
+        doWriteBool(value);
+        setNextState();
+    }
+
+    @Override
+    public void writeString(String value) {
+        Objects.requireNonNull(value);
+        ensureValueState(context);
+        doWriteString(value);
+        setNextState();
+    }
+
+    @Override
+    public void writeNull() {
+        ensureValueState(context);
+        doWriteNull();
+        setNextState();
+    }
+
+    @Override
+    public void writeBinary(Binary binary) {
+        Objects.requireNonNull(binary);
+        ensureValueState(context);
+        doWriteBinary(binary);
+        setNextState();
+    }
+
+    @Override
+    public void writeBinary(byte[] bytes, int offset, int len) {
+        ByteBufferUtils.checkBuffer(bytes, offset, len);
+        ensureValueState(context);
+        doWriteBinary(bytes, offset, len);
+        setNextState();
+    }
+
+    @Override
+    public void writePtr(ObjectPtr objectPtr) {
+        Objects.requireNonNull(objectPtr);
+        ensureValueState(context);
+        doWritePtr(objectPtr);
+        setNextState();
+    }
+
+    @Override
+    public void writeLitePtr(ObjectLitePtr objectLitePtr) {
+        Objects.requireNonNull(objectLitePtr);
+        ensureValueState(context);
+        doWriteLitePtr(objectLitePtr);
+        setNextState();
+    }
+
+    @Override
+    public void writeDateTime(ExtDateTime dateTime) {
+        Objects.requireNonNull(dateTime);
+        ensureValueState(context);
+        doWriteDateTime(dateTime);
+        setNextState();
+    }
+
+    @Override
+    public void writeTimestamp(Timestamp timestamp) {
+        Objects.requireNonNull(timestamp);
+        ensureValueState(context);
+        doWriteTimestamp(timestamp);
+        setNextState();
+    }
+
     protected abstract void doWriteInt32(int value);
 
     protected abstract void doWriteInt64(long value);

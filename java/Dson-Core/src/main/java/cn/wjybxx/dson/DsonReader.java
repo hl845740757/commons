@@ -22,8 +22,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * 1.读取数组内普通成员时，name传null，读取嵌套对象时使用无name参数的start方法
- * 2.为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
+ * 1.Object/Header先读name再读value，数组直接读value。
+ * 2.已读取name的情况下，使用包含name的方法，name将被忽略。
  *
  * @author wjybxx
  * date - 2023/4/20
@@ -122,6 +122,35 @@ public interface DsonReader extends AutoCloseable {
     ExtDateTime readDateTime(String name);
 
     Timestamp readTimestamp(String name);
+
+    // endregion
+
+    // region 简单值(无name版)
+
+    int readInt32();
+
+    long readInt64();
+
+    float readFloat();
+
+    double readDouble();
+
+    boolean readBool();
+
+    String readString();
+
+    void readNull();
+
+    Binary readBinary();
+
+    ObjectPtr readPtr();
+
+    ObjectLitePtr readLitePtr();
+
+    ExtDateTime readDateTime();
+
+    Timestamp readTimestamp();
+
     // endregion
 
     // region 容器

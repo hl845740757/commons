@@ -21,15 +21,9 @@ import cn.wjybxx.dson.types.*;
 import javax.annotation.Nonnull;
 
 /**
- * 编码格式可查看{@link Dsons}类文档
- * 解码流程为：type -> name -> value
- *
- * <p>
- * 1.读取数组内普通成员时，name传0，读取嵌套对象时使用无name参数的方法
- * 2.2.为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
- *
  * @author wjybxx
  * date - 2023/4/20
+ * @see DsonReader
  */
 @SuppressWarnings("unused")
 public interface DsonLiteReader extends AutoCloseable {
@@ -125,7 +119,34 @@ public interface DsonLiteReader extends AutoCloseable {
     ExtDateTime readDateTime(int name);
 
     Timestamp readTimestamp(int name);
+
     // endregion
+
+    // region 简单值(无name版)
+
+    int readInt32();
+
+    long readInt64();
+
+    float readFloat();
+
+    double readDouble();
+
+    boolean readBool();
+
+    String readString();
+
+    void readNull();
+
+    Binary readBinary();
+
+    ObjectPtr readPtr();
+
+    ObjectLitePtr readLitePtr();
+
+    ExtDateTime readDateTime();
+
+    Timestamp readTimestamp();
 
     // region 容器
 
