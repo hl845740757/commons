@@ -51,7 +51,8 @@ internal static class DynamicArrayHelper
 
     public static int FirstNullIndex(long[] elementsMask, int len, int elementCount) {
         if (elementCount == len) return -1;
-        for (int idx = 0, wordCount = WordCount(len); idx < wordCount; idx++) {
+        int wordCount = WordCount(len);
+        for (int idx = 0; idx < wordCount; idx++) {
             long word = elementsMask[idx];
             if (word == -1) continue;
             // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
@@ -65,7 +66,34 @@ internal static class DynamicArrayHelper
         int wordCount = WordCount(len);
         for (int idx = wordCount - 1; idx >= 0; idx--) {
             long word = elementsMask[idx];
-            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
+            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位还是-1
+            if (idx == wordCount - 1 && (len & 63) != 0) {
+                word |= -1L << len;
+            }
+            if (word == -1) continue;
+            return (idx * 64) + (63 - MathCommon.NumberOfLeadingZeros(~word));
+        }
+        throw new AssertionError();
+    }
+
+    public static int FirstNullIndex(long lowBits, long highBits, int len, int elementCount) {
+        if (elementCount == len) return -1;
+        int wordCount = len > 64 ? 2 : 1;
+        for (int idx = 0; idx < wordCount; idx++) {
+            long word = idx == 1 ? highBits : lowBits;
+            if (word == -1) continue;
+            // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
+            return (idx * 64) + MathCommon.NumberOfTrailingZeros(~word);
+        }
+        throw new AssertionError();
+    }
+
+    public static int LastNullIndex(long lowBits, long highBits, int len, int elementCount) {
+        if (elementCount == len) return -1;
+        int wordCount = len > 64 ? 2 : 1;
+        for (int idx = wordCount - 1; idx >= 0; idx--) {
+            long word = idx == 1 ? highBits : lowBits;
+            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位还是-1
             if (idx == wordCount - 1 && (len & 63) != 0) {
                 word |= -1L << len;
             }
@@ -78,13 +106,6 @@ internal static class DynamicArrayHelper
     #endregion
 
     #region bit-update
-
-    public static long InsertBit(long word, int bitIndex) {
-        int index = bitIndex & 63;
-        long high = (word << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-        long lower = (word) & ((1L << index) - 1); // [0, index -1] 全1
-        return high | lower;
-    }
 
     public static void InsertBit(long[] elementsMask, int len, int bitIndex) {
         int wordIndex = WordIndex(bitIndex);

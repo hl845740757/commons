@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class DynamicArrayTest {
 
-    private static int capacity = 64;
+    private static int capacity = 128;
     private static int repeat = 0;
     private static DynamicArray<Indexed> dynamicArray;
     private static Indexed[] valArray;
@@ -53,7 +53,7 @@ public class DynamicArrayTest {
     void setUp() {
         cacheMap.clear();
         if (MathCommon.isOdd(repeat++)) {
-            capacity = 64;
+            capacity = 128;
             dynamicArray = new SmallDynamicArray<>(capacity / 3); // 测试扩容
         } else {
             capacity = 1000;

@@ -48,7 +48,8 @@ final class DynamicArrayHelper {
 
     public static int firstNullIndex(long[] elementsMask, int len, int elementCount) {
         if (elementCount == len) return -1;
-        for (int idx = 0, wordCount = wordCount(len); idx < wordCount; idx++) {
+        int wordCount = wordCount(len);
+        for (int idx = 0; idx < wordCount; idx++) {
             long word = elementsMask[idx];
             if (word == -1) continue;
             // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
@@ -71,16 +72,37 @@ final class DynamicArrayHelper {
         }
         throw new AssertionError();
     }
+
+    public static int firstNullIndex(long lowBits, long highBits, int len, int elementCount) {
+        if (elementCount == len) return -1;
+        int wordCount = len > 64 ? 2 : 1;
+        for (int idx = 0; idx < wordCount; idx++) {
+            long word = idx == 1 ? highBits : lowBits;
+            if (word == -1) continue;
+            // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
+            return (idx * 64) + Long.numberOfTrailingZeros(~word);
+        }
+        throw new AssertionError();
+    }
+
+    public static int lastNullIndex(long lowBits, long highBits, int len, int elementCount) {
+        if (elementCount == len) return -1;
+        int wordCount = len > 64 ? 2 : 1;
+        for (int idx = wordCount - 1; idx >= 0; idx--) {
+            long word = idx == 1 ? highBits : lowBits;
+            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
+            if (idx == wordCount - 1 && (len & 63) != 0) {
+                word |= -1L << len;
+            }
+            if (word == -1) continue;
+            return (idx * 64) + (63 - Long.numberOfLeadingZeros(~word));
+        }
+        throw new AssertionError();
+    }
+
     // endregion
 
     // region bit-update
-
-    public static long insertBit(long word, int bitIndex) {
-        int index = bitIndex & 63;
-        long high = (word << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-        long lower = (word) & ((1L << index) - 1); // [0, index -1] 全1
-        return high | lower;
-    }
 
     public static void insertBit(long[] elementsMask, int len, int bitIndex) {
         int wordIndex = wordIndex(bitIndex);

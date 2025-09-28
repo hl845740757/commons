@@ -36,10 +36,11 @@ import java.util.function.ObjIntConsumer;
  */
 public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
-    private static final int MAX_CAPACITY = 64;
+    private static final int MAX_CAPACITY = 128;
 
     private Object[] elements;
-    private long elementsMask;
+    private long lowBits;
+    private long highBits;
     private final float nullFactor;
 
     private int len;
@@ -160,11 +161,12 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public void clear() {
-        if (elementsMask == 0) {
+        if (elementCount() == 0) {
             return;
         }
         Arrays.fill(elements, 0, len, null);
-        elementsMask = 0;
+        lowBits = 0;
+        highBits = 0;
         if (recursionDepth == 0) {
             len = 0;
         }
@@ -218,17 +220,12 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
     private int firstNullIndex() {
         if (len == 0) return -1;
-        // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
-        return Long.numberOfTrailingZeros(~elementsMask);
+        return DynamicArrayHelper.firstNullIndex(lowBits, highBits, len, elementCount());
     }
 
     private int lastNullIndex() {
         if (len == 0) return -1;
-        // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
-        long tempMask = len == 64
-                ? (elementsMask)
-                : (elementsMask | (-1L << len));
-        return 63 - Long.numberOfLeadingZeros(~tempMask);
+        return DynamicArrayHelper.lastNullIndex(lowBits, highBits, len, elementCount());
     }
 
     // endregion
@@ -242,20 +239,18 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public int elementCount() {
-        return MathCommon.bitCount(elementsMask);
+        return MathCommon.bitCount(lowBits) + MathCommon.bitCount(highBits);
     }
 
     @Override
     public int nullCount() {
         // 不能直接计算0的数量，0的数量可能超过len
-        return len - MathCommon.bitCount(elementsMask);
+        return len - (MathCommon.bitCount(lowBits) + MathCommon.bitCount(highBits));
     }
 
     @Override
     public boolean containsNull() {
-        if (len == 0) return false;
-        long expected = len == 64 ? -1 : (1L << len) - 1; // 后n位全1
-        return (elementsMask & expected) != expected;
+        return len > (MathCommon.bitCount(lowBits) + MathCommon.bitCount(highBits));
     }
 
     // endregion
@@ -335,17 +330,37 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
     // region internal
 
     private void setBit(int index, boolean val) {
-        if (val) {
-            elementsMask |= (1L << index);
+        if (index < 64) {
+            if (val) {
+                lowBits |= (1L << index);
+            } else {
+                lowBits &= ~(1L << index);
+            }
         } else {
-            elementsMask &= ~(1L << index);
+            index -= 64;
+            if (val) {
+                highBits |= (1L << index);
+            } else {
+                highBits &= ~(1L << index);
+            }
         }
     }
 
     private void insertBit(int index) {
-        long high = (elementsMask << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-        long lower = (elementsMask) & ((1L << index) - 1); // [0, index -1] 全1
-        elementsMask = high | lower;
+        if (index < 64) {
+            highBits <<= 1;
+            if (lowBits < 0) {
+                highBits |= 1;
+            }
+            long high = (lowBits << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
+            long lower = (lowBits) & ((1L << index) - 1); // [0, index -1] 全1
+            lowBits = high | lower;
+        } else {
+            index -= 64;
+            long high = (highBits << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
+            long lower = (highBits) & ((1L << index) - 1); // [0, index -1] 全1
+            highBits = high | lower;
+        }
     }
 
     private void ensureNotIterating() {
@@ -374,7 +389,8 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         }
         if (elementCount == 0) {
             this.len = 0;
-            this.elementsMask = 0;
+            this.lowBits = 0;
+            this.highBits = 0;
             return;
         }
         // 零散前移
@@ -396,7 +412,13 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         }
         Arrays.fill(elements, elementCount, len, null);
         this.len = elementCount;
-        this.elementsMask = (1L << elementCount) - 1;
+        if (elementCount < 64) {
+            lowBits = (1L << elementCount) - 1;
+            highBits = 0;
+        } else {
+            lowBits = -1;
+            highBits = (1L << (elementCount - 64)) - 1;
+        }
     }
 
     // endregion

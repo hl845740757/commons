@@ -27,7 +27,7 @@ namespace Commons.Tests.Core;
 
 public class DynamicArrayTest
 {
-    private static int capacity = 64;
+    private static int capacity = 128;
     private static int repeat;
 
     private static IDynamicArray<Indexed> dynamicArray;
@@ -46,7 +46,7 @@ public class DynamicArrayTest
     public void SetUp() {
         cacheMap.Clear();
         if (MathCommon.IsOdd(repeat++)) {
-            capacity = 64;
+            capacity = 128;
             dynamicArray = new SmallDynamicArray<Indexed>(capacity / 3); // 测试扩容
         } else {
             capacity = 1000;
