@@ -18,7 +18,6 @@ package cn.wjybxx.btree.fsm;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.btree.Decorator;
 import cn.wjybxx.btree.Task;
-import cn.wjybxx.btree.TaskStatus;
 import cn.wjybxx.btree.branch.Join;
 import cn.wjybxx.btree.fsm.handler.DefaultStateMachineHandler;
 
@@ -143,6 +142,17 @@ public class StateMachineTask<T> extends Decorator<T> {
         changeState(stateCfg.getTask(), ChangeStateArgs.plainWithArg(curStateResult));
     }
 
+    /** 通过状态的名字发起状态切换 */
+    public final void changeState(String stateName, ChangeStateArgs stateArgs) {
+        FsmStateCfg<T> stateCfg = getStateCfg(name);
+        if (stateCfg == null) {
+            throw new IllegalStateException("state is absent, name: " + stateName);
+        }
+        // 覆盖属性
+        stateCfg.getTask().setSharedProps(stateCfg.getProps());
+        changeState(stateCfg.getTask(), stateArgs);
+    }
+
     /** 查找状态配置 -- 返回前会加载Task */
     public FsmStateCfg<T> getStateCfg(String name) {
         return getStateCfg(name, true);
@@ -151,8 +161,8 @@ public class StateMachineTask<T> extends Decorator<T> {
     /** 查找状态配置 */
     public FsmStateCfg<T> getStateCfg(String name, boolean loadTask) {
         Objects.requireNonNull(name, "name");
-        for (int i = 0; i < stateCfgs.size(); i++) {
-            FsmStateCfg<T> stateCfg = stateCfgs.get(i);
+        for (int idx = 0; idx < stateCfgs.size(); idx++) {
+            FsmStateCfg<T> stateCfg = stateCfgs.get(idx);
             if (!name.equals(stateCfg.getName())) {
                 continue;
             }

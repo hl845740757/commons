@@ -46,7 +46,7 @@ public sealed class Binary
     /// </summary>
     /// <returns></returns>
     public Binary DeepCopy() {
-        return new Binary((byte[])_data.Clone());
+        return new Binary((byte[])_data.Clone()) { _hash = _hash };
     }
 
     /// <summary>
@@ -62,7 +62,6 @@ public sealed class Binary
     /// 字节数组长度
     /// </summary>
     public int Length => _data.Length;
-
 
     #region equals
 

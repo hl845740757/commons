@@ -17,23 +17,18 @@
 #endregion
 
 using System;
-using Wjybxx.Commons;
 
 namespace Wjybxx.BTree.FSM
 {
 /// <summary>
-/// 通用状态机切换任务
+/// 通过新状态的name发起状态切换，目标状态存在于配置中
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class ChangeStateTask<T> : LeafTask<T> where T : class
+public class ChangeStateTask2<T> : LeafTask<T> where T : class
 {
-    /** 下一个状态的guid或name -- 延迟加载 */
-    private string? stateGuid;
-    /** 目标状态的属性 */
-    private object? stateProps;
-    /** 下一个状态的对象缓存，通常延迟加载以避免循环引用 */
-    [NonSerialized] private Task<T>? nextState;
-
+#nullable disable
+    /** 下一个状态的name */
+    private string stateName;
     /** 目标状态机的名字，以允许切换更顶层的状态机 */
     private string? machineName;
     /** 延迟模式 */
@@ -41,35 +36,13 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     /** 延迟参数 */
     private int delayArg;
 
-    public ChangeStateTask() {
-    }
-
-    public ChangeStateTask(Task<T> nextState) {
-        this.nextState = nextState;
-    }
-
-    public override void ResetForRestart() {
-        base.ResetForRestart();
-        if (nextState != null && nextState.Control == null) {
-            nextState.ResetForRestart();
-        }
-    }
-
     protected override void Execute() {
-        if (nextState == null) {
-            if (string.IsNullOrEmpty(stateGuid)) {
-                throw new IllegalStateException("guid is empty");
-            }
-            nextState = TaskEntry.TreeLoader.LoadRootTask<T>(stateGuid);
-        }
-        nextState.SharedProps = stateProps;
-
         int reentryId = ReentryId;
         StateMachineTask<T> stateMachine = StateMachineTask<T>.FindStateMachine(this, machineName);
         if (delayMode == 0) {
-            stateMachine.ChangeState(nextState, delayArg);
+            stateMachine.ChangeState(stateName, delayArg);
         } else {
-            stateMachine.ChangeState(nextState, ChangeStateArgs.PLAIN.With(delayMode, delayArg));
+            stateMachine.ChangeState(stateName, ChangeStateArgs.PLAIN.With(delayMode, delayArg));
         }
         if (!IsExited(reentryId)) {
             SetSuccess();
@@ -79,19 +52,9 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     protected override void OnEventImpl(object eventObj) {
     }
 
-    public string? StateGuid {
-        get => stateGuid;
-        set => stateGuid = value;
-    }
-
-    public Task<T>? NextState {
-        get => nextState;
-        set => nextState = value;
-    }
-
-    public object? StateProps {
-        get => stateProps;
-        set => stateProps = value;
+    public string StateName {
+        get => stateName;
+        set => stateName = value;
     }
 
     public string? MachineName {

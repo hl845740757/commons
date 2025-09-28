@@ -135,11 +135,21 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         ChangeState(stateCfg.Task, ChangeStateArgs.PlainWithArg(curStateResult));
     }
 
+    /** 通过状态的名字发起状态切换 */
+    public void ChangeState(string stateName, ChangeStateArgs stateArgs) {
+        FsmStateCfg<T> stateCfg = GetStateCfg(stateName);
+        if (stateCfg == null) {
+            throw new InvalidOperationException("state is absent, name: " + stateName);
+        }
+        stateCfg.Task.SharedProps = stateCfg.Props;
+        ChangeState(stateCfg.Task, stateArgs);
+    }
+
     /** 查找状态配置 */
     public FsmStateCfg<T>? GetStateCfg(string name, bool loadTask = true) {
         if (name == null) throw new ArgumentNullException(nameof(name));
-        for (int i = 0; i < stateCfgs.Count; i++) {
-            FsmStateCfg<T> stateCfg = stateCfgs[i];
+        for (int idx = 0; idx < stateCfgs.Count; idx++) {
+            FsmStateCfg<T> stateCfg = stateCfgs[idx];
             if (name != stateCfg.Name) {
                 continue;
             }
