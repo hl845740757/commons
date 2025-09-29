@@ -23,6 +23,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons;
+using Wjybxx.Commons.IO;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Ext;
 using Wjybxx.Dson.IO;
@@ -55,6 +56,8 @@ public static class Dsons
 
     /** 二进制数据的最大长度 */
     public const int MaxBinaryLength = int.MaxValue - 6;
+    /** Dson二进制文件的文件头魔数 - dson的16进制编码；大端写入 */
+    public const int MagicNumber = 0x6473_6F6E;
 
     #endregion
 
@@ -89,6 +92,16 @@ public static class Dsons
         // 长度异常的数据不池化
         return fieldName.Length <= 32 ? string.Intern(fieldName) : fieldName;
     }
+
+    /** 检测文件是否是二进制Dson文件 */
+    public static bool IsBinaryDson(byte[] headerBytes) {
+        if (headerBytes.Length < 4) return false;
+        return ByteBufferUtil.GetInt32(headerBytes, 0) == MagicNumber;
+    }
+
+    #endregion
+
+    #region Check
 
     /** 检查具备类型标签的数据的子类型是否合法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

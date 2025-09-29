@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dson;
 
+import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.base.io.StringBuilderWriter;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.ext.Projection;
@@ -53,10 +54,18 @@ public final class Dsons {
 
     /** 二进制数据的最大长度 */
     public static final int MAX_BINARY_LENGTH = Integer.MAX_VALUE - 6;
+    /** Dson二进制文件的文件头魔数 - dson的16进制编码；大端写入 */
+    public static final int MAGIC_NUMBER = 0x6473_6F6E;
 
     public static String internField(String fieldName) {
         // 长度异常的数据不池化
         return fieldName.length() <= 32 ? fieldName.intern() : fieldName;
+    }
+
+    /** 检测文件是否是二进制Dson文件 */
+    public static boolean isBinaryDson(byte[] headerBytes) {
+        if (headerBytes.length < 4) return false;
+        return ByteBufferUtils.getInt32(headerBytes, 0) == MAGIC_NUMBER;
     }
 
     // fullType
