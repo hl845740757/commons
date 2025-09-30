@@ -147,6 +147,13 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
 
     public bool IsEnumCodec => _enumCodec != null;
 
+    public bool ContainsEnum(T value) {
+        if (_enumCodec != null) {
+            return _enumCodec.Contains(value);
+        }
+        throw new DsonCodecException("unexpected ContainsEnum method call");
+    }
+
     public bool ForNumber(int number, out T result) {
         if (_enumCodec != null) {
             return _enumCodec.ForNumber(number, out result);

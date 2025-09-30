@@ -267,7 +267,10 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         if (typeOfKey.IsEnum) {
             DsonCodecImpl<T> codecImpl = converter.CodecRegistry.GetEncoder(typeOfKey) as DsonCodecImpl<T>;
             if (codecImpl == null) {
-                throw new IllegalStateException();
+                throw new AssertionError();
+            }
+            if (converter.Options.writeEnumAsString && codecImpl.ContainsEnum(key)) {
+                return codecImpl.GetName(key);
             }
             return codecImpl.GetNumber(key).ToString();
         }

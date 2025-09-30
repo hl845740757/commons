@@ -284,6 +284,9 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         if (keyType.isEnum()) {
             @SuppressWarnings("unchecked") var codecImpl = (DsonCodecImpl<T>) converter.codecRegistry().getEncoder(keyType);
             assert codecImpl != null;
+            if (converter.options().writeEnumAsString) {
+                return codecImpl.getName(key);
+            }
             return Integer.toString(codecImpl.getNumber(key));
         }
         if ((key instanceof Integer) || (key instanceof Long)) {

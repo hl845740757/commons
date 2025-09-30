@@ -31,6 +31,8 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// <typeparam name="T"></typeparam>
 public interface IEnumCodec<T> : IDsonCodec<T>
 {
+    bool Contains(T value);
+
     bool ForNumber(int number, out T result);
 
     bool ForName(string name, out T result);
@@ -111,6 +113,10 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     }
 
     #region 避免装箱
+
+    public bool Contains(T value) {
+        return _value2EnumDic.ContainsKey(value);
+    }
 
     public bool ForNumber(int number, out T result) {
         if (_number2EnumDic.TryGetValue(number, out EnumValueInfo<T> valueInfo)) {

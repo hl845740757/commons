@@ -54,8 +54,8 @@ public class ConverterOptions
     public readonly MapEncodePolicy mapEncodePolicy;
     /// <summary>
     /// 是否将枚举写为字符串
-    /// 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为数字 -- 可通过字段编解码代码自定义格式化。
-    /// 2.通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
+    /// 
+    /// 注：通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
     /// </summary>
     public readonly bool writeEnumAsString;
     /// <summary>

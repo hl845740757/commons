@@ -234,14 +234,6 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         if (type == typeof(string) || type == typeof(object)) {
             return (T)(object)keyString;
         }
-        if (type.IsEnum) {
-            DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(type)!;
-            if (codec.ForName(keyString, out T result)) {
-                return result;
-            }
-            throw DsonCodecException.EnumAbsent(type, keyString);
-        }
-
         // 使用func以避免装箱
         if (type == typeof(int)) {
             Func<string, T> func = (Func<string, T>)parseInt;
@@ -259,7 +251,21 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             Func<string, T> func = (Func<string, T>)parseUlong;
             return func.Invoke(keyString);
         }
-        throw DsonCodecException.UnsupportedKeyType(type);
+        // 处理枚举类型
+        DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(type)!;
+        if (codec == null || !codec.IsEnumCodec) {
+            throw DsonCodecException.UnsupportedKeyType(type);
+        }
+        if (int.TryParse(keyString, out int number)) {
+            if (codec.ForNumber(number, out T result)) {
+                return result;
+            }
+        } else {
+            if (codec.ForName(keyString, out T result)) {
+                return result;
+            }
+        }
+        throw DsonCodecException.EnumAbsent(type, keyString);
     }
 
     public void SetEnableNameIntern(bool? value) {

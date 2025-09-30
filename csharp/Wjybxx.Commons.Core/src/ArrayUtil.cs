@@ -433,13 +433,24 @@ public static class ArrayUtil
         array[newIndex] = element;
     }
 
-    public static void Insert<T>(ref T[] array, int index, T value) {
+    public static void Insert<T>(ref T[] array, int index, T item) {
         T[] temp = new T[array.Length + 1];
         Array.Copy(array, temp, index);
-        temp[index] = value;
+        temp[index] = item;
         // 允许直接插入到末尾
         if (index < array.Length) {
             Array.Copy(array, index, temp, index + 1, array.Length - index);
+        }
+        array = temp;
+    }
+
+    public static void InsertRange<T>(ref T[] array, int index, T[] items) {
+        T[] temp = new T[array.Length + items.Length];
+        Array.Copy(array, temp, index);
+        Array.Copy(items, 0, temp, index, items.Length);
+        // 允许直接插入到末尾
+        if (index < array.Length) {
+            Array.Copy(array, index, temp, index + items.Length, array.Length - index);
         }
         array = temp;
     }

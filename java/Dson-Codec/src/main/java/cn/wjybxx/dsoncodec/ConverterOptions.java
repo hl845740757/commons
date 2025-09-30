@@ -59,8 +59,7 @@ public class ConverterOptions {
     public final MapEncodePolicy mapEncodePolicy;
     /**
      * 是否将枚举写为字符串
-     * 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为数字 -- 可通过字段编解码代码自定义格式化。
-     * 2.通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
+     * 注：通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
      */
     public final boolean writeEnumAsString;
     /**
@@ -69,7 +68,7 @@ public class ConverterOptions {
      * 2.这可以避免大量的字符串编解码，从而提升性能 - 适用于非持久化场景。
      * 3.该选项仅对{@link DsonCodec#autoStartEnd()}为true的编码器有效。
      * 4.不可以有基于name进行Switch编解码的codec。
-	 * 5.对象字段不可以有特殊的初始值 -- 否则会被反序列化覆盖。
+     * 5.对象字段不可以有特殊的初始值 -- 否则会被反序列化覆盖。
      */
     public final boolean writeObjectAsArray;
 
