@@ -59,6 +59,15 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
     /// 
     /// </summary>
     /// <param name="seconds">纪元时间秒时间戳</param>
+    /// <param name="nanos">剩余纳秒部分</param>
+    public ExtDateTime(long seconds, int nanos)
+        : this(seconds, nanos, 0, MaskDatetime) {
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="seconds">纪元时间秒时间戳</param>
     /// <param name="nanos">时间戳的纳秒部分</param>
     /// <param name="offset">时区偏移量--秒</param>
     /// <param name="enables">启用的字段信息；只有有效的字段才会被保存(序列化)</param>
@@ -95,6 +104,12 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
     public DateTime ToDateTime() {
         long totalTicks = Seconds * TicksPerSecond + Nanos / NanosPerTick;
         return DateTime.UnixEpoch.Add(new TimeSpan(totalTicks));
+    }
+
+    public static ExtDateTime OfEpochMillis(long epochMillis) {
+        long seconds = epochMillis / 1000;
+        int nanos = (int)(epochMillis % 1000 * DatetimeUtil.NanosPerMilli);
+        return new ExtDateTime(seconds, nanos);
     }
 
     public ExtDateTime WithOffset(int offset) {

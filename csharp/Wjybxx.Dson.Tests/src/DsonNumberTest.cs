@@ -65,7 +65,7 @@ public class DsonNumberTest
                 if (!dsonObject.TryGetValue(name, out DsonValue dsonValue)) {
                     break;
                 }
-                DsonNumber dsonNumber = dsonValue.AsDsonNumber();
+                DsonNumber dsonNumber = dsonValue.AsNumber();
                 switch (dsonNumber.DsonType) {
                     case DsonType.Int32: {
                         writer.WriteInt32(name, dsonNumber.IntValue, style);

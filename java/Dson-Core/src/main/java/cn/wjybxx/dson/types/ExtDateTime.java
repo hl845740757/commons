@@ -1,5 +1,6 @@
 package cn.wjybxx.dson.types;
 
+import cn.wjybxx.base.time.TimeUtils;
 import cn.wjybxx.dson.DsonLites;
 import cn.wjybxx.dson.internal.DsonInternals;
 
@@ -43,6 +44,14 @@ public final class ExtDateTime {
         this(seconds, 0, 0, MASK_DATETIME);
     }
 
+    /**
+     * @param seconds 纪元时间-秒
+     * @param nanos   剩余纳秒部分
+     */
+    public ExtDateTime(long seconds, int nanos) {
+        this(seconds, nanos, 0, MASK_DATETIME);
+    }
+
     public ExtDateTime(long seconds, int nanos, int offset, byte enables) {
         if ((enables & MASK_ALL) != enables) {
             throw new IllegalArgumentException("invalid enables: " + enables);
@@ -75,6 +84,12 @@ public final class ExtDateTime {
 
     public static ExtDateTime ofInstant(Instant instant) {
         return new ExtDateTime(instant.getEpochSecond(), instant.getNano(), 0, MASK_DATETIME);
+    }
+
+    public static ExtDateTime ofEpochMillis(long epochMillis) {
+        long seconds = epochMillis / 1000;
+        int nanos = (int) (epochMillis % 1000 * TimeUtils.NANOS_PER_MILLI);
+        return new ExtDateTime(seconds, nanos);
     }
 
     public ExtDateTime withOffset(int offset) {

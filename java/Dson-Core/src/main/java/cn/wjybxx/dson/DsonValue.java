@@ -82,7 +82,7 @@ public abstract class DsonValue {
         return getDsonType().isNumber();
     }
 
-    public DsonNumber asDsonNumber() {
+    public DsonNumber asNumber() {
         return (DsonNumber) this;
     }
 

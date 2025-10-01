@@ -69,7 +69,7 @@ public abstract class DsonValue
 
     public bool IsNumber => DsonType.IsNumber();
 
-    public DsonNumber AsDsonNumber() => ((DsonNumber)this);
+    public DsonNumber AsNumber() => ((DsonNumber)this);
 
     #endregion
 

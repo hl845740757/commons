@@ -645,14 +645,14 @@ public class Projection {
             return dsonValue.asBool();
         }
         if (dsonValue.isNumber()) {
-            return dsonValue.asDsonNumber().intValue() == 1;
+            return dsonValue.asNumber().intValue() == 1;
         }
         return false;
     }
 
     private static SliceSpec parseSliceSpec(DsonValue rangeValue) {
         if (rangeValue.isNumber()) {
-            int skip = rangeValue.asDsonNumber().intValue();
+            int skip = rangeValue.asNumber().intValue();
             return new SliceSpec(skip);
         }
         // todo 将slice看做字符串数组，就可以解析正负号
@@ -660,12 +660,12 @@ public class Projection {
         return switch (array.size()) {
             case 0 -> SliceSpec.EMPTY;
             case 1 -> {
-                int skip = array.get(0).asDsonNumber().intValue();
+                int skip = array.get(0).asNumber().intValue();
                 yield new SliceSpec(skip);
             }
             case 2 -> {
-                int skip = array.get(0).asDsonNumber().intValue();
-                int count = array.get(1).asDsonNumber().intValue();
+                int skip = array.get(0).asNumber().intValue();
+                int count = array.get(1).asNumber().intValue();
                 yield new SliceSpec(skip, count);
             }
             default -> {

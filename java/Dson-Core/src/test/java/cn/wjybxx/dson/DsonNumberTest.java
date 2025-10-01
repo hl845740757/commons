@@ -52,7 +52,7 @@ public class DsonNumberTest {
                     if (dsonValue == null) {
                         break;
                     }
-                    DsonNumber dsonNumber = dsonValue.asDsonNumber();
+                    DsonNumber dsonNumber = dsonValue.asNumber();
                     switch (dsonNumber.getDsonType()) {
                         case INT32 -> writer.writeInt32(name, dsonNumber.intValue(), style);
                         case INT64 -> writer.writeInt64(name, dsonNumber.longValue(), style);

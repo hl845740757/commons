@@ -633,14 +633,14 @@ public class Projection
             return dsonValue.AsBool();
         }
         if (dsonValue.IsNumber) {
-            return dsonValue.AsDsonNumber().IntValue == 1;
+            return dsonValue.AsNumber().IntValue == 1;
         }
         return false;
     }
 
     private static SliceSpec ParseSliceSpec(DsonValue rangeValue) {
         if (rangeValue.IsNumber) {
-            int skip = rangeValue.AsDsonNumber().IntValue;
+            int skip = rangeValue.AsNumber().IntValue;
             return new SliceSpec(skip);
         }
         DsonArray<string> array = rangeValue.AsArray();
@@ -649,12 +649,12 @@ public class Projection
                 return SliceSpec.Empty;
             }
             case 1: {
-                int skip = array[0].AsDsonNumber().IntValue;
+                int skip = array[0].AsNumber().IntValue;
                 return new SliceSpec(skip);
             }
             case 2: {
-                int skip = array[0].AsDsonNumber().IntValue;
-                int count = array[1].AsDsonNumber().IntValue;
+                int skip = array[0].AsNumber().IntValue;
+                int count = array[1].AsNumber().IntValue;
                 return new SliceSpec(skip, count);
             }
             default: {
