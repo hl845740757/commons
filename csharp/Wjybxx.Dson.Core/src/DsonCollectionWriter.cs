@@ -115,10 +115,6 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
         GetContext().Add(new DsonPointer(objectPtr));
     }
 
-    protected override void DoWriteLitePtr(in ObjectLitePtr objectLitePtr) {
-        GetContext().Add(new DsonLitePointer(objectLitePtr));
-    }
-
     protected override void DoWriteDateTime(in ExtDateTime dateTime) {
         GetContext().Add(new DsonDateTime(dateTime));
     }

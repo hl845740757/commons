@@ -133,8 +133,6 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     ObjectPtr ReadPtr(TName name);
 
-    ObjectLitePtr ReadLitePtr(TName name);
-
     ExtDateTime ReadDateTime(TName name);
 
     Timestamp ReadTimestamp(TName name);
@@ -160,8 +158,6 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     Binary ReadBinary();
 
     ObjectPtr ReadPtr();
-
-    ObjectLitePtr ReadLitePtr();
 
     ExtDateTime ReadDateTime();
 

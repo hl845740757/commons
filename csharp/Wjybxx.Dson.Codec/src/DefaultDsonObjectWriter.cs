@@ -115,10 +115,6 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WritePtr(name, in objectPtr);
     }
 
-    public void WriteLitePtr(string? name, in ObjectLitePtr objectLitePtr) {
-        writer.WriteLitePtr(name, in objectLitePtr);
-    }
-
     public void WriteDateTime(string? name, in DateTime dateTime) {
         writer.WriteDateTime(name, ExtDateTime.OfDateTime(in dateTime));
     }

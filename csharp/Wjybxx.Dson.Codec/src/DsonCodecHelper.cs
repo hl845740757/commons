@@ -218,21 +218,6 @@ internal static class DsonCodecHelper
         }
     }
 
-    public static ObjectLitePtr ReadLitePtr(IDsonReader<string> reader, string? name) {
-        DsonType dsonType = ReadOrGetDsonType(reader);
-        switch (dsonType) {
-            case DsonType.Int32: return new ObjectLitePtr(reader.ReadInt32(name));
-            case DsonType.Int64: return new ObjectLitePtr(reader.ReadInt64(name));
-            case DsonType.LitePointer: return reader.ReadLitePtr(name);
-            case DsonType.Null: {
-                reader.ReadNull(name);
-                return default;
-            }
-            default:
-                throw DsonCodecException.Incompatible(typeof(ObjectLitePtr), dsonType);
-        }
-    }
-
     public static ExtDateTime ReadDateTime(IDsonReader<string> reader, string? name) {
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
@@ -313,7 +298,6 @@ internal static class DsonCodecHelper
             case DsonType.String: return reader.ReadString(name);
             case DsonType.Binary: return reader.ReadBinary(name);
             case DsonType.Pointer: return reader.ReadPtr(name);
-            case DsonType.LitePointer: return reader.ReadLitePtr(name);
             case DsonType.DateTime: return reader.ReadDateTime(name);
             case DsonType.Timestamp: return reader.ReadTimestamp(name);
             case DsonType.Null: {

@@ -54,8 +54,6 @@ public interface IDsonObjectWriter : IDisposable
     // 内建结构体
     void WritePtr(string? name, in ObjectPtr objectPtr);
 
-    void WriteLitePtr(string? name, in ObjectLitePtr objectLitePtr);
-
     void WriteDateTime(string? name, in DateTime dateTime);
 
     // ExtDateTime并不常见

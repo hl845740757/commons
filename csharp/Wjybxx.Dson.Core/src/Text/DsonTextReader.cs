@@ -415,11 +415,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(unquotedString)));
                 break;
             }
-            case DsonType.LitePointer: {
-                long localId = DsonTexts.ParseInt64(unquotedString);
-                PushNextValue(UnionValue.OfObjectLitePtr(new ObjectLitePtr(localId)));
-                break;
-            }
             case DsonType.DateTime: {
                 DateTime dateTime = ExtDateTime.ParseDateTime(unquotedString); // 这里其实不应该走到
                 PushNextValue(UnionValue.OfDateTime(ExtDateTime.OfDateTime(in dateTime)));
@@ -450,13 +445,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             string localId = nextToken.NullableStringValue();
             PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
             return DsonType.Pointer;
-        }
-        if (DsonTexts.LabelLitePtr == clsName) { // @ptr localId
-            DsonToken nextToken = PopToken();
-            EnsureStringsToken(context, nextToken);
-            long localId = DsonTexts.ParseInt64(nextToken.StringValue());
-            PushNextValue(UnionValue.OfObjectLitePtr(new ObjectLitePtr(localId)));
-            return DsonType.LitePointer;
         }
         if (DsonTexts.LabelDateTime == clsName) { // @dt uuuu-MM-dd'T'HH:mm:ss
             DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUtilComma());
@@ -493,10 +481,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             case DsonTexts.LabelPtr: {
                 PushNextValue(UnionValue.OfObjectPtr(ScanPtr(context)));
                 return DsonType.Pointer;
-            }
-            case DsonTexts.LabelLitePtr: {
-                PushNextValue(UnionValue.OfObjectLitePtr(ScanLitePtr(context)));
-                return DsonType.LitePointer;
             }
             case DsonTexts.LabelDateTime: {
                 PushNextValue(UnionValue.OfDateTime(ScanDateTime(context)));
@@ -589,50 +573,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             CheckSeparator(context);
         }
         return new ObjectPtr(localId, ns, type, policy);
-    }
-
-    private ObjectLitePtr ScanLitePtr(Context context) {
-        string ns = null;
-        long localId = 0;
-        byte type = 0;
-        byte policy = 0;
-        DsonToken keyToken;
-        while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
-            // key必须是字符串
-            EnsureStringsToken(context, keyToken);
-            // 下一个应该是冒号
-            DsonToken colonToken = PopToken();
-            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
-            // 根据name校验
-            DsonToken valueToken = PopToken();
-            switch (keyToken.StringValue()) {
-                case ObjectPtr.NamesNamespace: {
-                    EnsureStringsToken(context, valueToken);
-                    ns = valueToken.StringValue();
-                    break;
-                }
-                case ObjectPtr.NamesLocalId: {
-                    VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
-                    localId = DsonTexts.ParseInt64(valueToken.StringValue());
-                    break;
-                }
-                case ObjectPtr.NamesType: {
-                    VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
-                    type = byte.Parse(valueToken.StringValue());
-                    break;
-                }
-                case ObjectPtr.NamesPolicy: {
-                    VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
-                    policy = byte.Parse(valueToken.StringValue());
-                    break;
-                }
-                default: {
-                    throw new DsonIOException("invalid lptr fieldName: " + keyToken.StringValue());
-                }
-            }
-            CheckSeparator(context);
-        }
-        return new ObjectLitePtr(localId, ns, type, policy);
     }
 
     private Timestamp ScanTimestamp(Context context) {
@@ -910,14 +850,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             throw new InvalidOperationException();
         }
         return value.ObjectPtr;
-    }
-
-    protected override ObjectLitePtr DoReadLitePtr() {
-        UnionValue value = PopNextValue();
-        if (value.type != DsonType.LitePointer) {
-            throw new InvalidOperationException();
-        }
-        return value.ObjectLitePtr;
     }
 
     protected override ExtDateTime DoReadDateTime() {

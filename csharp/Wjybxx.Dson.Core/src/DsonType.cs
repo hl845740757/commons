@@ -44,10 +44,6 @@ public enum DsonType : sbyte
     /// </summary>
     Pointer = 11,
     /// <summary>
-    /// 轻量对象指针
-    /// </summary>
-    LitePointer = 12,
-    /// <summary>
     /// 日期时间
     /// </summary>
     DateTime = 13,

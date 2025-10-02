@@ -276,10 +276,6 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         return PopNextValue().AsPointer();
     }
 
-    protected override ObjectLitePtr DoReadLitePtr() {
-        return PopNextValue().AsLitePointer();
-    }
-
     protected override ExtDateTime DoReadDateTime() {
         return PopNextValue().AsDateTime();
     }

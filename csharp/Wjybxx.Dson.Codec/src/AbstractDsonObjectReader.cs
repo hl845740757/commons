@@ -76,10 +76,6 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         return ReadName(name) ? DsonCodecHelper.ReadPtr(reader, name) : default;
     }
 
-    public ObjectLitePtr ReadLitePtr(string? name) {
-        return ReadName(name) ? DsonCodecHelper.ReadLitePtr(reader, name) : default;
-    }
-
     public DateTime ReadDateTime(string? name) {
         return ReadName(name) ? DsonCodecHelper.ReadDateTime(reader, name).ToDateTime() : default;
     }

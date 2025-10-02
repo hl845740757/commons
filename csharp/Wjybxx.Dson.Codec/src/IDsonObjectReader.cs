@@ -53,8 +53,6 @@ public interface IDsonObjectReader : IDisposable
 
     ObjectPtr ReadPtr(string? name);
 
-    ObjectLitePtr ReadLitePtr(string? name);
-
     DateTime ReadDateTime(string? name);
 
     // ExtDateTime并不常见

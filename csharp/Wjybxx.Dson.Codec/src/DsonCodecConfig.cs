@@ -499,7 +499,6 @@ public sealed class DsonCodecConfig
         config.AddCodec(new StringCodec());
         config.AddCodec(new BinaryCodec());
         config.AddCodec(new ObjectPtrCodec());
-        config.AddCodec(new ObjectLitePtrCodec());
         config.AddCodec(new ExtDateTimeCodec());
         config.AddCodec(new TimestampCodec());
         // 基本类型补充

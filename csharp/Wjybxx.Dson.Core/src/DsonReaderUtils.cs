@@ -17,9 +17,7 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.IO;
@@ -119,44 +117,6 @@ public static class DsonReaderUtils
         byte type = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType) ? input.ReadRawByte() : (byte)0;
         byte policy = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskPolicy) ? input.ReadRawByte() : (byte)0;
         return new ObjectPtr(localId, ns, type, policy);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WireTypeOfLitePtr(in ObjectLitePtr objectLitePtr) {
-        int v = 0;
-        if (objectLitePtr.HasNamespace) {
-            v |= ObjectPtr.MaskNamespace;
-        }
-        if (objectLitePtr.Type != 0) {
-            v |= ObjectPtr.MaskType;
-        }
-        if (objectLitePtr.Policy != 0) {
-            v |= ObjectPtr.MaskPolicy;
-        }
-        return v;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteLitePtr(IDsonOutput output, in ObjectLitePtr objectLiteRef) {
-        output.WriteUInt64(objectLiteRef.LocalId);
-        if (objectLiteRef.HasNamespace) {
-            output.WriteString(objectLiteRef.Namespace);
-        }
-        if (objectLiteRef.Type != 0) {
-            output.WriteRawByte(objectLiteRef.Type);
-        }
-        if (objectLiteRef.Policy != 0) {
-            output.WriteRawByte(objectLiteRef.Policy);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ObjectLitePtr ReadLitePtr(IDsonInput input, int wireTypeBits) {
-        long localId = input.ReadUInt64();
-        string ns = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskNamespace) ? input.ReadString() : null;
-        byte type = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType) ? input.ReadRawByte() : (byte)0;
-        byte policy = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskPolicy) ? input.ReadRawByte() : (byte)0;
-        return new ObjectLitePtr(localId, ns, type, policy);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -274,20 +234,6 @@ public static class DsonReaderUtils
                 skip = input.ReadUInt32(); // localId长度
                 input.SkipRawBytes(skip);
 
-                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskNamespace)) {
-                    skip = input.ReadUInt32(); // namespace长度
-                    input.SkipRawBytes(skip);
-                }
-                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType)) {
-                    input.ReadRawByte();
-                }
-                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskPolicy)) {
-                    input.ReadRawByte();
-                }
-                return;
-            }
-            case DsonType.LitePointer: {
-                input.ReadUInt64(); // localId
                 if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskNamespace)) {
                     skip = input.ReadUInt32(); // namespace长度
                     input.SkipRawBytes(skip);

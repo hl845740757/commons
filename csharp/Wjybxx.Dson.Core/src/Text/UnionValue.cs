@@ -106,11 +106,6 @@ public struct UnionValue : IEquatable<UnionValue>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static UnionValue OfObjectLitePtr(in ObjectLitePtr value) {
-        return new UnionValue(DsonType.LitePointer) { ObjectLitePtr = value };
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static UnionValue OfDateTime(in ExtDateTime value) {
         return new UnionValue(DsonType.DateTime) { DateTime = value };
     }
@@ -128,16 +123,6 @@ public struct UnionValue : IEquatable<UnionValue>
         get => new ObjectPtr((string)objValue, (string)objValue2, b1, b2);
         set {
             objValue = value.LocalId;
-            objValue2 = value.Namespace; // 固定value2
-            b1 = value.Type;
-            b2 = value.Policy;
-        }
-    }
-
-    public ObjectLitePtr ObjectLitePtr {
-        get => new ObjectLitePtr(lValue, (string)objValue2, b1, b2);
-        set {
-            lValue = value.LocalId;
             objValue2 = value.Namespace; // 固定value2
             b1 = value.Type;
             b2 = value.Policy;
@@ -179,7 +164,6 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Bool: return bValue == other.bValue;
             case DsonType.Null: return true;
             case DsonType.Pointer: return ObjectPtr.Equals(other.ObjectPtr);
-            case DsonType.LitePointer: return ObjectLitePtr.Equals(other.ObjectLitePtr);
             case DsonType.DateTime: return DateTime.Equals(other.DateTime);
             case DsonType.Timestamp: return Timestamp.Equals(other.Timestamp);
             default:
@@ -203,7 +187,6 @@ public struct UnionValue : IEquatable<UnionValue>
             DsonType.Bool => bValue.GetHashCode(),
             DsonType.Null => DsonNull.NULL.GetHashCode(), // null的Hash也特殊处理
             DsonType.Pointer => ObjectPtr.GetHashCode(),
-            DsonType.LitePointer => ObjectLitePtr.GetHashCode(),
             DsonType.DateTime => DateTime.GetHashCode(),
             DsonType.Timestamp => Timestamp.GetHashCode(),
             _ => objValue == null ? 0 : objValue.GetHashCode()
@@ -228,7 +211,6 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Double: return $"Type: {type}, Value: {dValue}";
             case DsonType.Bool: return $"Type: {type}, Value: {bValue}";
             case DsonType.Pointer: return $"Type: {type}, Value: {ObjectPtr}";
-            case DsonType.LitePointer: return $"Type: {type}, Value: {ObjectLitePtr}";
             case DsonType.DateTime: return $"Type: {type}, Value: {DateTime}";
             case DsonType.Timestamp: return $"Type: {type}, Value: {Timestamp}";
             default:

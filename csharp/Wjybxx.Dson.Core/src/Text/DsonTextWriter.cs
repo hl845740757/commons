@@ -470,48 +470,6 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.Print('}');
     }
 
-    protected override void DoWriteLitePtr(in ObjectLitePtr objectLitePtr) {
-        DsonPrinter printer = this._printer;
-        int softLineLength = this._settings.softLineLength;
-        WriteCurrentName(printer, DsonType.LitePointer);
-        if (objectLitePtr.CanBeAbbreviated) {
-            printer.FastPrint("@lptr "); // 只有localId时简写
-            printer.FastPrint(objectLitePtr.LocalId.ToString());
-            return;
-        }
-
-        printer.FastPrint("{@lptr ");
-        int count = 0;
-        if (objectLitePtr.HasNamespace) {
-            count++;
-            printer.FastPrint(ObjectPtr.NamesNamespace);
-            printer.FastPrint(": ");
-            PrintString(printer, objectLitePtr.Namespace, StringStyle.AutoQuote);
-        }
-        if (objectLitePtr.HasLocalId) {
-            if (count++ > 0) printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
-            printer.FastPrint(ObjectPtr.NamesLocalId);
-            printer.FastPrint(": ");
-            printer.FastPrint(objectLitePtr.LocalId.ToString());
-        }
-        if (objectLitePtr.Type != 0) {
-            if (count++ > 0) printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
-            printer.FastPrint(ObjectPtr.NamesType);
-            printer.FastPrint(": ");
-            printer.FastPrint(objectLitePtr.Type.ToString());
-        }
-        if (objectLitePtr.Policy != 0) {
-            if (count > 0) printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
-            printer.FastPrint(ObjectPtr.NamesPolicy);
-            printer.FastPrint(": ");
-            printer.FastPrint(objectLitePtr.Policy.ToString());
-        }
-        printer.Print('}');
-    }
-
     protected override void DoWriteDateTime(in ExtDateTime dateTime) {
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;

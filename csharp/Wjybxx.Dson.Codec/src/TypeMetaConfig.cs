@@ -184,7 +184,6 @@ public sealed class TypeMetaConfig
         config.Add(typeof(string), DsonTexts.LabelString, "string");
         config.Add(typeof(Binary), DsonTexts.LabelBinary, "bytes");
         config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr);
-        config.Add(typeof(ObjectLitePtr), DsonTexts.LabelLitePtr);
         config.Add(typeof(ExtDateTime), DsonTexts.LabelDateTime);
         config.Add(typeof(Timestamp), DsonTexts.LabelTimestamp);
         // 基础类型

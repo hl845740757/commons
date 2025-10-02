@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -55,7 +54,6 @@ public class CodecProcessor : ISourceGenerator
 
     private const string CNAME_Binary = "Wjybxx.Dson.Types.Binary";
     private const string CNAME_ObjectPtr = "Wjybxx.Dson.Types.ObjectPtr";
-    private const string CNAME_ObjectLitePtr = "Wjybxx.Dson.Types.ObjectLitePtr";
     private const string CNAME_Timestamp = "Wjybxx.Dson.Types.Timestamp";
     private const string CNAME_NumberStyles = "Wjybxx.Dson.Text.NumberStyles"; // 生成器直接指向工具类
     private const string CNAME_ContextType = "Wjybxx.Dson.DsonContextType"; // 生成器直接指向工具类
@@ -132,7 +130,6 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_Object;
     internal INamedTypeSymbol type_Binary;
     internal INamedTypeSymbol type_Ptr;
-    internal INamedTypeSymbol type_LitePtr;
     internal INamedTypeSymbol type_LocalDateTime;
     internal INamedTypeSymbol type_Timestamp;
 
@@ -186,7 +183,6 @@ public class CodecProcessor : ISourceGenerator
         type_LocalDateTime = compilation.GetSpecialType(SpecialType.System_DateTime);
         type_Binary = compilation.GetTypeByMetadataName(CNAME_Binary);
         type_Ptr = compilation.GetTypeByMetadataName(CNAME_ObjectPtr);
-        type_LitePtr = compilation.GetTypeByMetadataName(CNAME_ObjectLitePtr);
         type_Timestamp = compilation.GetTypeByMetadataName(CNAME_Timestamp);
 
         type_ILIST = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IList_T);

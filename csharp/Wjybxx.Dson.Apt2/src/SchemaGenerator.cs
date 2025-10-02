@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Poet;
 using ClassName = Wjybxx.Commons.Poet.ClassName;
@@ -103,10 +102,7 @@ internal class SchemaGenerator
                 // 自动属性字段使用属性名
                 dsonName = fieldInfo.propertyInfo!.Name;
             } else {
-                // 普通私有字段去除下划线
-                dsonName = (fieldName[0] == '_' && fieldName[1] != '_')
-                    ? fieldName.Substring(1)
-                    : fieldName;
+                dsonName = fieldName;
             }
             if (!dsonNameSet.Add(dsonName)) {
                 throw new Exception($"dsonName {dsonName} is duplicate, Type: {context.type}");

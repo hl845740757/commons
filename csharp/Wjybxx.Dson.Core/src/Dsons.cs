@@ -456,9 +456,6 @@ public static class Dsons
             case DsonType.Pointer:
                 writer.WritePtr(dsonValue.AsPointer());
                 break;
-            case DsonType.LitePointer:
-                writer.WriteLitePtr(dsonValue.AsLitePointer());
-                break;
             case DsonType.DateTime:
                 writer.WriteDateTime(dsonValue.AsDateTime());
                 break;
@@ -497,7 +494,6 @@ public static class Dsons
             }
             case DsonType.Binary: return new DsonBinary(reader.ReadBinary());
             case DsonType.Pointer: return new DsonPointer(reader.ReadPtr());
-            case DsonType.LitePointer: return new DsonLitePointer(reader.ReadLitePtr());
             case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
             case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());
             case DsonType.Header: {

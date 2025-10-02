@@ -470,7 +470,6 @@ internal class PojoCodecGenerator
         if (fieldType == typeof(byte[])) return MNAME_WRITE_BYTES;
         if (fieldType == typeof(Binary)) return MNAME_WRITE_BINARY;
         if (fieldType == typeof(ObjectPtr)) return MNAME_WRITE_PTR;
-        if (fieldType == typeof(ObjectLitePtr)) return MNAME_WRITE_LITE_PTR;
         if (fieldType == typeof(DateTime)) return MNAME_WRITE_DATETIME;
         if (fieldType == typeof(Timestamp)) return MNAME_WRITE_TIMESTAMP;
         return MNAME_WRITE_OBJECT;
@@ -486,7 +485,6 @@ internal class PojoCodecGenerator
         if (fieldType == typeof(byte[])) return MNAME_READ_BYTES;
         if (fieldType == typeof(Binary)) return MNAME_READ_BINARY;
         if (fieldType == typeof(ObjectPtr)) return MNAME_READ_PTR;
-        if (fieldType == typeof(ObjectLitePtr)) return MNAME_READ_LITE_PTR;
         if (fieldType == typeof(DateTime)) return MNAME_READ_DATETIME; // 系统库日期时间
         if (fieldType == typeof(Timestamp)) return MNAME_READ_TIMESTAMP;
         return MNAME_READ_OBJECT;
@@ -498,7 +496,6 @@ internal class PojoCodecGenerator
     private const string MNAME_READ_OBJECT = "ReadObject";
 
     private const string MNAME_READ_PTR = "ReadPtr";
-    private const string MNAME_READ_LITE_PTR = "ReadLitePtr";
     private const string MNAME_READ_DATETIME = "ReadDateTime";
     private const string MNAME_READ_TIMESTAMP = "ReadTimestamp";
 
@@ -508,7 +505,6 @@ internal class PojoCodecGenerator
     private const string MNAME_WRITE_OBJECT = "WriteObject";
 
     private const string MNAME_WRITE_PTR = "WritePtr";
-    private const string MNAME_WRITE_LITE_PTR = "WriteLitePtr";
     private const string MNAME_WRITE_DATETIME = "WriteDateTime";
     private const string MNAME_WRITE_TIMESTAMP = "WriteTimestamp";
 

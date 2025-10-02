@@ -164,12 +164,6 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         DsonReaderUtils.WritePtr(output, in objectPtr);
     }
 
-    protected override void DoWriteLitePtr(in ObjectLitePtr objectLitePtr) {
-        IDsonOutput output = this._output;
-        WriteFullTypeAndCurrentName(output, DsonType.LitePointer, DsonReaderUtils.WireTypeOfLitePtr(in objectLitePtr));
-        DsonReaderUtils.WriteLitePtr(output, in objectLitePtr);
-    }
-
     protected override void DoWriteDateTime(in ExtDateTime dateTime) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.DateTime, dateTime.Enables);

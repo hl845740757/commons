@@ -90,8 +90,6 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WritePtr(TName name, in ObjectPtr objectPtr);
 
-    void WriteLitePtr(TName name, in ObjectLitePtr objectLitePtr);
-
     void WriteDateTime(TName name, in ExtDateTime dateTime);
 
     void WriteTimestamp(TName name, in Timestamp timestamp);
@@ -124,8 +122,6 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     void WriteBinary(byte[] bytes, int offset, int len);
 
     void WritePtr(in ObjectPtr objectPtr);
-
-    void WriteLitePtr(in ObjectLitePtr objectLitePtr);
 
     void WriteDateTime(in ExtDateTime dateTime);
 

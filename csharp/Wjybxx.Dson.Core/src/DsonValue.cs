@@ -55,9 +55,6 @@ public abstract class DsonValue
     public ObjectPtr AsPointer() => ((DsonPointer)this).Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ObjectLitePtr AsLitePointer() => ((DsonLitePointer)this).Value;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ExtDateTime AsDateTime() => ((DsonDateTime)this).Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

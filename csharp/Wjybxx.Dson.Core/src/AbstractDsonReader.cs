@@ -273,13 +273,6 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
-    public ObjectLitePtr ReadLitePtr(TName name) {
-        AdvanceToValueState(name, DsonType.LitePointer);
-        ObjectLitePtr value = DoReadLitePtr();
-        SetNextState();
-        return value;
-    }
-
     public ExtDateTime ReadDateTime(TName name) {
         AdvanceToValueState(name, DsonType.DateTime);
         ExtDateTime value = DoReadDateTime();
@@ -358,13 +351,6 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
-    public ObjectLitePtr ReadLitePtr() {
-        EnsureValueState(context, DsonType.LitePointer);
-        ObjectLitePtr value = DoReadLitePtr();
-        SetNextState();
-        return value;
-    }
-
     public ExtDateTime ReadDateTime() {
         EnsureValueState(context, DsonType.DateTime);
         ExtDateTime value = DoReadDateTime();
@@ -398,8 +384,6 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected abstract Binary DoReadBinary();
 
     protected abstract ObjectPtr DoReadPtr();
-
-    protected abstract ObjectLitePtr DoReadLitePtr();
 
     protected abstract ExtDateTime DoReadDateTime();
 

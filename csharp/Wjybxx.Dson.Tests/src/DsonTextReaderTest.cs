@@ -46,8 +46,6 @@ public class DsonTextReaderTest
               intro: "hello world",
               ptr1: @ptr 17630eb4f916148b,
               ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: 10001},
-              lptr1: @lptr 10001,
-              lptr2: {@lptr ns: global, localId: 10001},
               ptr: @ptr null
             },
             [@{localId: "10001"}

@@ -49,7 +49,6 @@ public static class DsonTexts
 
     public const string LabelBinary = "bin";
     public const string LabelPtr = "ptr";
-    public const string LabelLitePtr = "lptr";
     public const string LabelDateTime = "dt";
     public const string LabelTimestamp = "ts";
 
@@ -68,7 +67,7 @@ public static class DsonTexts
     /** 所有内建值类型标签 */
     private static readonly ImmutableSet<string> builtinStructLabels = new[]
     {
-        LabelPtr, LabelLitePtr, LabelDateTime, LabelTimestamp
+        LabelPtr, LabelDateTime, LabelTimestamp
     }.ToImmutableSet2();
 
     /** 有特殊含义的字符串 */
