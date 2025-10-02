@@ -17,7 +17,10 @@
 package cn.wjybxx.dson;
 
 import cn.wjybxx.dson.io.DsonIOException;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -293,14 +296,6 @@ public abstract class AbstractDsonReader implements DsonReader {
     }
 
     @Override
-    public ObjectLitePtr readLitePtr(String name) {
-        advanceToValueState(name, DsonType.LITE_POINTER);
-        ObjectLitePtr value = doReadLitePtr();
-        setNextState();
-        return value;
-    }
-
-    @Override
     public ExtDateTime readDateTime(String name) {
         advanceToValueState(name, DsonType.DATETIME);
         ExtDateTime value = doReadDateTime();
@@ -390,14 +385,6 @@ public abstract class AbstractDsonReader implements DsonReader {
     }
 
     @Override
-    public ObjectLitePtr readLitePtr() {
-        ensureValueState(context, DsonType.LITE_POINTER);
-        ObjectLitePtr value = doReadLitePtr();
-        setNextState();
-        return value;
-    }
-
-    @Override
     public ExtDateTime readDateTime() {
         ensureValueState(context, DsonType.DATETIME);
         ExtDateTime value = doReadDateTime();
@@ -432,8 +419,6 @@ public abstract class AbstractDsonReader implements DsonReader {
     protected abstract Binary doReadBinary();
 
     protected abstract ObjectPtr doReadPtr();
-
-    protected abstract ObjectLitePtr doReadLitePtr();
 
     protected abstract ExtDateTime doReadDateTime();
 

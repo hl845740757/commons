@@ -17,7 +17,10 @@
 package cn.wjybxx.dson;
 
 import cn.wjybxx.dson.text.*;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.util.Objects;
 
@@ -78,8 +81,6 @@ public interface DsonWriter extends AutoCloseable {
 
     void writePtr(String name, ObjectPtr objectPtr);
 
-    void writeLitePtr(String name, ObjectLitePtr objectLitePtr);
-
     void writeDateTime(String name, ExtDateTime dateTime);
 
     void writeTimestamp(String name, Timestamp timestamp);
@@ -107,8 +108,6 @@ public interface DsonWriter extends AutoCloseable {
     void writeBinary(byte[] bytes, int offset, int len);
 
     void writePtr(ObjectPtr objectPtr);
-
-    void writeLitePtr(ObjectLitePtr objectLitePtr);
 
     void writeDateTime(ExtDateTime dateTime);
 

@@ -18,7 +18,10 @@ package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.dson.DsonReader;
 import cn.wjybxx.dson.DsonType;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 /**
  * 1.int扩展之间可以相互转换，当int的扩展不可以直接转换为其它数值类型
@@ -164,20 +167,6 @@ final class DsonCodecHelper {
         };
     }
 
-    static ObjectLitePtr readLitePtr(DsonReader reader, String name) {
-        DsonType dsonType = readOrGetDsonType(reader);
-        return switch (dsonType) {
-            case INT32 -> new ObjectLitePtr(reader.readInt32(name));
-            case INT64 -> new ObjectLitePtr(reader.readInt64(name));
-            case LITE_POINTER -> reader.readLitePtr(name);
-            case NULL -> {
-                reader.readNull(name);
-                yield null;
-            }
-            default -> throw DsonCodecException.incompatible(ObjectLitePtr.class, dsonType);
-        };
-    }
-
     static ExtDateTime readDateTime(DsonReader reader, String name) {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
@@ -245,7 +234,6 @@ final class DsonCodecHelper {
             case STRING -> reader.readString(name);
             case BINARY -> reader.readBinary(name);
             case POINTER -> reader.readPtr(name);
-            case LITE_POINTER -> reader.readLitePtr(name);
             case DATETIME -> reader.readDateTime(name);
             case TIMESTAMP -> reader.readTimestamp(name);
             case NULL -> {

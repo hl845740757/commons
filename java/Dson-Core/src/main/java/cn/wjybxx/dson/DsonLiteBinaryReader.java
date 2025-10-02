@@ -20,7 +20,10 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonInput;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.util.Objects;
 
@@ -150,11 +153,6 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
     @Override
     protected ObjectPtr doReadPtr() {
         return DsonReaderUtils.readPtr(input, currentWireTypeBits);
-    }
-
-    @Override
-    protected ObjectLitePtr doReadLitePtr() {
-        return DsonReaderUtils.readLitePtr(input, currentWireTypeBits);
     }
 
     @Override

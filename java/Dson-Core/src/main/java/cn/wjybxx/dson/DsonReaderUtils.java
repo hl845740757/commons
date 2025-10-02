@@ -20,7 +20,10 @@ import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonInput;
 import cn.wjybxx.dson.io.DsonOutput;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.util.List;
 
@@ -104,41 +107,6 @@ public class DsonReaderUtils {
         byte type = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE) ? input.readRawByte() : (byte) 0;
         byte policy = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_POLICY) ? input.readRawByte() : (byte) 0;
         return new ObjectPtr(localId, namespace, type, policy);
-    }
-
-    public static int wireTypeOfLitePtr(ObjectLitePtr objectLitePtr) {
-        int v = 0;
-        if (objectLitePtr.hasNamespace()) {
-            v |= ObjectPtr.MASK_NAMESPACE;
-        }
-        if (objectLitePtr.getType() != 0) {
-            v |= ObjectPtr.MASK_TYPE;
-        }
-        if (objectLitePtr.getPolicy() != 0) {
-            v |= ObjectPtr.MASK_POLICY;
-        }
-        return v;
-    }
-
-    public static void writeLitePtr(DsonOutput output, ObjectLitePtr objectLitePtr) {
-        output.writeUInt64(objectLitePtr.getLocalId());
-        if (objectLitePtr.hasNamespace()) {
-            output.writeString(objectLitePtr.getNamespace());
-        }
-        if (objectLitePtr.getType() != 0) {
-            output.writeRawByte(objectLitePtr.getType());
-        }
-        if (objectLitePtr.getPolicy() != 0) {
-            output.writeRawByte(objectLitePtr.getPolicy());
-        }
-    }
-
-    public static ObjectLitePtr readLitePtr(DsonInput input, int wireTypeBits) {
-        long localId = input.readUInt64();
-        String namespace = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE) ? input.readString() : null;
-        byte type = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE) ? input.readRawByte() : (byte) 0;
-        byte policy = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_POLICY) ? input.readRawByte() : (byte) 0;
-        return new ObjectLitePtr(localId, namespace, type, policy);
     }
 
     public static void writeDateTime(DsonOutput output, ExtDateTime dateTime) {
@@ -242,20 +210,6 @@ public class DsonReaderUtils {
                 skip = input.readUInt32(); // localId长度
                 input.skipRawBytes(skip);
 
-                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE)) {
-                    skip = input.readUInt32(); // namespace长度
-                    input.skipRawBytes(skip);
-                }
-                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE)) {
-                    input.readRawByte();
-                }
-                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_POLICY)) {
-                    input.readRawByte();
-                }
-                return;
-            }
-            case LITE_POINTER -> {
-                input.readUInt64(); // localId
                 if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE)) {
                     skip = input.readUInt32(); // namespace长度
                     input.skipRawBytes(skip);

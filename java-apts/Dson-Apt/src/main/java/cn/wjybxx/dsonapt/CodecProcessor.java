@@ -49,7 +49,6 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     private static final String CNAME_Binary = "cn.wjybxx.dson.types.Binary";
     private static final String CNAME_ObjectPtr = "cn.wjybxx.dson.types.ObjectPtr";
-    private static final String CNAME_ObjectLitePtr = "cn.wjybxx.dson.types.ObjectLitePtr";
     private static final String CNAME_Timestamp = "cn.wjybxx.dson.types.Timestamp";
     // commons
     private static final String CNAME_TypeInfo = "cn.wjybxx.base.TypeInfo";
@@ -123,7 +122,6 @@ public class CodecProcessor extends MyAbstractProcessor {
     public TypeMirror type_LocalDateTime;
     public TypeMirror type_Binary;
     public TypeMirror type_Ptr;
-    public TypeMirror type_LitePtr;
     public TypeMirror type_Timestamp;
 
     // 集合类型
@@ -178,7 +176,6 @@ public class CodecProcessor extends MyAbstractProcessor {
         type_LocalDateTime = elementUtils.getTypeElement(LocalDateTime.class.getCanonicalName()).asType();
         type_Binary = elementUtils.getTypeElement(CNAME_Binary).asType();
         type_Ptr = elementUtils.getTypeElement(CNAME_ObjectPtr).asType();
-        type_LitePtr = elementUtils.getTypeElement(CNAME_ObjectLitePtr).asType();
         type_Timestamp = elementUtils.getTypeElement(CNAME_Timestamp).asType();
         // 特殊集合
         type_EnumSet = typeUtils.erasure(AptUtils.getTypeMirrorOfClass(elementUtils, EnumSet.class));
@@ -686,10 +683,6 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     protected boolean isObjectPtr(TypeMirror typeMirror) {
         return typeUtils.isSameType(typeMirror, type_Ptr);
-    }
-
-    protected boolean isObjectLitePtr(TypeMirror typeMirror) {
-        return typeUtils.isSameType(typeMirror, type_LitePtr);
     }
 
     protected boolean isLocalDateTime(TypeMirror typeMirror) {

@@ -22,7 +22,10 @@ import cn.wjybxx.dson.DsonContextType;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.DsonWriterState;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.io.Writer;
 import java.util.Objects;
@@ -483,49 +486,6 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer.fastPrint(ObjectPtr.NAMES_POLICY);
             printer.fastPrint(": ");
             printer.fastPrint(Integer.toString(objectPtr.getPolicy()));
-        }
-        printer.print('}');
-    }
-
-    @Override
-    protected void doWriteLitePtr(ObjectLitePtr objectLitePtr) {
-        DsonPrinter printer = this.printer;
-        int softLineLength = this.settings.softLineLength;
-        writeCurrentName(printer, DsonType.LITE_POINTER);
-        if (objectLitePtr.canBeAbbreviated()) {
-            printer.fastPrint("@lptr "); // 只有localId时简写
-            printer.fastPrint(Long.toString(objectLitePtr.getLocalId()));
-            return;
-        }
-
-        printer.fastPrint("{@lptr ");
-        int count = 0;
-        if (objectLitePtr.hasNamespace()) {
-            count++;
-            printer.fastPrint(ObjectPtr.NAMES_NAMESPACE);
-            printer.fastPrint(": ");
-            printString(printer, objectLitePtr.getNamespace(), StringStyle.AUTO_QUOTE);
-        }
-        if (objectLitePtr.hasLocalId()) {
-            if (count++ > 0) printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_LOCAL_ID);
-            printer.fastPrint(": ");
-            printer.fastPrint(Long.toString(objectLitePtr.getLocalId()));
-        }
-        if (objectLitePtr.getType() != 0) {
-            if (count++ > 0) printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_TYPE);
-            printer.fastPrint(": ");
-            printer.fastPrint(Integer.toString(objectLitePtr.getType()));
-        }
-        if (objectLitePtr.getPolicy() != 0) {
-            if (count > 0) printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_POLICY);
-            printer.fastPrint(": ");
-            printer.fastPrint(Integer.toString(objectLitePtr.getPolicy()));
         }
         printer.print('}');
     }

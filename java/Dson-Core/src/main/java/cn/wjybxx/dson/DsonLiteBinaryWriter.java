@@ -20,7 +20,10 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonOutput;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.util.Objects;
 
@@ -165,13 +168,6 @@ public class DsonLiteBinaryWriter extends AbstractDsonLiteWriter {
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.POINTER, DsonReaderUtils.wireTypeOfPtr(objectPtr));
         DsonReaderUtils.writePtr(output, objectPtr);
-    }
-
-    @Override
-    protected void doWriteLitePtr(ObjectLitePtr objectLitePtr) {
-        DsonOutput output = this.output;
-        writeFullTypeAndCurrentName(output, DsonType.LITE_POINTER, DsonReaderUtils.wireTypeOfLitePtr(objectLitePtr));
-        DsonReaderUtils.writeLitePtr(output, objectLitePtr);
     }
 
     @Override

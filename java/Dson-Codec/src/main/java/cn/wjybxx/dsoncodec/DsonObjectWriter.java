@@ -69,8 +69,6 @@ public interface DsonObjectWriter extends AutoCloseable {
     // 内建结构体
     void writePtr(String name, ObjectPtr objectPtr);
 
-    void writeLitePtr(String name, ObjectLitePtr objectLitePtr);
-
     void writeDateTime(String name, LocalDateTime dateTime);
 
     // ExtDateTime并不常见

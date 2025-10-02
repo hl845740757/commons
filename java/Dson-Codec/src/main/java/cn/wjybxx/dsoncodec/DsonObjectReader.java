@@ -61,8 +61,6 @@ public interface DsonObjectReader extends AutoCloseable {
 
     ObjectPtr readPtr(String name);
 
-    ObjectLitePtr readLitePtr(String name);
-
     LocalDateTime readDateTime(String name);
 
     // ExtDateTime并不常见

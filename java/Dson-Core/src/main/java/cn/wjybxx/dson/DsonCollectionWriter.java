@@ -5,7 +5,10 @@ import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.util.Objects;
 
@@ -102,11 +105,6 @@ public class DsonCollectionWriter extends AbstractDsonWriter {
     @Override
     protected void doWritePtr(ObjectPtr objectPtr) {
         getContext().add(new DsonPointer(objectPtr));
-    }
-
-    @Override
-    protected void doWriteLitePtr(ObjectLitePtr objectLitePtr) {
-        getContext().add(new DsonLitePointer(objectLitePtr));
     }
 
     @Override

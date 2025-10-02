@@ -16,7 +16,10 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nonnull;
 
@@ -60,10 +63,6 @@ public abstract class DsonValue {
 
     public ObjectPtr asPointer() {
         return ((DsonPointer) this).getValue();
-    }
-
-    public ObjectLitePtr asLitePointer() {
-        return ((DsonLitePointer) this).getValue();
     }
 
     public ExtDateTime asDateTime() {

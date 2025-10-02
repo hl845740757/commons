@@ -41,10 +41,6 @@ public enum DsonType {
      */
     POINTER(11),
     /**
-     * 轻量对象指针
-     */
-    LITE_POINTER(12),
-    /**
      * 日期时间
      */
     DATETIME(13),

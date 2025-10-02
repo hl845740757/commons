@@ -16,7 +16,10 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -117,8 +120,6 @@ public interface DsonReader extends AutoCloseable {
 
     ObjectPtr readPtr(String name);
 
-    ObjectLitePtr readLitePtr(String name);
-
     ExtDateTime readDateTime(String name);
 
     Timestamp readTimestamp(String name);
@@ -144,8 +145,6 @@ public interface DsonReader extends AutoCloseable {
     Binary readBinary();
 
     ObjectPtr readPtr();
-
-    ObjectLitePtr readLitePtr();
 
     ExtDateTime readDateTime();
 

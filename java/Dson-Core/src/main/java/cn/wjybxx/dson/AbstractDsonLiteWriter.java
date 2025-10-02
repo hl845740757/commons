@@ -18,7 +18,10 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.dson.io.DsonIOException;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.util.List;
 import java.util.Objects;
@@ -200,14 +203,6 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
     }
 
     @Override
-    public void writeLitePtr(int name, ObjectLitePtr objectLitePtr) {
-        Objects.requireNonNull(objectLitePtr);
-        advanceToValueState(name);
-        doWriteLitePtr(objectLitePtr);
-        setNextState();
-    }
-
-    @Override
     public void writeDateTime(int name, ExtDateTime dateTime) {
         Objects.requireNonNull(dateTime);
         advanceToValueState(name);
@@ -299,14 +294,6 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
     }
 
     @Override
-    public void writeLitePtr(ObjectLitePtr objectLitePtr) {
-        Objects.requireNonNull(objectLitePtr);
-        ensureValueState(context);
-        doWriteLitePtr(objectLitePtr);
-        setNextState();
-    }
-
-    @Override
     public void writeDateTime(ExtDateTime dateTime) {
         Objects.requireNonNull(dateTime);
         ensureValueState(context);
@@ -341,8 +328,6 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
     protected abstract void doWriteBinary(byte[] bytes, int offset, int len);
 
     protected abstract void doWritePtr(ObjectPtr objectPtr);
-
-    protected abstract void doWriteLitePtr(ObjectLitePtr objectLitePtr);
 
     protected abstract void doWriteDateTime(ExtDateTime dateTime);
 

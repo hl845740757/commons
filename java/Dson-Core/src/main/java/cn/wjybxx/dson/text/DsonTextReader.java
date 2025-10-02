@@ -22,7 +22,10 @@ import cn.wjybxx.base.time.TimeUtils;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import java.io.Reader;
 import java.time.LocalDate;
@@ -396,10 +399,6 @@ public final class DsonTextReader extends AbstractDsonReader {
             case POINTER -> {
                 pushNextValue(new ObjectPtr(unquotedString));
             }
-            case LITE_POINTER -> {
-                long localId = DsonTexts.parseInt64(unquotedString);
-                pushNextValue(new ObjectLitePtr(localId));
-            }
             case DATETIME -> {
                 LocalDateTime dateTime = ExtDateTime.parseDateTime(unquotedString); // 这里其实不应该走到
                 pushNextValue(ExtDateTime.ofDateTime(dateTime));
@@ -428,13 +427,6 @@ public final class DsonTextReader extends AbstractDsonReader {
             String localId = nextToken.nullableStringValue();
             pushNextValue(new ObjectPtr(localId));
             return DsonType.POINTER;
-        }
-        if (DsonTexts.LABEL_LITE_PTR.equals(clsName)) { // @lptr localId
-            DsonToken nextToken = popToken();
-            ensureStringsToken(context, nextToken);
-            long localId = DsonTexts.parseInt64(nextToken.stringValue());
-            pushNextValue(new ObjectLitePtr(localId));
-            return DsonType.LITE_POINTER;
         }
 
         if (DsonTexts.LABEL_DATETIME.equals(clsName)) { // @dt uuuu-MM-dd'T'HH:mm:ss
@@ -473,10 +465,6 @@ public final class DsonTextReader extends AbstractDsonReader {
             case DsonTexts.LABEL_PTR -> {
                 pushNextValue(scanPtr(context));
                 yield DsonType.POINTER;
-            }
-            case DsonTexts.LABEL_LITE_PTR -> {
-                pushNextValue(scanLitePtr(context));
-                yield DsonType.LITE_POINTER;
             }
             case DsonTexts.LABEL_DATETIME -> {
                 pushNextValue(scanDateTime(context));
@@ -565,46 +553,6 @@ public final class DsonTextReader extends AbstractDsonReader {
             checkSeparator(context);
         }
         return new ObjectPtr(localId, namespace, type, policy);
-    }
-
-    private ObjectLitePtr scanLitePtr(Context context) {
-        String namespace = null;
-        long localId = 0;
-        byte type = 0;
-        byte policy = 0;
-        DsonToken keyToken;
-        while ((keyToken = popToken()).type != DsonTokenType.END_OBJECT) {
-            // key必须是字符串
-            ensureStringsToken(context, keyToken);
-            // 下一个应该是冒号
-            DsonToken colonToken = popToken();
-            verifyTokenType(context, colonToken, DsonTokenType.COLON);
-            // 根据name校验
-            DsonToken valueToken = popToken();
-            switch (keyToken.stringValue()) {
-                case ObjectPtr.NAMES_NAMESPACE -> {
-                    ensureStringsToken(context, valueToken);
-                    namespace = valueToken.stringValue();
-                }
-                case ObjectPtr.NAMES_LOCAL_ID -> {
-                    verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
-                    localId = DsonTexts.parseInt64(valueToken.stringValue());
-                }
-                case ObjectPtr.NAMES_TYPE -> {
-                    verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
-                    type = Byte.parseByte(valueToken.stringValue());
-                }
-                case ObjectPtr.NAMES_POLICY -> {
-                    verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
-                    policy = Byte.parseByte(valueToken.stringValue());
-                }
-                default -> {
-                    throw new DsonIOException("invalid lptr fieldName: " + keyToken.stringValue());
-                }
-            }
-            checkSeparator(context);
-        }
-        return new ObjectLitePtr(localId, namespace, type, policy);
     }
 
     private Timestamp scanTimestamp(Context context) {
@@ -837,11 +785,6 @@ public final class DsonTextReader extends AbstractDsonReader {
     @Override
     protected ObjectPtr doReadPtr() {
         return (ObjectPtr) Objects.requireNonNull(popNextValue());
-    }
-
-    @Override
-    protected ObjectLitePtr doReadLitePtr() {
-        return (ObjectLitePtr) Objects.requireNonNull(popNextValue());
     }
 
     @Override

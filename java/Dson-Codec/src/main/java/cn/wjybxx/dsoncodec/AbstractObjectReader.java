@@ -92,11 +92,6 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     }
 
     @Override
-    public ObjectLitePtr readLitePtr(String name) {
-        return readName(name) ? DsonCodecHelper.readLitePtr(reader, name) : null;
-    }
-
-    @Override
     public LocalDateTime readDateTime(String name) {
         if (readName(name)) { // java不是结构体可能返回null
             ExtDateTime extDateTime = DsonCodecHelper.readDateTime(reader, name);

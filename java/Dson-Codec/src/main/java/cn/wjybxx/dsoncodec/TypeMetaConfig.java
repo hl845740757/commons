@@ -211,7 +211,6 @@ public final class TypeMetaConfig {
         config.add(String.class, DsonTexts.LABEL_STRING, "string");
         config.add(Binary.class, DsonTexts.LABEL_BINARY, "bytes");
         config.add(ObjectPtr.class, DsonTexts.LABEL_PTR);
-        config.add(ObjectLitePtr.class, DsonTexts.LABEL_LITE_PTR);
         config.add(ExtDateTime.class, DsonTexts.LABEL_DATETIME);
         config.add(Timestamp.class, DsonTexts.LABEL_TIMESTAMP);
         // 基础类型

@@ -49,7 +49,6 @@ public class DsonTexts {
 
     public static final String LABEL_BINARY = "bin";
     public static final String LABEL_PTR = "ptr";
-    public static final String LABEL_LITE_PTR = "lptr";
     public static final String LABEL_DATETIME = "dt";
     public static final String LABEL_TIMESTAMP = "ts";
 
@@ -67,7 +66,7 @@ public class DsonTexts {
 
     /** 内建结构体标签 */
     private static final Set<String> builtinStructLabels = Set.of(
-            LABEL_PTR, LABEL_LITE_PTR, LABEL_DATETIME, LABEL_TIMESTAMP
+            LABEL_PTR, LABEL_DATETIME, LABEL_TIMESTAMP
     );
 
     /** 有特殊含义的字符串 */

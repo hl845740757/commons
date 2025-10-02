@@ -132,15 +132,6 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeLitePtr(String name, ObjectLitePtr objectLitePtr) {
-        if (objectLitePtr == null) {
-            writeNull(name);
-        } else {
-            writer.writeLitePtr(name, objectLitePtr);
-        }
-    }
-
-    @Override
     public void writeDateTime(String name, LocalDateTime dateTime) {
         if (dateTime == null) {
             writeNull(name);

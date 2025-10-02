@@ -209,7 +209,6 @@ public class PeekTypeTest {
             }
             case BINARY -> new DsonBinary(reader.readBinary(name));
             case POINTER -> new DsonPointer(reader.readPtr(name));
-            case LITE_POINTER -> new DsonLitePointer(reader.readLitePtr(name));
             case DATETIME -> new DsonDateTime(reader.readDateTime(name));
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp(name));
             default -> throw new AssertionError();
