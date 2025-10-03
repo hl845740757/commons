@@ -154,7 +154,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
                 continue;
             }
             if (loadTask && stateCfg.Task == null) {
-                Task<T> state = TaskEntry.TreeLoader.LoadRootTask<T>(stateCfg.Guid);
+                Task<T> state = TaskEntry.TreeLoader.LoadRootTask<T>(stateCfg.Path);
                 stateCfg.Task = state;
             }
             return stateCfg;

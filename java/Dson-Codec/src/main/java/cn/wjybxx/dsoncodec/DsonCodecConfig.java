@@ -566,7 +566,9 @@ public final class DsonCodecConfig {
         config.addCodec(new LocalTimeCodec());
         config.addCodec(new InstantCodec());
         config.addCodec(new DurationCodec());
+
         // TODO 特殊Codec绑定
+        config.addCodec(new ObjectPathCodec());
     }
     // endregion
 }

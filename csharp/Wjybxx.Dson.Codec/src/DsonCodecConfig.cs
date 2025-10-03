@@ -542,8 +542,9 @@ public sealed class DsonCodecConfig
         config.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(IList<string>)));
         config.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(IList<uint>)));
         config.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(IList<ulong>)));
-
+        
         // TODO 特殊Codec绑定
+        config.AddCodec(new ObjectPathCodec());
     }
 
     #endregion

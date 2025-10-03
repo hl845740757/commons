@@ -7,6 +7,7 @@ using System;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson;
 using Wjybxx.BTree;
+using Wjybxx.Commons;
 
 namespace Wjybxx.BTree.Codecs
 {
@@ -15,7 +16,7 @@ public sealed class ChangeStateTaskCodec<T> : AbstractDsonCodec<ChangeStateTask<
 {
     public const string names_guard = "guard";
     public const string names_flags = "flags";
-    public const string names_stateGuid = "stateGuid";
+    public const string names_statePath = "statePath";
     public const string names_stateProps = "stateProps";
     public const string names_machineName = "machineName";
     public const string names_delayMode = "delayMode";
@@ -26,7 +27,7 @@ public sealed class ChangeStateTaskCodec<T> : AbstractDsonCodec<ChangeStateTask<
     protected override void WriteFields(IDsonObjectWriter writer, in ChangeStateTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
-        writer.WriteString(names_stateGuid, inst.StateGuid, StringStyle.Auto);
+        writer.WriteObject(names_statePath, inst.StatePath, null);
         writer.WriteObject(names_stateProps, inst.StateProps, null);
         writer.WriteString(names_machineName, inst.MachineName, StringStyle.Auto);
         writer.WriteByte(names_delayMode, inst.DelayMode, NumberStyles.Simple);
@@ -41,7 +42,7 @@ public sealed class ChangeStateTaskCodec<T> : AbstractDsonCodec<ChangeStateTask<
         if (reader.ContextType == DsonContextType.Array) {
             inst.Guard = reader.ReadObject<Task<T>>(null, null);
             inst.Flags = reader.ReadInt(null);
-            inst.StateGuid = reader.ReadString(null);
+            inst.StatePath = reader.ReadObject<ObjectPath>(null, null);
             inst.StateProps = reader.ReadObject<object>(null, null);
             inst.MachineName = reader.ReadString(null);
             inst.DelayMode = reader.ReadByte(null);
@@ -52,7 +53,7 @@ public sealed class ChangeStateTaskCodec<T> : AbstractDsonCodec<ChangeStateTask<
             switch (reader.ReadName()) {
                 case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
                 case names_flags: inst.Flags = reader.ReadInt(null); break;
-                case names_stateGuid: inst.StateGuid = reader.ReadString(null); break;
+                case names_statePath: inst.StatePath = reader.ReadObject<ObjectPath>(null, null); break;
                 case names_stateProps: inst.StateProps = reader.ReadObject<object>(null, null); break;
                 case names_machineName: inst.MachineName = reader.ReadString(null); break;
                 case names_delayMode: inst.DelayMode = reader.ReadByte(null); break;

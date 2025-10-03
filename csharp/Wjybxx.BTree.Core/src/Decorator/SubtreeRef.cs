@@ -16,6 +16,8 @@
 
 #endregion
 
+using Wjybxx.Commons;
+
 namespace Wjybxx.BTree.Decorator
 {
 /// <summary>
@@ -26,20 +28,20 @@ namespace Wjybxx.BTree.Decorator
 public class SubtreeRef<T> : Decorator<T> where T : class
 {
 #nullable disable
-    private string subtreeName;
+    private ObjectPath path;
 #nullable restore
 
     public SubtreeRef() {
     }
 
-    public SubtreeRef(string subtreeName) {
-        this.subtreeName = subtreeName;
+    public SubtreeRef(in ObjectPath path) {
+        this.path = path;
     }
 
     protected override void BeforeEnter() {
         base.BeforeEnter();
         if (child == null) {
-            Task<T> rootTask = TaskEntry.TreeLoader.LoadRootTask<T>(subtreeName);
+            Task<T> rootTask = TaskEntry.TreeLoader.LoadRootTask<T>(path);
             AddChild(rootTask);
         }
     }
@@ -67,9 +69,9 @@ public class SubtreeRef<T> : Decorator<T> where T : class
     /// <summary>
     /// 子树的名字
     /// </summary>
-    public string SubtreeName {
-        get => subtreeName;
-        set => subtreeName = value;
+    public ObjectPath Path {
+        get => path;
+        set => path = value;
     }
 }
 }

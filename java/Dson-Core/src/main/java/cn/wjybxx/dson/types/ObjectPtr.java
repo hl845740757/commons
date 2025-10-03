@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dson.types;
 
+import cn.wjybxx.base.ObjectPath;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.dson.DsonLites;
 
@@ -150,4 +151,12 @@ public final class ObjectPtr {
     public static final int NUMBERS_LOCAL_ID = DsonLites.makeFullNumberZeroIdep(1);
     public static final int NUMBERS_LOCAL_NAME = DsonLites.makeFullNumberZeroIdep(2);
     public static final int NUMBERS_TYPE = DsonLites.makeFullNumberZeroIdep(3);
+
+    public static ObjectPtr OfObjectPath(ObjectPath path) {
+        return new ObjectPtr(path.localId, path.localName, path.assetPath, path.type);
+    }
+
+    public ObjectPath ToObjectPath() {
+        return new ObjectPath(namespace, localId, localName, type);
+    }
 }

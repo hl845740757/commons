@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Wjybxx.Commons;
 
@@ -33,7 +34,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public const int MaskType = 1 << 2;
 
 #nullable disable
-    /** 引用对象的本地id */
+    /** 引用对象的本地id - 如果目标资产是数组，则可能是下标 */
     [FieldOffset(0)] private readonly long localId;
     /** 引用对象的本地name - 优先级高于LocalId */
     [FieldOffset(8)] private readonly string localName;
@@ -63,13 +64,13 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public string Namespace => ns;
     public int Type => type;
 
-    public bool IsEmpty => LocalId == 0
+    public bool IsEmpty => localId == 0
                            && string.IsNullOrEmpty(localName)
                            && string.IsNullOrEmpty(ns);
     public bool CanBeAbbreviated => type == 0
                                     && string.IsNullOrEmpty(localName)
                                     && string.IsNullOrEmpty(ns);
-    public bool HasLocalId => LocalId != 0;
+    public bool HasLocalId => localId != 0;
     public bool HashLocalName => !string.IsNullOrEmpty(localName);
     public bool HasNamespace => !string.IsNullOrEmpty(ns);
 
@@ -114,6 +115,26 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public const string NamesLocalId = "localId";
     public const string NamesLocalName = "localName";
     public const string NamesType = "type";
+
+    #endregion
+
+    #region 隐式转换
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator ObjectPath(ObjectPtr ptr) {
+        return new ObjectPath()
+        {
+            assetPath = ptr.ns,
+            localId = ptr.localId,
+            localName = ptr.localName,
+            type = ptr.type
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator ObjectPtr(ObjectPath path) {
+        return new ObjectPtr(path.localId, path.localName, path.assetPath, path.type);
+    }
 
     #endregion
 }

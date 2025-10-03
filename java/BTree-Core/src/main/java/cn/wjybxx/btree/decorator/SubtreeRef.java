@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.btree.decorator;
 
+import cn.wjybxx.base.ObjectPath;
 import cn.wjybxx.btree.Decorator;
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlinable;
@@ -28,20 +29,20 @@ import cn.wjybxx.btree.TaskInlinable;
 @TaskInlinable
 public class SubtreeRef<T> extends Decorator<T> {
 
-    private String subtreeName;
+    private ObjectPath path;
 
     public SubtreeRef() {
     }
 
-    public SubtreeRef(String subtreeName) {
-        this.subtreeName = subtreeName;
+    public SubtreeRef(ObjectPath path) {
+        this.path = path;
     }
 
     @Override
     protected void beforeEnter() {
         super.beforeEnter();
         if (child == null) {
-            Task<T> rootTask = getTaskEntry().getTreeLoader().loadRootTask(subtreeName);
+            Task<T> rootTask = getTaskEntry().getTreeLoader().loadRootTask(path);
             addChild(rootTask);
         }
     }
@@ -69,11 +70,11 @@ public class SubtreeRef<T> extends Decorator<T> {
         setCompleted(child.getStatus(), true);
     }
 
-    public String getSubtreeName() {
-        return subtreeName;
+    public ObjectPath getPath() {
+        return path;
     }
 
-    public void setSubtreeName(String subtreeName) {
-        this.subtreeName = subtreeName;
+    public void setPath(ObjectPath path) {
+        this.path = path;
     }
 }

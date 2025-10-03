@@ -15,10 +15,9 @@
  */
 package cn.wjybxx.btree;
 
+import cn.wjybxx.base.ObjectPath;
+
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * 行为树加载器
@@ -36,101 +35,55 @@ public interface TreeLoader {
      * 1.加载时，通常应按照名字加载，再尝试按照guid加载。
      * 2.如果对象是一棵树，行为树的结构必须是稳定的。
      *
-     * @param nameOrGuid 行为树的名字或guid
+     * @param path 行为树的名字或guid
      * @return 编辑器导出的对象
      */
     @Nullable
-    Object tryLoadObject(String nameOrGuid);
+    Object tryLoadObject(ObjectPath path);
 
-    default Object loadObject(String nameOrGuid) {
-        Object result = tryLoadObject(nameOrGuid);
+    default Object loadObject(ObjectPath path) {
+        Object result = tryLoadObject(path);
         if (result == null) {
-            throw new IllegalArgumentException("target object is absent, name: " + nameOrGuid);
+            throw new IllegalArgumentException("target object is absent, path: " + path);
         }
         return result;
     }
 
     /**
-     * 批量加载指定文件中的对象
-     *
-     * @param fileName 文件名，通常不建议带扩展后缀
-     * @param filter   过滤器，为null则加载给定文件全部的入口对象；不要修改Entry对象的数据。
-     */
-    default List<Object> loadManyFromFile(String fileName, @Nullable Predicate<? super IEntry> filter) {
-        return loadManyFromFile(fileName, filter, false);
-    }
-
-    /**
-     * 批量加载指定文件中的对象
-     *
-     * @param fileName 文件名，通常不建议带扩展后缀
-     * @param filter   过滤器，为null则加载给定文件全部的入口对象；不要修改Entry对象的数据。
-     * @param sharable 是否共享；如果为true，则返回前不进行拷贝
-     */
-    List<Object> loadManyFromFile(String fileName, @Nullable Predicate<? super IEntry> filter, boolean sharable);
-
-    /**
      * 尝试加载行为树的根节点
      *
-     * @param treeName 行为树的名字或guid
+     * @param path 行为树的名字或guid
      * @return rootTask
      */
     @Nullable
     @SuppressWarnings({"unchecked", "rawtypes"})
-    default <T> Task<T> tryLoadRootTask(String treeName) {
-        Object result = tryLoadObject(treeName);
+    default <T> Task<T> tryLoadRootTask(ObjectPath path) {
+        Object result = tryLoadObject(path);
         if (result == null) {
             return null;
         }
         if (!(result instanceof Task task)) {
-            throw new IllegalArgumentException("target object is not a task, name: " + treeName);
+            throw new IllegalArgumentException("target object is not a task, path: " + path);
         }
         return task;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    default <T> Task<T> loadRootTask(String treeName) {
-        Object result = tryLoadObject(treeName);
+    default <T> Task<T> loadRootTask(ObjectPath path) {
+        Object result = tryLoadObject(path);
         if (result == null) {
-            throw new IllegalArgumentException("target tree is absent, name: " + treeName);
+            throw new IllegalArgumentException("target tree is absent, path: " + path);
         }
         if (!(result instanceof Task task)) {
-            throw new IllegalArgumentException("target object is not a task, name: " + treeName);
+            throw new IllegalArgumentException("target object is not a task, path: " + path);
         }
         return task;
     }
 
-    default <T> TaskEntry<T> loadTree(String treeName) {
-        final Task<T> rootTask = loadRootTask(treeName);
-        return new TaskEntry<>(treeName, rootTask, null, null, this);
-    }
-
-    // endregion
-
-    // region
-
-    /**
-     * 编辑器中的Entry节点抽象。
-     * 接口层不处理数据和行为分离架构下的配置需求，用户在具体的Entry上处理即可。
-     */
-    interface IEntry {
-
-        /** 入口对象的名字(别名) -- 可能为null */
-        @Nullable
-        String getName();
-
-        /** 入口对象的guid -- 一定存在 */
-        String getGuid();
-
-        /** 入口对象的标记信息 */
-        int getFlags();
-
-        /** 入口对象的类型，通常用于表示其作用 */
-        int getType();
-
-        /** 入口对象绑定的Root对象 */
-        Object getRoot();
-
+    /** path可能不包含name信息，因此推荐重写该方法，正确赋值行为树的name */
+    default <T> TaskEntry<T> loadTree(ObjectPath path) {
+        final Task<T> rootTask = loadRootTask(path);
+        return new TaskEntry<>(path.localName, rootTask, null, null, this);
     }
 
     // endregion
@@ -146,13 +99,8 @@ public interface TreeLoader {
         static final NullLoader INSTANCE = new NullLoader();
 
         @Override
-        public Object tryLoadObject(String nameOrGuid) {
+        public Object tryLoadObject(ObjectPath path) {
             return null;
-        }
-
-        @Override
-        public List<Object> loadManyFromFile(String fileName, @Nullable Predicate<? super IEntry> filter, boolean sharable) {
-            return new ArrayList<>();
         }
     }
 }

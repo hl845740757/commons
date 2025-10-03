@@ -167,7 +167,7 @@ public class StateMachineTask<T> extends Decorator<T> {
                 continue;
             }
             if (loadTask && stateCfg.getTask() == null) {
-                Task<T> state = getTaskEntry().getTreeLoader().loadRootTask(stateCfg.getGuid());
+                Task<T> state = getTaskEntry().getTreeLoader().loadRootTask(stateCfg.getPath());
                 stateCfg.setTask(state);
             }
             return stateCfg;

@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons;
 
 namespace Wjybxx.BTree.FSM
 {
@@ -32,7 +33,7 @@ public sealed class FsmStateCfg<T> where T : class
     /** 状态的名字 */
     private string name;
     /** 状态的task的guid */
-    private string guid;
+    private ObjectPath path;
     /** 状态关联的属性(输入) -- 理论上也可以共享，使用guid引用 */
     private object props;
     /** 状态的task缓存 */
@@ -42,9 +43,9 @@ public sealed class FsmStateCfg<T> where T : class
         get => name;
         set => name = value;
     }
-    public string Guid {
-        get => guid;
-        set => guid = value;
+    public ObjectPath Path {
+        get => path;
+        set => path = value;
     }
     public object Props {
         get => props;

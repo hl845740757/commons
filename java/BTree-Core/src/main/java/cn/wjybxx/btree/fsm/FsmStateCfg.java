@@ -16,6 +16,7 @@
 
 package cn.wjybxx.btree.fsm;
 
+import cn.wjybxx.base.ObjectPath;
 import cn.wjybxx.btree.Task;
 
 /**
@@ -30,7 +31,7 @@ public final class FsmStateCfg<T> {
     /** 状态的名字 */
     private String name;
     /** 状态的task的guid */
-    private String guid;
+    private ObjectPath path;
     /** 状态关联的属性(输入) */
     private Object props;
     /** 状态的task缓存 */
@@ -45,12 +46,12 @@ public final class FsmStateCfg<T> {
         return this;
     }
 
-    public String getGuid() {
-        return guid;
+    public ObjectPath getPath() {
+        return path;
     }
 
-    public FsmStateCfg<T> setGuid(String guid) {
-        this.guid = guid;
+    public FsmStateCfg<T> setPath(ObjectPath path) {
+        this.path = path;
         return this;
     }
 

@@ -28,7 +28,7 @@ namespace Wjybxx.BTree.FSM
 public class ChangeStateTask<T> : LeafTask<T> where T : class
 {
     /** 下一个状态的guid或name -- 延迟加载 */
-    private string? stateGuid;
+    private ObjectPath statePath;
     /** 目标状态的属性 */
     private object? stateProps;
     /** 下一个状态的对象缓存，通常延迟加载以避免循环引用 */
@@ -57,10 +57,10 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
 
     protected override void Execute() {
         if (nextState == null) {
-            if (string.IsNullOrEmpty(stateGuid)) {
-                throw new IllegalStateException("guid is empty");
+            if (statePath.IsEmpty) {
+                throw new IllegalStateException("path is empty");
             }
-            nextState = TaskEntry.TreeLoader.LoadRootTask<T>(stateGuid);
+            nextState = TaskEntry.TreeLoader.LoadRootTask<T>(statePath);
         }
         nextState.SharedProps = stateProps;
 
@@ -79,9 +79,9 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     protected override void OnEventImpl(object eventObj) {
     }
 
-    public string? StateGuid {
-        get => stateGuid;
-        set => stateGuid = value;
+    public ObjectPath StatePath {
+        get => statePath;
+        set => statePath = value;
     }
 
     public Task<T>? NextState {

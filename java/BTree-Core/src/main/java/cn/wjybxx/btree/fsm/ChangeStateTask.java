@@ -15,7 +15,7 @@
  */
 package cn.wjybxx.btree.fsm;
 
-import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.base.ObjectPath;
 import cn.wjybxx.btree.LeafTask;
 import cn.wjybxx.btree.Task;
 
@@ -30,7 +30,7 @@ import javax.annotation.Nonnull;
 public class ChangeStateTask<T> extends LeafTask<T> {
 
     /** 下一个状态的guid或name -- 延迟加载 */
-    private String stateGuid;
+    private ObjectPath statePath;
     /** 目标状态的属性 */
     private Object stateProps;
     /** 下一个状态的对象缓存，通常延迟加载以避免循环引用 */
@@ -61,8 +61,10 @@ public class ChangeStateTask<T> extends LeafTask<T> {
     @Override
     protected void execute() {
         if (nextState == null) {
-            if (ObjectUtils.isEmpty(stateGuid)) throw new IllegalStateException("guid is empty");
-            nextState = getTaskEntry().getTreeLoader().loadRootTask(stateGuid);
+            if (statePath == null || statePath.isEmpty()) {
+                throw new IllegalStateException("path is empty");
+            }
+            nextState = getTaskEntry().getTreeLoader().loadRootTask(statePath);
         }
         nextState.setSharedProps(stateProps);
 
@@ -85,12 +87,12 @@ public class ChangeStateTask<T> extends LeafTask<T> {
 
     // region
 
-    public String getStateGuid() {
-        return stateGuid;
+    public ObjectPath getStatePath() {
+        return statePath;
     }
 
-    public void setStateGuid(String stateGuid) {
-        this.stateGuid = stateGuid;
+    public void setStatePath(ObjectPath statePath) {
+        this.statePath = statePath;
     }
 
     public Task<T> getNextState() {
