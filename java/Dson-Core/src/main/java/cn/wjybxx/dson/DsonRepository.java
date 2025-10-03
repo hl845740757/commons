@@ -15,7 +15,7 @@ import java.util.Objects;
  */
 public class DsonRepository {
 
-    private final Map<String, DsonValue> indexMap = new HashMap<>();
+    private final Map<Long, DsonValue> indexMap = new HashMap<>();
     private final DsonArray<String> collection;
 
     public DsonRepository() {
@@ -25,15 +25,15 @@ public class DsonRepository {
     public DsonRepository(DsonArray<String> collection) {
         this.collection = Objects.requireNonNull(collection);
         for (DsonValue dsonValue : collection) {
-            String localId = Dsons.getLocalId(dsonValue);
-            if (localId != null) {
+            long localId = Dsons.getLocalId(dsonValue);
+            if (localId != 0) {
                 indexMap.put(localId, dsonValue);
             }
         }
     }
 
     /** 获取索引信息 -- 勿修改返回的对象 */
-    public Map<String, DsonValue> getIndexMap() {
+    public Map<Long, DsonValue> getIndexMap() {
         return indexMap;
     }
 
@@ -56,8 +56,8 @@ public class DsonRepository {
         }
         collection.add(value);
 
-        String localId = Dsons.getLocalId(value);
-        if (localId != null) {
+        long localId = Dsons.getLocalId(value);
+        if (localId != 0) {
             DsonValue exist = indexMap.put(localId, value);
             if (exist != null) {
                 CollectionUtils.removeRef(collection, exist);
@@ -68,8 +68,8 @@ public class DsonRepository {
 
     public DsonValue removeAt(int idx) {
         DsonValue dsonValue = collection.remove(idx);
-        String localId = Dsons.getLocalId(dsonValue);
-        if (localId != null) {
+        long localId = Dsons.getLocalId(dsonValue);
+        if (localId != 0) {
             indexMap.remove(localId);
         }
         return dsonValue;
@@ -85,8 +85,7 @@ public class DsonRepository {
         }
     }
 
-    public DsonValue removeById(String localId) {
-        Objects.requireNonNull(localId);
+    public DsonValue removeById(long localId) {
         DsonValue exist = indexMap.remove(localId);
         if (exist != null) {
             CollectionUtils.removeRef(collection, exist);
@@ -94,8 +93,7 @@ public class DsonRepository {
         return exist;
     }
 
-    public DsonValue find(String localId) {
-        Objects.requireNonNull(localId);
+    public DsonValue find(long localId) {
         return indexMap.get(localId);
     }
 

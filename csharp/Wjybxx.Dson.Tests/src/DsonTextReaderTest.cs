@@ -36,7 +36,7 @@ public class DsonTextReaderTest
               age: 28,
               介绍: "这是一段中文而且非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常长",
               intro: "hello world",
-              ptr1: @ptr 17630eb4f916148b,
+              ptr1: @ptr 10001,
               ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: 10001},
               bin: @bin "35DF2E75E6A4BE9E6F4571C64CB6D08B0D6BC46C1754F6E9EB4A6E57E2FD53",
               bin2: @bin ""
@@ -44,15 +44,15 @@ public class DsonTextReaderTest
             {@{MyStruct}
               name: wjybxx,
               intro: "hello world",
-              ptr1: @ptr 17630eb4f916148b,
+              ptr1: @ptr 10001,
               ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: 10001},
-              ptr: @ptr null
+              ptr: @ptr 0
             },
-            [@{localId: "10001"}
+            [@{localId: 10001}
               @bin "FFFE",
               @bin ""
             ],
-            [@{localId: 17630eb4f916148b}]
+            [@{localId: 10001}]
             """;
 
     [SetUp]

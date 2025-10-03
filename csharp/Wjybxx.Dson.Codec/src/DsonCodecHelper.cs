@@ -207,7 +207,8 @@ internal static class DsonCodecHelper
     public static ObjectPtr ReadPtr(IDsonReader<string> reader, string? name) {
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
-            case DsonType.String: return new ObjectPtr(reader.ReadString(name));
+            case DsonType.Int32: return new ObjectPtr(reader.ReadInt32());
+            case DsonType.Int64: return new ObjectPtr(reader.ReadInt64());
             case DsonType.Pointer: return reader.ReadPtr(name);
             case DsonType.Null: {
                 reader.ReadNull(name);

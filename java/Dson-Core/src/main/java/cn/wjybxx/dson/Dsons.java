@@ -276,12 +276,12 @@ public final class Dsons {
     }
 
     public static void writeHeader(DsonWriter writer, DsonHeader<String> header) {
-        if (header.size() == 1) {
-            DsonValue clsName = header.get(DsonHeader.NAMES_CLASS_NAME);
-            if (clsName != null) { // header只包含clsName时打印为简单模式
-                writer.writeSimpleHeader(clsName.asString());
-                return;
-            }
+        DsonValue clsName;
+        if (header.size() == 1
+                && (clsName = header.get(DsonHeader.NAMES_CLASS_NAME)) != null
+                && writer instanceof DsonTextWriter textWriter) {
+            textWriter.writeSimpleHeader(clsName.asString());
+            return;
         }
         writer.writeStartHeader(ObjectStyle.FLOW);
         header.forEach((key, value) -> writeDsonValue(writer, value, key));
@@ -509,17 +509,17 @@ public final class Dsons {
     }
 
     /** 获取dsonValue的localId -- dson的约定之一 */
-    public static String getLocalId(DsonValue dsonValue) {
+    public static long getLocalId(DsonValue dsonValue) {
         DsonHeader<?> header;
         if (dsonValue instanceof DsonObject<?> dsonObject) {
             header = dsonObject.getHeader();
         } else if (dsonValue instanceof DsonArray<?> dsonArray) {
             header = dsonArray.getHeader();
         } else {
-            return null;
+            return 0;
         }
         DsonValue wrapped = header.get(DsonHeader.NAMES_LOCAL_ID);
-        return wrapped instanceof DsonString dsonString ? dsonString.getValue() : null;
+        return wrapped.isNumber() ? wrapped.asNumber().longValue() : 0;
     }
 
     // endregion

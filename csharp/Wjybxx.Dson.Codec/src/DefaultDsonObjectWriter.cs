@@ -215,7 +215,13 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             if (typeMeta == null) {
                 throw new DsonCodecException($"typeMeta of encoderType: {encoderType} is absent");
             }
-            writer.WriteSimpleHeader(typeMeta.MainClsName);
+            if (writer is DsonTextWriter textWriter) {
+                textWriter.WriteSimpleHeader(typeMeta.MainClsName);
+            } else {
+                writer.WriteStartHeader();
+                writer.WriteString(DsonHeader.Names_ClassName, typeMeta.MainClsName, StringStyle.AutoQuote);
+                writer.WriteEndHeader();
+            }
         } else {
             writer.WriteStartHeader();
             if (typed) {

@@ -400,18 +400,6 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #region 特殊
 
-    public virtual void WriteSimpleHeader(string clsName) {
-        WriteStartHeader(ObjectStyle.Flow);
-        if (this is AbstractDsonWriter<string> writer1) {
-            writer1.WriteString(DsonHeader.Names_ClassName, clsName);
-        } else if (this is AbstractDsonWriter<int> writer2) {
-            writer2.WriteString(DsonHeader.Numbers_ClassName, clsName);
-        } else {
-            throw new AssertionError();
-        }
-        WriteEndHeader();
-    }
-
     public void WriteValueBytes(TName name, DsonType type, byte[] data) {
         DsonReaderUtils.CheckWriteValueAsBytes(type);
         AdvanceToValueState(name);

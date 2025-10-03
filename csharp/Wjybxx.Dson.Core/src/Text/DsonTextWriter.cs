@@ -428,44 +428,40 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;
         WriteCurrentName(printer, DsonType.Pointer);
-        if (objectPtr.IsEmpty) {
-            printer.FastPrint("@ptr null"); // 空指针打印为null
-            return;
-        }
+        // 只有localId时简写
         if (objectPtr.CanBeAbbreviated) {
-            printer.FastPrint("@ptr "); // 只有localId时简写
-            PrintString(printer, objectPtr.LocalId, StringStyle.AutoQuote);
+            printer.FastPrint("@ptr ");
+            printer.FastPrint(objectPtr.LocalId.ToString());
             return;
         }
 
         printer.FastPrint("{@ptr ");
-        int count = 0;
+        // 固定打印localId
+        {
+            printer.FastPrint(ObjectPtr.NamesLocalId);
+            printer.FastPrint(": ");
+            printer.FastPrint(objectPtr.LocalId.ToString());
+        }
+        if (objectPtr.HashLocalName) {
+            printer.FastPrint(", ");
+            CheckLineLength(printer, softLineLength);
+            printer.FastPrint(ObjectPtr.NamesLocalName);
+            printer.FastPrint(": ");
+            PrintString(printer, objectPtr.LocalName, StringStyle.AutoQuote);
+        }
         if (objectPtr.HasNamespace) {
-            count++;
+            printer.FastPrint(", ");
+            CheckLineLength(printer, softLineLength);
             printer.FastPrint(ObjectPtr.NamesNamespace);
             printer.FastPrint(": ");
             PrintString(printer, objectPtr.Namespace, StringStyle.AutoQuote);
         }
-        if (objectPtr.HasLocalId) {
-            if (count++ > 0) printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
-            printer.FastPrint(ObjectPtr.NamesLocalId);
-            printer.FastPrint(": ");
-            PrintString(printer, objectPtr.LocalId, StringStyle.AutoQuote);
-        }
         if (objectPtr.Type != 0) {
-            if (count++ > 0) printer.FastPrint(", ");
+            printer.FastPrint(", ");
             CheckLineLength(printer, softLineLength);
             printer.FastPrint(ObjectPtr.NamesType);
             printer.FastPrint(": ");
             printer.FastPrint(objectPtr.Type.ToString());
-        }
-        if (objectPtr.Policy != 0) {
-            if (count > 0) printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
-            printer.FastPrint(ObjectPtr.NamesPolicy);
-            printer.FastPrint(": ");
-            printer.FastPrint(objectPtr.Policy.ToString());
         }
         printer.Print('}');
     }
@@ -594,7 +590,10 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
 
     #region 特殊
 
-    public override void WriteSimpleHeader(string clsName) {
+    /// <summary>
+    /// 写入一个简单对象头（只包含className的对象头）
+    /// </summary>
+    public void WriteSimpleHeader(string clsName) {
         if (clsName == null) throw new ArgumentNullException(nameof(clsName));
         Context context = GetContext();
         if (context.contextType == DsonContextType.Object && context.state == DsonWriterState.Name) {

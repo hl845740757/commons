@@ -16,13 +16,14 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.text.*;
+import cn.wjybxx.dson.text.INumberStyle;
+import cn.wjybxx.dson.text.NumberStyle;
+import cn.wjybxx.dson.text.ObjectStyle;
+import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dson.types.ExtDateTime;
 import cn.wjybxx.dson.types.ObjectPtr;
 import cn.wjybxx.dson.types.Timestamp;
-
-import java.util.Objects;
 
 /**
  * 1.Object/Header先写入name再写入value，数组直接写入value。
@@ -163,18 +164,6 @@ public interface DsonWriter extends AutoCloseable {
     // endregion
 
     // region 特殊支持
-
-    /**
-     * 写入一个简单对象头 -- 仅有一个clsName属性的header。
-     * 1.该接口是为{@link DsonTextWriter}定制的，以支持简写。
-     * 2.对于其它Writer，则等同于普通写入。
-     */
-    default void writeSimpleHeader(String clsName) {
-        Objects.requireNonNull(clsName, "clsName");
-        writeStartHeader(ObjectStyle.FLOW);
-        writeString(DsonHeader.NAMES_CLASS_NAME, clsName, StringStyle.AUTO_QUOTE);
-        writeEndHeader();
-    }
 
     /**
      * 直接写入一个已编码的字节数组

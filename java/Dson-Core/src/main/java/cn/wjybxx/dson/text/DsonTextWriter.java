@@ -448,44 +448,40 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         DsonPrinter printer = this.printer;
         int softLineLength = this.settings.softLineLength;
         writeCurrentName(printer, DsonType.POINTER);
-        if (objectPtr.isEmpty()) {
-            printer.fastPrint("@ptr null"); // 空指针打印为null
-            return;
-        }
+        // 只有localId时简写
         if (objectPtr.canBeAbbreviated()) {
-            printer.fastPrint("@ptr "); // 只有localId时简写
-            printString(printer, objectPtr.getLocalId(), StringStyle.AUTO_QUOTE);
+            printer.fastPrint("@ptr ");
+            printer.fastPrint(Long.toString(objectPtr.getLocalId()));
             return;
         }
 
         printer.fastPrint("{@ptr ");
-        int count = 0;
+        // 固定打印localId
+        {
+            printer.fastPrint(ObjectPtr.NAMES_LOCAL_ID);
+            printer.fastPrint(": ");
+            printer.fastPrint(Long.toString(objectPtr.getLocalId()));
+        }
+        if (objectPtr.hasLocalName()) {
+            printer.fastPrint(", ");
+            checkLineLength(printer, softLineLength);
+            printer.fastPrint(ObjectPtr.NAMES_LOCAL_NAME);
+            printer.fastPrint(": ");
+            printString(printer, objectPtr.getLocalName(), StringStyle.AUTO_QUOTE);
+        }
         if (objectPtr.hasNamespace()) {
-            count++;
+            printer.fastPrint(", ");
+            checkLineLength(printer, softLineLength);
             printer.fastPrint(ObjectPtr.NAMES_NAMESPACE);
             printer.fastPrint(": ");
             printString(printer, objectPtr.getNamespace(), StringStyle.AUTO_QUOTE);
         }
-        if (objectPtr.hasLocalId()) {
-            if (count++ > 0) printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_LOCAL_ID);
-            printer.fastPrint(": ");
-            printString(printer, objectPtr.getLocalId(), StringStyle.AUTO_QUOTE);
-        }
         if (objectPtr.getType() != 0) {
-            if (count++ > 0) printer.fastPrint(", ");
+            printer.fastPrint(", ");
             checkLineLength(printer, softLineLength);
             printer.fastPrint(ObjectPtr.NAMES_TYPE);
             printer.fastPrint(": ");
             printer.fastPrint(Integer.toString(objectPtr.getType()));
-        }
-        if (objectPtr.getPolicy() != 0) {
-            if (count > 0) printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_POLICY);
-            printer.fastPrint(": ");
-            printer.fastPrint(Integer.toString(objectPtr.getPolicy()));
         }
         printer.print('}');
     }
@@ -618,7 +614,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
 
     // region 特殊接口
 
-    @Override
+    /** 写入一个简单对象头（只包含className的对象头） */
     public void writeSimpleHeader(String clsName) {
         Objects.requireNonNull(clsName, "clsName");
         Context context = getContext();

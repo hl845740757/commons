@@ -83,40 +83,39 @@ public static class DsonReaderUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WireTypeOfPtr(in ObjectPtr objectPtr) {
         int v = 0;
+        if (objectPtr.HashLocalName) {
+            v |= ObjectPtr.MaskLocalName;
+        }
         if (objectPtr.HasNamespace) {
             v |= ObjectPtr.MaskNamespace;
         }
         if (objectPtr.Type != 0) {
             v |= ObjectPtr.MaskType;
         }
-        if (objectPtr.Policy != 0) {
-            v |= ObjectPtr.MaskPolicy;
-        }
         return v;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WritePtr(IDsonOutput output, in ObjectPtr objectPtr) {
-        string localId = objectPtr.LocalId ?? "";
-        output.WriteString(localId);
+        output.WriteUInt64(objectPtr.LocalId);
+        if (objectPtr.HashLocalName) {
+            output.WriteString(objectPtr.LocalName);
+        }
         if (objectPtr.HasNamespace) {
             output.WriteString(objectPtr.Namespace);
         }
         if (objectPtr.Type != 0) {
-            output.WriteRawByte(objectPtr.Type);
-        }
-        if (objectPtr.Policy != 0) {
-            output.WriteRawByte(objectPtr.Policy);
+            output.WriteUInt32(objectPtr.Type);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ObjectPtr ReadPtr(IDsonInput input, int wireTypeBits) {
-        string localId = input.ReadString();
+        long localId = input.ReadUInt64();
+        string localName = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskLocalName) ? input.ReadString() : null;
         string ns = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskNamespace) ? input.ReadString() : null;
-        byte type = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType) ? input.ReadRawByte() : (byte)0;
-        byte policy = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskPolicy) ? input.ReadRawByte() : (byte)0;
-        return new ObjectPtr(localId, ns, type, policy);
+        int type = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType) ? input.ReadUInt32() : 0;
+        return new ObjectPtr(localId, localName, ns, type);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -231,18 +230,17 @@ public static class DsonReaderUtils
                 break;
             }
             case DsonType.Pointer: {
-                skip = input.ReadUInt32(); // localId长度
-                input.SkipRawBytes(skip);
-
+                input.ReadUInt64(); // localId;
+                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskLocalName)) {
+                    skip = input.ReadUInt32(); // localName长度
+                    input.SkipRawBytes(skip);
+                }
                 if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskNamespace)) {
                     skip = input.ReadUInt32(); // namespace长度
                     input.SkipRawBytes(skip);
                 }
                 if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType)) {
-                    input.ReadRawByte();
-                }
-                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskPolicy)) {
-                    input.ReadRawByte();
+                    input.ReadUInt32();
                 }
                 return;
             }
@@ -250,7 +248,7 @@ public static class DsonReaderUtils
                 input.ReadUInt64();
                 input.ReadUInt32();
                 input.ReadSInt32();
-                // input.ReadRawByte();
+                // input.ReadRawByte(); // 已转移到 wireTypeBits
                 return;
             }
             case DsonType.Timestamp: {

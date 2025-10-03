@@ -188,15 +188,6 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     #region 特殊接口
 
     /// <summary>
-    /// 写入一个简单对象头 -- 仅有一个clsName属性的header。
-    /// 1.该接口是为<see cref="DsonTextWriter"/>定制的，以支持简写。
-    /// 2.对于其它Writer，则等同于普通写入。
-    /// </summary>
-    /// <param name="clsName"></param>
-    /// <exception cref="ArgumentNullException"></exception>
-    void WriteSimpleHeader(string clsName);
-
-    /// <summary>
     /// 直接写入一个已编码的字节数组
     /// 1.请确保合法性
     /// 2.支持的类型与读方法相同

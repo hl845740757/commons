@@ -38,8 +38,7 @@ public class DsonTextReaderSettings extends DsonReaderSettings {
         countType = Objects.requireNonNull(builder.countType);
 
         if (localIdType != DsonType.INT32
-                && localIdType != DsonType.INT64
-                && localIdType != DsonType.STRING) {
+                && localIdType != DsonType.INT64) {
             throw new IllegalArgumentException("invalid localIdType: " + localIdType);
         }
         if (countType != DsonType.INT32
@@ -53,8 +52,8 @@ public class DsonTextReaderSettings extends DsonReaderSettings {
     }
 
     public static class Builder extends DsonReaderSettings.Builder {
-        /** localId的类型 -- 限制int32、int64、string */
-        private DsonType localIdType = DsonType.STRING;
+        /** localId的类型 -- 限制int32、int64 */
+        private DsonType localIdType = DsonType.INT64;
         /** count的类型 -- 限制int32、int64 */
         private DsonType countType = DsonType.INT32;
 

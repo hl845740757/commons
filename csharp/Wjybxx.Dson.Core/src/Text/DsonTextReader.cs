@@ -348,6 +348,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             switch (_nextName) {
                 case DsonHeader.Names_ClassName:
                 case DsonHeader.Names_Namespace:
+                case DsonHeader.Names_LocalName:
                     PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
                 case DsonHeader.Names_LocalId: {
@@ -412,7 +413,8 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 break;
             }
             case DsonType.Pointer: {
-                PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(unquotedString)));
+                long localId = DsonTexts.ParseInt64(unquotedString);
+                PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
                 break;
             }
             case DsonType.DateTime: {
@@ -439,10 +441,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // 2.object和array的className会在beginObject和beginArray的时候转换为结构体 @{}
         // 因此这里只能出现内置结构体的简写形式
         string clsName = valueToken.StringValue();
-        if (DsonTexts.LabelPtr == clsName) { // @ref localId
+        if (DsonTexts.LabelPtr == clsName) { // @ptr localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
-            string localId = nextToken.NullableStringValue();
+            long localId = DsonTexts.ParseInt64(nextToken.StringValue());
             PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
             return DsonType.Pointer;
         }
@@ -532,10 +534,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     #region 内置结构体语法
 
     private ObjectPtr ScanPtr(Context context) {
+        long localId = 0;
+        string localName = null;
         string ns = null;
-        string localId = null;
-        byte type = 0;
-        byte policy = 0;
+        int type = 0;
         DsonToken keyToken;
         while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
             // key必须是字符串
@@ -546,24 +548,24 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             // 根据name校验
             DsonToken valueToken = PopToken();
             switch (keyToken.StringValue()) {
+                case ObjectPtr.NamesLocalId: {
+                    VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
+                    localId = DsonTexts.ParseInt64(valueToken.StringValue());
+                    break;
+                }
+                case ObjectPtr.NamesLocalName: {
+                    EnsureStringsToken(context, valueToken);
+                    localName = valueToken.StringValue();
+                    break;
+                }
                 case ObjectPtr.NamesNamespace: {
                     EnsureStringsToken(context, valueToken);
                     ns = valueToken.StringValue();
                     break;
                 }
-                case ObjectPtr.NamesLocalId: {
-                    EnsureStringsToken(context, valueToken);
-                    localId = valueToken.StringValue();
-                    break;
-                }
                 case ObjectPtr.NamesType: {
                     VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
-                    type = byte.Parse(valueToken.StringValue());
-                    break;
-                }
-                case ObjectPtr.NamesPolicy: {
-                    VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
-                    policy = byte.Parse(valueToken.StringValue());
+                    type = DsonTexts.ParseInt32(valueToken.StringValue());
                     break;
                 }
                 default: {
@@ -572,7 +574,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             }
             CheckSeparator(context);
         }
-        return new ObjectPtr(localId, ns, type, policy);
+        return new ObjectPtr(localId, localName, ns, type);
     }
 
     private Timestamp ScanTimestamp(Context context) {

@@ -18,11 +18,11 @@ package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.*;
-import cn.wjybxx.dson.text.INumberStyle;
-import cn.wjybxx.dson.text.NumberStyle;
-import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.text.StringStyle;
-import cn.wjybxx.dson.types.*;
+import cn.wjybxx.dson.text.*;
+import cn.wjybxx.dson.types.Binary;
+import cn.wjybxx.dson.types.ExtDateTime;
+import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
@@ -225,7 +225,13 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta of encoderType: %s is absent".formatted(encoderType));
             }
-            writer.writeSimpleHeader(typeMeta.mainClsName());
+            if (writer instanceof DsonTextWriter textWriter) {
+                textWriter.writeSimpleHeader(typeMeta.mainClsName());
+            } else {
+                writer.writeStartHeader(ObjectStyle.FLOW);
+                writer.writeString(DsonHeader.NAMES_CLASS_NAME, typeMeta.mainClsName(), StringStyle.AUTO_QUOTE);
+                writer.writeEndHeader();
+            }
         } else {
             writer.writeStartHeader(ObjectStyle.FLOW);
             if (typed) {

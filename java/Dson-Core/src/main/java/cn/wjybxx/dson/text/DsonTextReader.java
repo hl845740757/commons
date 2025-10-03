@@ -350,7 +350,9 @@ public final class DsonTextReader extends AbstractDsonReader {
         // 处理header的特殊属性依赖
         if (context.contextType == DsonContextType.HEADER) {
             switch (nextName) {
-                case DsonHeader.NAMES_CLASS_NAME, DsonHeader.NAMES_NAMESPACE -> {
+                case DsonHeader.NAMES_CLASS_NAME,
+                     DsonHeader.NAMES_NAMESPACE,
+                     DsonHeader.NAMES_LOCAL_NAME -> {
                     pushNextValue(unquotedString);
                     return DsonType.STRING;
                 }
@@ -397,7 +399,8 @@ public final class DsonTextReader extends AbstractDsonReader {
                 pushNextValue(binary);
             }
             case POINTER -> {
-                pushNextValue(new ObjectPtr(unquotedString));
+                long localId = DsonTexts.parseInt64(unquotedString);
+                pushNextValue(new ObjectPtr(localId));
             }
             case DATETIME -> {
                 LocalDateTime dateTime = ExtDateTime.parseDateTime(unquotedString); // 这里其实不应该走到
@@ -424,7 +427,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         if (DsonTexts.LABEL_PTR.equals(clsName)) {// @ptr localId
             DsonToken nextToken = popToken();
             ensureStringsToken(context, nextToken);
-            String localId = nextToken.nullableStringValue();
+            long localId = DsonTexts.parseInt64(nextToken.stringValue());
             pushNextValue(new ObjectPtr(localId));
             return DsonType.POINTER;
         }
@@ -516,10 +519,10 @@ public final class DsonTextReader extends AbstractDsonReader {
     // region 内置结构体语法
 
     private ObjectPtr scanPtr(Context context) {
+        long localId = 0;
+        String localName = null;
         String namespace = null;
-        String localId = null;
-        byte type = 0;
-        byte policy = 0;
+        int type = 0;
         DsonToken keyToken;
         while ((keyToken = popToken()).type != DsonTokenType.END_OBJECT) {
             // key必须是字符串
@@ -530,21 +533,21 @@ public final class DsonTextReader extends AbstractDsonReader {
             // 根据name校验
             DsonToken valueToken = popToken();
             switch (keyToken.stringValue()) {
+                case ObjectPtr.NAMES_LOCAL_ID -> {
+                    verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
+                    localId = DsonTexts.parseInt64(valueToken.stringValue());
+                }
+                case ObjectPtr.NAMES_LOCAL_NAME -> {
+                    ensureStringsToken(context, valueToken);
+                    localName = valueToken.stringValue();
+                }
                 case ObjectPtr.NAMES_NAMESPACE -> {
                     ensureStringsToken(context, valueToken);
                     namespace = valueToken.stringValue();
                 }
-                case ObjectPtr.NAMES_LOCAL_ID -> {
-                    ensureStringsToken(context, valueToken);
-                    localId = valueToken.stringValue();
-                }
                 case ObjectPtr.NAMES_TYPE -> {
                     verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
-                    type = Byte.parseByte(valueToken.stringValue());
-                }
-                case ObjectPtr.NAMES_POLICY -> {
-                    verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
-                    policy = Byte.parseByte(valueToken.stringValue());
+                    type = DsonTexts.parseInt32(valueToken.stringValue());
                 }
                 default -> {
                     throw new DsonIOException("invalid ptr fieldName: " + keyToken.stringValue());
@@ -552,7 +555,7 @@ public final class DsonTextReader extends AbstractDsonReader {
             }
             checkSeparator(context);
         }
-        return new ObjectPtr(localId, namespace, type, policy);
+        return new ObjectPtr(localId, localName, namespace, type);
     }
 
     private Timestamp scanTimestamp(Context context) {

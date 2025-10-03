@@ -31,71 +31,77 @@ import java.util.Objects;
 @Immutable
 public final class ObjectPtr {
 
-    public static final ObjectPtr EMPTY = new ObjectPtr(null);
+    public static final ObjectPtr EMPTY = new ObjectPtr(0);
 
-    public static final int MASK_NAMESPACE = 1;
-    public static final int MASK_TYPE = 1 << 1;
-    public static final int MASK_POLICY = 1 << 2;
+    public static final int MASK_LOCAL_NAME = 1;
+    public static final int MASK_NAMESPACE = 1 << 1;
+    public static final int MASK_TYPE = 1 << 2;
 
-    /** 引用对象的本地id -- 如果目标对象是容器中的一员，该值是其容器内编号 */
-    private final String localId;
-    /** 引用对象所属的命名空间 */
+    /** 引用对象的本地id */
+    private final long localId;
+    /** 引用对象的本地name - 优先级高于LocalId */
+    private final String localName;
+    /** 引用对象所属的命名空间 - 集合库/对象桶 */
     private final String namespace;
     /** 引用的对象的大类型 -- 给业务使用的，用于快速引用分析 */
-    private final byte type;
-    /** 引用的解析策略 -- 自定义解析规则 */
-    private final byte policy;
+    private final int type;
 
-    public ObjectPtr(String localId) {
-        this(localId, null, (byte) 0, (byte) 0);
+    public ObjectPtr(long localId) {
+        this(localId, null, null, 0);
     }
 
-    public ObjectPtr(String localId, String namespace) {
-        this(localId, namespace, (byte) 0, (byte) 0);
+    public ObjectPtr(long localId, String localName) {
+        this(localId, localName, null, 0);
     }
 
-    public ObjectPtr(String localId, String namespace, byte type, byte policy) {
-        // 空字符串转null而不是null转空字符串，以兼容default构建的实例
-        this.localId = ObjectUtils.emptyToDef(localId, null);
+    public ObjectPtr(long localId, String localName, String namespace, int type) {
+        // 空字符串转null以兼容default构建的实例
+        this.localId = localId;
+        this.localName = ObjectUtils.emptyToDef(localName, null);
         this.namespace = ObjectUtils.emptyToDef(namespace, null);
         this.type = type;
-        this.policy = policy;
-
-        if (isEmpty() && (type != 0 || policy != 0)) {
-            throw new IllegalStateException();
+        if (type != 0 && isEmpty()) {
+            throw new IllegalArgumentException();
         }
     }
 
-    public boolean canBeAbbreviated() {
-        return ObjectUtils.isBlank(namespace) && type == 0 && policy == 0;
+    public boolean isEmpty() {
+        return localId == 0
+                && ObjectUtils.isEmpty(localName)
+                && ObjectUtils.isEmpty(namespace);
     }
 
-    public boolean isEmpty() {
-        // localId一般不为空，放前面测试
-        return ObjectUtils.isBlank(localId) && ObjectUtils.isBlank(namespace);
+    public boolean canBeAbbreviated() {
+        return type == 0
+                && ObjectUtils.isEmpty(localName)
+                && ObjectUtils.isEmpty(namespace);
     }
 
     public boolean hasLocalId() {
-        return !ObjectUtils.isBlank(localId);
+        return localId != 0;
+    }
+
+    public boolean hasLocalName() {
+        return !ObjectUtils.isEmpty(localName);
     }
 
     public boolean hasNamespace() {
-        return !ObjectUtils.isBlank(namespace);
+        return !ObjectUtils.isEmpty(namespace);
     }
 
-    public String getLocalId() {
+    public long getLocalId() {
         return localId;
+    }
+
+    public String getLocalName() {
+        return localName;
     }
 
     public String getNamespace() {
         return namespace;
     }
 
-    public byte getPolicy() {
-        return policy;
-    }
-
-    public byte getType() {
+    public int getType() {
         return type;
     }
 
@@ -107,41 +113,41 @@ public final class ObjectPtr {
         if (o == null || getClass() != o.getClass()) return false;
 
         ObjectPtr objectPtr = (ObjectPtr) o;
-        return type == objectPtr.type
-                && policy == objectPtr.policy
-                && Objects.equals(localId, objectPtr.localId)
+        return localId == objectPtr.localId
+                && type == objectPtr.type
+                && Objects.equals(localName, objectPtr.localName)
                 && Objects.equals(namespace, objectPtr.namespace);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hashCode(localId);
+        int result = Long.hashCode(localId);
+        result = 31 * result + Objects.hashCode(localName);
         result = 31 * result + Objects.hashCode(namespace);
         result = 31 * result + type;
-        result = 31 * result + policy;
         return result;
     }
-
-    // endregion
 
     @Override
     public String toString() {
         return "ObjectPtr{" +
-                "namespace='" + namespace + '\'' +
-                ", localId='" + localId + '\'' +
+                "localId=" + localId +
+                ", localName='" + localName + '\'' +
+                ", namespace='" + namespace + '\'' +
                 ", type=" + type +
-                ", policy=" + policy +
                 '}';
     }
+
+    // endregion
 
     // 属性名
     public static final String NAMES_NAMESPACE = "ns";
     public static final String NAMES_LOCAL_ID = "localId";
+    public static final String NAMES_LOCAL_NAME = "localName";
     public static final String NAMES_TYPE = "type";
-    public static final String NAMES_POLICY = "policy";
 
     public static final int NUMBERS_NAMESPACE = DsonLites.makeFullNumberZeroIdep(0);
     public static final int NUMBERS_LOCAL_ID = DsonLites.makeFullNumberZeroIdep(1);
-    public static final int NUMBERS_TYPE = DsonLites.makeFullNumberZeroIdep(2);
-    public static final int NUMBERS_POLICY = DsonLites.makeFullNumberZeroIdep(3);
+    public static final int NUMBERS_LOCAL_NAME = DsonLites.makeFullNumberZeroIdep(2);
+    public static final int NUMBERS_TYPE = DsonLites.makeFullNumberZeroIdep(3);
 }

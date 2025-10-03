@@ -54,13 +54,8 @@ public static class DsonHeader
     // header常见属性名
     public const string Names_ClassName = "clsName";
     public const string Names_LocalId = "localId";
+    public const string Names_LocalName = "localName";
     public const string Names_Count = "count";
     public const string Names_Namespace = "ns";
-
-    // header常见属性名的编号
-    public const int Numbers_ClassName = 1;
-    public const int Numbers_LocalId = 2;
-    public const int Numbers_Count = 3;
-    public const int Numbers_Namespace = 4;
 }
 }

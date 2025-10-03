@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.InteropServices;
 using Wjybxx.Commons;
 
 namespace Wjybxx.Dson.Types
@@ -24,47 +25,61 @@ namespace Wjybxx.Dson.Types
 /// <summary>
 /// 对象指针
 /// </summary>
+[StructLayout(LayoutKind.Explicit)]
 public readonly struct ObjectPtr : IEquatable<ObjectPtr>
 {
-    public const int MaskNamespace = 1;
-    public const int MaskType = 1 << 1;
-    public const int MaskPolicy = 1 << 2;
+    public const int MaskLocalName = 1;
+    public const int MaskNamespace = 1 << 1;
+    public const int MaskType = 1 << 2;
 
 #nullable disable
-    /** 引用对象的本地id - 如果目标对象是容器中的一员，该值是其容器内编号 */
-    public string LocalId { get; }
-    /** 引用对象所属的命名空间 */
-    public string Namespace { get; }
+    /** 引用对象的本地id */
+    [FieldOffset(0)] private readonly long localId;
+    /** 引用对象的本地name - 优先级高于LocalId */
+    [FieldOffset(8)] private readonly string localName;
+    /** 引用对象所属的命名空间 - 集合库/对象桶 */
+    [FieldOffset(16)] private readonly string ns;
     /** 引用的对象的大类型 -- 给业务使用的，用于快速引用分析 */
-    public byte Type { get; }
-    /** 引用的解析策略 -- 自定义解析规则 */
-    public byte Policy { get; }
-#nullable restore
+    [FieldOffset(24)] private readonly int type;
 
-    public ObjectPtr(string? localId, string? ns = null, byte type = 0, byte policy = 0) {
-        // 空字符串转null而不是null转空字符串，以兼容default构建的实例
-        this.LocalId = ObjectUtil.EmptyToDef(localId, null);
-        this.Namespace = ObjectUtil.EmptyToDef(ns, null);
-        this.Type = type;
-        this.Policy = policy;
-
-        if (IsEmpty && (type != 0 || policy != 0)) {
-            throw new IllegalStateException();
-        }
+    public ObjectPtr(long localId) {
+        this.localId = localId;
+        this.localName = null;
+        this.ns = null;
+        this.type = 0;
     }
 
-    public bool CanBeAbbreviated => string.IsNullOrWhiteSpace(Namespace) && Type == 0 && Policy == 0;
+    public ObjectPtr(long localId, string localName, string ns, int type = 0) {
+        // 空字符串转null以兼容default构建的实例
+        this.localId = localId;
+        this.localName = ObjectUtil.EmptyToDef(localName, null);
+        this.ns = ObjectUtil.EmptyToDef(ns, null);
+        this.type = type;
+    }
+#nullable restore
 
-    public bool IsEmpty => string.IsNullOrWhiteSpace(LocalId) && string.IsNullOrWhiteSpace(Namespace);
+    public long LocalId => localId;
+    public string LocalName => localName;
+    public string Namespace => ns;
+    public int Type => type;
 
-    public bool HasLocalId => !string.IsNullOrWhiteSpace(LocalId);
-
-    public bool HasNamespace => !string.IsNullOrWhiteSpace(Namespace);
+    public bool IsEmpty => LocalId == 0
+                           && string.IsNullOrEmpty(localName)
+                           && string.IsNullOrEmpty(ns);
+    public bool CanBeAbbreviated => type == 0
+                                    && string.IsNullOrEmpty(localName)
+                                    && string.IsNullOrEmpty(ns);
+    public bool HasLocalId => LocalId != 0;
+    public bool HashLocalName => !string.IsNullOrEmpty(localName);
+    public bool HasNamespace => !string.IsNullOrEmpty(ns);
 
     #region equals
 
     public bool Equals(ObjectPtr other) {
-        return LocalId == other.LocalId && Namespace == other.Namespace && Type == other.Type && Policy == other.Policy;
+        return localId == other.localId
+               && localName == other.localName
+               && ns == other.ns
+               && type == other.type;
     }
 
     public override bool Equals(object? obj) {
@@ -72,10 +87,10 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     }
 
     public override int GetHashCode() {
-        int hashCode = (LocalId != null ? LocalId.GetHashCode() : 0);
-        hashCode = (hashCode * 397) ^ (Namespace != null ? Namespace.GetHashCode() : 0);
-        hashCode = (hashCode * 397) ^ Type.GetHashCode();
-        hashCode = (hashCode * 397) ^ Policy.GetHashCode();
+        int hashCode = localId.GetHashCode();
+        hashCode = (hashCode * 397) ^ (localName != null ? localName.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ (ns != null ? ns.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ type.GetHashCode();
         return hashCode;
     }
 
@@ -90,15 +105,15 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     #endregion
 
     public override string ToString() {
-        return $"{nameof(LocalId)}: {LocalId}, {nameof(Namespace)}: {Namespace}, {nameof(Type)}: {Type}, {nameof(Policy)}: {Policy}";
+        return $"{nameof(localId)}: {localId}, {nameof(localName)}: {localName}, {nameof(ns)}: {ns}, {nameof(type)}: {type}";
     }
 
     #region 常量
 
     public const string NamesNamespace = "ns";
     public const string NamesLocalId = "localId";
+    public const string NamesLocalName = "localName";
     public const string NamesType = "type";
-    public const string NamesPolicy = "policy";
 
     #endregion
 }

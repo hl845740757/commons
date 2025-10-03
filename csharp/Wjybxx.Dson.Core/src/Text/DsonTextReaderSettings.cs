@@ -35,8 +35,7 @@ public class DsonTextReaderSettings : DsonReaderSettings
         countType = builder.CountType;
 
         if (localIdType != DsonType.Int32
-            && localIdType != DsonType.Int64
-            && localIdType != DsonType.String) {
+            && localIdType != DsonType.Int64) {
             throw new ArgumentException("invalid localIdType: " + localIdType);
         }
         if (countType != DsonType.Int32
@@ -51,8 +50,8 @@ public class DsonTextReaderSettings : DsonReaderSettings
 
     public new class Builder : DsonReaderSettings.Builder
     {
-        /** localId的类型 -- 限制int32、int64、string */
-        public DsonType LocalIdType { get; set; } = DsonType.String;
+        /** localId的类型 -- 限制int32、int64 */
+        public DsonType LocalIdType { get; set; } = DsonType.Int64;
         /** count的类型 -- 限制int32、int64 */
         public DsonType CountType { get; set; } = DsonType.Int32;
 

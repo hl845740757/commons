@@ -395,9 +395,10 @@ public static class Dsons
     }
 
     public static void WriteHeader<TName>(IDsonWriter<TName> writer, DsonHeader<TName> header) where TName : IEquatable<TName> {
-        if (header.Count == 1) {
-            if (header is DsonHeader<string> header1 && header1.TryGetValue(DsonHeader.Names_ClassName, out DsonValue clsName)) {
-                writer.WriteSimpleHeader(clsName.AsString()); // header只包含clsName时打印为简单模式
+        if (header.Count == 1 && writer is DsonTextWriter textWriter) {
+            if (header is DsonHeader<string> header1
+                && header1.TryGetValue(DsonHeader.Names_ClassName, out DsonValue clsName)) {
+                textWriter.WriteSimpleHeader(clsName.AsString());
                 return;
             }
         }
@@ -660,19 +661,19 @@ public static class Dsons
     }
 
     /** 获取dsonValue的localId -- dson的约定之一 */
-    public static string? GetLocalId(DsonValue dsonValue) {
+    public static long GetLocalId(DsonValue dsonValue) {
         DsonHeader<string> header;
         if (dsonValue is DsonObject<string> dsonObject) {
             header = dsonObject.Header;
         } else if (dsonValue is DsonArray<string> dsonArray) {
             header = dsonArray.Header;
         } else {
-            return null;
+            return 0;
         }
         if (header.TryGetValue(DsonHeader.Names_LocalId, out DsonValue wrapped)) {
-            return wrapped is DsonString dsonString ? dsonString.Value : null;
+            return wrapped.IsNumber ? wrapped.AsNumber().LongValue : 0;
         }
-        return null;
+        return 0;
     }
 
     #endregion

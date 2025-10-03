@@ -75,38 +75,37 @@ public class DsonReaderUtils {
     // region 内置结构体
     public static int wireTypeOfPtr(ObjectPtr objectPtr) {
         int v = 0;
+        if (objectPtr.hasLocalName()) {
+            v |= ObjectPtr.MASK_LOCAL_NAME;
+        }
         if (objectPtr.hasNamespace()) {
             v |= ObjectPtr.MASK_NAMESPACE;
         }
         if (objectPtr.getType() != 0) {
             v |= ObjectPtr.MASK_TYPE;
         }
-        if (objectPtr.getPolicy() != 0) {
-            v |= ObjectPtr.MASK_POLICY;
-        }
         return v;
     }
 
     public static void writePtr(DsonOutput output, ObjectPtr objectPtr) {
-        String localId = objectPtr.getLocalId();
-        output.writeString(localId == null ? "" : localId);
+        output.writeUInt64(objectPtr.getLocalId());
+        if (objectPtr.hasLocalName()) {
+            output.writeString(objectPtr.getLocalName());
+        }
         if (objectPtr.hasNamespace()) {
             output.writeString(objectPtr.getNamespace());
         }
         if (objectPtr.getType() != 0) {
-            output.writeRawByte(objectPtr.getType());
-        }
-        if (objectPtr.getPolicy() != 0) {
-            output.writeRawByte(objectPtr.getPolicy());
+            output.writeUInt32(objectPtr.getType());
         }
     }
 
     public static ObjectPtr readPtr(DsonInput input, int wireTypeBits) {
-        String localId = input.readString();
+        long localId = input.readUInt64();
+        String localName = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_LOCAL_NAME) ? input.readString() : null;
         String namespace = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE) ? input.readString() : null;
-        byte type = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE) ? input.readRawByte() : (byte) 0;
-        byte policy = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_POLICY) ? input.readRawByte() : (byte) 0;
-        return new ObjectPtr(localId, namespace, type, policy);
+        int type = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE) ? input.readUInt32() : 0;
+        return new ObjectPtr(localId, localName, namespace, type);
     }
 
     public static void writeDateTime(DsonOutput output, ExtDateTime dateTime) {
@@ -207,18 +206,17 @@ public class DsonReaderUtils {
                 skip = input.readUInt32(); // length(data)
             }
             case POINTER -> {
-                skip = input.readUInt32(); // localId长度
-                input.skipRawBytes(skip);
-
+                input.readUInt64(); // localId
+                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_LOCAL_NAME)) {
+                    skip = input.readUInt32(); // localName长度
+                    input.skipRawBytes(skip);
+                }
                 if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE)) {
                     skip = input.readUInt32(); // namespace长度
                     input.skipRawBytes(skip);
                 }
                 if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE)) {
-                    input.readRawByte();
-                }
-                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_POLICY)) {
-                    input.readRawByte();
+                    input.readUInt32();
                 }
                 return;
             }
@@ -226,7 +224,7 @@ public class DsonReaderUtils {
                 input.readUInt64();
                 input.readUInt32();
                 input.readSInt32();
-//                input.readRawByte();
+//                input.readRawByte(); // 已转移到wireTypeBits
                 return;
             }
             case TIMESTAMP -> {

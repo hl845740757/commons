@@ -28,7 +28,7 @@ namespace Wjybxx.Dson
 /// </summary>
 public class DsonRepository
 {
-    private readonly Dictionary<string, DsonValue> _indexMap = new();
+    private readonly Dictionary<long, DsonValue> _indexMap = new();
     private readonly DsonArray<string> _collection;
 
     public DsonRepository() {
@@ -38,15 +38,15 @@ public class DsonRepository
     public DsonRepository(DsonArray<string> container) {
         _collection = container ?? throw new ArgumentNullException(nameof(container));
         foreach (var dsonValue in container) {
-            string localId = Dsons.GetLocalId(dsonValue);
-            if (localId != null) {
+            long localId = Dsons.GetLocalId(dsonValue);
+            if (localId != 0) {
                 _indexMap[localId] = dsonValue;
             }
         }
     }
 
     /** 获取索引信息 -- 勿修改返回的对象 */
-    public Dictionary<string, DsonValue> IndexMap => _indexMap;
+    public Dictionary<long, DsonValue> IndexMap => _indexMap;
 
     /** 获取顶层集合 -- 勿修改返回的对象 */
     public DsonArray<string> Collection => _collection;
@@ -69,8 +69,8 @@ public class DsonRepository
         }
         _collection.Add(value);
 
-        string localId = Dsons.GetLocalId(value);
-        if (localId != null) {
+        long localId = Dsons.GetLocalId(value);
+        if (localId != 0) {
             if (_indexMap.Remove(localId, out DsonValue exist)) {
                 CollectionUtil.RemoveRef(_collection, exist);
             }
@@ -88,8 +88,8 @@ public class DsonRepository
         DsonValue dsonValue = _collection[idx];
         _collection.RemoveAt(idx); // 居然没返回值...
 
-        string localId = Dsons.GetLocalId(dsonValue);
-        if (localId != null) {
+        long localId = Dsons.GetLocalId(dsonValue);
+        if (localId != 0) {
             _indexMap.Remove(localId, out DsonValue _);
         }
         return dsonValue;
@@ -117,8 +117,7 @@ public class DsonRepository
     /// <param name="localId">要删除的元素id</param>
     /// <returns>被删除的元素，不存在时返回null</returns>
     /// <exception cref="ArgumentNullException">id为null</exception>
-    public DsonValue? RemoveById(string localId) {
-        if (localId == null) throw new ArgumentNullException(nameof(localId));
+    public DsonValue? RemoveById(long localId) {
         if (_indexMap.Remove(localId, out DsonValue exist)) {
             CollectionUtil.RemoveRef(_collection, exist);
         }
@@ -131,8 +130,7 @@ public class DsonRepository
     /// <param name="localId">要查找的元素的id</param>
     /// <returns>id关联的元素，不存在时返回null</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public DsonValue? Find(string localId) {
-        if (localId == null) throw new ArgumentNullException(nameof(localId));
+    public DsonValue? Find(long localId) {
         _indexMap.TryGetValue(localId, out DsonValue exist);
         return exist;
     }

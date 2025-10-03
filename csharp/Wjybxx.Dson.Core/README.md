@@ -157,6 +157,7 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
 4. Dson-Codec值类型兼容改善，`EnumCodec`支持Flags类型
 5. 重写`DsonObject`和`DsonArray`的HashCode方法
 6. 顶层对象之间不打印逗号分隔符(顶层对象之间可以无分隔符)
+7. 优化`ObjectPtr`，删除`ObjectLitePtr`
 
 ```csharp
    private class Context<TName> : ISequentialEnumerator<KeyValuePair<TName, DsonValue>> {
