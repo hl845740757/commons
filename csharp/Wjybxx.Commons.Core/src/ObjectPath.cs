@@ -26,7 +26,7 @@ namespace Wjybxx.Commons
 /// 注：该对象是Dson库中的ObjectPtr的替代物，用于避免引入Dson库。
 /// </summary>
 [Serializable]
-public struct ObjectPath
+public struct ObjectPath : IEquatable<ObjectPath>
 {
 #nullable disable
     /// <summary>
@@ -52,11 +52,17 @@ public struct ObjectPath
     /// </summary>
     public int type;
 
+    /// <summary>
+    /// 引用目标缓存，辅助字段
+    /// </summary>
+    [NonSerialized] public object obj;
+
     public ObjectPath(long localId) {
         this.localId = localId;
         this.collection = null;
         this.localPath = null;
         this.type = 0;
+        this.obj = null;
     }
 
     public ObjectPath(string collection, string localPath, long localId, int type = 0) {
@@ -65,6 +71,7 @@ public struct ObjectPath
         this.localPath = ObjectUtil.EmptyToDef(localPath, null);
         this.localId = localId;
         this.type = type;
+        this.obj = null;
     }
 #nullable restore
 

@@ -255,19 +255,19 @@ PS： 虽然Dson文本块不要求行首`@`对齐，也不要求开始和结束�
 
 ### 指针\(ptr)
 
-1. 指针支持两种范式 @ptr localId 和 {@ptr localId: $localId, localName: $localName, coll: $coll, type: $type}
+1. 指针支持两种范式 @ptr localId 和 {@ptr localId: $localId, localPath: $localPath, coll: $coll, type: $type}
 2. @ptr localId 简写方式适用大多数情况，结构体用于复杂情况。
 3. localId 表示对象命名空间下的数字id，限定int32或int64类型
-4. localName 表示对象命名空间下的name，限定字符串类型，无特殊符号时可省略引号。
+4. localPath 表示集合下的路径，限定字符串类型，无特殊符号时可省略引号。
 5. coll是collection的缩写，表示目标对象所属的集合，限定字符串类型，无特殊符号时可省略引号。
-6. type表示引用的类型。
+6. type表示引用的类型，用于引用分析，也可以表示如何解析引用等。
 7. Dson默认不解析指针，只存储为ptr结构，会提供根据localId解析的简单方法。
 8. 字段拼写错误将引发异常。
 
 ```
    @ptr 10001
    {@ptr localId: 10001, coll: global, type: 1 }
-   {@ptr localName: wjybxx001, coll: global, type: 1}
+   {@ptr localPath: wjybxx001, coll: global, type: 1}
 ```
 
 PS：对于配置文件，指针的最大作用是复用和减少嵌套。
@@ -324,13 +324,13 @@ PS：对于配置文件，指针的最大作用是复用和减少嵌套。
 2. key和value之间通过 ':' (英文冒号)分隔，冒号两边空格分隔key和value不是必须的，但冒号和value之间建议输入空格。
 3. key为字符串类型，适用字符串规范，无特殊字符时可省略双引号。
 4. `@{}` 用于声明对象的header信息 -- 新版本不再要求’@‘必须与'\{'紧邻。
-5. 禁止末尾出现逗号，以避免奇怪语义
+5. 支持末尾冗余逗号
 
 ### array
 
 1. value之间通过 ',' (英文逗号) 分隔。
 2. `@{}` 用于声明数组的header信息 -- 新版本不再要求’@‘必须与'\['紧邻。
-3. 禁止允许末尾出现逗号，以避免奇怪语义
+3. 支持末尾冗余逗号
 
 ### header
 

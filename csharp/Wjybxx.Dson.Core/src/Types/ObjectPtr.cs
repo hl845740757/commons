@@ -53,7 +53,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     [FieldOffset(16)] private readonly long localId;
     /// <summary>
     /// 引用类型
-    /// (用于引用分析，可以嵌入信息，表示如何解析引用等)
+    /// (用于引用分析，也可以表示如何解析引用等)
     /// </summary>
     [FieldOffset(24)] private readonly int type;
 

@@ -65,24 +65,24 @@ Dson提供了两个版本的二进制格式，从整体上看他们是一样的�
 #### Binary编码
 
 ```
-   output.writeUint32(binary.length);
-   output.writeRawBytes(binary.data);
+   output.WriteUint32(binary.length);
+   output.WriteRawBytes(binary.data);
 ```
 
 #### 指针(ptr)
 
-1. 由于指针的使用量可能较大，我们在wireType上记录了namespace、type、policy是否有值的信息。
+1. 由于指针的使用量可能较大，我们在wireType上记录了collection、localPath、type是否有值的信息。
 
 ```
-   output.writeUInt64(dsonValue.localId);
-   if (dsonValue.hasNamespcae) {
-      output.writeString(dsonValue.namespace);
+   output.WriteUInt64(dsonValue.localId);
+   if (dsonValue.HasColletion) {
+      output.WriteString(dsonValue.collection);
    }
-   if (dsonValue.hasLocalName) {
-      output.writeString(dsonValue.localName);
+   if (dsonValue.HasLocalPath) {
+      output.WriteString(dsonValue.localPath);
    }   
    if (dsonValue.type != 0) {
-      output.writeUInt32(dsonValue.type);
+      output.WriteUInt32(dsonValue.type);
    }
 ```
 
@@ -93,9 +93,9 @@ Dson提供了两个版本的二进制格式，从整体上看他们是一样的�
 3. enables使用wireType比特位存储
 
 ```
-   output.writeUint64(dateTime.getSeconds());
-   output.writeUint32(dateTime.getNanos());
-   output.writeSint32(dateTime.getOffset());
+   output.WriteUint64(dateTime.seconds);
+   output.WriteUint32(dateTime.nanos);
+   output.WriteSint32(dateTime.offset);
 ```
 
 #### Timestamp
@@ -103,8 +103,8 @@ Dson提供了两个版本的二进制格式，从整体上看他们是一样的�
 1. 我未对Timestamp的编码做优化，简单按序写入。
 
 ```
-   output.writeUint64(dateTime.getSeconds());
-   output.writeUint32(dateTime.getNanos());
+   output.WriteUint64(timestamp.seconds);
+   output.WriteUint32(timestamp.nanos);
 ```
 
 ### 其它

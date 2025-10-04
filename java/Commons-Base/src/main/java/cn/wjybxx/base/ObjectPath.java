@@ -44,9 +44,12 @@ public final class ObjectPath {
     public long localId;
     /**
      * 引用类型
-     * (用于快速引用分析；可以嵌入信息，表示如何解析引用等)
+     * (用于引用分析，也可以表示如何解析引用等)
      */
     public int type;
+
+    /** 引用目标缓存，辅助字段 */
+    public transient Object obj;
 
     public ObjectPath() {
     }
