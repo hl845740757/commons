@@ -68,22 +68,22 @@ ps: 当@作用于普通值类型和内置简单结构体时，我们称`@`声明
 
 Dson支持的值类型和内置结构体包括：
 
-| 标签  | 类型        | 枚举 | 含义         | 内置结构体                                                                                 | 格式或示例                                                                                                             |
-|-----|-----------|----|------------|---------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| i   | int32     | 1  | 32位整型      |                                                                                       | @i 123 <br> @i  0xFF                                                                                              |
-| L   | int64     | 2  | 64位长整型，大写L |                                                                                       | @L 123 <br> @L 0xFF                                                                                               |
-| f   | float     | 3  | 32位浮点数     |                                                                                       | @f 1.0                                                                                                            |
-| d   | double    | 4  | 64位浮点数     |                                                                                       | @d 1.5  <br> 1.5                                                                                                  |
-| b   | bool      | 5  | bool值      |                                                                                       | @b true <br> true <br/> @b 1                                                                                      |
-| s   | string    | 6  | 字符串        |                                                                                       | "10"   <br>  abc                                                                                                  |
-| N   | null      | 7  | null，大写N   |                                                                                       | @N null <br> null                                                                                                 |
-| bin | binary    | 8  | 二进制        |                                                                                       | @bin "FFFE"          <br> @bin ""                                                                                 |
-| ptr | pointer   | 11 | 指针         | {<br> string namespace;<br> long localId;<br> string localName;<br> int32 type;<br> } | 格式为单值 '@ptr localId' 格式或 object格式 <br/> @ptr 10001 <br> {@ptr localId: 10001, ns : global, type: 1 }              |
-| dt  | datetime  | 13 | 日期时间       | { <br>  int64 seconds; <br> int32 nanos;<br> int32 offset;<br> int32 enables; <br> }  | 单值或object结构<br/> @dt 2023-06-17T18:37:00 <br/>{@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100} |
-| ts  | timestamp | 14 | 时间戳        | { <br>  int64 seconds; <br> int32 nanos;<br> }                                        | 单值或object结构<br/> @ts 1715659200 <br/>{@ts seconds: 1715659200, nanos: 100}                                        |
-|     | header    | 29 | 对象头        |                                                                                       | 对象形式： @{clsName: Vector3 } <br/> 简写形式： @{Vector3}                                                                 |
-|     | array     | 30 | 数组         |                                                                                       | \[ 1, 2, 3, 4, 5 ]                                                                                                |
-|     | object    | 31 | 对象/结构体     |                                                                                       | { name: wjybxx, age: 28 }                                                                                         |
+| 标签  | 类型        | 枚举 | 含义         | 内置结构体                                                                                  | 格式或示例                                                                                                             |
+|-----|-----------|----|------------|----------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| i   | int32     | 1  | 32位整型      |                                                                                        | @i 123 <br> @i  0xFF                                                                                              |
+| L   | int64     | 2  | 64位长整型，大写L |                                                                                        | @L 123 <br> @L 0xFF                                                                                               |
+| f   | float     | 3  | 32位浮点数     |                                                                                        | @f 1.0                                                                                                            |
+| d   | double    | 4  | 64位浮点数     |                                                                                        | @d 1.5  <br> 1.5                                                                                                  |
+| b   | bool      | 5  | bool值      |                                                                                        | @b true <br> true <br/> @b 1                                                                                      |
+| s   | string    | 6  | 字符串        |                                                                                        | "10"   <br>  abc                                                                                                  |
+| N   | null      | 7  | null，大写N   |                                                                                        | @N null <br> null                                                                                                 |
+| bin | binary    | 8  | 二进制        |                                                                                        | @bin "FFFE"          <br> @bin ""                                                                                 |
+| ptr | pointer   | 11 | 指针         | {<br> string collection;<br> long localId;<br> string localName;<br> int32 type;<br> } | 格式为单值 '@ptr localId' 格式或 object格式 <br/> @ptr 10001 <br> {@ptr localId: 10001, coll : global, type: 1 }            |
+| dt  | datetime  | 13 | 日期时间       | { <br>  int64 seconds; <br> int32 nanos;<br> int32 offset;<br> int32 enables; <br> }   | 单值或object结构<br/> @dt 2023-06-17T18:37:00 <br/>{@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100} |
+| ts  | timestamp | 14 | 时间戳        | { <br>  int64 seconds; <br> int32 nanos;<br> }                                         | 单值或object结构<br/> @ts 1715659200 <br/>{@ts seconds: 1715659200, nanos: 100}                                        |
+|     | header    | 29 | 对象头        |                                                                                        | 对象形式： @{clsName: Vector3 } <br/> 简写形式： @{Vector3}                                                                 |
+|     | array     | 30 | 数组         |                                                                                        | \[ 1, 2, 3, 4, 5 ]                                                                                                |
+|     | object    | 31 | 对象/结构体     |                                                                                        | { name: wjybxx, age: 28 }                                                                                         |
 
 ### 特殊类型
 
@@ -255,19 +255,19 @@ PS： 虽然Dson文本块不要求行首`@`对齐，也不要求开始和结束�
 
 ### 指针\(ptr)
 
-1. 指针支持两种范式 @ptr localId 和 {@ptr localId: $localId, localName: $localName, ns: $ns, type: $type}
+1. 指针支持两种范式 @ptr localId 和 {@ptr localId: $localId, localName: $localName, coll: $coll, type: $type}
 2. @ptr localId 简写方式适用大多数情况，结构体用于复杂情况。
 3. localId 表示对象命名空间下的数字id，限定int32或int64类型
 4. localName 表示对象命名空间下的name，限定字符串类型，无特殊符号时可省略引号。
-5. ns是namespace的缩写，表示对象id的命名空间，限定字符串类型，无特殊符号时可省略引号。
+5. coll是collection的缩写，表示目标对象所属的集合，限定字符串类型，无特殊符号时可省略引号。
 6. type表示引用的类型。
 7. Dson默认不解析指针，只存储为ptr结构，会提供根据localId解析的简单方法。
 8. 字段拼写错误将引发异常。
 
 ```
    @ptr 10001
-   {@ptr localId: 10001, ns : global, type: 1 }
-   {@ptr localName: wjybxx001, ns : global, type: 1}
+   {@ptr localId: 10001, coll: global, type: 1 }
+   {@ptr localName: wjybxx001, coll: global, type: 1}
 ```
 
 PS：对于配置文件，指针的最大作用是复用和减少嵌套。
@@ -374,18 +374,18 @@ PS：对于配置文件，指针的最大作用是复用和减少嵌套。
 
 虽然header没有默认结构体，但我们还是依赖了一些属性，以支持一些基础功能。因此，如果用户扩展header，使用了以下属性名，请确保类型一致，否则可能引发兼容性问题。
 
-| 属性名     | 类型                 | 含义                     | 备注                            |
-|---------|--------------------|------------------------|-------------------------------|
-| clsName | string             | ClassName的缩写，表达当前对象的类型 | 可包括内置基础值和内置结构体                | 
-| localId | string/int64/int32 | 对象本地id                 | 用于支持默认的引用解析                   |
-| count   | int32/int64        | 元素个数                   | 缓存值，唯一作用就是创建List和Map时更好地初始化空间 |
+| 属性名       | 类型                 | 含义                     | 备注                            |
+|-----------|--------------------|------------------------|-------------------------------|
+| clsName   | string             | ClassName的缩写，表达当前对象的类型 | 可包括内置基础值和内置结构体                | 
+| localId   | string/int64/int32 | 对象本地id                 | 用于支持默认的引用解析                   |
+| localPath | string             | 对象本地路径                 | 用于支持扩展的引用解析                   |
+| count     | int32/int64        | 元素个数                   | 缓存值，唯一作用就是创建List和Map时更好地初始化空间 |
 
 ps：
 
-1. keyClsName和compClsName用于非泛型情况下的类型自解释 —— 用于跨语言序列化。
-2. 如果语言支持泛型，可以只使用clsName记录类型的完整信息 —— 用于单语言序列化。
-3. clsName不可以包含冒号`:`和大括号`{}`。
-4. **count在文本模式下未必是精确值**，因此不可以使用count判断输入流是否结束，其唯一作用就是初始化List和Map的空间。
+1. 如果语言支持泛型，可以只使用clsName记录类型的完整信息 —— 用于单语言序列化。
+2. clsName不可以包含冒号`:`和大括号`{}`。
+3. **count在文本模式下未必是精确值**，因此不可以使用count判断输入流是否结束，其唯一作用就是初始化List和Map的空间。
 
 ### 无类型value解析规则
 

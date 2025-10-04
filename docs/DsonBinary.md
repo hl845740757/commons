@@ -53,18 +53,12 @@ Dson提供了两个版本的二进制格式，从整体上看他们是一样的�
 ### wireType比特位的特殊使用
 
 1. bool使用wireType记录了其值；wireType为1表示true，0表示false
-2. Float和Double使用wireType记录了**后导全0的字节数**
-    1. 浮点数的前16位总是写入
-    2. 对于Float，前16位包含了7个有效数据位，就涵盖了大量的常用数；WireType的取值范围为\[0, 2]
-    3. 对于Double，前16位包含了4个数据位，也包含了少许常用数据；WireType的取值范围为\[0, 6]
-    4. 浮点数压缩算法的实际收益不理想，不过聊胜于无。
-3. ptr/lptr使用wireType标记了namespace、type、policy是否存在，只有存在时才写入；localId总是写入。
+2. ptr使用wireType标记了namespace、localName、type是否存在，只有存在时才写入；localId总是写入。
     1. 001 用于标记namespace
-    2. 010 用于标记type
-    3. 100 用于标记policy
-    4. 编码顺序为 localId、namespace、type、policy (可选字段后序列化)
-    5. 其中 type 和 policy 使用unit32编码
-4. datetime使用wireType存储了enables
+    3. 010 用于标记localName
+    2. 100 用于标记type
+    4. 编码顺序为 localId、namespace、localName、type (可选字段后序列化)
+3. datetime使用wireType存储了enables
 
 ### 编码详情
 
@@ -80,33 +74,15 @@ Dson提供了两个版本的二进制格式，从整体上看他们是一样的�
 1. 由于指针的使用量可能较大，我们在wireType上记录了namespace、type、policy是否有值的信息。
 
 ```
-   output.writeString(dsonValue.localId);
-   if (dsonValue.hasNamespcae) {
-      output.writeString(dsonValue.namespace);
-   }
-   if (dsonValue.type != 0) {
-      output.writeRawByte(dsonValue.type);
-   }
-   if (dsonValue.policy != 0) {
-      output.writeRawByte(dsonValue.policy);
-   }
-```
-
-#### 轻量指针(lptr)
-
-1. 由于指针的使用量可能较大，我们在wireType上记录了namespace、type、policy是否有值的信息
-2. localId 使用`Uint`编码，localId通常应该为正值。
-
-```
    output.writeUInt64(dsonValue.localId);
    if (dsonValue.hasNamespcae) {
       output.writeString(dsonValue.namespace);
    }
+   if (dsonValue.hasLocalName) {
+      output.writeString(dsonValue.localName);
+   }   
    if (dsonValue.type != 0) {
-      output.writeRawByte(dsonValue.type);
-   }
-   if (dsonValue.policy != 0) {
-      output.writeRawByte(dsonValue.policy);
+      output.writeUInt32(dsonValue.type);
    }
 ```
 

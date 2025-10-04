@@ -28,76 +28,80 @@ import java.util.Objects;
  */
 public final class ObjectPath {
     /**
-     * 资产路径
+     * 目标对象所属的集合(文件路径、资产路径、db路径)
      * (如果为空，表示引用当前资产内的对象)
      */
-    public String assetPath;
+    public String collection;
     /**
-     * 对象在资产内的名字
-     * (如果name不为空，则使用name查找对象，即localName的优先级高于localId)
+     * 对象在集合内的路径(或name)
+     * (如果字段不为空，则优先使用localPath查找对象，即localPath的优先级高于localId)
      */
-    public String localName;
+    public String localPath;
     /**
-     * 对象在资产内的id
-     * (如果目标资产是数组，则可能是下标)
+     * 对象在集合内的id
+     * (如果目标集合是数组，则可能是下标)
      */
     public long localId;
     /**
-     * 引用的类型
+     * 引用类型
+     * (用于快速引用分析；可以嵌入信息，表示如何解析引用等)
      */
     public int type;
 
     public ObjectPath() {
     }
 
-    public ObjectPath(String assetPath, long localId, String localName) {
-        this.assetPath = assetPath;
+    public ObjectPath(long localId) {
         this.localId = localId;
-        this.localName = localName;
-        this.type = 0;
     }
 
-    public ObjectPath(String assetPath, long localId, String localName, int type) {
-        this.assetPath = assetPath;
+    public ObjectPath(String collection, String localPath, long localId) {
+        this.collection = collection;
+        this.localPath = localPath;
         this.localId = localId;
-        this.localName = localName;
+    }
+
+    public ObjectPath(String collection, String localPath, long localId, int type) {
+        this.collection = collection;
+        this.localId = localId;
+        this.localPath = localPath;
         this.type = type;
     }
 
     public boolean isEmpty() {
         return localId == 0
-                && ObjectUtils.isEmpty(localName)
-                && ObjectUtils.isEmpty(assetPath);
+                && ObjectUtils.isEmpty(localPath)
+                && ObjectUtils.isEmpty(collection);
     }
 
     public boolean hasLocalId() {
         return localId != 0;
     }
 
-    public boolean hasLocalName() {
-        return !ObjectUtils.isEmpty(localName);
+    public boolean hasLocalPath() {
+        return !ObjectUtils.isEmpty(localPath);
     }
 
     public boolean hasAssetPath() {
-        return !ObjectUtils.isEmpty(assetPath);
+        return !ObjectUtils.isEmpty(collection);
     }
 
     // region getter/setter
 
-    public String getAssetPath() {
-        return assetPath;
+    public String getCollection() {
+        return collection;
     }
 
-    public void setAssetPath(String assetPath) {
-        this.assetPath = assetPath;
+    public void setCollection(String collection) {
+        this.collection = collection;
     }
 
-    public String getLocalName() {
-        return localName;
+    public String getLocalPath() {
+        return localPath;
     }
 
-    public void setLocalName(String localName) {
-        this.localName = localName;
+    public void setLocalPath(String localPath) {
+        this.localPath = localPath;
     }
 
     public long getLocalId() {
@@ -127,15 +131,15 @@ public final class ObjectPath {
         ObjectPath objectPtr = (ObjectPath) o;
         return localId == objectPtr.localId
                 && type == objectPtr.type
-                && Objects.equals(localName, objectPtr.localName)
-                && Objects.equals(assetPath, objectPtr.assetPath);
+                && Objects.equals(localPath, objectPtr.localPath)
+                && Objects.equals(collection, objectPtr.collection);
     }
 
     @Override
     public int hashCode() {
         int result = Long.hashCode(localId);
-        result = 31 * result + Objects.hashCode(localName);
-        result = 31 * result + Objects.hashCode(assetPath);
+        result = 31 * result + Objects.hashCode(localPath);
+        result = 31 * result + Objects.hashCode(collection);
         result = 31 * result + type;
         return result;
     }
@@ -144,8 +148,8 @@ public final class ObjectPath {
     public String toString() {
         return "ObjectPath{" +
                 "localId=" + localId +
-                ", localName='" + localName + '\'' +
-                ", assetPath='" + assetPath + '\'' +
+                ", localPath='" + localPath + '\'' +
+                ", assetPath='" + collection + '\'' +
                 ", type=" + type +
                 '}';
     }

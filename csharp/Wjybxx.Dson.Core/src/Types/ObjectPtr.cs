@@ -29,57 +29,71 @@ namespace Wjybxx.Dson.Types
 [StructLayout(LayoutKind.Explicit)]
 public readonly struct ObjectPtr : IEquatable<ObjectPtr>
 {
-    public const int MaskLocalName = 1;
-    public const int MaskNamespace = 1 << 1;
+    public const int MaskCollection = 1;
+    public const int MaskLocalPath = 1 << 1;
     public const int MaskType = 1 << 2;
 
 #nullable disable
-    /** 引用对象的本地id - 如果目标资产是数组，则可能是下标 */
-    [FieldOffset(0)] private readonly long localId;
-    /** 引用对象的本地name - 优先级高于LocalId */
-    [FieldOffset(8)] private readonly string localName;
-    /** 引用对象所属的命名空间 - 集合库/对象桶 */
-    [FieldOffset(16)] private readonly string ns;
-    /** 引用的对象的大类型 -- 给业务使用的，用于快速引用分析 */
+    /// <summary>
+    /// 目标对象所属的集合(文件路径、资产路径、db路径)
+    /// (如果为空，表示引用当前集合内的对象)
+    /// </summary>
+    [FieldOffset(0)] private readonly string collection;
+    /// <summary>
+    /// 对象在集合内的路径(或name)
+    /// 
+    /// 如果字段不为空，则优先使用localPath查找对象，即localPath的优先级高于localId；
+    /// 因为localPath更具有可读性，更适合手工引用对象。
+    /// </summary>
+    [FieldOffset(8)] private readonly string localPath;
+    /// <summary>
+    /// 对象在集合内的id
+    /// (如果目标集合是数组，则可能是下标) 
+    /// </summary>
+    [FieldOffset(16)] private readonly long localId;
+    /// <summary>
+    /// 引用类型
+    /// (用于引用分析，可以嵌入信息，表示如何解析引用等)
+    /// </summary>
     [FieldOffset(24)] private readonly int type;
 
     public ObjectPtr(long localId) {
         this.localId = localId;
-        this.localName = null;
-        this.ns = null;
+        this.collection = null;
+        this.localPath = null;
         this.type = 0;
     }
 
-    public ObjectPtr(long localId, string localName, string ns, int type = 0) {
+    public ObjectPtr(string collection, string localPath, long localId, int type = 0) {
         // 空字符串转null以兼容default构建的实例
+        this.collection = ObjectUtil.EmptyToDef(collection, null);
+        this.localPath = ObjectUtil.EmptyToDef(localPath, null);
         this.localId = localId;
-        this.localName = ObjectUtil.EmptyToDef(localName, null);
-        this.ns = ObjectUtil.EmptyToDef(ns, null);
         this.type = type;
     }
 #nullable restore
 
+    public string Collection => collection;
+    public string LocalPath => localPath;
     public long LocalId => localId;
-    public string LocalName => localName;
-    public string Namespace => ns;
     public int Type => type;
 
     public bool IsEmpty => localId == 0
-                           && string.IsNullOrEmpty(localName)
-                           && string.IsNullOrEmpty(ns);
+                           && string.IsNullOrEmpty(localPath)
+                           && string.IsNullOrEmpty(collection);
     public bool CanBeAbbreviated => type == 0
-                                    && string.IsNullOrEmpty(localName)
-                                    && string.IsNullOrEmpty(ns);
+                                    && string.IsNullOrEmpty(localPath)
+                                    && string.IsNullOrEmpty(collection);
+    public bool HasCollection => !string.IsNullOrEmpty(collection);
+    public bool HashLocalPath => !string.IsNullOrEmpty(localPath);
     public bool HasLocalId => localId != 0;
-    public bool HashLocalName => !string.IsNullOrEmpty(localName);
-    public bool HasNamespace => !string.IsNullOrEmpty(ns);
 
     #region equals
 
     public bool Equals(ObjectPtr other) {
         return localId == other.localId
-               && localName == other.localName
-               && ns == other.ns
+               && localPath == other.localPath
+               && collection == other.collection
                && type == other.type;
     }
 
@@ -89,8 +103,8 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
 
     public override int GetHashCode() {
         int hashCode = localId.GetHashCode();
-        hashCode = (hashCode * 397) ^ (localName != null ? localName.GetHashCode() : 0);
-        hashCode = (hashCode * 397) ^ (ns != null ? ns.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ (localPath != null ? localPath.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ (collection != null ? collection.GetHashCode() : 0);
         hashCode = (hashCode * 397) ^ type.GetHashCode();
         return hashCode;
     }
@@ -106,14 +120,14 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     #endregion
 
     public override string ToString() {
-        return $"{nameof(localId)}: {localId}, {nameof(localName)}: {localName}, {nameof(ns)}: {ns}, {nameof(type)}: {type}";
+        return $"{nameof(localId)}: {localId}, {nameof(localPath)}: {localPath}, {nameof(collection)}: {collection}, {nameof(type)}: {type}";
     }
 
     #region 常量
 
-    public const string NamesNamespace = "ns";
+    public const string NamesCollection = "coll";
+    public const string NamesLocalPath = "localPath";
     public const string NamesLocalId = "localId";
-    public const string NamesLocalName = "localName";
     public const string NamesType = "type";
 
     #endregion
@@ -124,16 +138,16 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public static implicit operator ObjectPath(ObjectPtr ptr) {
         return new ObjectPath()
         {
-            assetPath = ptr.ns,
+            collection = ptr.collection,
+            localPath = ptr.localPath,
             localId = ptr.localId,
-            localName = ptr.localName,
             type = ptr.type
         };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator ObjectPtr(ObjectPath path) {
-        return new ObjectPtr(path.localId, path.localName, path.assetPath, path.type);
+        return new ObjectPtr(path.collection, path.localPath, path.localId, path.type);
     }
 
     #endregion

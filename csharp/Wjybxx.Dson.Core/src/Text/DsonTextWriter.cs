@@ -442,19 +442,19 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             printer.FastPrint(": ");
             printer.FastPrint(objectPtr.LocalId.ToString());
         }
-        if (objectPtr.HashLocalName) {
+        if (objectPtr.HashLocalPath) {
             printer.FastPrint(", ");
             CheckLineLength(printer, softLineLength);
-            printer.FastPrint(ObjectPtr.NamesLocalName);
+            printer.FastPrint(ObjectPtr.NamesLocalPath);
             printer.FastPrint(": ");
-            PrintString(printer, objectPtr.LocalName, StringStyle.AutoQuote);
+            PrintString(printer, objectPtr.LocalPath, StringStyle.AutoQuote);
         }
-        if (objectPtr.HasNamespace) {
+        if (objectPtr.HasCollection) {
             printer.FastPrint(", ");
             CheckLineLength(printer, softLineLength);
-            printer.FastPrint(ObjectPtr.NamesNamespace);
+            printer.FastPrint(ObjectPtr.NamesCollection);
             printer.FastPrint(": ");
-            PrintString(printer, objectPtr.Namespace, StringStyle.AutoQuote);
+            PrintString(printer, objectPtr.Collection, StringStyle.AutoQuote);
         }
         if (objectPtr.Type != 0) {
             printer.FastPrint(", ");

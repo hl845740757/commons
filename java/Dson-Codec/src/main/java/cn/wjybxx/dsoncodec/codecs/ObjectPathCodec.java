@@ -46,14 +46,13 @@ public class ObjectPathCodec implements DsonCodec<ObjectPath> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, ObjectPath inst, TypeInfo declaredType, ObjectStyle style) {
-        ObjectPtr ptr = new ObjectPtr(inst.localId, inst.localName, inst.assetPath, inst.type);
+        ObjectPtr ptr = ObjectPtr.OfObjectPath(inst);
         writer.writePtr(null, ptr);
     }
 
     @Override
     public ObjectPath readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends ObjectPath> factory) {
         ObjectPtr ptr = reader.readPtr(null);
-        if (ptr == null) return null;
-        return new ObjectPath(ptr.getNamespace(), ptr.getLocalId(), ptr.getLocalName(), ptr.getType());
+        return ptr == null ? null : ptr.toObjectPath();
     }
 }

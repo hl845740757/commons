@@ -351,8 +351,8 @@ public final class DsonTextReader extends AbstractDsonReader {
         if (context.contextType == DsonContextType.HEADER) {
             switch (nextName) {
                 case DsonHeader.NAMES_CLASS_NAME,
-                     DsonHeader.NAMES_NAMESPACE,
-                     DsonHeader.NAMES_LOCAL_NAME -> {
+                     DsonHeader.NAMES_COLLECTION,
+                     DsonHeader.NAMES_LOCAL_PATH -> {
                     pushNextValue(unquotedString);
                     return DsonType.STRING;
                 }
@@ -519,9 +519,9 @@ public final class DsonTextReader extends AbstractDsonReader {
     // region 内置结构体语法
 
     private ObjectPtr scanPtr(Context context) {
+        String collection = null;
+        String localPath = null;
         long localId = 0;
-        String localName = null;
-        String namespace = null;
         int type = 0;
         DsonToken keyToken;
         while ((keyToken = popToken()).type != DsonTokenType.END_OBJECT) {
@@ -533,17 +533,17 @@ public final class DsonTextReader extends AbstractDsonReader {
             // 根据name校验
             DsonToken valueToken = popToken();
             switch (keyToken.stringValue()) {
+                case ObjectPtr.NAMES_COLLECTION -> {
+                    ensureStringsToken(context, valueToken);
+                    collection = valueToken.stringValue();
+                }
+                case ObjectPtr.NAMES_LOCAL_PATH -> {
+                    ensureStringsToken(context, valueToken);
+                    localPath = valueToken.stringValue();
+                }
                 case ObjectPtr.NAMES_LOCAL_ID -> {
                     verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
                     localId = DsonTexts.parseInt64(valueToken.stringValue());
-                }
-                case ObjectPtr.NAMES_LOCAL_NAME -> {
-                    ensureStringsToken(context, valueToken);
-                    localName = valueToken.stringValue();
-                }
-                case ObjectPtr.NAMES_NAMESPACE -> {
-                    ensureStringsToken(context, valueToken);
-                    namespace = valueToken.stringValue();
                 }
                 case ObjectPtr.NAMES_TYPE -> {
                     verifyTokenType(context, valueToken, DsonTokenType.UNQUOTE_STRING);
@@ -555,7 +555,7 @@ public final class DsonTextReader extends AbstractDsonReader {
             }
             checkSeparator(context);
         }
-        return new ObjectPtr(localId, localName, namespace, type);
+        return new ObjectPtr(collection, localPath, localId, type);
     }
 
     private Timestamp scanTimestamp(Context context) {

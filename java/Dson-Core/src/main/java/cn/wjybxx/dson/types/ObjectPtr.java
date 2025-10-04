@@ -18,7 +18,6 @@ package cn.wjybxx.dson.types;
 
 import cn.wjybxx.base.ObjectPath;
 import cn.wjybxx.base.ObjectUtils;
-import cn.wjybxx.dson.DsonLites;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.Objects;
@@ -34,32 +33,40 @@ public final class ObjectPtr {
 
     public static final ObjectPtr EMPTY = new ObjectPtr(0);
 
-    public static final int MASK_LOCAL_NAME = 1;
-    public static final int MASK_NAMESPACE = 1 << 1;
+    public static final int MASK_COLLECTION = 1;
+    public static final int MASK_LOCAL_PATH = 1 << 1;
     public static final int MASK_TYPE = 1 << 2;
 
-    /** 引用对象的本地id */
+    /**
+     * 目标对象所属的集合(文件路径、资产路径、db路径)
+     * (如果为空，表示引用当前资产内的对象)
+     */
+    private final String collection;
+    /**
+     * 对象在集合内的路径(或name)
+     * (如果字段不为空，则优先使用localPath查找对象，即localPath的优先级高于localId)
+     */
+    private final String localPath;
+    /**
+     * 对象在集合内的id
+     * (如果目标集合是数组，则可能是下标)
+     */
     private final long localId;
-    /** 引用对象的本地name - 优先级高于LocalId */
-    private final String localName;
-    /** 引用对象所属的命名空间 - 集合库/对象桶 */
-    private final String namespace;
-    /** 引用的对象的大类型 -- 给业务使用的，用于快速引用分析 */
+    /**
+     * 引用类型
+     * (用于快速引用分析；可以嵌入信息，表示如何解析引用等)
+     */
     private final int type;
 
     public ObjectPtr(long localId) {
-        this(localId, null, null, 0);
+        this(null, null, localId, 0);
     }
 
-    public ObjectPtr(long localId, String localName) {
-        this(localId, localName, null, 0);
-    }
-
-    public ObjectPtr(long localId, String localName, String namespace, int type) {
+    public ObjectPtr(String collection, String localPath, long localId, int type) {
         // 空字符串转null以兼容default构建的实例
+        this.collection = ObjectUtils.emptyToDef(collection, null);
+        this.localPath = ObjectUtils.emptyToDef(localPath, null);
         this.localId = localId;
-        this.localName = ObjectUtils.emptyToDef(localName, null);
-        this.namespace = ObjectUtils.emptyToDef(namespace, null);
         this.type = type;
         if (type != 0 && isEmpty()) {
             throw new IllegalArgumentException();
@@ -68,38 +75,38 @@ public final class ObjectPtr {
 
     public boolean isEmpty() {
         return localId == 0
-                && ObjectUtils.isEmpty(localName)
-                && ObjectUtils.isEmpty(namespace);
+                && ObjectUtils.isEmpty(localPath)
+                && ObjectUtils.isEmpty(collection);
     }
 
     public boolean canBeAbbreviated() {
         return type == 0
-                && ObjectUtils.isEmpty(localName)
-                && ObjectUtils.isEmpty(namespace);
+                && ObjectUtils.isEmpty(localPath)
+                && ObjectUtils.isEmpty(collection);
+    }
+
+    public boolean hasCollection() {
+        return !ObjectUtils.isEmpty(collection);
+    }
+
+    public boolean hasLocalPath() {
+        return !ObjectUtils.isEmpty(localPath);
     }
 
     public boolean hasLocalId() {
         return localId != 0;
     }
 
-    public boolean hasLocalName() {
-        return !ObjectUtils.isEmpty(localName);
+    public String getCollection() {
+        return collection;
     }
 
-    public boolean hasNamespace() {
-        return !ObjectUtils.isEmpty(namespace);
+    public String getLocalPath() {
+        return localPath;
     }
 
     public long getLocalId() {
         return localId;
-    }
-
-    public String getLocalName() {
-        return localName;
-    }
-
-    public String getNamespace() {
-        return namespace;
     }
 
     public int getType() {
@@ -116,15 +123,15 @@ public final class ObjectPtr {
         ObjectPtr objectPtr = (ObjectPtr) o;
         return localId == objectPtr.localId
                 && type == objectPtr.type
-                && Objects.equals(localName, objectPtr.localName)
-                && Objects.equals(namespace, objectPtr.namespace);
+                && Objects.equals(localPath, objectPtr.localPath)
+                && Objects.equals(collection, objectPtr.collection);
     }
 
     @Override
     public int hashCode() {
         int result = Long.hashCode(localId);
-        result = 31 * result + Objects.hashCode(localName);
-        result = 31 * result + Objects.hashCode(namespace);
+        result = 31 * result + Objects.hashCode(localPath);
+        result = 31 * result + Objects.hashCode(collection);
         result = 31 * result + type;
         return result;
     }
@@ -133,8 +140,8 @@ public final class ObjectPtr {
     public String toString() {
         return "ObjectPtr{" +
                 "localId=" + localId +
-                ", localName='" + localName + '\'' +
-                ", namespace='" + namespace + '\'' +
+                ", localPath='" + localPath + '\'' +
+                ", collection='" + collection + '\'' +
                 ", type=" + type +
                 '}';
     }
@@ -142,21 +149,17 @@ public final class ObjectPtr {
     // endregion
 
     // 属性名
-    public static final String NAMES_NAMESPACE = "ns";
+    public static final String NAMES_COLLECTION = "coll";
+    public static final String NAMES_LOCAL_PATH = "localPath";
     public static final String NAMES_LOCAL_ID = "localId";
-    public static final String NAMES_LOCAL_NAME = "localName";
     public static final String NAMES_TYPE = "type";
 
-    public static final int NUMBERS_NAMESPACE = DsonLites.makeFullNumberZeroIdep(0);
-    public static final int NUMBERS_LOCAL_ID = DsonLites.makeFullNumberZeroIdep(1);
-    public static final int NUMBERS_LOCAL_NAME = DsonLites.makeFullNumberZeroIdep(2);
-    public static final int NUMBERS_TYPE = DsonLites.makeFullNumberZeroIdep(3);
-
+    // 转换
     public static ObjectPtr OfObjectPath(ObjectPath path) {
-        return new ObjectPtr(path.localId, path.localName, path.assetPath, path.type);
+        return new ObjectPtr(path.collection, path.localPath, path.localId, path.type);
     }
 
-    public ObjectPath ToObjectPath() {
-        return new ObjectPath(namespace, localId, localName, type);
+    public ObjectPath toObjectPath() {
+        return new ObjectPath(collection, localPath, localId, type);
     }
 }

@@ -35,7 +35,8 @@ public class DsonTextReaderSettings : DsonReaderSettings
         countType = builder.CountType;
 
         if (localIdType != DsonType.Int32
-            && localIdType != DsonType.Int64) {
+            && localIdType != DsonType.Int64
+            && localIdType != DsonType.String) {
             throw new ArgumentException("invalid localIdType: " + localIdType);
         }
         if (countType != DsonType.Int32

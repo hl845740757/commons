@@ -47,12 +47,12 @@ public struct UnionValue : IEquatable<UnionValue>
     [FieldOffset(4)] public bool bValue;
 
     // 2个扩展int值，支持DateTime、TimeStamp
-    [FieldOffset(12)] public int v2; // nanos, type
+    [FieldOffset(12)] public int v2; // type, nanos
     [FieldOffset(16)] public int v3; // offset
 
     // 由于内存对齐的原因，引用类型需要偏移24
-    [FieldOffset(24)] public object objValue; // localName, string, bytes
-    [FieldOffset(32)] public object objValue2; // namespace
+    [FieldOffset(24)] public object objValue; // collection, string, bytes
+    [FieldOffset(32)] public object objValue2; // localPath
 
     public UnionValue(DsonType type) : this() {
         this.type = type;
@@ -120,11 +120,11 @@ public struct UnionValue : IEquatable<UnionValue>
     #region converter
 
     public ObjectPtr ObjectPtr {
-        get => new ObjectPtr(lValue, (string)objValue, (string)objValue2, v2);
+        get => new ObjectPtr((string)objValue, (string)objValue2, lValue, v2);
         set {
+            objValue = value.Collection;
+            objValue2 = value.LocalPath;
             lValue = value.LocalId;
-            objValue = value.LocalName;
-            objValue2 = value.Namespace;
             v2 = value.Type;
         }
     }

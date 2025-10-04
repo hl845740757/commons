@@ -18,7 +18,6 @@ package cn.wjybxx.base.pool;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.function.FunctionUtils;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import javax.annotation.concurrent.ThreadSafe;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;

@@ -92,7 +92,7 @@ public interface ITreeLoader
     /// <exception cref="NotImplementedException"></exception>
     TaskEntry<T> LoadTree<T>(ObjectPath path) where T : class {
         Task<T> rootTask = LoadRootTask<T>(path);
-        return new TaskEntry<T>(path.localName, rootTask, null, this);
+        return new TaskEntry<T>(path.localPath, rootTask, null, this);
     }
 
     #region NullLoader

@@ -29,7 +29,6 @@ namespace Wjybxx.Dson.Types
 /// </summary>
 public readonly struct ExtDateTime : IEquatable<ExtDateTime>
 {
-    public const byte MaskNone = 0;
     public const byte MaskDate = 1;
     public const byte MaskTime = 1 << 1;
     public const byte MaskOffset = 1 << 2;
@@ -46,21 +45,13 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
     public int Offset { get; }
     /** 哪些字段有效 */
     public byte Enables { get; }
-
-    /// <summary>
-    /// 该接口慎用，通常我们需要精确到毫秒
-    /// </summary>
-    /// <param name="seconds">纪元时间秒时间戳</param>
-    public ExtDateTime(long seconds)
-        : this(seconds, 0, 0, MaskDatetime) {
-    }
-
+    
     /// <summary>
     /// 
     /// </summary>
     /// <param name="seconds">纪元时间秒时间戳</param>
     /// <param name="nanos">剩余纳秒部分</param>
-    public ExtDateTime(long seconds, int nanos)
+    public ExtDateTime(long seconds, int nanos = 0)
         : this(seconds, nanos, 0, MaskDatetime) {
     }
 

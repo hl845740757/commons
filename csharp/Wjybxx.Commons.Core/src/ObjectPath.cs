@@ -30,48 +30,57 @@ public struct ObjectPath
 {
 #nullable disable
     /// <summary>
-    /// 资产路径
-    /// (如果为空，表示引用当前资产内的对象)
+    /// 目标对象所属的集合(文件路径、资产路径、db路径)
+    /// (如果为空，表示引用当前集合内的对象)
     /// </summary>
-    public string assetPath;
+    public string collection;
     /// <summary>
-    /// 对象在资产内的名字
-    /// (如果name不为空，则使用name查找对象，即localName的优先级高于localId)
+    /// 对象在集合内的路径(或name)
+    /// 
+    /// 如果字段不为空，则优先使用localPath查找对象，即localPath的优先级高于localId；
+    /// 因为localPath更具有可读性，更适合手工引用对象。
     /// </summary>
-    public string localName;
+    public string localPath;
     /// <summary>
-    /// 对象在资产内的id
-    /// (如果目标资产是数组，则可能是下标)
+    /// 对象在集合内的id
+    /// (如果目标集合是数组，则可能是下标) 
     /// </summary>
     public long localId;
     /// <summary>
-    /// 引用的类型
+    /// 引用类型
+    /// (用于引用分析，可以嵌入信息，表示如何解析引用等)
     /// </summary>
     public int type;
 
-    public ObjectPath(string assetPath, string localName, long localId, int type = 0) {
+    public ObjectPath(long localId) {
+        this.localId = localId;
+        this.collection = null;
+        this.localPath = null;
+        this.type = 0;
+    }
+
+    public ObjectPath(string collection, string localPath, long localId, int type = 0) {
         // 空字符串转null以兼容default构建的实例
-        this.assetPath = ObjectUtil.EmptyToDef(assetPath, null);
-        this.localName = ObjectUtil.EmptyToDef(localName, null);
+        this.collection = ObjectUtil.EmptyToDef(collection, null);
+        this.localPath = ObjectUtil.EmptyToDef(localPath, null);
         this.localId = localId;
         this.type = type;
     }
 #nullable restore
 
     public bool IsEmpty => localId == 0
-                           && string.IsNullOrEmpty(localName)
-                           && string.IsNullOrEmpty(assetPath);
-
+                           && string.IsNullOrEmpty(localPath)
+                           && string.IsNullOrEmpty(collection);
+    public bool HasCollection => !string.IsNullOrEmpty(collection);
+    public bool HashLocalPath => !string.IsNullOrEmpty(localPath);
     public bool HasLocalId => localId != 0;
-    public bool HashLocalName => !string.IsNullOrEmpty(localName);
-    public bool HasAssetPath => !string.IsNullOrEmpty(assetPath);
 
     #region equals
 
     public bool Equals(ObjectPath other) {
         return localId == other.localId
-               && localName == other.localName
-               && assetPath == other.assetPath
+               && localPath == other.localPath
+               && collection == other.collection
                && type == other.type;
     }
 
@@ -81,8 +90,8 @@ public struct ObjectPath
 
     public override int GetHashCode() {
         int hashCode = localId.GetHashCode();
-        hashCode = (hashCode * 397) ^ (localName != null ? localName.GetHashCode() : 0);
-        hashCode = (hashCode * 397) ^ (assetPath != null ? assetPath.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ (localPath != null ? localPath.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ (collection != null ? collection.GetHashCode() : 0);
         hashCode = (hashCode * 397) ^ type.GetHashCode();
         return hashCode;
     }
@@ -98,7 +107,7 @@ public struct ObjectPath
     #endregion
 
     public override string ToString() {
-        return $"{nameof(assetPath)}: {assetPath}, {nameof(localName)}: {localName}, {nameof(localId)}: {localId}, {nameof(type)}: {type}";
+        return $"{nameof(collection)}: {collection}, {nameof(localPath)}: {localPath}, {nameof(localId)}: {localId}, {nameof(type)}: {type}";
     }
 }
 }

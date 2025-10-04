@@ -83,7 +83,7 @@ public interface TreeLoader {
     /** path可能不包含name信息，因此推荐重写该方法，正确赋值行为树的name */
     default <T> TaskEntry<T> loadTree(ObjectPath path) {
         final Task<T> rootTask = loadRootTask(path);
-        return new TaskEntry<>(path.localName, rootTask, null, null, this);
+        return new TaskEntry<>(path.localPath, rootTask, null, null, this);
     }
 
     // endregion

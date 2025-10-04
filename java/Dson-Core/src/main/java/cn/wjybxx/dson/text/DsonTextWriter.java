@@ -462,19 +462,19 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer.fastPrint(": ");
             printer.fastPrint(Long.toString(objectPtr.getLocalId()));
         }
-        if (objectPtr.hasLocalName()) {
+        if (objectPtr.hasLocalPath()) {
             printer.fastPrint(", ");
             checkLineLength(printer, softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_LOCAL_NAME);
+            printer.fastPrint(ObjectPtr.NAMES_LOCAL_PATH);
             printer.fastPrint(": ");
-            printString(printer, objectPtr.getLocalName(), StringStyle.AUTO_QUOTE);
+            printString(printer, objectPtr.getLocalPath(), StringStyle.AUTO_QUOTE);
         }
-        if (objectPtr.hasNamespace()) {
+        if (objectPtr.hasCollection()) {
             printer.fastPrint(", ");
             checkLineLength(printer, softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_NAMESPACE);
+            printer.fastPrint(ObjectPtr.NAMES_COLLECTION);
             printer.fastPrint(": ");
-            printString(printer, objectPtr.getNamespace(), StringStyle.AUTO_QUOTE);
+            printString(printer, objectPtr.getCollection(), StringStyle.AUTO_QUOTE);
         }
         if (objectPtr.getType() != 0) {
             printer.fastPrint(", ");

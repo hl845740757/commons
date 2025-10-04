@@ -17,7 +17,6 @@ import java.time.format.DateTimeFormatter;
 @Immutable
 public final class ExtDateTime {
 
-    public static final byte MASK_NONE = 0;
     public static final byte MASK_DATE = 1;
     public static final byte MASK_TIME = 1 << 1;
     public static final byte MASK_OFFSET = 1 << 2;

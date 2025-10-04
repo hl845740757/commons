@@ -38,7 +38,8 @@ public class DsonTextReaderSettings extends DsonReaderSettings {
         countType = Objects.requireNonNull(builder.countType);
 
         if (localIdType != DsonType.INT32
-                && localIdType != DsonType.INT64) {
+                && localIdType != DsonType.INT64
+                && localIdType != DsonType.STRING) {
             throw new IllegalArgumentException("invalid localIdType: " + localIdType);
         }
         if (countType != DsonType.INT32

@@ -347,8 +347,8 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (context.contextType == DsonContextType.Header) {
             switch (_nextName) {
                 case DsonHeader.Names_ClassName:
-                case DsonHeader.Names_Namespace:
-                case DsonHeader.Names_LocalName:
+                case DsonHeader.Names_Collection:
+                case DsonHeader.Names_LocalPath:
                     PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
                 case DsonHeader.Names_LocalId: {
@@ -534,9 +534,9 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     #region 内置结构体语法
 
     private ObjectPtr ScanPtr(Context context) {
+        string collection = null;
+        string localPath = null;
         long localId = 0;
-        string localName = null;
-        string ns = null;
         int type = 0;
         DsonToken keyToken;
         while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
@@ -548,19 +548,19 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             // 根据name校验
             DsonToken valueToken = PopToken();
             switch (keyToken.StringValue()) {
+                case ObjectPtr.NamesCollection: {
+                    EnsureStringsToken(context, valueToken);
+                    collection = valueToken.StringValue();
+                    break;
+                }
+                case ObjectPtr.NamesLocalPath: {
+                    EnsureStringsToken(context, valueToken);
+                    localPath = valueToken.StringValue();
+                    break;
+                }
                 case ObjectPtr.NamesLocalId: {
                     VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
                     localId = DsonTexts.ParseInt64(valueToken.StringValue());
-                    break;
-                }
-                case ObjectPtr.NamesLocalName: {
-                    EnsureStringsToken(context, valueToken);
-                    localName = valueToken.StringValue();
-                    break;
-                }
-                case ObjectPtr.NamesNamespace: {
-                    EnsureStringsToken(context, valueToken);
-                    ns = valueToken.StringValue();
                     break;
                 }
                 case ObjectPtr.NamesType: {
@@ -574,7 +574,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             }
             CheckSeparator(context);
         }
-        return new ObjectPtr(localId, localName, ns, type);
+        return new ObjectPtr(collection, localPath, localId, type);
     }
 
     private Timestamp ScanTimestamp(Context context) {
