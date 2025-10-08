@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Commons.Inject</AssemblyName>
         <PackageId>Wjybxx.Commons.Inject</PackageId>
-        <PackageVersion>1.5.0-rc2</PackageVersion>
+        <PackageVersion>1.5.0</PackageVersion>
 
         <Title>Wjybxx.Commons.Inject</Title>
         <Description>依赖注入库</Description>

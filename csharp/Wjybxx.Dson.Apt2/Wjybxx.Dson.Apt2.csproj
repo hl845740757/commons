@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Dson.Apt2</AssemblyName>
         <PackageId>Wjybxx.Dson.Apt2</PackageId>
-        <PackageVersion>2.5.0-rc1</PackageVersion>
+        <PackageVersion>2.6.0</PackageVersion>
 
         <Title>Wjybxx.Dson</Title>
         <Description>基于反射的Codec生成器</Description>

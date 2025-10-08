@@ -48,9 +48,6 @@ public final class ObjectPath {
      */
     public int type;
 
-    /** 引用目标缓存，辅助字段 */
-    public transient Object obj;
-
     public ObjectPath() {
     }
 

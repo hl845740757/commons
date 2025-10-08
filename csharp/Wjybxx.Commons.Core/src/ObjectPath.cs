@@ -52,17 +52,11 @@ public struct ObjectPath : IEquatable<ObjectPath>
     /// </summary>
     public int type;
 
-    /// <summary>
-    /// 引用目标缓存，辅助字段
-    /// </summary>
-    [NonSerialized] public object obj;
-
     public ObjectPath(long localId) {
         this.localId = localId;
         this.collection = null;
         this.localPath = null;
         this.type = 0;
-        this.obj = null;
     }
 
     public ObjectPath(string collection, string localPath, long localId, int type = 0) {
@@ -71,7 +65,6 @@ public struct ObjectPath : IEquatable<ObjectPath>
         this.localPath = ObjectUtil.EmptyToDef(localPath, null);
         this.localId = localId;
         this.type = type;
-        this.obj = null;
     }
 #nullable restore
 
