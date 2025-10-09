@@ -350,26 +350,74 @@ public static class MathCommon
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Min(float a, float b, float c) {
-        float r = Math.Min(a, b);
-        return Math.Min(r, c);
+        if ((double)a > b) a = b;
+        if ((double)a > c) a = c;
+        return a;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Max(float a, float b, float c) {
-        float r = Math.Max(a, b);
-        return Math.Max(r, c);
+        if ((double)a < b) a = b;
+        if ((double)a < c) a = c;
+        return a;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Min(double a, double b, double c) {
-        double r = Math.Min(a, b);
-        return Math.Min(r, c);
+        if (a > b) a = b;
+        if (a > c) a = c;
+        return a;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Max(double a, double b, double c) {
-        double r = Math.Max(a, b);
-        return Math.Max(r, c);
+        if (a < b) a = b;
+        if (a < c) a = c;
+        return a;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void MinMax(int a, int b, out int min, out int max) {
+        if (a < b) {
+            min = a;
+            max = b;
+        } else {
+            min = b;
+            max = a;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void MinMax(long a, long b, out long min, out long max) {
+        if (a < b) {
+            min = a;
+            max = b;
+        } else {
+            min = b;
+            max = a;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void MinMax(float a, float b, out float min, out float max) {
+        if ((double)a < b) {
+            min = a;
+            max = b;
+        } else {
+            min = b;
+            max = a;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void MinMax(double a, double b, out double min, out double max) {
+        if (a < b) {
+            min = a;
+            max = b;
+        } else {
+            min = b;
+            max = a;
+        }
     }
 
     #endregion
@@ -409,24 +457,28 @@ public static class MathCommon
     }
 
     /** 求两个int的和，溢出时clamp到int范围 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int SumAndClamp(int value, int delta) {
         long r = (long)value + delta;
         return Clamp(r, int.MinValue, int.MaxValue);
     }
 
     /** 求两个int的和，同时clamp到给定的范围 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int SumAndClamp(int value, int delta, int min, int max) {
         long r = (long)value + delta;
         return Clamp(r, min, max);
     }
 
     /** 求两个int的乘积，溢出时clamp到int范围 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int MultiplyAndClamp(int value, int delta) {
         long r = (long)value * delta;
         return Clamp(r, int.MinValue, int.MaxValue);
     }
 
     /** 求两个int的乘积，同时clamp到给定的范围 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int MultiplyAndClamp(int value, int delta, int min, int max) {
         long r = (long)value * delta;
         return Clamp(r, min, max);

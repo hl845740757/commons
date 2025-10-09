@@ -56,8 +56,7 @@ public static class DsonOutputs
         if (maxCapacity < initCapacity) {
             throw new ArgumentException($"initCapacity: {initCapacity}, maxCapacity: {maxCapacity}");
         }
-        byte[] buffer = bufferPool.Acquire(initCapacity);
-        return new ArrayOutput(buffer, bufferPool, maxCapacity);
+        return new ArrayOutput(bufferPool, initCapacity, maxCapacity);
     }
 
     /// <summary>
@@ -65,10 +64,10 @@ public static class DsonOutputs
     /// </summary>
     public class ArrayOutput : IDsonOutput
     {
+        private IArrayPool<byte>? _bufferPool;
         private byte[] _buffer;
         private readonly int _rawOffset;
         private readonly int _rawLimit; // 如果是池化的buffer，该值表示最大空间
-        private IArrayPool<byte>? _bufferPool;
 
         private int _bufferPos; // 当前写位置
         private int _posLimit; // 当前限制位置-不可写入位置
@@ -83,9 +82,10 @@ public static class DsonOutputs
             this._posLimit = offset + length;
         }
 
-        internal ArrayOutput(byte[] buffer, IArrayPool<byte> bufferPool, int maxCapacity) {
-            _buffer = buffer;
+        internal ArrayOutput(IArrayPool<byte> bufferPool, int initCapacity, int maxCapacity) {
+            byte[] buffer = bufferPool.Acquire(initCapacity);
             _bufferPool = bufferPool;
+            _buffer = buffer;
             _rawOffset = 0;
             _rawLimit = maxCapacity;
 
@@ -249,17 +249,20 @@ public static class DsonOutputs
         }
 
         public void Dispose() {
-            // 需要归还buffer
-            byte[] buffer = this._buffer;
             IArrayPool<byte> bufferPool = this._bufferPool;
+            byte[] buffer = this._buffer;
+            // 需要归还buffer
             this._buffer = null!;
             this._bufferPool = null;
-            //
             if (bufferPool != null) {
                 bufferPool.Release(buffer);
             }
         }
 
+        /// <summary>
+        /// 关联的Buffer池
+        /// </summary>
+        public IArrayPool<byte>? BufferPool => _bufferPool;
         /// <summary>
         /// 获取底层的buffer，慎重使用
         /// </summary>
