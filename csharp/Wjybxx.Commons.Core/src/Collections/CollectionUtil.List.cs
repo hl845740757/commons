@@ -491,17 +491,25 @@ public static partial class CollectionUtil
 
     /// <summary>
     /// 确保List的空间足够
-    /// 
-    /// 注：用于Unity项目
     /// </summary>
-    /// <param name="list">list</param>
+    /// <param name="list"></param>
     /// <param name="capacity"></param>
     /// <typeparam name="T"></typeparam>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void EnsureCapacity<T>(List<T> list, int capacity) {
-        if (list.Capacity < capacity) {
-            list.Capacity = capacity;
+    public static void EnsureCapacity<T>(this List<T> list, int capacity) {
+#if NET6_0_OR_GREATER
+        list.EnsureCapacity(capacity);
+#else
+        if (list.Capacity >= capacity) {
+            return;
         }
+        if (capacity <= 4) {
+            list.Capacity = 4;
+            return;
+        }
+        int newCapacity = list.Capacity + list.Capacity / 2;
+        list.Capacity = Math.Max(newCapacity, capacity);
+#endif
     }
 
     #endregion

@@ -21,6 +21,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
+#if !NET6_0_OR_GREATER
+using Wjybxx.Commons.Collections; // UNITY
+#endif
+
 namespace Wjybxx.Dson.Text
 {
 /// <summary>
@@ -48,10 +52,7 @@ public abstract class AbstractCharStream : IDsonCharStream
     }
 
     protected void AddLines(IList<LineInfo> newLines) {
-        // unity下可能无该方法
-#if NET6_0_OR_GREATER
         _lines.EnsureCapacity(_lines.Count + newLines.Count);
-#endif
         foreach (LineInfo newLine in newLines) {
             if (newLine.IsNull) throw new NullReferenceException("newLine");
             _lines.Add(newLine);
