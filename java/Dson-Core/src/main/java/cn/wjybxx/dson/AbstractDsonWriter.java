@@ -18,7 +18,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.dson.io.DsonIOException;
-import cn.wjybxx.dson.text.INumberStyle;
+import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.Binary;
@@ -136,28 +136,28 @@ public abstract class AbstractDsonWriter implements DsonWriter {
 
     // region 简单值
     @Override
-    public void writeInt32(String name, int value, INumberStyle style) {
+    public void writeInt32(String name, int value, NumberStyle style) {
         advanceToValueState(name);
         doWriteInt32(value, style);
         setNextState();
     }
 
     @Override
-    public void writeInt64(String name, long value, INumberStyle style) {
+    public void writeInt64(String name, long value, NumberStyle style) {
         advanceToValueState(name);
         doWriteInt64(value, style);
         setNextState();
     }
 
     @Override
-    public void writeFloat(String name, float value, INumberStyle style) {
+    public void writeFloat(String name, float value, NumberStyle style) {
         advanceToValueState(name);
         doWriteFloat(value, style);
         setNextState();
     }
 
     @Override
-    public void writeDouble(String name, double value, INumberStyle style) {
+    public void writeDouble(String name, double value, NumberStyle style) {
         advanceToValueState(name);
         doWriteDouble(value, style);
         setNextState();
@@ -227,28 +227,28 @@ public abstract class AbstractDsonWriter implements DsonWriter {
 
     // region 无name版
     @Override
-    public void writeInt32(int value, INumberStyle style) {
+    public void writeInt32(int value, NumberStyle style) {
         ensureValueState(context);
         doWriteInt32(value, style);
         setNextState();
     }
 
     @Override
-    public void writeInt64(long value, INumberStyle style) {
+    public void writeInt64(long value, NumberStyle style) {
         ensureValueState(context);
         doWriteInt64(value, style);
         setNextState();
     }
 
     @Override
-    public void writeFloat(float value, INumberStyle style) {
+    public void writeFloat(float value, NumberStyle style) {
         ensureValueState(context);
         doWriteFloat(value, style);
         setNextState();
     }
 
     @Override
-    public void writeDouble(double value, INumberStyle style) {
+    public void writeDouble(double value, NumberStyle style) {
         ensureValueState(context);
         doWriteDouble(value, style);
         setNextState();
@@ -318,13 +318,13 @@ public abstract class AbstractDsonWriter implements DsonWriter {
 
     // endregion
 
-    protected abstract void doWriteInt32(int value, INumberStyle style);
+    protected abstract void doWriteInt32(int value, NumberStyle style);
 
-    protected abstract void doWriteInt64(long value, INumberStyle style);
+    protected abstract void doWriteInt64(long value, NumberStyle style);
 
-    protected abstract void doWriteFloat(float value, INumberStyle style);
+    protected abstract void doWriteFloat(float value, NumberStyle style);
 
-    protected abstract void doWriteDouble(double value, INumberStyle style);
+    protected abstract void doWriteDouble(double value, NumberStyle style);
 
     protected abstract void doWriteBool(boolean value);
 

@@ -66,21 +66,23 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     /// <summary>
     /// 写入一个int值
+    ///
+    /// 注：默认为Typed模式，因为需要能够精确恢复。
     /// </summary>
     /// <param name="name">字段的名字</param>
     /// <param name="value">要写入的值</param>
     /// <param name="style">数字的文本编码类型</param>
-    void WriteInt32(TName name, int value, INumberStyle style);
+    void WriteInt32(TName name, int value, NumberStyle style = NumberStyle.Typed);
 
-    void WriteInt64(TName name, long value, INumberStyle style);
+    void WriteInt64(TName name, long value, NumberStyle style = NumberStyle.Typed);
 
-    void WriteFloat(TName name, float value, INumberStyle style);
+    void WriteFloat(TName name, float value, NumberStyle style = NumberStyle.Typed);
 
-    void WriteDouble(TName name, double value, INumberStyle style);
+    void WriteDouble(TName name, double value, NumberStyle style = NumberStyle.Simple);
 
     void WriteBool(TName name, bool value);
 
-    void WriteString(TName name, string value, StringStyle style = StringStyle.Auto);
+    void WriteString(TName name, string value, StringStyle style = StringStyle.AutoQuote);
 
     void WriteNull(TName name);
 
@@ -103,17 +105,17 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     /// </summary>
     /// <param name="value">要写入的值</param>
     /// <param name="style">数字的文本编码类型</param>
-    void WriteInt32(int value, INumberStyle style);
+    void WriteInt32(int value, NumberStyle style = NumberStyle.Typed);
 
-    void WriteInt64(long value, INumberStyle style);
+    void WriteInt64(long value, NumberStyle style = NumberStyle.Typed);
 
-    void WriteFloat(float value, INumberStyle style);
+    void WriteFloat(float value, NumberStyle style = NumberStyle.Typed);
 
-    void WriteDouble(double value, INumberStyle style);
+    void WriteDouble(double value, NumberStyle style = NumberStyle.Simple);
 
     void WriteBool(bool value);
 
-    void WriteString(string value, StringStyle style = StringStyle.Auto);
+    void WriteString(string value, StringStyle style = StringStyle.AutoQuote);
 
     void WriteNull();
 

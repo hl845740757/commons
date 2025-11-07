@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,41 +18,34 @@ package cn.wjybxx.dsoncodec.codecs;
 
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 /**
+ * 用于支持空对象
+ *
  * @author wjybxx
- * date - 2024/5/9
+ * date - 2025/11/6
  */
-@DsonCodecScanIgnore
-public class StringCodec implements DsonCodec<String> {
+public class ObjectCodec implements DsonCodec<Object> {
 
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
-        return TypeInfo.STRING;
+        return TypeInfo.OBJECT;
     }
 
     @Override
-    public boolean autoStartEnd() {
-        return false;
+    public void writeObject(DsonObjectWriter writer, Object inst, TypeInfo declaredType, ObjectStyle style) {
+
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, String inst, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeString(null, inst, StringStyle.AUTO_QUOTE);
+    public Object readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<?> factory) {
+        return new Object();
     }
-
-    @Override
-    public String readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends String> factory) {
-        return reader.readString(null);
-    }
-
 }

@@ -39,14 +39,10 @@
     <ItemGroup>
         <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
         <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
-        <ProjectReference Include="..\Wjybxx.Dson.Apt2\Wjybxx.Dson.Apt2.csproj" />
-
-        <!-- 测试一下通过反射为行为树生成codec -->
         <ProjectReference Include="..\Wjybxx.BTree.Codec\Wjybxx.BTree.Codec.csproj" />
         <ProjectReference Include="..\Wjybxx.BTree.Core\Wjybxx.BTree.Core.csproj" />
         
-        <!-- apt2运行时依赖poet -->
-        <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>

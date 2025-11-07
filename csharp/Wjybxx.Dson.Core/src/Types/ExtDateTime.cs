@@ -45,7 +45,7 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
     public int Offset { get; }
     /** 哪些字段有效 */
     public byte Enables { get; }
-    
+
     /// <summary>
     /// 
     /// </summary>

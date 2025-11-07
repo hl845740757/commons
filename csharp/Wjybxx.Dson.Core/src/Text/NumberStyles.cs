@@ -18,37 +18,48 @@
 
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Dson.Text
 {
 /// <summary>
 /// 这里提供默认数字格式化方式
 /// </summary>
-public static class NumberStyles
+internal static class NumberStyles
 {
+    public interface INumberStyle
+    {
+        StyleOut ToString(int value);
+
+        StyleOut ToString(long value);
+
+        StyleOut ToString(float value);
+
+        StyleOut ToString(double value);
+    }
+
     /** 普通打印 -- 超过表示范围时会添加类型标签 */
-    [StableName] public static INumberStyle Simple { get; } = new SimpleStyle();
+    private static INumberStyle Simple { get; } = new SimpleStyle();
     /** 总是打印类型 */
-    [StableName] public static INumberStyle Typed { get; } = new TypedStyle();
+    private static INumberStyle Typed { get; } = new TypedStyle();
 
     /** 打印为无符号数 -- 超过表示范围时会添加类型标签；通常用于打印Flags类型 */
-    [StableName] public static INumberStyle Unsigned { get; } = new UnsignedStyle();
+    private static INumberStyle Unsigned { get; } = new UnsignedStyle();
     /** 打印为带类型无符号数；通常用于打印Flags类型 */
-    [StableName] public static INumberStyle TypedUnsigned { get; } = new TypedUnsignedStyle();
+    private static INumberStyle TypedUnsigned { get; } = new TypedUnsignedStyle();
 
     /** 16进制，打印正负号 -- 不支持浮点数 */
-    [StableName] public static INumberStyle SignedHex { get; } = new SignedHexStyle();
+    private static INumberStyle SignedHex { get; } = new SignedHexStyle();
     /** 无符号16进制，按位打印 -- 不支持浮点数 */
-    [StableName] public static INumberStyle UnsignedHex { get; } = new UnsignedHexStyle();
+    private static INumberStyle UnsignedHex { get; } = new UnsignedHexStyle();
 
     /** 2进制，打印正负号 -- 不支持浮点数 */
-    [StableName] public static INumberStyle SignedBinary { get; } = new SignedBinaryStyle();
+    private static INumberStyle SignedBinary { get; } = new SignedBinaryStyle();
     /** 无符号2进制，按位打印 -- 不支持浮点数 */
-    [StableName] public static INumberStyle UnsignedBinary { get; } = new UnsignedBinaryStyle();
+    private static INumberStyle UnsignedBinary { get; } = new UnsignedBinaryStyle();
     /** 固定位数2进制，按位打印 -- 不支持浮点数 */
-    [StableName] public static INumberStyle FixedBinary { get; } = new FixedBinaryStyle();
+    private static INumberStyle FixedBinary { get; } = new FixedBinaryStyle();
 
     /** double能精确表示的最大整数 */
     private const long DoubleMaxLong = (1L << 53) - 1;
@@ -296,12 +307,27 @@ public static class NumberStyles
 
     #endregion
 
-    /// <summary>
-    /// 将枚举转换为对应Style实例
-    /// </summary>
-    /// <param name="style"></param>
+    #region 对外接口
+
+    public static StyleOut ToString(this NumberStyle style, int value) {
+        return GetInstance(style).ToString(value);
+    }
+
+    public static StyleOut ToString(this NumberStyle style, long value) {
+        return GetInstance(style).ToString(value);
+    }
+
+    public static StyleOut ToString(this NumberStyle style, float value) {
+        return GetInstance(style).ToString(value);
+    }
+
+    public static StyleOut ToString(this NumberStyle style, double value) {
+        return GetInstance(style).ToString(value);
+    }
+
     /// <returns></returns>
-    public static INumberStyle ToNumberStyle(this NumberStyle style) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static INumberStyle GetInstance(NumberStyle style) {
         return style switch
         {
             NumberStyle.Simple => Simple,
@@ -316,5 +342,7 @@ public static class NumberStyles
             _ => throw new ArgumentException(style.ToString())
         };
     }
+
+    #endregion
 }
 }

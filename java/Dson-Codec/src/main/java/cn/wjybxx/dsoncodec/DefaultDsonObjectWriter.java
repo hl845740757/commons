@@ -18,7 +18,10 @@ package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.*;
-import cn.wjybxx.dson.text.*;
+import cn.wjybxx.dson.text.DsonTextWriter;
+import cn.wjybxx.dson.text.NumberStyle;
+import cn.wjybxx.dson.text.ObjectStyle;
+import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dson.types.ExtDateTime;
 import cn.wjybxx.dson.types.ObjectPtr;
@@ -47,28 +50,28 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // region 简单值
 
     @Override
-    public void writeInt(String name, int value, INumberStyle style) {
+    public void writeInt(String name, int value, NumberStyle style) {
         if (value != 0 || (!writer.isAtName() || converter.options().appendDef)) {
             writer.writeInt32(name, value, style);
         }
     }
 
     @Override
-    public void writeLong(String name, long value, INumberStyle style) {
+    public void writeLong(String name, long value, NumberStyle style) {
         if (value != 0 || (!writer.isAtName() || converter.options().appendDef)) {
             writer.writeInt64(name, value, style);
         }
     }
 
     @Override
-    public void writeFloat(String name, float value, INumberStyle style) {
+    public void writeFloat(String name, float value, NumberStyle style) {
         if (value != 0 || (!writer.isAtName() || converter.options().appendDef)) {
             writer.writeFloat(name, value, style);
         }
     }
 
     @Override
-    public void writeDouble(String name, double value, INumberStyle style) {
+    public void writeDouble(String name, double value, NumberStyle style) {
         if (value != 0 || (!writer.isAtName() || converter.options().appendDef)) {
             writer.writeDouble(name, value, style);
         }

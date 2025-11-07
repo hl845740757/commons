@@ -242,8 +242,6 @@ public final class TypeMetaConfig {
             config.add(HashMap.class, "HashMap", "HashMap`2"); // c#的字典有毒，不删除的情况下有序，导致Java映射困难
             config.add(LinkedHashMap.class, "Dictionary", "Dictionary`2", "LinkedDictionary", "LinkedDictionary`2");
             config.add(ConcurrentHashMap.class, "ConcurrentDictionary", "ConcurrentDictionary`2");
-
-            config.add(MapEncodeProxy.class, "DictionaryEncodeProxy", "MapEncodeProxy"); // 字典读写代理
         }
         return config;
     }

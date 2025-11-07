@@ -23,25 +23,15 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public enum StringStyle : byte
 {
-    /**
-     * 自动判别
-     * 1.当内容较短且无特殊字符，且不是特殊值（true/false/数字）时不加引号
-     * 2.当内容长度中等时，打印为双引号字符串
-     * 3.当内容较长时，打印为文本模式
-     */
-    Auto = 0,
-
     /** 自动加引号模式 -- 优先无引号，如果不可以无引号则加引号 */
-    AutoQuote,
-
+    AutoQuote = 0,
     /** 双引号模式 -- 内容可能包含特殊字符，且想保持流式输入 */
     Quote,
-
     /** 无引号模式 -- 内容不包含特殊字符，且内容较短；要小心使用 */
     Unquote,
 
     /// <summary>
-    /// 纯文本模式
+    /// Dson文本块
     ///
     /// 1. 对内容无限制。
     /// 2. 不对内容进行转义，会考虑行长度限制，一行内容可能输出为多行。
@@ -53,10 +43,10 @@ public enum StringStyle : byte
     /// @"""
     /// </code>
     /// </summary>
-    Text,
+    DsonText,
 
     /// <summary>
-    /// 简单纯文本模式
+    /// 简单文本块模式
     ///
     /// 1. 内容行不能以三引号(""")开头。
     /// 2. 默认不被启用，只有显式指定的情况下生效。
@@ -78,6 +68,6 @@ public enum StringStyle : byte
     /// 3. 不对内容进行转义，不考虑行长度限制，直接打印。
     /// 4. 适合包含特殊字符的短文本
     /// </summary>
-    StringLine,
+    SingleLine,
 }
 }

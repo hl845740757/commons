@@ -45,7 +45,7 @@ class AptFieldProps {
     public static final String TYPE_EXT_DOUBLE = "EXT_DOUBLE";
 
     public static final String DEFAULT_NUMBER_STYLE = "SIMPLE";
-    public static final String DEFAULT_STRING_STYLE = "AUTO";
+    public static final String DEFAULT_STRING_STYLE = "AUTO_QUOTE";
 
     /** 字段序列化时的名字 */
     public String name;

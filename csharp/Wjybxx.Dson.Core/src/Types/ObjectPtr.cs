@@ -78,6 +78,9 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public long LocalId => localId;
     public int Type => type;
 
+    /// <summary>
+    /// 注意：IsEmpty默认不测试Type。
+    /// </summary>
     public bool IsEmpty => localId == 0
                            && string.IsNullOrEmpty(localPath)
                            && string.IsNullOrEmpty(collection);

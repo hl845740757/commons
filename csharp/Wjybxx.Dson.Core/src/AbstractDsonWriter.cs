@@ -139,25 +139,25 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #region 简单值
 
-    public void WriteInt32(TName name, int value, INumberStyle style) {
+    public void WriteInt32(TName name, int value, NumberStyle style) {
         AdvanceToValueState(name);
         DoWriteInt32(value, style);
         SetNextState();
     }
 
-    public void WriteInt64(TName name, long value, INumberStyle style) {
+    public void WriteInt64(TName name, long value, NumberStyle style) {
         AdvanceToValueState(name);
         DoWriteInt64(value, style);
         SetNextState();
     }
 
-    public void WriteFloat(TName name, float value, INumberStyle style) {
+    public void WriteFloat(TName name, float value, NumberStyle style) {
         AdvanceToValueState(name);
         DoWriteFloat(value, style);
         SetNextState();
     }
 
-    public void WriteDouble(TName name, double value, INumberStyle style) {
+    public void WriteDouble(TName name, double value, NumberStyle style) {
         AdvanceToValueState(name);
         DoWriteDouble(value, style);
         SetNextState();
@@ -169,7 +169,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WriteString(TName name, string value, StringStyle style = StringStyle.Auto) {
+    public void WriteString(TName name, string value, StringStyle style = StringStyle.AutoQuote) {
         if (value == null) throw new ArgumentNullException(nameof(value));
         AdvanceToValueState(name);
         DoWriteString(value, style);
@@ -218,25 +218,25 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #region 无name版
 
-    public void WriteInt32(int value, INumberStyle style) {
+    public void WriteInt32(int value, NumberStyle style) {
         EnsureValueState(context);
         DoWriteInt32(value, style);
         SetNextState();
     }
 
-    public void WriteInt64(long value, INumberStyle style) {
+    public void WriteInt64(long value, NumberStyle style) {
         EnsureValueState(context);
         DoWriteInt64(value, style);
         SetNextState();
     }
 
-    public void WriteFloat(float value, INumberStyle style) {
+    public void WriteFloat(float value, NumberStyle style) {
         EnsureValueState(context);
         DoWriteFloat(value, style);
         SetNextState();
     }
 
-    public void WriteDouble(double value, INumberStyle style) {
+    public void WriteDouble(double value, NumberStyle style) {
         EnsureValueState(context);
         DoWriteDouble(value, style);
         SetNextState();
@@ -248,7 +248,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WriteString(string value, StringStyle style = StringStyle.Auto) {
+    public void WriteString(string value, StringStyle style = StringStyle.AutoQuote) {
         if (value == null) throw new ArgumentNullException(nameof(value));
         EnsureValueState(context);
         DoWriteString(value, style);
@@ -297,13 +297,13 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #endregion
 
-    protected abstract void DoWriteInt32(int value, INumberStyle style);
+    protected abstract void DoWriteInt32(int value, NumberStyle style);
 
-    protected abstract void DoWriteInt64(long value, INumberStyle style);
+    protected abstract void DoWriteInt64(long value, NumberStyle style);
 
-    protected abstract void DoWriteFloat(float value, INumberStyle style);
+    protected abstract void DoWriteFloat(float value, NumberStyle style);
 
-    protected abstract void DoWriteDouble(double value, INumberStyle style);
+    protected abstract void DoWriteDouble(double value, NumberStyle style);
 
     protected abstract void DoWriteBool(bool value);
 

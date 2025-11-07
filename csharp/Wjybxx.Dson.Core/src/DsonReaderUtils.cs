@@ -316,49 +316,8 @@ public static class DsonReaderUtils
     #region 扩展方法
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteInt32<TName>(IDsonWriter<TName> writer, TName name, int value) where TName : IEquatable<TName> {
-        writer.WriteInt32(name, value, NumberStyles.Typed);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteInt64<TName>(IDsonWriter<TName> writer, TName name, long value) where TName : IEquatable<TName> {
-        writer.WriteInt64(name, value, NumberStyles.Typed);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteFloat<TName>(IDsonWriter<TName> writer, TName name, float value) where TName : IEquatable<TName> {
-        writer.WriteFloat(name, value, NumberStyles.Typed);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteDouble<TName>(IDsonWriter<TName> writer, TName name, double value) where TName : IEquatable<TName> {
-        writer.WriteDouble(name, value, NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteBinary<TName>(IDsonWriter<TName> writer, TName name, byte[] bytes) where TName : IEquatable<TName> {
         writer.WriteBinary(name, bytes, 0, bytes.Length);
-    }
-
-    // 无name版
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteInt32<TName>(IDsonWriter<TName> writer, int value) where TName : IEquatable<TName> {
-        writer.WriteInt32(value, NumberStyles.Typed);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteInt64<TName>(IDsonWriter<TName> writer, long value) where TName : IEquatable<TName> {
-        writer.WriteInt64(value, NumberStyles.Typed);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteFloat<TName>(IDsonWriter<TName> writer, float value) where TName : IEquatable<TName> {
-        writer.WriteFloat(value, NumberStyles.Typed);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteDouble<TName>(IDsonWriter<TName> writer, double value) where TName : IEquatable<TName> {
-        writer.WriteDouble(value, NumberStyles.Simple);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

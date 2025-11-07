@@ -2,7 +2,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.text.INumberStyle;
+import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.Binary;
@@ -58,22 +58,22 @@ public class DsonCollectionWriter extends AbstractDsonWriter {
 
     //region 简单值
     @Override
-    protected void doWriteInt32(int value, INumberStyle style) {
+    protected void doWriteInt32(int value, NumberStyle style) {
         getContext().add(DsonInt32.valueOf(value));
     }
 
     @Override
-    protected void doWriteInt64(long value, INumberStyle style) {
+    protected void doWriteInt64(long value, NumberStyle style) {
         getContext().add(DsonInt64.valueOf(value));
     }
 
     @Override
-    protected void doWriteFloat(float value, INumberStyle style) {
+    protected void doWriteFloat(float value, NumberStyle style) {
         getContext().add(DsonFloat.valueOf(value));
     }
 
     @Override
-    protected void doWriteDouble(double value, INumberStyle style) {
+    protected void doWriteDouble(double value, NumberStyle style) {
         getContext().add(DsonDouble.valueOf(value));
     }
 

@@ -178,7 +178,7 @@ class CodecStructs {
             writer.writeFloat("floatVal", inst.floatVal, NumberStyle.SIMPLE);
             writer.writeDouble("doubleVal", inst.doubleVal, NumberStyle.SIMPLE);
             writer.writeBoolean("boolVal", inst.boolVal);
-            writer.writeString("strVal", inst.strVal, StringStyle.AUTO);
+            writer.writeString("strVal", inst.strVal, StringStyle.AUTO_QUOTE);
             writer.writeBytes("bytes", inst.bytes);
             writer.writeObject("sex", inst.sex, TypeInfo.of(Sex.class));
             writer.writeObject("map", inst.map, TypeInfo.STRING_HASHMAP, null);

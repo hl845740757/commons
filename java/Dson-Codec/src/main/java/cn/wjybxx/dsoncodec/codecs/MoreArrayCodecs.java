@@ -270,7 +270,7 @@ public final class MoreArrayCodecs {
         public void writeObject(DsonObjectWriter writer, String[] inst, TypeInfo declaredType, ObjectStyle style) {
             writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (String e : inst) {
-                writer.writeString(null, e, StringStyle.AUTO);
+                writer.writeString(null, e, StringStyle.AUTO_QUOTE);
             }
             writer.writeEndArray();
         }

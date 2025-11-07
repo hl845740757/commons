@@ -75,19 +75,19 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
 
     #region 简单值
 
-    protected override void DoWriteInt32(int value, INumberStyle style) {
+    protected override void DoWriteInt32(int value, NumberStyle style) {
         GetContext().Add(DsonInt32.ValueOf(value));
     }
 
-    protected override void DoWriteInt64(long value, INumberStyle style) {
+    protected override void DoWriteInt64(long value, NumberStyle style) {
         GetContext().Add(DsonInt64.ValueOf(value));
     }
 
-    protected override void DoWriteFloat(float value, INumberStyle style) {
+    protected override void DoWriteFloat(float value, NumberStyle style) {
         GetContext().Add(DsonFloat.ValueOf(value));
     }
 
-    protected override void DoWriteDouble(double value, INumberStyle style) {
+    protected override void DoWriteDouble(double value, NumberStyle style) {
         GetContext().Add(DsonDouble.ValueOf(value));
     }
 

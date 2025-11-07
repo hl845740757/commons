@@ -7,10 +7,12 @@ import cn.wjybxx.base.EnumUtils;
 import java.math.BigDecimal;
 
 /**
+ * 数字的打印格式
+ *
  * @author wjybxx
  * date - 2023/6/19
  */
-public enum NumberStyle implements INumberStyle, EnumLite {
+public enum NumberStyle implements EnumLite {
 
     /**
      * 简单格式，能省略类型标签的情况下就省略标签
@@ -399,6 +401,14 @@ public enum NumberStyle implements INumberStyle, EnumLite {
     public int getNumber() {
         return number;
     }
+
+    public abstract void toString(int value, StyleOut styleOut);
+
+    public abstract void toString(long value, StyleOut styleOut);
+
+    public abstract void toString(float value, StyleOut styleOut);
+
+    public abstract void toString(double value, StyleOut styleOut);
 
     /** 是否支持浮点数 */
     public boolean supportFloat() {

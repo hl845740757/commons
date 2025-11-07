@@ -30,4 +30,6 @@ public class LinkerGroupExample
     public GenericBean<int> g;
     // 测试无法加载的程序集 -- 警告
     public ExtInt32 _extInt32;
+    // 测试无法加载的程序集 -- 警告
+    public ExtInt64 _extInt64;
 }

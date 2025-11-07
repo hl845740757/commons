@@ -18,7 +18,6 @@ package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
-import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -47,13 +46,13 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     // region 简单值
 
-    void writeInt(String name, int value, INumberStyle style);
+    void writeInt(String name, int value, NumberStyle style);
 
-    void writeLong(String name, long value, INumberStyle style);
+    void writeLong(String name, long value, NumberStyle style);
 
-    void writeFloat(String name, float value, INumberStyle style);
+    void writeFloat(String name, float value, NumberStyle style);
 
-    void writeDouble(String name, double value, INumberStyle style);
+    void writeDouble(String name, double value, NumberStyle style);
 
     void writeBoolean(String name, boolean value);
 
@@ -238,7 +237,7 @@ public interface DsonObjectWriter extends AutoCloseable {
     }
 
     default void writeString(String name, String value) {
-        writeString(name, value, StringStyle.AUTO);
+        writeString(name, value, StringStyle.AUTO_QUOTE);
     }
 
     // short等不再允许指定WireType
@@ -248,7 +247,7 @@ public interface DsonObjectWriter extends AutoCloseable {
         writeInt(name, value, NumberStyle.SIMPLE);
     }
 
-    default void writeShort(String name, short value, INumberStyle style) {
+    default void writeShort(String name, short value, NumberStyle style) {
         writeInt(name, value, style);
     }
 
@@ -256,7 +255,7 @@ public interface DsonObjectWriter extends AutoCloseable {
         writeInt(name, value, NumberStyle.SIMPLE); // java的byte是有符号数，容易负数
     }
 
-    default void writeByte(String name, byte value, INumberStyle style) {
+    default void writeByte(String name, byte value, NumberStyle style) {
         writeInt(name, value, style);
     }
 
@@ -264,7 +263,7 @@ public interface DsonObjectWriter extends AutoCloseable {
         writeInt(name, value, NumberStyle.SIMPLE);
     }
 
-    default void writeChar(String name, char value, INumberStyle style) {
+    default void writeChar(String name, char value, NumberStyle style) {
         writeInt(name, value, style);
     }
 

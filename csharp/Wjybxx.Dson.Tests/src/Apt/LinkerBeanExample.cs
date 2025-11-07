@@ -36,7 +36,7 @@ public class LinkerBeanExample
     /// <summary>
     /// 只匹配类型
     /// </summary>
-    [DsonProperty(StringStyle = StringStyle.Unquote)]
+    [DsonProperty(Features = SerializeFeatures.StringUnquote)]
     public string name;
 
     /// <summary>

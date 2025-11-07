@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -62,13 +61,13 @@ public interface DsonWriter extends AutoCloseable {
 
     // region 简单值
 
-    void writeInt32(String name, int value, INumberStyle style);
+    void writeInt32(String name, int value, NumberStyle style);
 
-    void writeInt64(String name, long value, INumberStyle style);
+    void writeInt64(String name, long value, NumberStyle style);
 
-    void writeFloat(String name, float value, INumberStyle style);
+    void writeFloat(String name, float value, NumberStyle style);
 
-    void writeDouble(String name, double value, INumberStyle style);
+    void writeDouble(String name, double value, NumberStyle style);
 
     void writeBool(String name, boolean value);
 
@@ -90,13 +89,13 @@ public interface DsonWriter extends AutoCloseable {
 
     // region 简单值(无name版)
 
-    void writeInt32(int value, INumberStyle style);
+    void writeInt32(int value, NumberStyle style);
 
-    void writeInt64(long value, INumberStyle style);
+    void writeInt64(long value, NumberStyle style);
 
-    void writeFloat(float value, INumberStyle style);
+    void writeFloat(float value, NumberStyle style);
 
-    void writeDouble(double value, INumberStyle style);
+    void writeDouble(double value, NumberStyle style);
 
     void writeBool(boolean value);
 
@@ -190,6 +189,7 @@ public interface DsonWriter extends AutoCloseable {
 
     // region 快捷方法
 
+    /** 注：默认为Typed模式，因为需要能够精确恢复。 */
     default void writeInt32(String name, int value) {
         writeInt32(name, value, NumberStyle.TYPED);
     }
@@ -207,7 +207,7 @@ public interface DsonWriter extends AutoCloseable {
     }
 
     default void writeString(String name, String value) {
-        writeString(name, value, StringStyle.AUTO);
+        writeString(name, value, StringStyle.AUTO_QUOTE);
     }
 
     default void writeBinary(String name, byte[] bytes) {
@@ -231,7 +231,7 @@ public interface DsonWriter extends AutoCloseable {
     }
 
     default void writeString(String value) {
-        writeString(value, StringStyle.AUTO);
+        writeString(value, StringStyle.AUTO_QUOTE);
     }
 
     default void writeBinary(byte[] bytes) {

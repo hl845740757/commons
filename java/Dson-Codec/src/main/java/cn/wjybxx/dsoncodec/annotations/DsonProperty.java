@@ -78,7 +78,7 @@ public @interface DsonProperty {
     NumberStyle numberStyle() default NumberStyle.SIMPLE;
 
     /** 字符串类型字段的文本格式 */
-    StringStyle stringStyle() default StringStyle.AUTO;
+    StringStyle stringStyle() default StringStyle.AUTO_QUOTE;
 
     /**
      * 对象类型字段的文本格式

@@ -102,28 +102,28 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
 
     #region 简单值
 
-    protected override void DoWriteInt32(int value, INumberStyle style) {
+    protected override void DoWriteInt32(int value, NumberStyle style) {
         WireType wireType = WireTypes.BestOfInt32(value);
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Int32, (int)wireType);
         wireType.WriteInt32(output, value);
     }
 
-    protected override void DoWriteInt64(long value, INumberStyle style) {
+    protected override void DoWriteInt64(long value, NumberStyle style) {
         WireType wireType = WireTypes.BestOfInt64(value);
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Int64, (int)wireType);
         wireType.WriteInt64(output, value);
     }
 
-    protected override void DoWriteFloat(float value, INumberStyle style) {
+    protected override void DoWriteFloat(float value, NumberStyle style) {
         WireType wireType = WireTypes.BestOfFloat(value);
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Float, (int)wireType);
         wireType.WriteFloat(output, value);
     }
 
-    protected override void DoWriteDouble(double value, INumberStyle style) {
+    protected override void DoWriteDouble(double value, NumberStyle style) {
         WireType wireType = WireTypes.BestOfDouble(value);
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Double, (int)wireType);

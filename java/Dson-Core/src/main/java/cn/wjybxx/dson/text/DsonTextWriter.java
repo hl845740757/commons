@@ -146,15 +146,6 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     private void printString(DsonPrinter printer, String value, StringStyle style) {
         final DsonTextWriterSettings settings = this.settings;
         switch (style) {
-            case AUTO -> {
-                if (canPrintAsUnquote(value, settings, false)) {
-                    printer.fastPrint(value);
-                } else if (canPrintAsText(value, settings)) {
-                    printText(value);
-                } else {
-                    printEscaped(value);
-                }
-            }
             case AUTO_QUOTE -> {
                 if (canPrintAsUnquote(value, settings, false)) {
                     printer.fastPrint(value);
@@ -168,7 +159,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             case UNQUOTE -> {
                 printer.fastPrint(value);
             }
-            case TEXT -> {
+            case DSON_TEXT -> {
                 if (settings.enableText) {
                     printText(value);
                 } else {
@@ -178,8 +169,8 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             case SIMPLE_TEXT -> {
                 printSimpleText(value);
             }
-            case STRING_LINE -> {
-                if (value.indexOf('\n') >= 0) {
+            case SINGLE_LINE -> {
+                if (value.lastIndexOf('\n') >= 0) {
                     printEscaped(value);
                 } else {
                     printStringLine(value);
@@ -342,7 +333,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
 
     // region 简单值
 
-    private void printInt32(DsonPrinter printer, int value, INumberStyle style) {
+    private void printInt32(DsonPrinter printer, int value, NumberStyle style) {
         StyleOut styleOut = this.styleOut;
         style.toString(value, styleOut.reset());
         if (styleOut.isTyped()) {
@@ -351,7 +342,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         printer.fastPrint(styleOut.getValue());
     }
 
-    private void printInt64(DsonPrinter printer, long value, INumberStyle style) {
+    private void printInt64(DsonPrinter printer, long value, NumberStyle style) {
         StyleOut styleOut = this.styleOut;
         style.toString(value, styleOut.reset());
         if (styleOut.isTyped()) {
@@ -360,7 +351,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         printer.fastPrint(styleOut.getValue());
     }
 
-    private void printFloat(DsonPrinter printer, float value, INumberStyle style) {
+    private void printFloat(DsonPrinter printer, float value, NumberStyle style) {
         StyleOut styleOut = this.styleOut;
         style.toString(value, styleOut.reset());
         if (styleOut.isTyped()) {
@@ -369,7 +360,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         printer.fastPrint(styleOut.getValue());
     }
 
-    private void printDouble(DsonPrinter printer, double value, INumberStyle style) {
+    private void printDouble(DsonPrinter printer, double value, NumberStyle style) {
         StyleOut styleOut = this.styleOut;
         style.toString(value, styleOut.reset());
         if (styleOut.isTyped()) {
@@ -379,28 +370,28 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteInt32(int value, INumberStyle style) {
+    protected void doWriteInt32(int value, NumberStyle style) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.INT32);
         printInt32(printer, value, style);
     }
 
     @Override
-    protected void doWriteInt64(long value, INumberStyle style) {
+    protected void doWriteInt64(long value, NumberStyle style) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.INT64);
         printInt64(printer, value, style);
     }
 
     @Override
-    protected void doWriteFloat(float value, INumberStyle style) {
+    protected void doWriteFloat(float value, NumberStyle style) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.FLOAT);
         printFloat(printer, value, style);
     }
 
     @Override
-    protected void doWriteDouble(double value, INumberStyle style) {
+    protected void doWriteDouble(double value, NumberStyle style) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.DOUBLE);
         printDouble(printer, value, style);

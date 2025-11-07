@@ -114,7 +114,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     public void ReadName(TName expected) {
         // 不直接使用方法返回值比较，避免装箱
         ReadName();
-        if (!expected.Equals(currentName)) {
+        if (!currentName.Equals(expected)) {
             throw DsonIOException.UnexpectedName(expected, currentName);
         }
     }

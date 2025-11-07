@@ -314,7 +314,7 @@ public final class Dsons {
             case FLOAT -> writer.writeFloat(dsonValue.asFloat(), writer.getSettings().numberStyle);
             case DOUBLE -> writer.writeDouble(dsonValue.asDouble(), NumberStyle.SIMPLE);
             case BOOL -> writer.writeBool(dsonValue.asBool());
-            case STRING -> writer.writeString(dsonValue.asString(), StringStyle.AUTO);
+            case STRING -> writer.writeString(dsonValue.asString(), StringStyle.AUTO_QUOTE);
             case NULL -> writer.writeNull();
             case BINARY -> writer.writeBinary(dsonValue.asBinary());
             case POINTER -> writer.writePtr(dsonValue.asPointer());

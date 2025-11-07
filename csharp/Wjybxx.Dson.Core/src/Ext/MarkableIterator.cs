@@ -67,7 +67,7 @@ public struct MarkableIterator<T> : ISequentialEnumerator<T>
     }
 
     public IEnumerator<T> GetBaseIterator() => _baseIterator;
-    
+
     public void SetBaseIterator(IEnumerator<T> baseIterator) {
         if (_baseIterator != null) {
             throw new InvalidOperationException("dispose must be called before reuse");

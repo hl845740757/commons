@@ -520,9 +520,6 @@ public final class DsonCodecConfig {
         config.addGenericCodec(TypeInfo.of(EnumMap.class, Enum.class, Object.class), MapCodec.class); // EnumSet需要动态构建
         config.addGenericCodec(TypeInfo.of(ConcurrentMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
         config.addGenericCodec(TypeInfo.of(ConcurrentHashMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
-
-        // 特殊组件
-        config.addGenericCodec(TypeInfo.of(MapEncodeProxy.class, Object.class), MapEncodeProxyCodec.class);
     }
 
     private static void initDefaultCodecs(DsonCodecConfig config) {
@@ -568,6 +565,7 @@ public final class DsonCodecConfig {
         config.addCodec(new DurationCodec());
 
         // TODO 特殊Codec绑定
+        config.addCodec(new ObjectCodec());
         config.addCodec(new ObjectPathCodec());
     }
     // endregion

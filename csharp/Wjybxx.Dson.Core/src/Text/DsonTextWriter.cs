@@ -127,16 +127,6 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
     private void PrintString(DsonPrinter printer, string value, StringStyle style) {
         DsonTextWriterSettings settings = this._settings;
         switch (style) {
-            case StringStyle.Auto: {
-                if (CanPrintAsUnquote(value, settings, false)) {
-                    printer.FastPrint(value);
-                } else if (CanPrintAsText(value, settings)) {
-                    PrintText(value);
-                } else {
-                    PrintEscaped(value);
-                }
-                break;
-            }
             case StringStyle.AutoQuote: {
                 if (CanPrintAsUnquote(value, settings, false)) {
                     printer.FastPrint(value);
@@ -153,7 +143,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
                 printer.FastPrint(value);
                 break;
             }
-            case StringStyle.Text: {
+            case StringStyle.DsonText: {
                 if (settings.enableText) {
                     PrintText(value);
                 } else {
@@ -165,8 +155,8 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
                 PrintSimpleText(value);
                 break;
             }
-            case StringStyle.StringLine: {
-                if (value.IndexOf('\n') >= 0) {
+            case StringStyle.SingleLine: {
+                if (value.LastIndexOf('\n') >= 0) {
                     PrintEscaped(value);
                 } else {
                     PrintStringLine(value);
@@ -333,7 +323,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
     #region 简单值
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PrintInt32(DsonPrinter printer, int value, INumberStyle style) {
+    private void PrintInt32(DsonPrinter printer, int value, NumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
             printer.FastPrint("@i ");
@@ -342,7 +332,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PrintInt64(DsonPrinter printer, long value, INumberStyle style) {
+    private void PrintInt64(DsonPrinter printer, long value, NumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
             printer.FastPrint("@L ");
@@ -351,7 +341,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PrintFloat(DsonPrinter printer, float value, INumberStyle style) {
+    private void PrintFloat(DsonPrinter printer, float value, NumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
             printer.FastPrint("@f ");
@@ -360,7 +350,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PrintDouble(DsonPrinter printer, double value, INumberStyle style) {
+    private void PrintDouble(DsonPrinter printer, double value, NumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
             printer.FastPrint("@d ");
@@ -368,25 +358,25 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.FastPrint(styleOut.Value);
     }
 
-    protected override void DoWriteInt32(int value, INumberStyle style) {
+    protected override void DoWriteInt32(int value, NumberStyle style) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Int32);
         PrintInt32(printer, value, style);
     }
 
-    protected override void DoWriteInt64(long value, INumberStyle style) {
+    protected override void DoWriteInt64(long value, NumberStyle style) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Int64);
         PrintInt64(printer, value, style);
     }
 
-    protected override void DoWriteFloat(float value, INumberStyle style) {
+    protected override void DoWriteFloat(float value, NumberStyle style) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Float);
         PrintFloat(printer, value, style);
     }
 
-    protected override void DoWriteDouble(double value, INumberStyle style) {
+    protected override void DoWriteDouble(double value, NumberStyle style) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Double);
         PrintDouble(printer, value, style);

@@ -1,6 +1,6 @@
 #region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,30 +16,21 @@
 
 #endregion
 
-using System.Collections.Generic;
+using System;
 
-namespace Wjybxx.Dson.Codec
+namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
-/// 字典编码代理
+/// 用于支持空对象
 /// </summary>
-public class DictionaryEncodeProxy<V>
+public class ObjectCodec : IDsonCodec<object>
 {
-    private MapEncodePolicy _policy;
-    private IEnumerable<KeyValuePair<string, V>>? _entries;
+    public void WriteObject(IDsonObjectWriter writer, object inst, Type declaredType, SerializeFeatures features) {
 
-    public DictionaryEncodeProxy(MapEncodePolicy policy = MapEncodePolicy.Document) {
-        this._policy = policy;
     }
 
-    public MapEncodePolicy Policy {
-        get => _policy;
-        set => _policy = value;
-    }
-
-    public IEnumerable<KeyValuePair<string, V>>? Entries {
-        get => _entries;
-        set => _entries = value;
+    public object ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+        return new object();
     }
 }
 }

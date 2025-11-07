@@ -20,7 +20,7 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonOutput;
-import cn.wjybxx.dson.text.INumberStyle;
+import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.Binary;
@@ -102,7 +102,7 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
     // region 简单值
 
     @Override
-    protected void doWriteInt32(int value, INumberStyle style) {
+    protected void doWriteInt32(int value, NumberStyle style) {
         WireType wireType = WireType.bestOfInt32(value);
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.INT32, wireType.getNumber());
@@ -110,7 +110,7 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteInt64(long value, INumberStyle style) {
+    protected void doWriteInt64(long value, NumberStyle style) {
         WireType wireType = WireType.bestOfInt64(value);
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.INT64, wireType.getNumber());
@@ -118,7 +118,7 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteFloat(float value, INumberStyle style) {
+    protected void doWriteFloat(float value, NumberStyle style) {
         WireType wireType = WireType.bestOfFloat(value);
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.FLOAT, wireType.getNumber());
@@ -126,7 +126,7 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteDouble(double value, INumberStyle style) {
+    protected void doWriteDouble(double value, NumberStyle style) {
         WireType wireType = WireType.bestOfDouble(value);
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.DOUBLE, wireType.getNumber());
