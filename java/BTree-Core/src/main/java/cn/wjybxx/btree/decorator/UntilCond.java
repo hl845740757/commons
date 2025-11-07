@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.btree.decorator;
 
+import cn.wjybxx.base.SerializeReference;
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlinable;
 import cn.wjybxx.btree.TaskStatus;
@@ -29,6 +30,7 @@ import cn.wjybxx.btree.TaskStatus;
 public class UntilCond<T> extends LoopDecorator<T> {
 
     /** 循环条件 -- 不能直接使用child的guard，意义不同 */
+    @SerializeReference
     private Task<T> cond;
 
     @Override

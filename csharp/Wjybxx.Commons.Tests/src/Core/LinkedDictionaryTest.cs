@@ -76,13 +76,6 @@ public class LinkedDictionaryTest
 
     private static LinkedDictionary<string, string> TestStringDic(int expectedCount) {
         LinkedDictionary<string, string> dictionary = new LinkedDictionary<string, string>(expectedCount / 3); // 顺便测试扩容
-        dictionary.DefaultValue = "wjybxx";
-        // 测试默认值
-        {
-            dictionary.TryGetValue("abc", out string value);
-            Assert.That(value, Is.EqualTo(dictionary.DefaultValue));
-        }
-
         byte[] buffer = new byte[12];
         List<string> keyList = new List<string>(expectedCount);
         while (dictionary.Count < expectedCount) {

@@ -46,9 +46,9 @@ public class BtreeCodecLinker
     public class FsmLinker
     {
         private ChangeStateTask<object> changeStateTask;
-        private StateMachineTask<object> stateMachineTask;
         private StackStateMachineTask<object> stackStateMachine;
-        private FsmStateCfg<object> fsmStateCfg;
+        private StateMachineTask<object> stateMachineTask;
+        private ChangeStateTask2<object> changeStateTask2;
 
         [DsonCodecLinker(Singleton = "Inst")]
         private DefaultStateMachineHandler<object> _defHandler;

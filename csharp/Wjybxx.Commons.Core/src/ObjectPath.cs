@@ -68,12 +68,22 @@ public struct ObjectPath : IEquatable<ObjectPath>
     }
 #nullable restore
 
+    /// <summary>
+    /// 注意：IsEmpty默认不测试Type。
+    /// </summary>
     public bool IsEmpty => localId == 0
                            && string.IsNullOrEmpty(localPath)
                            && string.IsNullOrEmpty(collection);
     public bool HasCollection => !string.IsNullOrEmpty(collection);
     public bool HashLocalPath => !string.IsNullOrEmpty(localPath);
     public bool HasLocalId => localId != 0;
+
+    public void Reset() {
+        collection = null;
+        localPath = null;
+        localId = 0;
+        type = 0;
+    }
 
     #region equals
 

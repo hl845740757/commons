@@ -16,6 +16,7 @@
 package cn.wjybxx.btree;
 
 import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.SerializeReference;
 import cn.wjybxx.base.annotation.VisibleForTesting;
 
 import javax.annotation.Nullable;
@@ -34,6 +35,7 @@ import java.util.Objects;
  */
 public abstract class BranchTask<T> extends Task<T> {
 
+    @SerializeReference
     protected List<Task<T>> children;
 
     public BranchTask() {

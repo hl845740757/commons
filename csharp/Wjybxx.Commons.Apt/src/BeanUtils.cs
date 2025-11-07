@@ -126,9 +126,8 @@ public static class BeanUtils
     }
 
     /// <summary>
-    /// 获取类的所有成员
+    /// 获取类的所有public和protected成员
     /// (查询的开销较大，用户应当缓存结果)
-    /// (未指定类型列表时，默认返回字段、方法、属性)
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
@@ -140,7 +139,7 @@ public static class BeanUtils
     }
 
     /// <summary>
-    /// 获取类的所有成员
+    /// 获取类的所有public和protected成员
     /// (查询的开销较大，用户应当缓存结果)
     /// </summary>
     /// <param name="type"></param>

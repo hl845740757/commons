@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.btree;
 
+import cn.wjybxx.base.SerializeReference;
 import cn.wjybxx.btree.fsm.StateMachineTask;
 
 import javax.annotation.Nonnull;
@@ -36,9 +37,8 @@ import java.util.Objects;
  */
 public class TaskEntry<T> extends Task<T> {
 
-    /** 行为树的名字 */
-    private String name;
     /** 行为树的根节点 */
+    @SerializeReference
     private Task<T> rootTask;
     /** 行为树的类型 -- 用于加载时筛选 */
     private byte type;
@@ -71,13 +71,6 @@ public class TaskEntry<T> extends Task<T> {
     }
 
     // getter/setter
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public Task<T> getRootTask() {
         return rootTask;

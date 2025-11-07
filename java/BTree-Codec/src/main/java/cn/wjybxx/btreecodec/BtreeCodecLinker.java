@@ -20,7 +20,7 @@ import cn.wjybxx.btree.branch.*;
 import cn.wjybxx.btree.branch.join.*;
 import cn.wjybxx.btree.decorator.*;
 import cn.wjybxx.btree.fsm.ChangeStateTask;
-import cn.wjybxx.btree.fsm.FsmStateCfg;
+import cn.wjybxx.btree.fsm.ChangeStateTask2;
 import cn.wjybxx.btree.fsm.StackStateMachineTask;
 import cn.wjybxx.btree.fsm.StateMachineTask;
 import cn.wjybxx.btree.fsm.handler.DefaultStateMachineHandler;
@@ -44,10 +44,10 @@ public class BtreeCodecLinker {
 
     @DsonCodecLinkerGroup(outputPackage = "cn.wjybxx.btreecodec.fsm")
     private static class FsmLinker {
-        private ChangeStateTask<?> changeStateTask;
         private StateMachineTask<?> stateMachineTask;
         private StackStateMachineTask<?> stackStateMachineTask;
-        private FsmStateCfg<?> fsmStateCfg;
+        private ChangeStateTask<?> changeStateTask;
+        private ChangeStateTask2<?> changeStateTask2;
 
         @DsonCodecLinker(props = @DsonSerializable(singleton = "getInstance"))
         private DefaultStateMachineHandler<?> defaultStateMachineHandler;

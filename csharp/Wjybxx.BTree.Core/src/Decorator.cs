@@ -28,6 +28,7 @@ namespace Wjybxx.BTree
 public abstract class Decorator<T> : Task<T> where T : class
 {
 #nullable disable
+    [SerializeReference]
     protected Task<T> child;
 
     /// <summary>

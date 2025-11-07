@@ -16,6 +16,8 @@
 
 #endregion
 
+using Wjybxx.Commons;
+
 namespace Wjybxx.BTree.Branch
 {
 /// <summary>
@@ -27,11 +29,11 @@ namespace Wjybxx.BTree.Branch
 [TaskInlinable]
 public class FixedSwitch<T> : Switch<T> where T : class
 {
-    private Task<T>? branch1;
-    private Task<T>? branch2;
-    private Task<T>? branch3;
-    private Task<T>? branch4;
-    private Task<T>? branch5;
+    [SerializeReference] private Task<T>? branch1;
+    [SerializeReference] private Task<T>? branch2;
+    [SerializeReference] private Task<T>? branch3;
+    [SerializeReference] private Task<T>? branch4;
+    [SerializeReference] private Task<T>? branch5;
 
     public FixedSwitch() {
     }

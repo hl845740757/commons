@@ -15,6 +15,8 @@
  */
 package cn.wjybxx.btree;
 
+import cn.wjybxx.base.SerializeReference;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -25,6 +27,7 @@ import javax.annotation.Nonnull;
  */
 public abstract class Decorator<T> extends Task<T> {
 
+    @SerializeReference
     protected Task<T> child;
 
     /**

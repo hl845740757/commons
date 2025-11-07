@@ -15,7 +15,7 @@
  */
 package cn.wjybxx.btree.fsm;
 
-import cn.wjybxx.base.ObjectPath;
+import cn.wjybxx.base.SerializeReference;
 import cn.wjybxx.btree.LeafTask;
 import cn.wjybxx.btree.Task;
 
@@ -29,12 +29,11 @@ import javax.annotation.Nonnull;
  */
 public class ChangeStateTask<T> extends LeafTask<T> {
 
-    /** 下一个状态的guid或name -- 延迟加载 */
-    private ObjectPath statePath;
+    /** 下一个状态 -- 序列化需要支持对象图 */
+    @SerializeReference
+    private Task<T> nextState;
     /** 目标状态的属性 */
     private Object stateProps;
-    /** 下一个状态的对象缓存，通常延迟加载以避免循环引用 */
-    private transient Task<T> nextState;
 
     /** 目标状态机的名字，以允许切换更顶层的状态机 */
     private String machineName;
@@ -60,14 +59,8 @@ public class ChangeStateTask<T> extends LeafTask<T> {
 
     @Override
     protected void execute() {
-        if (nextState == null) {
-            if (statePath == null || statePath.isEmpty()) {
-                throw new IllegalStateException("path is empty");
-            }
-            nextState = getTaskEntry().getTreeLoader().loadRootTask(statePath);
-        }
         nextState.setSharedProps(stateProps);
-
+        //
         final int reentryId = getReentryId();
         final StateMachineTask<T> stateMachine = StateMachineTask.findStateMachine(this, machineName);
         if (delayMode == 0) {
@@ -86,14 +79,6 @@ public class ChangeStateTask<T> extends LeafTask<T> {
     }
 
     // region
-
-    public ObjectPath getStatePath() {
-        return statePath;
-    }
-
-    public void setStatePath(ObjectPath statePath) {
-        this.statePath = statePath;
-    }
 
     public Task<T> getNextState() {
         return nextState;

@@ -21,6 +21,8 @@ Unity2021尚不支持的特性:
 2. override时不能修改方法的返回值类型，因此对于简单的类型转换的情况，使用new代替override实现。
 3. 不能使用新的Immutable集合库 -- 我实现了自己的Immutable集合。
 
+在unity中使用该项目的代码时，请使用包管理器下载源码，见仓库主页`mainfest.json`添加内容。
+
 ## C#模块说明
 
 ### Commons.Core

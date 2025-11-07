@@ -16,6 +16,7 @@
 package cn.wjybxx.btree;
 
 import cn.wjybxx.base.MathCommon;
+import cn.wjybxx.base.SerializeReference;
 import cn.wjybxx.concurrent.ICancelToken;
 import cn.wjybxx.concurrent.ICancelTokenListener;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ import java.util.Objects;
  * @author wjybxx
  * date - 2023/11/25
  */
+@SerializeReference
 public abstract class Task<T> implements ICancelTokenListener {
 
     public static final Logger logger = LoggerFactory.getLogger(Task.class);
@@ -127,6 +129,8 @@ public abstract class Task<T> implements ICancelTokenListener {
     /** 重入Id，只增不减 -- 用于事件驱动下检测冲突（递归）；reset时不重置，甚至也增加 */
     private transient short reentryId;
 
+    /** 节点的名字 */
+    protected String name;
     /**
      * 任务绑定的前置条件(precondition太长...)
      * 编程经验告诉我们：前置条件和行为是由控制节点组合的，而不是行为的属性。
@@ -1250,23 +1254,30 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     // region 序列化
 
-    public final Task<T> getGuard() {
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Task<T> getGuard() {
         return guard;
     }
 
-    public final Task<T> setGuard(Task<T> guard) {
+    public Task<T> setGuard(Task<T> guard) {
         this.guard = guard;
         return this;
     }
 
-    public final int getFlags() {
+    public int getFlags() {
         return flags;
     }
 
-    public final Task<T> setFlags(int flags) {
+    public void setFlags(int flags) {
         this.flags = flags;
-        return this;
     }
 
-    // endregion
+// endregion
 }

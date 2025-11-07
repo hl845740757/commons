@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.btree.branch;
 
+import cn.wjybxx.base.SerializeReference;
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlinable;
 
@@ -29,10 +30,15 @@ import cn.wjybxx.btree.TaskInlinable;
 @TaskInlinable
 public class FixedSwitch<T> extends Switch<T> {
 
+    @SerializeReference
     private Task<T> branch1;
+    @SerializeReference
     private Task<T> branch2;
+    @SerializeReference
     private Task<T> branch3;
+    @SerializeReference
     private Task<T> branch4;
+    @SerializeReference
     private Task<T> branch5;
 
     public FixedSwitch() {

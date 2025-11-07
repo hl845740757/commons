@@ -16,6 +16,8 @@
 
 #endregion
 
+using Wjybxx.Commons;
+
 namespace Wjybxx.BTree.Decorator
 {
 /// <summary>
@@ -26,6 +28,7 @@ namespace Wjybxx.BTree.Decorator
 public class UntilCond<T> : LoopDecorator<T> where T : class
 {
     /** 循环条件 -- 不能直接使用child的guard，意义不同 */
+    [SerializeReference]
     private Task<T>? cond;
 
     public override void ResetForRestart() {

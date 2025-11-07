@@ -45,6 +45,7 @@ namespace Wjybxx.BTree
 ///
 /// <typeparam name="T">黑板的类型</typeparam>
 /// </summary>
+[SerializeReference]
 public abstract class Task<T> : ICancelTokenListener where T : class
 {
     /** 低5位记录Task重写了哪些方法 */
@@ -122,12 +123,16 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     [NonSerialized] private short reentryId;
 
     /// <summary>
+    /// 节点的名字
+    /// </summary>
+    protected string name;
+    /// <summary>
     /// 任务绑定的前置条件(precondition太长...)
     /// 编程经验告诉我们：前置条件和行为是由控制节点组合的，而不是行为的属性。
     /// 但由于Task只能有一个Control，因此将前置条件存储在Task可避免额外的映射，从而可提高查询性能和易用性；
     /// 另外，将前置条件存储在Task上，可以让行为树的结构更加清晰。
     /// </summary>
-    private Task<T> guard;
+    [SerializeReference] private Task<T> guard;
     /// <summary>
     /// 任务的自定义标识
     /// 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
@@ -1259,6 +1264,11 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 #nullable disable
 
     #region 序列化
+
+    public string Name {
+        get => name;
+        set => name = value;
+    }
 
     public Task<T> Guard {
         get => guard;

@@ -37,10 +37,8 @@ namespace Wjybxx.BTree
 /// </summary>
 public class TaskEntry<T> : Task<T> where T : class
 {
-    /** 行为树的名字 */
-    private string? name;
     /** 行为树的根节点 */
-    private Task<T>? rootTask;
+    [SerializeReference] private Task<T>? rootTask;
     /** 行为树的类型 -- 用于加载时筛选 */
     private byte type;
 
@@ -72,11 +70,6 @@ public class TaskEntry<T> : Task<T> where T : class
     }
 
     #region getter/setter
-
-    public string? Name {
-        get => name;
-        set => name = value;
-    }
 
     public Task<T>? RootTask {
         get => rootTask;

@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.BTree
@@ -32,6 +33,7 @@ namespace Wjybxx.BTree
 public abstract class BranchTask<T> : Task<T> where T : class
 {
 #nullable disable
+    [SerializeReference]
     protected List<Task<T>> children;
 #nullable restore
 

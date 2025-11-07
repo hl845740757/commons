@@ -27,13 +27,13 @@ namespace Wjybxx.BTree.FSM
 /// <typeparam name="T"></typeparam>
 public class ChangeStateTask<T> : LeafTask<T> where T : class
 {
-    /** 下一个状态的guid或name -- 延迟加载 */
-    private ObjectPath statePath;
-    /** 目标状态的属性 */
-    private object? stateProps;
-    /** 下一个状态的对象缓存，通常延迟加载以避免循环引用 */
-    [NonSerialized] private Task<T>? nextState;
-
+#nullable disable
+    /** 下一个状态 -- 序列化库需要支持对象图 */
+    [SerializeReference]
+    private Task<T> nextState;
+    /** 下一个状态的属性 */
+    private object stateProps;
+#nullable restore
     /** 目标状态机的名字，以允许切换更顶层的状态机 */
     private string? machineName;
     /** 延迟模式 */
@@ -56,14 +56,8 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     }
 
     protected override void Execute() {
-        if (nextState == null) {
-            if (statePath.IsEmpty) {
-                throw new IllegalStateException("path is empty");
-            }
-            nextState = TaskEntry.TreeLoader.LoadRootTask<T>(statePath);
-        }
         nextState.SharedProps = stateProps;
-
+        //
         int reentryId = ReentryId;
         StateMachineTask<T> stateMachine = StateMachineTask<T>.FindStateMachine(this, machineName);
         if (delayMode == 0) {
@@ -79,12 +73,8 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     protected override void OnEventImpl(object eventObj) {
     }
 
-    public ObjectPath StatePath {
-        get => statePath;
-        set => statePath = value;
-    }
 
-    public Task<T>? NextState {
+    public Task<T> NextState {
         get => nextState;
         set => nextState = value;
     }

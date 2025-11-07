@@ -36,7 +36,8 @@ namespace Wjybxx.Commons.Collections
 /// 吐槽：
 /// 1.C#的基础库里居然没有保持插入序的高性能字典，这对于编写底层工具的开发者来说太不方便了。
 /// 2.C#的集合和字典库接口太差了，泛型集合与非泛型集合兼容性也不够。
-/// 
+///
+/// 注：新版本删除了defaultValue，因为不符合C#风格，C#的this[index]默认需要抛出异常。此外，容易和TryGetValue造成混淆。
 /// </summary>
 /// <typeparam name="TKey">键的类型，允许为null</typeparam>
 /// <typeparam name="TValue">值的类型，允许为null</typeparam>
@@ -61,8 +62,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     private float _loadFactor;
     /** 用于代替key自身的equals和hashcode计算；这一点C#的设计做的要好些 */
     private IEqualityComparer<TKey> _keyComparer;
-    /** key不存在时的默认值  */
-    private TValue? _defValue;
 
     private KeyCollection? _keys;
     private ValueCollection? _values;
@@ -105,14 +104,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public bool IsReadOnly => false;
     public int Count => _count;
     public bool IsEmpty => _count == 0;
-
-    /// <summary>
-    /// key不存在时的默认值，序列化由外部实现
-    /// </summary>
-    public TValue? DefaultValue {
-        get => _defValue;
-        set => _defValue = value;
-    }
 
     /** 用于子类感知数组大小 */
     internal int Capacity => _mask + 1;
@@ -333,7 +324,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public bool TryGetValue(TKey key, out TValue value) {
         int index = Find(key, KeyHash(key, _keyComparer));
         if (index < 0) {
-            value = _defValue;
+            value = default;
             return false;
         }
         ref Node node = ref _table[index];
@@ -1060,7 +1051,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
                 Insert(pos, hash, key, value, InsertionOrder.Default);
                 break;
         }
-        return new PutResult<TValue>(true, _defValue);
+        return new PutResult<TValue>(true, default);
     }
 
     private void Insert(int pos, int hash, TKey key, TValue value, InsertionOrder order) {
