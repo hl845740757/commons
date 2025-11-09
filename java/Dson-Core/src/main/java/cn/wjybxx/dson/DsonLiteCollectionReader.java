@@ -35,36 +35,52 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
 
     private int nextName = 0; // 0是无效值
     private DsonValue nextValue;
-    private final boolean unsafeTop;
+    private boolean singleValue;
 
     public DsonLiteCollectionReader(DsonReaderSettings settings, DsonArray<Integer> dsonArray) {
         super(settings);
 
         Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
-        context.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
+        context.header = dsonArray.getHeader().size() > 0 ? dsonArray.getHeader() : null;
         context.container = dsonArray;
         context.arrayIterator.setBaseIterator(dsonArray.iterator());
-        unsafeTop = false;
         setContext(context);
     }
 
-    private DsonLiteCollectionReader(DsonReaderSettings settings, DsonValue dsonValue, boolean ignore) {
-        super(settings);
+    private DsonLiteCollectionReader() {
+        super(null);
+    }
+
+    public void unsafeInit(DsonReaderSettings settings, DsonValue dsonValue, boolean singleValue) {
+        this.settings = Objects.requireNonNull(settings);
+        this.singleValue = singleValue;
         Objects.requireNonNull(dsonValue);
 
         // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
         Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
-        context.header = null;
-        context.container = dsonValue;
-        context.arrayIterator.setBaseIterator(new SingleValueIterator<>(dsonValue));
-        unsafeTop = true;
+        if (singleValue) {
+            context.header = null;
+            context.container = dsonValue;
+            context.arrayIterator.setBaseIterator(new SingleValueIterator<>(dsonValue));
+        } else {
+            DsonArray<Integer> dsonArray = dsonValue.asArrayLite();
+            context.header = dsonArray.getHeader().size() > 0 ? dsonArray.getHeader() : null;
+            context.container = dsonArray;
+            context.arrayIterator.setBaseIterator(dsonArray.iterator());
+        }
         setContext(context);
     }
 
-    /** 适用读取顶层集合的单个值的情况 */
-    public static DsonLiteCollectionReader unsafeCreate(DsonReaderSettings settings, DsonValue dsonValue) {
-        return new DsonLiteCollectionReader(settings, dsonValue, true);
+    /** 用于支持池化 */
+    public static DsonLiteCollectionReader unsafeCreate() {
+        return new DsonLiteCollectionReader();
+    }
 
+    /** 适用读取顶层集合的单个值的情况 */
+    public static DsonLiteCollectionReader unsafeCreate(DsonReaderSettings settings, DsonValue dsonValue, boolean singleValue) {
+        DsonLiteCollectionReader reader = new DsonLiteCollectionReader();
+        reader.unsafeInit(settings, dsonValue, singleValue);
+        return reader;
     }
 
     /**
@@ -88,16 +104,15 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         };
     }
 
-    /** 获取当前容器的大小 */
-    public int count() {
+    /** 获取当前容器 */
+    public DsonValue getContainer() {
         Context context = getContext();
-        return switch (context.contextType) {
-            case HEADER -> context.container.asHeaderLite().size();
-            case OBJECT -> context.container.asObjectLite().size();
-            case ARRAY -> context.container.asArrayLite().size();
-            case TOP_LEVEL -> unsafeTop ? 1 : context.container.asArrayLite().size();
-            default -> throw new AssertionError();
-        };
+        return context.container;
+    }
+
+    /** 是否是单值集合（顶层上下文） */
+    public boolean isSingleValueCollection() {
+        return singleValue;
     }
 
     @Override
@@ -279,12 +294,12 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         DsonValue dsonValue = popNextValue();
         if (dsonValue.getDsonType() == DsonType.OBJECT) {
             DsonObject<Integer> dsonObject = dsonValue.asObjectLite();
-            newContext.header = !dsonObject.getHeader().isEmpty() ? dsonObject.getHeader() : null;
+            newContext.header = dsonObject.getHeader().size() > 0 ? dsonObject.getHeader() : null;
             newContext.container = dsonObject;
             newContext.objectIterator.setBaseIterator(dsonObject.entrySet().iterator());
         } else if (dsonValue.getDsonType() == DsonType.ARRAY) {
             DsonArray<Integer> dsonArray = dsonValue.asArrayLite();
-            newContext.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
+            newContext.header = dsonArray.getHeader().size() > 0 ? dsonArray.getHeader() : null;
             newContext.container = dsonArray;
             newContext.arrayIterator.setBaseIterator(dsonArray.iterator());
         } else {

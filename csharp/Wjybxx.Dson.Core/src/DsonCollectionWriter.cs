@@ -32,7 +32,7 @@ namespace Wjybxx.Dson
 public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> where TName : IEquatable<TName>
 {
 #nullable disable
-    private readonly DsonArray<TName> outList;
+    private DsonArray<TName> _outList;
 
     /// <summary>
     /// 
@@ -41,7 +41,7 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
     /// <param name="outList">接收编码结果</param>
     public DsonCollectionWriter(DsonWriterSettings settings, DsonArray<TName> outList)
         : base(settings) {
-        this.outList = outList ?? throw new ArgumentNullException(nameof(outList));
+        this._outList = outList ?? throw new ArgumentNullException(nameof(outList));
 
         Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
         context.container = outList;
@@ -51,8 +51,13 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
 
     /// <summary>
     /// 获取传入的OutList
+    ///
+    /// 注：set方法仅限于回收对象之前清理引用避免内存泄漏，outList并不适合在Close的时候清理
     /// </summary>
-    public DsonArray<TName> OutList => outList; // 不能通过Context查询，close后context会被清理
+    public DsonArray<TName> OutList {
+        get => _outList; // 不能通过Context查询，close后context会被清理
+        set => _outList = value;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {

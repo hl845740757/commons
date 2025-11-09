@@ -440,7 +440,7 @@ public static class Dsons
                 writer.WriteFloat(dsonValue.AsFloat(), writer.Settings.numberStyle);
                 break;
             case DsonType.Double:
-                writer.WriteDouble(dsonValue.AsDouble(), NumberStyles.Simple);
+                writer.WriteDouble(dsonValue.AsDouble(), NumberStyle.Simple);
                 break;
             case DsonType.Bool:
                 writer.WriteBool(dsonValue.AsBool());

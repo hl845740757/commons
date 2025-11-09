@@ -18,7 +18,7 @@ import java.util.Objects;
  */
 public class DsonCollectionWriter extends AbstractDsonWriter {
 
-    private final DsonArray<String> outList;
+    private DsonArray<String> outList;
 
     public DsonCollectionWriter(DsonWriterSettings settings, DsonArray<String> outList) {
         super(settings);
@@ -32,6 +32,11 @@ public class DsonCollectionWriter extends AbstractDsonWriter {
     /** 获取传入的OutList */
     public DsonArray<String> getOutList() {
         return outList; // 不能通过Context查询，close后context会被清理
+    }
+
+    /** set方法仅限于回收对象之前清理引用避免内存泄漏，outList并不适合在Close的时候清理 */
+    public void setOutList(DsonArray<String> outList) {
+        this.outList = outList;
     }
 
     @Override

@@ -35,12 +35,12 @@ import java.util.Objects;
  */
 public abstract class AbstractDsonWriter implements DsonWriter {
 
-    protected final DsonWriterSettings settings;
+    protected DsonWriterSettings settings;
     protected Context context;
     protected int recursionDepth;
 
     protected AbstractDsonWriter(DsonWriterSettings settings) {
-        this.settings = Objects.requireNonNull(settings, "settings");
+        this.settings = settings; // 允许传入null以支持池化
     }
 
     @Override
@@ -59,6 +59,7 @@ public abstract class AbstractDsonWriter implements DsonWriter {
 
     @Override
     public void close() {
+        settings = null;
         context = null;
         recursionDepth = 0;
     }

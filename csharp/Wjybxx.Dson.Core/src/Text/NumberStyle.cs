@@ -41,7 +41,7 @@ public enum NumberStyle : byte
 
     /** 2进制，打印正负号 -- 不支持浮点数 */
     SignedBinary = 6,
-    /** 无符号2进制，按位打印 -- 不支持浮点数 */
+    /** 无符号2进制 -- 不支持浮点数 */
     UnsignedBinary = 7,
 
     /** 固定位数2进制，按位打印 -- 不支持浮点数 */

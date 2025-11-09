@@ -43,7 +43,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     private final char[] cBuffer = new char[16];
     private final StyleOut styleOut = new StyleOut();
 
-    private final DsonTextWriterSettings settings;
+    private DsonTextWriterSettings settings;
     private DsonPrinter printer;
 
     public DsonTextWriter(DsonTextWriterSettings settings, Writer writer) {
@@ -93,6 +93,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer = null;
         }
         styleOut.reset();
+        settings = null;
         super.close();
     }
 

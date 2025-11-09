@@ -32,7 +32,7 @@ namespace Wjybxx.Dson.Text
 public sealed class DsonTextWriter : AbstractDsonWriter<string>
 {
 #nullable disable
-    private readonly DsonTextWriterSettings _settings;
+    private DsonTextWriterSettings _settings;
     private DsonPrinter _printer;
 
     public DsonTextWriter(DsonTextWriterSettings settings, TextWriter writer, bool? autoClose = null)
@@ -73,6 +73,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             _printer?.Dispose();
             _printer = null!;
         }
+        _settings = null;
         base.Dispose();
     }
 

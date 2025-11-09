@@ -69,4 +69,5 @@ public class DsonHeader<K> extends AbstractDsonObject<K> {
     public static final String NAMES_LOCAL_PATH = "localPath";
     public static final String NAMES_LOCAL_ID = "localId";
     public static final String NAMES_COUNT = "count";
+    public static final String NAMES_VERSION = "version";
 }

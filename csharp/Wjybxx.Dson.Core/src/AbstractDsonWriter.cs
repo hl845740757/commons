@@ -31,7 +31,7 @@ namespace Wjybxx.Dson
 public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName : IEquatable<TName>
 {
 #nullable disable
-    protected readonly DsonWriterSettings settings;
+    protected DsonWriterSettings settings;
     protected internal Context context;
     protected int recursionDepth; // 当前递归深度
 
@@ -40,7 +40,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     /// <param name="settings">设置</param>
     /// <exception cref="ArgumentNullException"></exception>
     protected AbstractDsonWriter(DsonWriterSettings settings) {
-        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this.settings = settings; // 允许传入null以支持池化
     }
 
     public DsonWriterSettings Settings => settings;
@@ -58,6 +58,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     public abstract void Flush();
 
     public virtual void Dispose() {
+        settings = null;
         context = null;
         recursionDepth = 0;
     }

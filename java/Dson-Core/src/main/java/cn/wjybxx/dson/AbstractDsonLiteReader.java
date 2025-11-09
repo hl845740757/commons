@@ -38,7 +38,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
 
     protected static final int INVALID_NAME = -1;
 
-    protected final DsonReaderSettings settings;
+    protected DsonReaderSettings settings;
     protected Context context;
     // 这些值放外面，不需要上下文隔离，但需要能恢复
     protected int recursionDepth;
@@ -49,7 +49,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     protected Context waitStartContext; // 暂时只支持单次回滚，在ReadStart或SkipValue时都应该清理
 
     protected AbstractDsonLiteReader(DsonReaderSettings settings) {
-        this.settings = Objects.requireNonNull(settings, "settings");
+        this.settings = settings; // 允许传入null以支持池化
     }
 
     protected Context getContext() {
@@ -62,6 +62,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
 
     @Override
     public void close() {
+        settings = null;
         context = null;
         recursionDepth = 0;
         currentDsonType = null;

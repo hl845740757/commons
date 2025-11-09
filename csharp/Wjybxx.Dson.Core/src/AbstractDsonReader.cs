@@ -29,7 +29,7 @@ namespace Wjybxx.Dson
 public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName : IEquatable<TName>
 {
 #nullable disable
-    protected readonly DsonReaderSettings settings;
+    protected DsonReaderSettings settings;
     protected Context context;
     protected int recursionDepth; // 这些值放外面，不需要上下文隔离，但需要能恢复
     protected DsonType currentDsonType = DsonTypes.INVALID;
@@ -39,7 +39,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected Context waitStartContext; // 暂时只支持单次回滚，在ReadStart或SkipValue时都应该清理
 
     protected AbstractDsonReader(DsonReaderSettings settings) {
-        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this.settings = settings; // 允许传入null以支持池化
     }
 
     public DsonReaderSettings Settings => settings;
@@ -55,6 +55,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     }
 
     public virtual void Dispose() {
+        settings = null;
         context = null;
         recursionDepth = 0;
         currentDsonType = DsonTypes.INVALID;

@@ -57,5 +57,6 @@ public static class DsonHeader
     public const string Names_LocalPath = "localPath";
     public const string Names_LocalId = "localId";
     public const string Names_Count = "count";
+    public const string Names_Version = "version";
 }
 }

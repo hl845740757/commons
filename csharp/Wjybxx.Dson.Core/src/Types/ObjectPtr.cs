@@ -71,12 +71,12 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
         this.localId = localId;
         this.type = type;
     }
-#nullable restore
 
     public string Collection => collection;
     public string LocalPath => localPath;
     public long LocalId => localId;
     public int Type => type;
+#nullable restore
 
     /// <summary>
     /// 注意：IsEmpty默认不测试Type。

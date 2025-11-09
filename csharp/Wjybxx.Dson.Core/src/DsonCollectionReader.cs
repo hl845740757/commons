@@ -38,7 +38,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 #nullable disable
     private TName _nextName;
     private DsonValue _nextValue;
-    private readonly bool _unsafeTop;
+    private bool _singleValue;
 
     /// <summary>
     /// 
@@ -56,26 +56,43 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         SetContext(context);
     }
 
-    private DsonCollectionReader(DsonReaderSettings settings, DsonValue dsonValue, bool ignore)
-        : base(settings) {
+    private DsonCollectionReader() : base(null) {
+    }
+
+    public void UnsafeInit(DsonReaderSettings settings, DsonValue dsonValue, bool singleValue) {
+        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this._singleValue = singleValue;
         if (dsonValue == null) throw new ArgumentNullException(nameof(dsonValue));
         // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
         Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
-        context.header = null;
-        context.container = dsonValue;
-        context.arrayIterator.SetBaseIterator(new SingleValueEnumerator<DsonValue>(dsonValue));
-        _unsafeTop = true;
+        if (singleValue) {
+            context.header = null;
+            context.container = dsonValue;
+            context.arrayIterator.SetBaseIterator(new SingleValueEnumerator<DsonValue>(dsonValue));
+        } else {
+            DsonArray<TName> dsonArray = (DsonArray<TName>)dsonValue;
+            context.header = dsonArray.Header.Count > 0 ? dsonArray.Header : null;
+            context.container = dsonArray;
+            context.arrayIterator.SetBaseIterator(dsonArray.GetEnumerator());
+        }
         SetContext(context);
+    }
+
+    /// <summary>
+    /// 用于支持池化
+    /// </summary>
+    /// <returns></returns>
+    public static DsonCollectionReader<TName> UnsafeCreate() {
+        return new DsonCollectionReader<TName>();
     }
 
     /// <summary>
     /// 适用读取顶层集合的单个值的情况
     /// </summary>
-    /// <param name="settings"></param>
-    /// <param name="dsonValue"></param>
-    /// <returns></returns>
-    public static DsonCollectionReader<TName> UnsafeCreate(DsonReaderSettings settings, DsonValue dsonValue) {
-        return new DsonCollectionReader<TName>(settings, dsonValue, true);
+    public static DsonCollectionReader<TName> UnsafeCreate(DsonReaderSettings settings, DsonValue dsonValue, bool singleValue) {
+        DsonCollectionReader<TName> reader = new DsonCollectionReader<TName>();
+        reader.UnsafeInit(settings, dsonValue, singleValue);
+        return reader;
     }
 
     /// <summary>
@@ -109,21 +126,22 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     }
 
     /// <summary>
-    /// 获取当前容器的大小
+    /// 获取当前容器
     /// </summary>
-    public int Count {
-        get {
-            Context context = GetContext();
-            return context.contextType switch
-            {
-                DsonContextType.Header => context.container.AsHeader<TName>().Count,
-                DsonContextType.Object => context.container.AsObject<TName>().Count,
-                DsonContextType.Array => context.container.AsArray<TName>().Count,
-                DsonContextType.TopLevel => _unsafeTop ? 1 : context.container.AsArray<TName>().Count,
-                _ => throw new AssertionError()
-            };
-        }
+    /// <returns></returns>
+    public DsonValue GetContainer() {
+        return GetContext().container;
     }
+
+    /// <summary>
+    /// 获取当前要读取的值
+    /// </summary>
+    /// <returns></returns>
+    public DsonValue CurrentValue => _nextValue;
+    /// <summary>
+    /// 是否是单值集合（顶层上下文）
+    /// </summary>
+    public bool IsSingleValueCollection => _singleValue;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {
