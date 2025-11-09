@@ -25,6 +25,8 @@ namespace Wjybxx.Dson
 /// <summary>
 /// 1. Object/Header先读name再读value，数组直接读value。
 /// 2. 已读取name的情况下，使用包含name的方法，name将被忽略。
+///
+/// TODO Mark/Reset
 /// </summary>
 /// <typeparam name="TName">name的类型，string或<see cref="int"/></typeparam>
 public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName>
@@ -178,22 +180,6 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     void ReadStartHeader();
 
     void ReadEndHeader();
-
-    /// <summary>
-    /// 回退到等待开始状态，可再次调用<see cref="ReadStartObject()"/>和<see cref="ReadStartArray()"/>方法。
-    /// 1.该方法只回退上下文(状态)，不回退输入
-    /// 2.只有在等待读取下一个值的类型时才可以执行，即等待<see cref="ReadDsonType"/>时才可以执行
-    /// 3.通常用于在读取header之后回退，然后让业务对象的codec去解码
-    /// </summary>
-    void BackToWaitStart();
-
-    /// <summary>
-    /// 是否处于等待Start状态
-    ///
-    /// 仅在调用<see cref="BackToWaitStart"/>后为true.
-    /// </summary>
-    /// <returns></returns>
-    bool IsWaitingStart();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ReadStartArray(TName name) {

@@ -46,7 +46,6 @@ public abstract class AbstractDsonReader implements DsonReader {
     protected WireType currentWireType;
     protected int currentWireTypeBits;
     protected String currentName = INVALID_NAME;
-    protected Context waitStartContext; // 暂时只支持单次回滚，在ReadStart或SkipValue时都应该清理
 
     protected AbstractDsonReader(DsonReaderSettings settings) {
         this.settings = settings; // 允许传入null以支持池化
@@ -74,7 +73,6 @@ public abstract class AbstractDsonReader implements DsonReader {
         currentWireType = null;
         currentWireTypeBits = 0;
         currentName = null;
-        waitStartContext = null;
     }
 
     // region state
@@ -459,42 +457,7 @@ public abstract class AbstractDsonReader implements DsonReader {
         readEndContainer(DsonContextType.HEADER);
     }
 
-    @Override
-    public boolean isWaitingStart() {
-        return waitStartContext != null;
-    }
-
-    @Override
-    public void backToWaitStart() {
-        Context context = this.context;
-        if (context.contextType == DsonContextType.TOP_LEVEL) {
-            throw DsonIOException.contextErrorTopLevel();
-        }
-        if (context.state != DsonReaderState.TYPE) {
-            throw invalidState(List.of(DsonReaderState.TYPE));
-        }
-        waitStartContext = context;
-        // 模拟ReadEnd
-        recoverDsonType(this.context);
-        recursionDepth--;
-        setContext(context.parent);
-        context.parent.setState(DsonReaderState.VALUE); // 设置读Value状态
-    }
-
     private void readStartContainer(DsonContextType contextType, DsonType dsonType) {
-        Context waitStartContext = this.waitStartContext;
-        if (waitStartContext != null) {
-            if (waitStartContext.contextType != contextType) {
-                throw DsonIOException.contextError(waitStartContext.contextType, contextType);
-            }
-            this.waitStartContext = null;
-            // 模拟ReadStart
-            recursionDepth++;
-            setContext(waitStartContext);
-            setNextState(); // 设置新上下文状态
-            return;
-        }
-
         if (recursionDepth >= settings.recursionLimit) {
             throw DsonIOException.recursionLimitExceeded();
         }
@@ -571,7 +534,6 @@ public abstract class AbstractDsonReader implements DsonReader {
             throw invalidState(List.of(DsonReaderState.VALUE));
         }
         doSkipValue();
-        assert waitStartContext == null;
         setNextState();
     }
 
@@ -586,7 +548,6 @@ public abstract class AbstractDsonReader implements DsonReader {
             return;
         }
         doSkipToEndOfObject();
-        assert waitStartContext == null;
         setNextState();
         readDsonType(); // end of object
         assert currentDsonType == DsonType.END_OF_OBJECT;
@@ -597,7 +558,6 @@ public abstract class AbstractDsonReader implements DsonReader {
         advanceToValueState(name, null);
         DsonReaderUtils.checkReadValueAsBytes(currentDsonType);
         byte[] data = doReadValueAsBytes();
-        assert waitStartContext == null;
         setNextState();
         return data;
     }

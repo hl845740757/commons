@@ -233,11 +233,6 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClearWaitStartContext() {
-        Context context = (Context)waitStartContext;
-        if (context != null) {
-            waitStartContext = null;
-            ReturnContext(context);
-        }
     }
 
     #endregion

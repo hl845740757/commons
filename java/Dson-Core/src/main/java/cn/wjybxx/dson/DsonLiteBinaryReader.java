@@ -228,11 +228,6 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
     }
 
     private void clearWaitStartContext() {
-        Context context = (Context) waitStartContext;
-        if (context != null) {
-            waitStartContext = null;
-            returnContext(context);
-        }
     }
     // endregion
 

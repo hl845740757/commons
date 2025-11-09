@@ -46,7 +46,6 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     protected WireType currentWireType;
     protected int currentWireTypeBits;
     protected int currentName = INVALID_NAME;
-    protected Context waitStartContext; // 暂时只支持单次回滚，在ReadStart或SkipValue时都应该清理
 
     protected AbstractDsonLiteReader(DsonReaderSettings settings) {
         this.settings = settings; // 允许传入null以支持池化
@@ -69,7 +68,6 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         currentWireType = null;
         currentWireTypeBits = 0;
         currentName = INVALID_NAME;
-        waitStartContext = null;
     }
 
     // region state
@@ -450,39 +448,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         readEndContainer(DsonContextType.HEADER);
     }
 
-    @Override
-    public boolean isWaitingStart() {
-        return waitStartContext != null;
-    }
-
-    @Override
-    public void backToWaitStart() {
-        Context context = this.context;
-        if (context.contextType == DsonContextType.TOP_LEVEL) {
-            throw DsonIOException.contextErrorTopLevel();
-        }
-        if (context.state != DsonReaderState.TYPE) {
-            throw invalidState(List.of(DsonReaderState.TYPE));
-        }
-        waitStartContext = context;
-        // 模拟ReadEnd
-        recoverDsonType(this.context);
-        recursionDepth--;
-        setContext(context.parent);
-        context.parent.setState(DsonReaderState.VALUE); // 设置读Value状态
-    }
-
     private void readStartContainer(DsonContextType contextType, DsonType dsonType) {
-        Context waitStartContext = this.waitStartContext;
-        if (waitStartContext != null) {
-            this.waitStartContext = null;
-            // 模拟ReadStart
-            recursionDepth++;
-            setContext(waitStartContext);
-            setNextState(); // 设置新上下文状态
-            return;
-        }
-
         if (recursionDepth >= settings.recursionLimit) {
             throw DsonIOException.recursionLimitExceeded();
         }
@@ -558,7 +524,6 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
             throw invalidState(List.of(DsonReaderState.VALUE));
         }
         doSkipValue();
-        assert waitStartContext == null;
         setNextState();
     }
 
@@ -573,7 +538,6 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
             return;
         }
         doSkipToEndOfObject();
-        assert waitStartContext == null;
         setNextState();
         readDsonType(); // end of object
         assert currentDsonType == DsonType.END_OF_OBJECT;
@@ -584,7 +548,6 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         advanceToValueState(name, null);
         DsonReaderUtils.checkReadValueAsBytes(currentDsonType);
         byte[] data = doReadValueAsBytes();
-        assert waitStartContext == null;
         setNextState();
         return data;
     }

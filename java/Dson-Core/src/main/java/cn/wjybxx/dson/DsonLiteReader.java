@@ -162,20 +162,6 @@ public interface DsonLiteReader extends AutoCloseable {
 
     void readEndHeader();
 
-    /**
-     * 回退到等待开始状态，可再次调用{@link #readStartObject()}和{@link #readStartArray()}方法。
-     * 1.该方法只回退上下文，不回退输入
-     * 2.只有在等待读取下一个值的类型时才可以执行，即等待{@link #readDsonType()}时才可以执行
-     * 3.通常用于在读取header之后回退，然后让业务对象的codec去解码
-     */
-    void backToWaitStart();
-
-    /**
-     * 是否处于等待Start状态
-     * 仅在调用{@link #backToWaitStart()}后为true.
-     */
-    boolean isWaitingStart();
-
     default void readStartArray(int name) {
         readName(name);
         readStartArray();

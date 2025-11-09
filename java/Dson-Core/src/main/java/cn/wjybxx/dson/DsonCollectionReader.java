@@ -368,11 +368,6 @@ public final class DsonCollectionReader extends AbstractDsonReader {
     }
 
     private void clearWaitStartContext() {
-        Context context = (Context) waitStartContext;
-        if (context != null) {
-            waitStartContext = null;
-            returnContext(context);
-        }
     }
 
     // endregion

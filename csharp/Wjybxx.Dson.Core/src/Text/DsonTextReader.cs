@@ -970,11 +970,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClearWaitStartContext() {
-        Context context = (Context)waitStartContext;
-        if (context != null) {
-            waitStartContext = null;
-            ReturnContext(context);
-        }
     }
 
     #endregion
