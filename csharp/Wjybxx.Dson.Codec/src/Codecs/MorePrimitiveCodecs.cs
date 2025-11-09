@@ -26,115 +26,133 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// </summary>
 public static class MorePrimitiveCodecs
 {
-    public class UInt32Codec : IDsonCodec<uint>
+    public class UInt32Codec : IDsonCodec<uint>, IKeyCodec<uint>
     {
-        public bool AutoStartEnd => false;
+        public string EncodeKey(uint value, SerializeFeatures features) {
+            return features.ToNumberStyle().ToString((int)value).Value;
+        }
 
-        public void WriteObject(IDsonObjectWriter writer, in uint inst, Type declaredType, ObjectStyle style) {
-            INumberStyle numberStyle = declaredType == typeof(uint)
-                ? NumberStyles.Unsigned
-                : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, (int)inst, numberStyle);
+        public uint DecodeKey(string keyString) {
+            return (uint)DsonTexts.ParseInt32(keyString);
+        }
+
+        public void WriteObject(IDsonObjectWriter writer, uint inst, Type declaredType, SerializeFeatures features) {
+            if (declaredType != typeof(uint)) {
+                features |= SerializeFeatures.NumberTyped;
+            }
+            writer.WriteInt((int)inst, features | SerializeFeatures.NumberUnsigned);
         }
 
         public uint ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (uint)reader.ReadInt(null);
+            return (uint)reader.ReadInt();
         }
     }
 
-    public class UInt64Codec : IDsonCodec<ulong>
+    public class UInt64Codec : IDsonCodec<ulong>, IKeyCodec<ulong>
     {
-        public bool AutoStartEnd => false;
+        public string EncodeKey(ulong value, SerializeFeatures features) {
+            return features.ToNumberStyle().ToString((long)value).Value;
+        }
 
-        public void WriteObject(IDsonObjectWriter writer, in ulong inst, Type declaredType, ObjectStyle style) {
-            INumberStyle numberStyle = declaredType == typeof(ulong)
-                ? NumberStyles.Unsigned
-                : NumberStyles.TypedUnsigned;
-            writer.WriteLong(null, (long)inst, numberStyle);
+        public ulong DecodeKey(string keyString) {
+            return (ulong)DsonTexts.ParseInt64(keyString);
+        }
+
+        public void WriteObject(IDsonObjectWriter writer, ulong inst, Type declaredType, SerializeFeatures features) {
+            if (declaredType != typeof(ulong)) {
+                features |= SerializeFeatures.NumberTyped;
+            }
+            writer.WriteLong((long)inst, features | SerializeFeatures.NumberUnsigned);
         }
 
         public ulong ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (ulong)reader.ReadLong(null);
+            return (ulong)reader.ReadLong();
         }
     }
 
-    public class ShortCodec : IDsonCodec<short>
+    public class ShortCodec : IDsonCodec<short>, IKeyCodec<short>
     {
-        public bool AutoStartEnd => false;
+        public string EncodeKey(short value, SerializeFeatures features) {
+            return features.ToNumberStyle().ToString((int)value).Value;
+        }
 
-        public void WriteObject(IDsonObjectWriter writer, in short inst, Type declaredType, ObjectStyle style) {
-            INumberStyle numberStyle = declaredType == typeof(short)
-                ? NumberStyles.Unsigned
-                : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, numberStyle);
+        public short DecodeKey(string keyString) {
+            return (short)DsonTexts.ParseInt32(keyString);
+        }
+
+        public void WriteObject(IDsonObjectWriter writer, short inst, Type declaredType, SerializeFeatures features) {
+            if (declaredType != typeof(short)) {
+                features |= SerializeFeatures.NumberTyped;
+            }
+            writer.WriteInt(inst, features);
         }
 
         public short ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (short)reader.ReadInt(null);
+            return (short)reader.ReadInt();
         }
     }
 
-    public class UShortCodec : IDsonCodec<ushort>
+    public class UShortCodec : IDsonCodec<ushort>, IKeyCodec<ushort>
     {
-        public bool AutoStartEnd => false;
+        public string EncodeKey(ushort value, SerializeFeatures features) {
+            return features.ToNumberStyle().ToString((int)value).Value;
+        }
 
-        public void WriteObject(IDsonObjectWriter writer, in ushort inst, Type declaredType, ObjectStyle style) {
-            INumberStyle numberStyle = declaredType == typeof(ushort)
-                ? NumberStyles.Unsigned
-                : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, numberStyle);
+        public ushort DecodeKey(string keyString) {
+            return (ushort)DsonTexts.ParseInt32(keyString);
+        }
+
+        public void WriteObject(IDsonObjectWriter writer, ushort inst, Type declaredType, SerializeFeatures features) {
+            if (declaredType != typeof(ushort)) {
+                features |= SerializeFeatures.NumberTyped;
+            }
+            writer.WriteInt(inst, features | SerializeFeatures.NumberUnsigned);
         }
 
         public ushort ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (ushort)reader.ReadInt(null);
+            return (ushort)reader.ReadInt();
         }
     }
 
     public class ByteCodec : IDsonCodec<byte>
     {
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in byte inst, Type declaredType, ObjectStyle style) {
-            INumberStyle numberStyle = declaredType == typeof(byte)
-                ? NumberStyles.Unsigned
-                : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, numberStyle); // c# byte是无符号数
+        public void WriteObject(IDsonObjectWriter writer, byte inst, Type declaredType, SerializeFeatures features) {
+            if (declaredType != typeof(byte)) {
+                features |= SerializeFeatures.NumberTyped;
+            }
+            writer.WriteInt(inst, features); // c# byte是无符号数
         }
 
         public byte ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (byte)reader.ReadInt(null);
+            return (byte)reader.ReadInt();
         }
     }
 
     public class SByteCodec : IDsonCodec<sbyte>
     {
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in sbyte inst, Type declaredType, ObjectStyle style) {
-            INumberStyle numberStyle = declaredType == typeof(sbyte)
-                ? NumberStyles.Unsigned
-                : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, numberStyle);
+        public void WriteObject(IDsonObjectWriter writer, sbyte inst, Type declaredType, SerializeFeatures features) {
+            if (declaredType != typeof(sbyte)) {
+                features |= SerializeFeatures.NumberTyped;
+            }
+            writer.WriteInt(inst, features);
         }
 
         public sbyte ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (sbyte)reader.ReadInt(null);
+            return (sbyte)reader.ReadInt();
         }
     }
 
     public class CharCodec : IDsonCodec<char>
     {
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in char inst, Type declaredType, ObjectStyle style) {
-            INumberStyle numberStyle = declaredType == typeof(char)
-                ? NumberStyles.Unsigned
-                : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, numberStyle);
+        public void WriteObject(IDsonObjectWriter writer, char inst, Type declaredType, SerializeFeatures features) {
+            if (declaredType != typeof(char)) {
+                features |= SerializeFeatures.NumberTyped;
+            }
+            writer.WriteInt(inst, features);
         }
 
         public char ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (char)reader.ReadInt(null);
+            return (char)reader.ReadInt();
         }
     }
 }

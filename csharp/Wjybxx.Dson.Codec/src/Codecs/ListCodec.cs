@@ -27,30 +27,30 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// 如果想提升性能，可以为常见基本类型数组提供定制的Codec，以避免低效的WriteObject/ReadObject。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public sealed class ArrayCodec<T> : IDsonCodec<T[]>
+public sealed class ListCodec<T> : IDsonCodec<List<T>>
 {
-    public void WriteObject(IDsonObjectWriter writer, T[] inst, Type declaredType, SerializeFeatures features) {
+    public void WriteObject(IDsonObjectWriter writer, List<T> inst, Type declaredType, SerializeFeatures features) {
         SerializeFeatures selfFeatures = features.ErasureElementFeatures();
         SerializeFeatures elementFeatures = features.GetElementFeatures();
         // T就是声明类型
         DsonCodecImpl<T> elementCodec = writer.GetInlinableCodec<T>();
         if (elementCodec != null) {
             Type elementType = typeof(T);
-            writer.WriteStartArray(typeof(T[]), declaredType, selfFeatures, inst.Length);
-            for (int i = 0; i < inst.Length; i++) {
-                elementCodec.WriteObject(writer, in inst[i], elementType, elementFeatures);
+            writer.WriteStartArray(typeof(List<T>), declaredType, selfFeatures, inst.Count);
+            for (int i = 0; i < inst.Count; i++) {
+                elementCodec.WriteObject(writer, inst[i], elementType, elementFeatures);
             }
             writer.WriteEndArray();
         } else {
-            writer.WriteStartArray(typeof(T[]), declaredType, selfFeatures, inst.Length);
-            for (int i = 0; i < inst.Length; i++) {
+            writer.WriteStartArray(typeof(List<T>), declaredType, selfFeatures, inst.Count);
+            for (int i = 0; i < inst.Count; i++) {
                 writer.WriteObject(inst[i], elementFeatures);
             }
             writer.WriteEndArray();
         }
     }
 
-    public T[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public List<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         // count非精确值，不可以直接创建数组
         int count = reader.ReadStartArray().count;
         List<T> result = new List<T>(count);
@@ -69,7 +69,7 @@ public sealed class ArrayCodec<T> : IDsonCodec<T[]>
             }
         }
         reader.ReadEndArray();
-        return result.ToArray();
+        return result;
     }
 }
 }

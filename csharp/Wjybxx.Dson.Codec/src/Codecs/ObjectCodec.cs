@@ -26,11 +26,12 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class ObjectCodec : IDsonCodec<object>
 {
     public void WriteObject(IDsonObjectWriter writer, object inst, Type declaredType, SerializeFeatures features) {
-
+        writer.WriteStartObject(typeof(object), features);
+        writer.WriteEndObject();
     }
 
     public object ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return new object();
+        return reader.ReadObject<DsonValue>();
     }
 }
 }

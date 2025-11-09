@@ -30,7 +30,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 5. <see cref="DsonSerializableAttribute"/>中提到的钩子方法也将映射到【LinkerBean】中的静态方法。
 /// 6. 如果是泛型类，使用其泛型定义类声明，且当前配置类需要保持相同的泛型参数。
 /// 7. C#端存在自动属性，【字段映射字段，属性映射属性】 —— 都按名字匹配。
-/// 8. 如果通过反射为第三方程序集生成代码，可通过<see cref="UsedForReflectionBasedGeneratorAttribute"/>告知APT在编译时忽略。
+/// 8. 关于钩子函数，可阅读<see cref="AbstractDsonCodec{T}"/>
 /// 
 /// 注意：Linker类不应该存在继承关系，否则可能导致方法绑定错误。
 /// <pre><code>
@@ -41,20 +41,26 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///      // Class
 ///      public static MyBean NewInstance(IDsonObjectReader reader){}
 ///      public static void ReadObject(MyBean instance, IDsonObjectReader reader){}
+///      public static void ReadField(MyBean instance, IDsonObjectReader reader, string dsonName){}
 ///      public static void AfterDecode(MyBean instance, ConverterOptions options){}
-/// 
+///
 ///      public static void BeforeEncode(MyBean instance, ConverterOptions options){}
 ///      public static void WriteObject(MyBean instance, IDsonObjectWriter writer){}
+///      // 字段读写代理
 ///      public static void ReadField1(MyBean instance, IDsonObjectReader reader, String dsonName){}
 ///      public static void WriteField1(MyBean instance, IDsonObjectWriter writer, String dsonName){}
 /// 
-///      // 结构体需要使用ref和in
+///      // 结构体需要使用ref
 ///      public static MyBean NewInstance(IDsonObjectReader reader){}
 ///      public static void ReadObject(ref MyBean instance, IDsonObjectReader reader){}
+///      public static void ReadField(ref MyBean instance, IDsonObjectReader reader, string dsonName){}
 ///      public static void AfterDecode(ref MyBean instance, ConverterOptions options){}
 /// 
 ///      public static void BeforeEncode(ref MyBean instance, ConverterOptions options){}
-///      public static void WriteObject(in MyBean instance, IDsonObjectWriter writer){}
+///      public static void WriteObject(ref MyBean instance, IDsonObjectWriter writer){}
+///      // 字段读写代理
+///      public static void ReadField1(ref MyBean instance, IDsonObjectReader reader, String dsonName){}
+///      public static void WriteField1(ref MyBean instance, IDsonObjectWriter writer, String dsonName){}
 ///  }
 /// </code></pre>
 ///

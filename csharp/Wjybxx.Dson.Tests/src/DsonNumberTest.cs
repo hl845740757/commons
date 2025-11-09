@@ -48,14 +48,14 @@ public class DsonNumberTest
     public void TestNumber() {
         DsonObject<string> dsonObject = Dsons.FromDson(NumberString).AsObject();
         // 必须带类型，否则无法精确反序列化，断言会失败
-        List<INumberStyle> styleList = new List<INumberStyle>
+        List<NumberStyle> styleList = new List<NumberStyle>
         {
-            NumberStyles.Typed, NumberStyles.TypedUnsigned,
-            NumberStyles.SignedHex, NumberStyles.UnsignedHex,
-            NumberStyles.SignedBinary, NumberStyles.UnsignedBinary,
-            NumberStyles.FixedBinary
+            NumberStyle.Typed, NumberStyle.TypedUnsigned,
+            NumberStyle.SignedHex, NumberStyle.UnsignedHex,
+            NumberStyle.SignedBinary, NumberStyle.UnsignedBinary,
+            NumberStyle.FixedBinary
         };
-        foreach (INumberStyle style in styleList) {
+        foreach (NumberStyle style in styleList) {
             bool supportFloat = IsSupportFloat(style);
             StringWriter stringWriter = new StringWriter(new StringBuilder(120));
             using DsonTextWriter writer = new DsonTextWriter(DsonTextWriterSettings.Default, stringWriter);
@@ -76,11 +76,11 @@ public class DsonNumberTest
                         break;
                     }
                     case DsonType.Float: {
-                        writer.WriteFloat(name, dsonNumber.FloatValue, supportFloat ? style : NumberStyles.Typed);
+                        writer.WriteFloat(name, dsonNumber.FloatValue, supportFloat ? style : NumberStyle.Typed);
                         break;
                     }
                     case DsonType.Double: {
-                        writer.WriteDouble(name, dsonNumber.DoubleValue, supportFloat ? style : NumberStyles.Simple);
+                        writer.WriteDouble(name, dsonNumber.DoubleValue, supportFloat ? style : NumberStyle.Simple);
                         break;
                     }
                 }
@@ -98,11 +98,11 @@ public class DsonNumberTest
     }
 
     /** 是否支持浮点数 -- float和double */
-    private static bool IsSupportFloat(INumberStyle style) {
+    private static bool IsSupportFloat(NumberStyle style) {
         try {
             style.ToString(0f);
         }
-        catch (NotImplementedException) {
+        catch (Exception) {
             return false;
         }
         return true;

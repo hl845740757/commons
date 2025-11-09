@@ -33,7 +33,8 @@ public class CodecTest
     public void SetUp() {
         IList<TypeMeta> typeMetas = new List<TypeMeta>()
         {
-            TypeMeta.Of(typeof(Vector3), ObjectStyle.Flow, "V3", "Vector3")
+            TypeMeta.Of(typeof(Vector3), SerializeFeatures.ObjectFlow, "V3", "Vector3"),
+            TypeMeta.Of(typeof(Sex), "Sex"),
         };
         IList<IDsonCodec> codecs = new List<IDsonCodec>()
         {
@@ -64,7 +65,7 @@ public class CodecTest
             Sex.Male,
             Sex.Female,
         };
-        string dson = converter.WriteAsDson(list, ObjectStyle.Flow);
+        string dson = converter.WriteAsDson(list, SerializeFeatures.ObjectFlow);
         Console.WriteLine(dson);
 
         List<Sex> copied = converter.ReadFromDson<List<Sex>>(dson);
@@ -87,32 +88,32 @@ public class CodecTest
 
     [Test]
     public void TestDictionaryVector3() {
-        TestDictionaryVector3(MapEncodePolicy.Array);
+        TestDictionaryVector3(SerializeFeatures.MapAsArray);
     }
 
     [Test]
     public void TestDictionaryVector3AsDocument() {
-        TestDictionaryVector3(MapEncodePolicy.Document);
-    }
-    
-    [Test]
-    public void TestDictionaryVector3AsPairDocument() {
-        TestDictionaryVector3(MapEncodePolicy.PairAsDocument);
-    }
-    
-    [Test]
-    public void TestDictionaryVector3AsPariArray() {
-        TestDictionaryVector3(MapEncodePolicy.PairAsArray);
+        TestDictionaryVector3(SerializeFeatures.MapAsDocument);
     }
 
-    private void TestDictionaryVector3(MapEncodePolicy mapEncodePolicy) {
+    [Test]
+    public void TestDictionaryVector3AsPairDocument() {
+        TestDictionaryVector3(SerializeFeatures.PairAsDocument);
+    }
+
+    [Test]
+    public void TestDictionaryVector3AsPariArray() {
+        TestDictionaryVector3(SerializeFeatures.PairAsArray);
+    }
+
+    private void TestDictionaryVector3(SerializeFeatures mapStyle) {
         IDictionary<int, Vector3> dictionary = new Dictionary<int, Vector3>();
         for (int i = 1; i <= 5; i++) {
             dictionary[i] = new Vector3(i - 0.5f, i, i + 0.5f);
         }
 
         ConverterOptions.Builder builder = converter.Options.ToBuilder();
-        builder.MapEncodePolicy = mapEncodePolicy;
+        builder.EncodeFeatures = mapStyle;
 
         IDsonConverter converter2 = converter.WithOptions(builder.Build());
 
@@ -121,7 +122,7 @@ public class CodecTest
 
         IDictionary<int, Vector3> copied = converter2.ReadFromDson<IDictionary<int, Vector3>>(dson, () => new Dictionary<int, Vector3>());
         Assert.IsTrue(CollectionUtil.DataEquals(copied, dictionary));
-    } 
+    }
 
     /// <summary>
     /// 测试Nullable

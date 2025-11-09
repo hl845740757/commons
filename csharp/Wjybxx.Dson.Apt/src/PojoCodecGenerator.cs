@@ -50,6 +50,7 @@ internal class PojoCodecGenerator
 
     private MethodSpec.Builder newInstanceMethodBuilder;
     private MethodSpec.Builder readFieldsMethodBuilder;
+    private MethodSpec.Builder readFieldMethodBuilder;
     private MethodSpec.Builder afterDecodeMethodBuilder;
     private MethodSpec.Builder beforeEncodeMethodBuilder;
     private MethodSpec.Builder writeFieldsMethodBuilder;
@@ -82,6 +83,7 @@ internal class PojoCodecGenerator
         INamedTypeSymbol superDeclaredType = context.superDeclaredType;
         newInstanceMethodBuilder = processor.NewNewInstanceMethodBuilder(superDeclaredType);
         readFieldsMethodBuilder = processor.NewReadFieldsMethodBuilder(superDeclaredType);
+        readFieldMethodBuilder = processor.NewReadFieldMethodBuilder(superDeclaredType);
         afterDecodeMethodBuilder = processor.NewAfterDecodeMethodBuilder(superDeclaredType);
         beforeEncodeMethodBuilder = processor.NewBeforeEncodeMethodBuilder(superDeclaredType);
         writeFieldsMethodBuilder = processor.NewWriteFieldsMethodBuilder(superDeclaredType);
@@ -93,6 +95,7 @@ internal class PojoCodecGenerator
         if (!aptClassProps.IsSingleton) {
             GenReadObjectMethod(aptClassProps);
             GenReadFieldsMethod();
+            GenReadFieldMethod();
             //
             GenWriteObjectMethod(aptClassProps);
             GenWriteFieldsMethod();
@@ -100,16 +103,23 @@ internal class PojoCodecGenerator
         // 控制方法生成顺序
         // GetEncoderType
         typeBuilder.AddMethod(processor.NewGetEncoderTypeMethod(context.superDeclaredType, rawTypeName));
-        // BeforeEncode回调
-        if (GenBeforeEncodeMethod(aptClassProps)) {
-            typeBuilder.AddMethod(beforeEncodeMethodBuilder.Build());
+        {
+            // BeforeEncode回调
+            if (GenBeforeEncodeMethod(aptClassProps)) {
+                typeBuilder.AddMethod(beforeEncodeMethodBuilder.Build());
+            }
+            typeBuilder.AddMethod(writeFieldsMethodBuilder.Build(true));
         }
-        typeBuilder.AddMethod(writeFieldsMethodBuilder.Build(true));
+        //
         typeBuilder.AddMethod(newInstanceMethodBuilder.Build())
             .AddMethod(readFieldsMethodBuilder.Build(true));
-        // AfterDecode回调
-        if (GenAfterDecodeMethod(aptClassProps)) {
-            typeBuilder.AddMethod(afterDecodeMethodBuilder.Build());
+        if (!aptClassProps.IsSingleton) {
+            // 
+            typeBuilder.AddMethod(readFieldMethodBuilder.Build(true));
+            // AfterDecode回调
+            if (GenAfterDecodeMethod(aptClassProps)) {
+                typeBuilder.AddMethod(afterDecodeMethodBuilder.Build());
+            }
         }
         // 额外注解
         if (context.additionalAnnotations != null) {
@@ -149,7 +159,7 @@ internal class PojoCodecGenerator
         if (linkerContext != null) {
             if (linkerContext.ContainsHookMethod(CodecProcessor.MNAME_WRITE_OBJECT)) {
                 string format = typeSymbol.IsValueType
-                    ? "$T.$L(in inst, writer)"
+                    ? "$T.$L(ref inst, writer)"
                     : "$T.$L(inst, writer)";
                 // CodecProxy.WriteObject(inst, writer);
                 writeFieldsMethodBuilder.codeBuilder.AddStatement(format,
@@ -277,60 +287,41 @@ internal class PojoCodecGenerator
 
     #region field
 
-    private bool ContainsAutoReadFields() {
-        AptClassProps aptClassProps = context.aptClassProps;
-        foreach (AptFieldInfo? fieldInfo in context.serialFields) {
-            AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
-            if (processor.IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void GenReadFieldsMethod() {
-        // 可能没有需要自动读的字段
-        if (!ContainsAutoReadFields()) {
-            return;
-        }
         AptClassProps aptClassProps = context.aptClassProps;
         CodeBlock.Builder codeBuilder = readFieldsMethodBuilder.codeBuilder;
-        // ReadObject或构造函数可能导致输入流结束 - 不必手动处理
-        // codeBuilder.AddStatement("if (reader.CurrentDsonType == DsonType.EndOfObject) return");
-        codeBuilder.BeginControlFlow("if (reader.ContextType == $T.Array)", CodecProcessor.typeName_ContextType);
         // array格式
         foreach (AptFieldInfo? fieldInfo in context.serialFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
             if (!processor.IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
                 continue;
             }
-            AddReadStatement(fieldInfo, aptFieldProps, aptClassProps);
+            AddReadStatement(codeBuilder, fieldInfo, aptFieldProps, aptClassProps);
             codeBuilder.AddStatement("");
         }
-        codeBuilder.AddStatement("return"); // 减少缩进
-        codeBuilder.EndControlFlow();
+    }
 
-        // Object格式
-        codeBuilder.BeginControlFlow("while (reader.ReadDsonType() != DsonType.EndOfObject)");
-        codeBuilder.BeginControlFlow("switch (reader.ReadName())");
+    private void GenReadFieldMethod() {
+        AptClassProps aptClassProps = context.aptClassProps;
+        CodeBlock.Builder codeBuilder = readFieldMethodBuilder.codeBuilder;
+        // object样式
+        codeBuilder.BeginControlFlow("switch (name)");
         foreach (AptFieldInfo? fieldInfo in context.serialFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
             if (!processor.IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
                 continue;
             }
             codeBuilder.Add("case $L: ", SerialName(fieldInfo.Name));
-            AddReadStatement(fieldInfo, aptFieldProps, aptClassProps);
-            codeBuilder.AddStatement("; break");
+            AddReadStatement(codeBuilder, fieldInfo, aptFieldProps, aptClassProps);
+            codeBuilder.AddStatement("; return true");
         }
-        // codeBuilder.AddStatement("default: break");
         codeBuilder.EndControlFlow();
-        codeBuilder.EndControlFlow();
+        codeBuilder.AddStatement("return false"); // 可能没有字段
     }
 
-    private void AddReadStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
-        CodeBlock.Builder codeBuilder = readFieldsMethodBuilder.codeBuilder;
+    private void AddReadStatement(CodeBlock.Builder codeBuilder, AptFieldInfo fieldInfo,
+                                  AptFieldProps fieldProps, AptClassProps aptClassProps) {
         string fieldName = fieldInfo.Name;
-
         // 自定义读 -- 传入name以支持处理多个字段
         string? readProxy = fieldProps.readProxy;
         if (!string.IsNullOrWhiteSpace(readProxy)) {
@@ -357,15 +348,20 @@ internal class PojoCodecGenerator
             fieldAccess = fieldName;
         }
         if (readMethodName == MNAME_READ_OBJECT) {
-            TypeName fieldTypeName = fieldInfo.typeName!;
-            // 读对象时要传入类型信息和Factory -- C#还要传泛型参数；name在前面已读，因此这里传入null
+            // 读对象时要传入类型信息和Factory -- C#还要传泛型参数，泛型方法自动匹配
             // inst.name = reader.readObject<Type>(names_name, factories_name)
-            codeBuilder.Add("inst.$L = reader.$L<$T>(null, $L)",
-                fieldAccess, readMethodName, fieldTypeName,
-                fieldProps.implTypeName == null ? "null" : SerialFactory(fieldName));
+            TypeName fieldTypeName = fieldInfo.typeName!;
+            if (fieldProps.implTypeName != null) {
+                codeBuilder.Add("inst.$L = reader.$L<$T>($L)",
+                    fieldAccess, readMethodName, fieldTypeName,
+                    SerialFactory(fieldName));
+            } else {
+                codeBuilder.Add("inst.$L = reader.$L<$T>()",
+                    fieldAccess, readMethodName, fieldTypeName);
+            }
         } else {
             // inst.name = reader.readString(names_name)
-            codeBuilder.Add("inst.$L = reader.$L(null)",
+            codeBuilder.Add("inst.$L = reader.$L()",
                 fieldAccess, readMethodName);
         }
     }
@@ -406,47 +402,24 @@ internal class PojoCodecGenerator
             fieldAccess = fieldName;
         }
 
-        // 处理数字 -- 涉及WireType和Style，注解使用的是枚举，我们转换为NumberStyles静态类
+        // 处理需要传入Features的类型
         string writeMethodName = GetWriteMethodName(fieldInfo);
-        if (fieldInfo.FieldType!.IsPrimitiveNumber()) {
+        if (fieldInfo.FieldType!.IsPrimitiveNumber()
+            || writeMethodName == MNAME_WRITE_BOOL
+            || writeMethodName == MNAME_WRITE_STRING
+            || writeMethodName == MNAME_WRITE_BYTES
+            || writeMethodName == MNAME_WRITE_OBJECT) {
             // int,long,float,double,uint,ulong,short,ushort,byte,sbyte...
-            // writer.writeInt(names_fieldName, inst.field, NumberStyles.Simple)
-            builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
+            // writer.writeInt(names_fieldName, inst.field, (SerializeFeatures)0x01)
+            builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, ($T)$L)",
                 writeMethodName, SerialName(fieldName), fieldAccess,
-                CodecProcessor.typeName_NumberStyles, fieldProps.numberStyle);
+                CodecProcessor.typeName_EncodeFeatures, fieldProps.encodeFeatures);
             return;
         }
-
-        // 其它类型
-        switch (writeMethodName) {
-            case MNAME_WRITE_STRING: {
-                // writer.writeString(names_fieldName, inst.getName(), StringStyle.AUTO)
-                builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
-                    writeMethodName, SerialName(fieldName), fieldAccess,
-                    CodecProcessor.typeName_StringStyle, fieldProps.stringStyle);
-                break;
-            }
-            case MNAME_WRITE_OBJECT: {
-                // 写Object时传入类型信息和Style -- 会自动匹配泛型方法
-                // writer.writeObject(names_fieldName, inst.getName(), ObjectStyle.INDENT)
-                if (!string.IsNullOrWhiteSpace(fieldProps.objectStyle)) {
-                    builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
-                        writeMethodName, SerialName(fieldName), fieldAccess,
-                        CodecProcessor.typeName_ObjectStyle, fieldProps.objectStyle);
-                } else {
-                    builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, null)",
-                        writeMethodName, SerialName(fieldName), fieldAccess);
-                }
-                break;
-            }
-            default: {
-                // 未对DateTime等结构体做in优化，因为通过属性访问时，无法使用in
-                // writer.writeBytes(names_fieldName, inst.field)
-                // writer.writeBool(names_fieldName, inst.getName())
-                builder.codeBuilder.AddStatement("writer.$L($L, inst.$L)",
-                    writeMethodName, SerialName(fieldName), fieldAccess);
-                break;
-            }
+        // 其它类型 - 未对DateTime等结构体做in优化，因为通过属性访问时，无法使用in
+        {
+            builder.codeBuilder.AddStatement("writer.$L($L, inst.$L)",
+                writeMethodName, SerialName(fieldName), fieldAccess);
         }
     }
 
@@ -463,7 +436,7 @@ internal class PojoCodecGenerator
     /** 获取writer写字段的方法名 */
     private string GetWriteMethodName(AptFieldInfo fieldInfo) {
         ITypeSymbol fieldType = fieldInfo.FieldType!;
-        if (primitiveWriteMethodNameMap.TryGetValue(fieldType.SpecialType, out string? r)) {
+        if (primitiveWriteMethodNameMap.TryGetValue(fieldType.SpecialType, out string r)) {
             return r;
         }
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_WRITE_STRING;
@@ -478,7 +451,7 @@ internal class PojoCodecGenerator
     /** 获取reader读字段的方法名 */
     private string GetReadMethodName(AptFieldInfo fieldInfo) {
         ITypeSymbol fieldType = fieldInfo.FieldType!;
-        if (primitiveReadMethodNameMap.TryGetValue(fieldType.SpecialType, out string? r)) {
+        if (primitiveReadMethodNameMap.TryGetValue(fieldType.SpecialType, out string r)) {
             return r;
         }
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_READ_STRING;
@@ -499,6 +472,7 @@ internal class PojoCodecGenerator
     private const string MNAME_READ_DATETIME = "ReadDateTime";
     private const string MNAME_READ_TIMESTAMP = "ReadTimestamp";
 
+    private const string MNAME_WRITE_BOOL = "WriteBool";
     private const string MNAME_WRITE_STRING = "WriteString";
     private const string MNAME_WRITE_BYTES = "WriteBytes";
     private const string MNAME_WRITE_BINARY = "WriteBinary";

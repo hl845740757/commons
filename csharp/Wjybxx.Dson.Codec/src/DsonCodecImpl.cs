@@ -17,10 +17,9 @@
 #endregion
 
 using System;
-using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Wjybxx.Dson.Codec.Codecs;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -29,14 +28,15 @@ namespace Wjybxx.Dson.Codec
 /// </summary>
 public abstract class DsonCodecImpl
 {
-    public abstract IDsonCodec GetCodec();
-
-    internal abstract ObjectStyle? Style { get; set; }
+    /** 是否禁止序列化引用 */
+    internal abstract bool DisableSerializeReference { get; }
+    /** 是否是可内联的Codec -- 用于集合类型性能优化 */
+    internal abstract bool IsInlinableCodec { get; }
 
     public abstract Type GetEncoderType();
 
     // 解决泛型协变逆变问题 - 不会导致装箱，但会多一次cast
-    public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style);
+    public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, SerializeFeatures features);
 
     public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, Func<object>? factory);
 
@@ -59,36 +59,41 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
 {
     private readonly IDsonCodec<T> _codec;
     private readonly Type _encoderType;
-    private readonly bool _autoStart;
-    private readonly bool _writeAsArray;
-    private readonly IEnumCodec<T>? _enumCodec;
-    private ObjectStyle? _style; // Style查询缓存，该缓存在多线程下是无害的
+    private readonly INullableCodec<T>? _nullableCodec;
+    private readonly IKeyCodec<T>? _keyCodec;
+    private readonly bool _disableSerilizeReference;
+    private readonly bool _inlinableCodec;
 
     internal DsonCodecImpl(IDsonCodec<T> codec) {
         _codec = codec;
         _encoderType = codec.GetEncoderType();
-        _autoStart = codec.AutoStartEnd;
-        _writeAsArray = codec.IsWriteAsArray;
-        _enumCodec = codec as IEnumCodec<T>;
+        _nullableCodec = codec as INullableCodec<T>;
+        _keyCodec = codec as IKeyCodec<T>;
+        //
+        _disableSerilizeReference = _encoderType.IsValueType
+                                    || _encoderType == typeof(string)
+                                    || _encoderType.IsArray
+                                    || DsonConverterUtils.IsCollection(_encoderType)
+                                    || DsonConverterUtils.IsDictionary(_encoderType);
+        // codec需要能正确处理null
+        _inlinableCodec = _encoderType.IsValueType
+                          || _encoderType == typeof(string);
     }
 
-    public override IDsonCodec GetCodec() {
-        return _codec;
-    }
+    internal override bool DisableSerializeReference => _disableSerilizeReference;
 
-    internal override ObjectStyle? Style {
-        get => _style;
-        set => _style = value;
-    }
+    internal override bool IsInlinableCodec => _inlinableCodec;
 
     public override Type GetEncoderType() {
         return _encoderType;
     }
 
-    public override void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style) {
-        WriteObject(writer, (T)inst, declaredType, style);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, SerializeFeatures features) {
+        WriteObject(writer, (T)inst, declaredType, features);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override object ReadObject2(IDsonObjectReader reader, Type declaredType, Func<object>? factory) {
         return ReadObject(reader, declaredType, factory);
     }
@@ -99,23 +104,10 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// <param name="writer"></param>
     /// <param name="inst">要编码的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="style">编码风格</param>
-    public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style) {
-        if (_autoStart) {
-            if (_writeAsArray || writer.Options.writeObjectAsArray) {
-                writer.WriteStartArray(style);
-                writer.WriteTypeInfo(_encoderType, declaredType);
-                _codec.WriteObject(writer, in inst, declaredType, style);
-                writer.WriteEndArray();
-            } else {
-                writer.WriteStartObject(style);
-                writer.WriteTypeInfo(_encoderType, declaredType);
-                _codec.WriteObject(writer, in inst, declaredType, style);
-                writer.WriteEndObject();
-            }
-        } else {
-            _codec.WriteObject(writer, in inst, declaredType, style);
-        }
+    /// <param name="features">特征值</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, SerializeFeatures features) {
+        _codec.WriteObject(writer, inst, declaredType, features);
     }
 
     /// <summary>
@@ -125,61 +117,43 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// <param name="declaredType"></param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory) {
-        if (_autoStart) {
-            T result;
-            if (reader.CurrentDsonType == DsonType.Array) {
-                reader.ReadStartArray();
-                result = _codec.ReadObject(reader, declaredType, factory);
-                reader.ReadEndArray();
-            } else {
-                reader.ReadStartObject();
-                result = _codec.ReadObject(reader, declaredType, factory);
-                reader.ReadEndObject();
-            }
-            return result;
-        } else {
-            return _codec.ReadObject(reader, declaredType, factory);
-        }
+        return _codec.ReadObject(reader, declaredType, factory);
     }
 
-    #region 枚举支持
+    #region nullabel支持
 
-    public bool IsEnumCodec => _enumCodec != null;
+    public bool IsNullableCodec => _nullableCodec != null;
 
-    public bool ContainsEnum(T value) {
-        if (_enumCodec != null) {
-            return _enumCodec.Contains(value);
+    public bool HasValue(in T value) {
+        if (_nullableCodec != null) {
+            return _nullableCodec.HasValue(in value);
         }
-        throw new DsonCodecException("unexpected ContainsEnum method call");
+        throw new DsonCodecException("unexpected HasValue method call");
     }
 
-    public bool ForNumber(int number, out T result) {
-        if (_enumCodec != null) {
-            return _enumCodec.ForNumber(number, out result);
+    #endregion
+
+    #region 字典特殊支持
+
+    /// <summary>
+    /// 是否是字典的Key编解码器
+    /// </summary>
+    public bool IsKeyCodec => _keyCodec != null;
+
+    public string EncodeKey(T value, SerializeFeatures features) {
+        if (_keyCodec != null) {
+            return _keyCodec.EncodeKey(value, features);
         }
-        throw new DsonCodecException("unexpected ForNumber method call");
+        throw new DsonCodecException("unexpected EncodeKey method call");
     }
 
-    public bool ForName(string name, out T result) {
-        if (_enumCodec != null) {
-            return _enumCodec.ForName(name, out result);
+    public T DecodeKey(string keyString) {
+        if (_keyCodec != null) {
+            return _keyCodec.DecodeKey(keyString);
         }
-        throw new DsonCodecException("unexpected ForName method call");
-    }
-
-    public int GetNumber(T value) {
-        if (_enumCodec != null) {
-            return _enumCodec.GetNumber(value);
-        }
-        throw new DsonCodecException("unexpected GetNumber method call");
-    }
-
-    public string GetName(T value) {
-        if (_enumCodec != null) {
-            return _enumCodec.GetName(value);
-        }
-        throw new DsonCodecException("unexpected GetName method call");
+        throw new DsonCodecException("unexpected DecodeKey method call");
     }
 
     #endregion

@@ -36,13 +36,12 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
 
     public Type GetEncoderType() => encoderType;
 
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in IEnumerable<T> inst, Type declaredType, ObjectStyle style) {
-        writer.WriteStartArray(style, inst.GetType(), declaredType, -1);
-        ;
+    public void WriteObject(IDsonObjectWriter writer, IEnumerable<T> inst, Type declaredType, SerializeFeatures features) {
+        SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+        SerializeFeatures elementFeatures = features.GetElementFeatures();
+        writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, 0);
         foreach (T value in inst) {
-            writer.WriteObject<T>(null, in value);
+            writer.WriteObject(in value, elementFeatures);
         }
         writer.WriteEndArray();
     }
@@ -56,10 +55,10 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     /// <returns></returns>
     public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         if (factory != null) {
-            int count = reader.ReadStartArray();
+            int count = reader.ReadStartArray().count;
             ICollection<T> result = factory() as ICollection<T> ?? new List<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(null);
+                T value = reader.ReadObject<T>();
                 result.Add(value);
             }
             reader.ReadEndArray();
@@ -69,10 +68,10 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     }
 
     public static List<T> ReadAsList(IDsonObjectReader reader) {
-        int count = reader.ReadStartArray();
+        int count = reader.ReadStartArray().count;
         List<T> result = new List<T>(count);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>(null);
+            T value = reader.ReadObject<T>();
             result.Add(value);
         }
         reader.ReadEndArray();

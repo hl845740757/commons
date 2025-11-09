@@ -30,9 +30,6 @@ namespace Wjybxx.Dson.Apt
 /// </summary>
 internal class AptFieldProps
 {
-    public const string DEFAULT_NUMBER_STYLE = "Simple";
-    public const string DEFAULT_STRING_STYLE = "Auto";
-
 #nullable disable
     /** 字段序列化时的名字 */
     public string? name;
@@ -40,6 +37,10 @@ internal class AptFieldProps
     public string? getter;
     /** 赋值方法 */
     public string? setter;
+    /** 序列化特征值 */
+    public int encodeFeatures;
+    /** 反序列化特征值 */
+    public int decodeFeatures;
 
     /** 实现类 -- 会被替换（修正泛型参数） */
     private INamedTypeSymbol? implType;
@@ -50,13 +51,10 @@ internal class AptFieldProps
     /** 读代理方法名 */
     public string? readProxy;
 
-    /** 绑定style -- 需要正确初始化，可能没有注解 */
-    public string numberStyle = DEFAULT_NUMBER_STYLE;
-    public string stringStyle = DEFAULT_STRING_STYLE;
-    public string? objectStyle = null; // 该属性只有显式声明才有效
-
     /** 是否忽略 -- 非null表示注解指定了值 */
     public bool? ignore;
+    /** 是否序列化为引用 */
+    public bool? serializeReference;
 #nullable restore
 
     /// <summary>
@@ -64,40 +62,26 @@ internal class AptFieldProps
     /// </summary>
     /// <returns></returns>
     public static AptFieldProps Parse(AptFieldInfo fieldInfo, string attributeClassName,
-                                      INamedTypeSymbol typeNumberStyle,
-                                      INamedTypeSymbol typeStringStyle,
-                                      INamedTypeSymbol typeObjectStyle,
                                       Compilation compilation) {
         AptAttributeData? attributeData = fieldInfo.GetAttribute(attributeClassName);
         if (attributeData == null) {
             return new AptFieldProps();
         }
         if (attributeData.CompilationData != null) {
-            return ParseByCompilationData(fieldInfo, attributeData.CompilationData,
-                typeNumberStyle, typeStringStyle, typeObjectStyle);
+            return ParseByCompilationData(fieldInfo, attributeData.CompilationData);
         }
-        return ParseByReflectionData(fieldInfo, attributeData.ReflectionData,
-            typeNumberStyle, typeStringStyle, typeObjectStyle,
-            compilation);
+        return ParseByReflectionData(fieldInfo, attributeData.ReflectionData, compilation);
     }
 
     #region parse-compilation
 
-    private static AptFieldProps ParseByCompilationData(AptFieldInfo fieldInfo, AttributeData attributeData,
-                                                        INamedTypeSymbol typeNumberStyle,
-                                                        INamedTypeSymbol typeStringStyle,
-                                                        INamedTypeSymbol typeObjectStyle) {
+    private static AptFieldProps ParseByCompilationData(AptFieldInfo fieldInfo, AttributeData attributeData) {
         AptFieldProps props = new AptFieldProps();
         props.name = GetStringValue(attributeData, "Name", props.name);
         props.getter = GetStringValue(attributeData, "Getter", props.getter);
         props.setter = GetStringValue(attributeData, "Setter", props.setter);
-
-        // props.dsonType = GetStringValue(attributeData, "DsonType", props.dsonType);
-        // props.dsonSubType = GetIntValue(attributeData, "DsonSubType", props.dsonSubType);
-
-        props.numberStyle = GetEnumStringValue(attributeData, "NumberStyle", props.numberStyle, typeNumberStyle);
-        props.stringStyle = GetEnumStringValue(attributeData, "StringStyle", props.stringStyle, typeStringStyle);
-        props.objectStyle = GetEnumStringValue(attributeData, "ObjectStyle", null, typeObjectStyle);
+        props.encodeFeatures = GetIntValue(attributeData, "EncodeFeatures", props.encodeFeatures);
+        props.decodeFeatures = GetIntValue(attributeData, "DecodeFeatures", props.decodeFeatures);
 
         props.writeProxy = GetStringValue(attributeData, "WriteProxy", props.writeProxy);
         props.readProxy = GetStringValue(attributeData, "ReadProxy", props.readProxy);
@@ -170,11 +154,8 @@ internal class AptFieldProps
     private static PropertyInfo refPropertyName;
     private static PropertyInfo refPropertyGetter;
     private static PropertyInfo refPropertySetter;
-
-    private static PropertyInfo refPropertyNumberStyle;
-    private static PropertyInfo refPropertyStringStyle;
-    private static PropertyInfo refPropertyObjectStyle;
-    private static PropertyInfo refPropertyHasStyle;
+    private static PropertyInfo refPropertyEncodeFeatures;
+    private static PropertyInfo refPropertyDecodeFeatures;
 
     private static PropertyInfo refPropertyWriteProxy;
     private static PropertyInfo refPropertyReadProxy;
@@ -197,11 +178,8 @@ internal class AptFieldProps
             refPropertyName = type.GetProperty("Name");
             refPropertyGetter = type.GetProperty("Getter");
             refPropertySetter = type.GetProperty("Setter");
-
-            refPropertyNumberStyle = type.GetProperty("NumberStyle");
-            refPropertyStringStyle = type.GetProperty("StringStyle");
-            refPropertyObjectStyle = type.GetProperty("ObjectStyle");
-            refPropertyHasStyle = type.GetProperty("HasObjectStyle");
+            refPropertyEncodeFeatures = type.GetProperty("EncodeFeatures");
+            refPropertyDecodeFeatures = type.GetProperty("DecodeFeatures");
 
             refPropertyWriteProxy = type.GetProperty("WriteProxy");
             refPropertyReadProxy = type.GetProperty("ReadProxy");
@@ -222,9 +200,6 @@ internal class AptFieldProps
     /// 在编译的过程中由于反射的原因，会导致Dson-Codec程序集被加载到内存，此时我们才能使用反射获取数据。
     /// </summary>
     private static AptFieldProps ParseByReflectionData(AptFieldInfo fieldInfo, Attribute attribute,
-                                                       INamedTypeSymbol typeNumberStyle,
-                                                       INamedTypeSymbol typeStringStyle,
-                                                       INamedTypeSymbol typeObjectStyle,
                                                        Compilation compilation) {
         InitReflectEnv();
         //
@@ -232,12 +207,9 @@ internal class AptFieldProps
         props.name = (string)refPropertyName.GetValue(attribute);
         props.getter = (string)refPropertyGetter.GetValue(attribute);
         props.setter = (string)refPropertySetter.GetValue(attribute);
+        props.encodeFeatures = (int)refPropertyEncodeFeatures.GetValue(attribute);
+        props.decodeFeatures = (int)refPropertyDecodeFeatures.GetValue(attribute);
 
-        props.numberStyle = AptUtils.GetEnumName(typeNumberStyle, (int)refPropertyNumberStyle.GetValue(attribute));
-        props.stringStyle = AptUtils.GetEnumName(typeStringStyle, (int)refPropertyStringStyle.GetValue(attribute));
-        if ((bool)refPropertyHasStyle.GetValue(attribute)) { // objectStyle必须显式声明
-            props.objectStyle = AptUtils.GetEnumName(typeObjectStyle, (int)refPropertyObjectStyle.GetValue(attribute));
-        }
         props.writeProxy = (string)refPropertyWriteProxy.GetValue(attribute);
         props.readProxy = (string)refPropertyReadProxy.GetValue(attribute);
 
@@ -278,6 +250,15 @@ internal class AptFieldProps
             // Value属性
             ignore = (bool)refPropertyIgnoreValue.GetValue(attributeData.ReflectionData);
         }
+    }
+
+    public void ParseSerializeReference(AptFieldInfo fieldInfo, string attributeClassName) {
+        AptAttributeData? attributeData = fieldInfo.GetAttribute(attributeClassName);
+        if (attributeData == null) {
+            return;
+        }
+        serializeReference = true;
+        encodeFeatures |= 0x01; // 序列化引用
     }
 
     #endregion

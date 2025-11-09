@@ -38,13 +38,13 @@ public static class MoreCollectionCodecs
     /// <typeparam name="T"></typeparam>
     public class StackCodec<T> : IDsonCodec<Stack<T>>
     {
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in Stack<T> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, Stack<T> inst, Type declaredType, SerializeFeatures features) {
+            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+            SerializeFeatures elementFeatures = features.GetElementFeatures();
             // 重复编码以避免Itr装箱
-            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.Count);
+            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.Count);
             foreach (T item in inst) {
-                writer.WriteObject<T>(null, in item);
+                writer.WriteObject(in item, elementFeatures);
             }
             writer.WriteEndArray();
         }
@@ -67,23 +67,23 @@ public static class MoreCollectionCodecs
     /// <typeparam name="T"></typeparam>
     public class QueueCodec<T> : IDsonCodec<Queue<T>>
     {
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in Queue<T> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, Queue<T> inst, Type declaredType, SerializeFeatures features) {
+            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+            SerializeFeatures elementFeatures = features.GetElementFeatures();
             // 重复编码以避免Itr装箱
-            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.Count);
+            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.Count);
             foreach (T item in inst) {
-                writer.WriteObject<T>(null, in item);
+                writer.WriteObject(in item, elementFeatures);
             }
             writer.WriteEndArray();
         }
 
         public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // Queue重复编码，避免不必要的拷贝
-            int count = reader.ReadStartArray();
+            int count = reader.ReadStartArray().count;
             Queue<T> result = new Queue<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(null);
+                T value = reader.ReadObject<T>();
                 result.Enqueue(value);
             }
             reader.ReadEndArray();
@@ -93,16 +93,16 @@ public static class MoreCollectionCodecs
 
     public class SmallDynamicArrayCodec<T> : IDsonCodec<SmallDynamicArray<T>> where T : class
     {
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in SmallDynamicArray<T> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.ElementCount);
+        public void WriteObject(IDsonObjectWriter writer, SmallDynamicArray<T> inst, Type declaredType, SerializeFeatures features) {
+            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+            SerializeFeatures elementFeatures = features.GetElementFeatures();
+            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.ElementCount);
             inst.BeginItr();
             try {
                 for (int i = 0, len = inst.Length; i < len; i++) {
                     T item = inst[i];
                     if (item != null) {
-                        writer.WriteObject(null, item);
+                        writer.WriteObject(item, elementFeatures);
                     }
                 }
             }
@@ -113,10 +113,10 @@ public static class MoreCollectionCodecs
         }
 
         public SmallDynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
+            int count = reader.ReadStartArray().count;
             SmallDynamicArray<T> result = new SmallDynamicArray<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(null);
+                T value = reader.ReadObject<T>();
                 result.Add(value);
             }
             reader.ReadEndArray();
@@ -126,16 +126,16 @@ public static class MoreCollectionCodecs
 
     public class DynamicArrayCodec<T> : IDsonCodec<DynamicArray<T>> where T : class
     {
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in DynamicArray<T> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.ElementCount);
+        public void WriteObject(IDsonObjectWriter writer, DynamicArray<T> inst, Type declaredType, SerializeFeatures features) {
+            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+            SerializeFeatures elementFeatures = features.GetElementFeatures();
+            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.ElementCount);
             inst.BeginItr();
             try {
                 for (int i = 0, len = inst.Length; i < len; i++) {
                     T item = inst[i];
                     if (item != null) {
-                        writer.WriteObject(null, item);
+                        writer.WriteObject(item, elementFeatures);
                     }
                 }
             }
@@ -146,311 +146,14 @@ public static class MoreCollectionCodecs
         }
 
         public DynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
+            int count = reader.ReadStartArray().count;
             DynamicArray<T> result = new DynamicArray<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(null);
+                T value = reader.ReadObject<T>();
                 result.Add(value);
             }
             reader.ReadEndArray();
             return result;
-        }
-    }
-
-    #endregion
-
-    #region 特化List
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static IList<T> ToImmutable<T>(IList<T> list, Type declaredType) {
-        // 需要确保ImmutableList能赋值给声明类型
-        if (declaredType.IsGenericType) {
-            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)
-                || declaredType.GetGenericTypeDefinition() == typeof(ISet<>)
-                || declaredType.GetGenericTypeDefinition() == typeof(IGenericSet<>)) {
-                return ImmutableList<T>.CreateRange(list);
-            }
-        }
-        return list;
-    }
-
-    public class IntListCodec : IDsonCodec<IList<int>>
-    {
-        private readonly Type typeInfo;
-
-        public IntListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<int> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteInt(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<int> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<int> result = new List<int>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                int value = reader.ReadInt(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
-        }
-    }
-
-    public class LongListCodec : IDsonCodec<IList<long>>
-    {
-        private readonly Type typeInfo;
-
-        public LongListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<long> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteLong(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<long> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<long> result = new List<long>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                long value = reader.ReadLong(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
-        }
-    }
-
-    public class FloatListCodec : IDsonCodec<IList<float>>
-    {
-        private readonly Type typeInfo;
-
-        public FloatListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<float> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteFloat(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<float> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<float> result = new List<float>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                float value = reader.ReadFloat(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
-        }
-    }
-
-    public class DoubleListCodec : IDsonCodec<IList<double>>
-    {
-        private readonly Type typeInfo;
-
-        public DoubleListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<double> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteDouble(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<double> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<double> result = new List<double>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                double value = reader.ReadDouble(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
-        }
-    }
-
-    public class BoolListCodec : IDsonCodec<IList<bool>>
-    {
-        private readonly Type typeInfo;
-
-        public BoolListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<bool> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteBool(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<bool> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<bool> result = new List<bool>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                bool value = reader.ReadBool(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
-        }
-    }
-
-    public class StringListCodec : IDsonCodec<IList<string>>
-    {
-        private readonly Type typeInfo;
-
-        public StringListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<string> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteString(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<string> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<string> result = new List<string>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                string value = reader.ReadString(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
-        }
-    }
-
-    public class UIntListCodec : IDsonCodec<IList<uint>>
-    {
-        private readonly Type typeInfo;
-
-        public UIntListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<uint> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteUInt(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<uint> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<uint> result = new List<uint>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                uint value = reader.ReadUInt(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
-        }
-    }
-
-    public class ULongListCodec : IDsonCodec<IList<ulong>>
-    {
-        private readonly Type typeInfo;
-
-        public ULongListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public bool AutoStartEnd => false;
-
-        public void WriteObject(IDsonObjectWriter writer, in IList<ulong> inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteULong(null, inst[i]);
-            }
-            writer.WriteEndArray();
-        }
-
-        public IList<ulong> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            int count = reader.ReadStartArray();
-            IList<ulong> result = new List<ulong>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                ulong value = reader.ReadULong(null);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            //
-            return reader.Options.readAsImmutable
-                ? ToImmutable(result, declaredType)
-                : result;
         }
     }
 

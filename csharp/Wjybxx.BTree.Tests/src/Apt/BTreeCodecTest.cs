@@ -22,6 +22,7 @@ using System.Linq;
 using NUnit.Framework;
 using Wjybxx.BTree.Leaf;
 using Wjybxx.BTreeCodec;
+using Wjybxx.Dson;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Text;
 
@@ -33,12 +34,24 @@ namespace Wjybxx.BTree.Codec;
 public class BTreeCodecTest
 {
     private static string dsonString = """
-    {@{AlwaysSuccess[string]}
-        child: {@{SimpleRandom[string]}
-            p: 0.5
-        }
-    }
-    """;
+                                       {@{AlwaysSuccess[string]}
+                                           child: {@{SimpleRandom[string]}
+                                               p: 0.5
+                                           }
+                                       }
+                                       """;
+
+    private static string dsonString2 = """
+                                        {@{clsName: "AlwaysSuccess[string]", localId: 1}
+                                            child: @ptr 2
+                                        }
+                                        {@{clsName: "SimpleRandom[string]", localId: 2}
+                                            p: 0.5
+                                        }
+                                        {@{clsName: "AlwaysFail[string]", localId: 3}
+                                            child: @ptr 2
+                                        }
+                                        """;
 
     private static IDsonConverter converter;
 
@@ -54,7 +67,7 @@ public class BTreeCodecTest
             Type encoderType = codecType.BaseType!.GenericTypeArguments[0].GetGenericTypeDefinition();
             builder.AddGenericCodec(encoderType, codecType);
 
-            TypeMeta typeMeta = TypeMeta.Of(encoderType, ObjectStyle.Indent, RemoveGenericInfo(encoderType.Name));
+            TypeMeta typeMeta = TypeMeta.Of(encoderType, RemoveGenericInfo(encoderType.Name));
             builder.AddTypeMeta(typeMeta);
         }
         converter = builder.Build();
@@ -74,5 +87,24 @@ public class BTreeCodecTest
         SimpleRandom<string> simpleRandom = task.GetChild(0) as SimpleRandom<string>;
         Assert.NotNull(simpleRandom);
         Assert.AreEqual(0.5, simpleRandom.P);
+    }
+
+    [Test]
+    public void ReadCollectionTest() {
+        List<Task<string>> list = converter.ReadFromDsonCollectionString<Task<string>>(dsonString2);
+        SimpleRandom<string> simpleRandom = list[1] as SimpleRandom<string>;
+        Assert.NotNull(simpleRandom);
+        Assert.AreEqual(0.5, simpleRandom.P);
+        //
+        Task<string> decorator1 = list[0];
+        Task<string> decorator2 = list[2];
+        Assert.AreSame(decorator1.GetChild(0), decorator2.GetChild(0));
+    }
+
+    [Test]
+    public void SerializeTest() {
+        List<Task<string>> list = converter.ReadFromDsonCollectionString<Task<string>>(dsonString2);
+        string collectionString = converter.WriteAsDsonCollectionString(list, typeof(Task<string>));
+        Console.WriteLine(collectionString);
     }
 }

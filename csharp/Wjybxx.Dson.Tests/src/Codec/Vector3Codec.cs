@@ -25,16 +25,21 @@ namespace Wjybxx.Dson.Tests;
 
 public class Vector3Codec : IDsonCodec<Vector3>
 {
-    public void WriteObject(IDsonObjectWriter writer, in Vector3 inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, Vector3 inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteStartObject(typeof(Vector3), declaredType, features);
         writer.WriteFloat("x", inst.X);
         writer.WriteFloat("y", inst.Y);
         writer.WriteFloat("z", inst.Z);
+        writer.WriteEndObject();
     }
 
     public Vector3 ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return new Vector3(
+        reader.ReadStartObject();
+        Vector3 r = new Vector3(
             reader.ReadFloat("x"),
             reader.ReadFloat("y"),
             reader.ReadFloat("z"));
+        reader.ReadEndObject();
+        return r;
     }
 }

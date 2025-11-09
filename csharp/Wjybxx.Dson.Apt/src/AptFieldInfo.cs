@@ -41,7 +41,7 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
     public readonly FieldInfo? fieldInfo;
     /// <summary>
     /// 字段编译期数据
-    /// 1.如果是当前程序集类型的字段，则该字段有值；
+    /// 1.如果是第三方程序集类的字段，则不一定有值；
     /// 2.该字段只用于获取注解（Attribute），不能用于类型判断。
     /// </summary>
     public readonly IFieldSymbol? fieldSymbol;
@@ -137,19 +137,18 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
             AttributeData? attributeData = AptUtils.GetAttribute(propertySymbol!.GetAttributes(), className);
             return attributeData == null ? null : new AptAttributeData(attributeData, null);
         }
-        // 非自动属性，只能将注解添加到字段；编译期数据和反射数据都要查询
+        // 非自动属性，只能将注解添加到字段；编译期数据和反射数据都要查询；反射数据优先，第三方程序集以反射数据为准
+        if (fieldInfo != null) {
+            foreach (Attribute attribute in fieldInfo.GetCustomAttributes(false)) {
+                if (attribute.GetType().ToString() == className) {
+                    return new AptAttributeData(null, attribute);
+                }
+            }
+        }
         if (fieldSymbol != null) {
             AttributeData? attributeData = AptUtils.GetAttribute(fieldSymbol!.GetAttributes(), className);
             if (attributeData != null) {
                 return new AptAttributeData(attributeData, null);
-            }
-        }
-        if (fieldInfo != null) {
-            // 反射API未提供根据类型名查询注解的接口，只能笨方法测试Type的名字
-            foreach (Attribute attribute in fieldInfo!.GetCustomAttributes(false)) {
-                if (attribute.GetType().ToString() == className) {
-                    return new AptAttributeData(null, attribute);
-                }
             }
         }
         return null;

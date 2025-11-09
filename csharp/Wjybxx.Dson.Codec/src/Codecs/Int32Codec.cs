@@ -21,20 +21,25 @@ using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
-public class Int32Codec : IDsonCodec<int>
+public class Int32Codec : IDsonCodec<int>, IKeyCodec<int>
 {
-    public bool AutoStartEnd => false;
+    public string EncodeKey(int value, SerializeFeatures features) {
+        return features.ToNumberStyle().ToString(value).Value;
+    }
 
-    public void WriteObject(IDsonObjectWriter writer, in int inst, Type declaredType, ObjectStyle style) {
-        // 由字典或List调用时，declaredType可能是匹配的
-        INumberStyle numberStyle = declaredType == typeof(int)
-            ? NumberStyles.Simple
-            : NumberStyles.Typed;
-        writer.WriteInt(null, inst, numberStyle);
+    public int DecodeKey(string keyString) {
+        return DsonTexts.ParseInt32(keyString);
+    }
+
+    public void WriteObject(IDsonObjectWriter writer, int inst, Type declaredType, SerializeFeatures features) {
+        if (declaredType != typeof(int)) {
+            features |= SerializeFeatures.NumberTyped;
+        }
+        writer.WriteInt(inst, features);
     }
 
     public int ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadInt(null);
+        return reader.ReadInt();
     }
 }
 }

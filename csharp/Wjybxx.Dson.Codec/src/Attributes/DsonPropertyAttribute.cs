@@ -18,7 +18,6 @@
 
 using System;
 using Wjybxx.Commons.Attributes;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Attributes
 {
@@ -50,42 +49,14 @@ public class DsonPropertyAttribute : Attribute
     /// 赋值字段的属性或方法 -- 特殊情况下使用
     /// </summary>
     [StableName] public string? Setter { get; set; }
-
-    #region style
-
     /// <summary>
-    /// 数字类型字段的文本格式
+    /// 序列化特征值
     /// </summary>
-    [StableName] public NumberStyle NumberStyle { get; set; } = NumberStyle.Simple;
-
+    [StableName] public SerializeFeatures EncodeFeatures { get; set; }
     /// <summary>
-    /// 字符串类型字段的文本格式
+    /// 反序列化特征值
     /// </summary>
-    [StableName] public StringStyle StringStyle { get; set; } = StringStyle.Auto;
-
-    /// <summary>
-    /// 对象类型字段的文本格式。
-    /// 注意：该属性只有显式声明才有效，当未声明该属性时，将使用目标类型的默认格式。
-    /// </summary>
-    [StableName] public ObjectStyle ObjectStyle {
-        get => _objectStyle;
-        set {
-            _objectStyle = value;
-            HasObjectStyle = true;
-        }
-    }
-
-    /// <summary>
-    /// Nullable不是编译时常量，因此不能在构造Attribute时初始化，我们通过额外的Bool标识来解决。
-    /// </summary>
-    private ObjectStyle _objectStyle = ObjectStyle.Indent;
-
-    /// <summary>
-    /// 以后可能也用于记录其它属性是否有值
-    /// </summary>
-    public bool HasObjectStyle { get; private set; }
-
-    #endregion
+    [StableName] public SerializeFeatures DecodeFeatures { get; set; }
 
     #region 多态解析
 
@@ -111,7 +82,7 @@ public class DsonPropertyAttribute : Attribute
     ///  }
     ///  // 静态方法代理
     ///  public static void WriteName(T inst, IDsonObjectWriter writer, String name) {
-    ///      writer.WriteString(name, this.name);
+    ///      writer.WriteString(name, inst.name);
     ///  }
     /// </code>
     /// </summary>
@@ -129,7 +100,7 @@ public class DsonPropertyAttribute : Attribute
     ///  }
     ///  // 静态方法代理
     ///  public static void ReadName(T inst, IDsonObjectReader reader, String name) {
-    ///      this.name = reader.ReadString(name);
+    ///      inst.name = reader.ReadString(name);
     ///  }
     /// </code>
     /// </summary>

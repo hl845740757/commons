@@ -142,13 +142,18 @@ public sealed class TypeMetaConfig
         return this;
     }
 
-    public TypeMetaConfig Add(Type type, ObjectStyle style, string clsName) {
-        Add(TypeMeta.Of(type, style, clsName));
+    public TypeMetaConfig Add(Type type,
+                              SerializeFeatures encodeFeatures,
+                              params string[] clsNames) {
+        Add(TypeMeta.Of(type, encodeFeatures, default, clsNames));
         return this;
     }
 
-    public TypeMetaConfig Add(Type type, ObjectStyle style, params string[] clsNames) {
-        Add(TypeMeta.Of(type, style, clsNames));
+    public TypeMetaConfig Add(Type type,
+                              SerializeFeatures encodeFeatures,
+                              DeserializeFeatures decodeFeatures,
+                              params string[] clsNames) {
+        Add(TypeMeta.Of(type, encodeFeatures, decodeFeatures, clsNames));
         return this;
     }
 
@@ -197,7 +202,7 @@ public sealed class TypeMetaConfig
         // 特殊组件
         config.Add(typeof(object), "Object", "object"); // object会作为泛型参数...
         config.Add(typeof(Nullable<>), "Nullable"); // Nullable
-        config.Add(typeof(KeyValuePair<,>), "KVPair"); // 字典Pair
+        config.Add(typeof(KeyValuePair<,>), "Pair", "KeyValuePair"); // 字典Pair
 
         // 基础集合
         if (includeCollections) {
@@ -209,8 +214,6 @@ public sealed class TypeMetaConfig
             config.Add(typeof(Dictionary<,>), "Dictionary", "Dictionary`2");
             config.Add(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2");
             config.Add(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2");
-
-            config.Add(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy");
         }
         return config;
     }

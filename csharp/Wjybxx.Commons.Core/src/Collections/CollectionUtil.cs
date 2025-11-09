@@ -245,14 +245,17 @@ public static partial class CollectionUtil
 
     #region linq
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ImmutableList<T> ToImmutableList2<T>(this IEnumerable<T> source, IComparer<T>? comparer = null) {
         return ImmutableList<T>.CreateRange(source, comparer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ImmutableSet<T> ToImmutableSet2<T>(this IEnumerable<T> source, IEqualityComparer<T>? keyComparer = null) {
         return ImmutableSet<T>.CreateRange(source, keyComparer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ImmutableDictionary<TKey, TValue> ToImmutableDictionary2<TKey, TValue>(
         this IEnumerable<KeyValuePair<TKey, TValue>> source,
         IEqualityComparer<TKey>? keyComparer = null) {

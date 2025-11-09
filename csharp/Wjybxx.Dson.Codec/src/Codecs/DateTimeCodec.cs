@@ -23,14 +23,12 @@ namespace Wjybxx.Dson.Codec.Codecs
 {
 public class DateTimeCodec : IDsonCodec<DateTime>
 {
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in DateTime inst, Type declaredType, ObjectStyle style) {
-        writer.WriteDateTime(null, in inst);
+    public void WriteObject(IDsonObjectWriter writer, DateTime inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteDateTime(in inst);
     }
 
     public DateTime ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadDateTime(null);
+        return reader.ReadDateTime();
     }
 }
 }

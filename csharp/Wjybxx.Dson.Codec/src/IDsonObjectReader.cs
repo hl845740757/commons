@@ -23,42 +23,73 @@ using Wjybxx.Dson.Types;
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 1. 读取数组内普通成员时，name传null或零值，读取嵌套对象时使用无name参数的start方法
-/// 2. 为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
+/// 1. Object/Header先读name再读value，数组直接读value。
+/// 2. 已读取name的情况下，使用包含name的方法，name将被忽略。
 /// </summary>
 public interface IDsonObjectReader : IDisposable
 {
-    #region 简单值
+    #region 基础值
 
-    int ReadInt(string? name);
+    int ReadInt(string name);
 
-    long ReadLong(string? name);
+    long ReadLong(string name);
 
-    float ReadFloat(string? name);
+    float ReadFloat(string name);
 
-    double ReadDouble(string? name);
+    double ReadDouble(string name);
 
-    bool ReadBool(string? name);
+    bool ReadBool(string name);
 
-    string ReadString(string? name);
+    string ReadString(string name);
 
-    void ReadNull(string? name);
+    void ReadNull(string name);
 
-    byte[]? ReadBytes(string? name) {
-        Binary binary = ReadBinary(name);
+    byte[]? ReadBytes(string name);
+
+    Binary? ReadBinary(string name);
+
+    ObjectPtr ReadPtr(string name);
+
+    DateTime ReadDateTime(string name);
+
+    // ExtDateTime并不常见
+    ExtDateTime ReadExtDateTime(string name);
+
+    Timestamp ReadTimestamp(string name);
+
+    #endregion
+
+    #region 基础值-无name版
+
+    int ReadInt();
+
+    long ReadLong();
+
+    float ReadFloat();
+
+    double ReadDouble();
+
+    bool ReadBool();
+
+    string ReadString();
+
+    void ReadNull();
+
+    byte[]? ReadBytes() {
+        Binary binary = ReadBinary();
         return binary.UnsafeBuffer;
     }
 
-    Binary ReadBinary(string? name);
+    Binary ReadBinary();
 
-    ObjectPtr ReadPtr(string? name);
+    ObjectPtr ReadPtr();
 
-    DateTime ReadDateTime(string? name);
+    DateTime ReadDateTime();
 
     // ExtDateTime并不常见
-    ExtDateTime ReadExtDateTime(string? name);
+    ExtDateTime ReadExtDateTime();
 
-    Timestamp ReadTimestamp(string? name);
+    Timestamp ReadTimestamp();
 
     #endregion
 
@@ -76,7 +107,7 @@ public interface IDsonObjectReader : IDisposable
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
     /// <returns></returns>
-    object ReadObject(string? name, Type declaredType, Func<object>? factory = null);
+    object ReadObject(string name, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
     /// 从输入流中读取一个对象
@@ -86,7 +117,23 @@ public interface IDsonObjectReader : IDisposable
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
     /// </summary>
-    T ReadObject<T>(string? name, Func<object>? factory = null);
+    T ReadObject<T>(string name, Func<object>? factory = null);
+
+    /// <summary>
+    /// 从输入流中读取一个对象
+    /// </summary>
+    /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
+    /// <returns></returns>
+    object ReadObject(Type declaredType, Func<object>? factory = null);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
+    /// <typeparam name="T">对象的声明类型</typeparam>
+    /// <returns></returns>
+    T ReadObject<T>(Func<object>? factory = null);
 
     #endregion
 
@@ -116,8 +163,7 @@ public interface IDsonObjectReader : IDisposable
     /// 如果尚未调用<see cref="ReadDsonType"/>，该方法将尝试跳转到该name所在的字段。
     /// 如果已调用<see cref="ReadDsonType"/>，则name必须与下一个name匹配。
     /// 如果已调用<see cref="ReadName()"/>，则name可以为null，否则必须当前name匹配。
-    /// 如果reader不支持随机读，当名字不匹配下一个值时将抛出异常。
-    /// 返回false的情况下，可继续调用该方法或{@link #readDsonType()}读取下一个字段。
+    /// 返回false的情况下，可继续调用该方法或<see cref="ReadDsonType"/>读取下一个字段。
     /// </summary>
     /// <param name="name"></param>
     /// <returns>如果是Object上下文，如果字段存在则返回true，否则返回false；如果是Array上下文，如果尚未到达数组尾部，则返回true，否则返回false。</returns>
@@ -127,23 +173,11 @@ public interface IDsonObjectReader : IDisposable
 
     string CurrentName { get; }
 
-    /// <summary>
-    /// 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
-    /// 在使用Dson文本配置数据的情况下，Count可能未被正确维护。
-    /// 该值的唯一作用就是更好的初始化<see cref="List{T}"/>和<see cref="Dictionary{TKey,TValue}"/>的空间。
-    /// </summary>
-    /// <returns>对象头中的count，如果未写入也返回0，以方便初始化</returns>
-    int ReadStartObject();
+    SerializeHeader ReadStartObject();
 
     void ReadEndObject();
 
-    /// <summary>
-    /// 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
-    /// 在使用Dson文本配置数据的情况下，Count可能未被正确维护。
-    /// 该值的唯一作用就是更好的初始化<see cref="List{T}"/>和<see cref="Dictionary{TKey,TValue}"/>的空间。
-    /// </summary>
-    /// <returns>对象头中的count，如果未写入也返回0，以方便初始化</returns>
-    int ReadStartArray();
+    SerializeHeader ReadStartArray();
 
     void ReadEndArray();
 
@@ -156,13 +190,24 @@ public interface IDsonObjectReader : IDisposable
     byte[] ReadValueAsBytes(string name);
 
     /// <summary>
-    /// 解码字典的key。
-    /// 外部可以判断Key的类型，以避免拆装箱。
+    /// 发布引用
+    /// 
+    /// 注：Codec应该在创建实例以后立刻发布，以避免循环依赖时出现错误。
     /// </summary>
-    /// <param name="keyString">字符串形式的key</param>
-    /// <typeparam name="T">key的声明类型</typeparam>
-    /// <returns>期望的结果类型</returns>
-    T DecodeKey<T>(string keyString);
+    void PublishReference<T>(in T reference);
+
+    /// <summary>
+    /// 获取当前容器的类型元数据
+    ///
+    /// 注：如果当前是顶层对象，则返回值为null。
+    /// </summary>
+    /// <returns></returns>
+    TypeMeta? GetContainerTypeMeta();
+
+    /// <summary>
+    /// 查询可用于内联编码的Codec
+    /// </summary>
+    DsonCodecImpl<T>? GetInlinableCodec<T>();
 
     /// <summary>
     /// 设置是否启用name池化

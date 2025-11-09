@@ -35,8 +35,9 @@ public interface IConverter
     /// </summary>
     /// <param name="value">要序列化的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">序列化特征值</param>
     /// <returns></returns>
-    byte[] Write(object value, Type declaredType);
+    byte[] Write(object value, Type declaredType, SerializeFeatures features = default);
 
     /// <summary>
     /// 从数据源中读取一个对象
@@ -51,13 +52,14 @@ public interface IConverter
 
     /// <summary>
     /// 将一个对象转换为字节数组
-    ///
+    /// 
     /// 注意：写入的字节数回设置到<see cref="DsonChunk"/>
     /// </summary>
     /// <param name="value">要序列化的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="chunk">二进制块</param>
-    void Write(object value, Type declaredType, DsonChunk chunk);
+    /// <param name="features">特征值</param>
+    void Write(object value, Type declaredType, DsonChunk chunk, SerializeFeatures features = default);
 
     /// <summary>
     /// 从数据源中读取一个对象

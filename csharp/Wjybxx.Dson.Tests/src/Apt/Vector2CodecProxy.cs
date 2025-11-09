@@ -31,7 +31,7 @@ public class Vector2CodecProxy
     public static void BeforeEncode(ref Vector2 inst, ConverterOptions options) {
     }
 
-    public static void WriteObject(in Vector2 inst, IDsonObjectWriter writer) {
+    public static void WriteObject(ref Vector2 inst, IDsonObjectWriter writer) {
     }
 
     public static void ReadObject(ref Vector2 inst, IDsonObjectReader reader) {

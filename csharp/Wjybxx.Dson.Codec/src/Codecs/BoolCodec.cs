@@ -17,20 +17,25 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
-public class BoolCodec : IDsonCodec<bool>
+public class BoolCodec : IDsonCodec<bool>, IKeyCodec<bool>
 {
-    public bool AutoStartEnd => false;
+    public string EncodeKey(bool value, SerializeFeatures features) {
+        return value ? "true" : "false";
+    }
 
-    public void WriteObject(IDsonObjectWriter writer, in bool inst, Type declaredType, ObjectStyle style) {
-        writer.WriteBool(null, inst);
+    public bool DecodeKey(string keyString) {
+        return keyString == "true" || keyString == "1";
+    }
+
+    public void WriteObject(IDsonObjectWriter writer, bool inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteBool(inst, features);
     }
 
     public bool ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadBool(null);
+        return reader.ReadBool();
     }
 }
 }

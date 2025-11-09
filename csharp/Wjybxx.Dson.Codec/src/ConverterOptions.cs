@@ -35,38 +35,13 @@ public class ConverterOptions
     /// </summary>
     public readonly TypeWritePolicy typeWritePolicy;
     /// <summary>
-    /// 是否写入对象基础类型字段的默认值
-    /// 1.数值类型默认值为0，bool类型默认值为false
-    /// 2.只在Object上下文生效
-    ///
-    /// 基础值类型需要单独控制，因为有时候我们仅想不输出null，但要输出基础类型字段的默认值 -- 通常是在文本模式下。
+    /// 全局序列化特征值
     /// </summary>
-    public readonly bool appendDef;
+    public readonly SerializeFeatures encodeFeatures;
     /// <summary>
-    /// 是否写入对象内的null值
-    /// 1.只在Object上下文生效
-    /// 2.对于一般的对象可不写入，因为ObjectReader是支持随机读的
+    /// 全局反序列化特征值(TODO)
     /// </summary>
-    public readonly bool appendNull;
-    /// <summary>
-    /// 字典的编码策略
-    /// </summary>
-    public readonly MapEncodePolicy mapEncodePolicy;
-    /// <summary>
-    /// 是否将枚举写为字符串
-    /// 
-    /// 注：通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
-    /// </summary>
-    public readonly bool writeEnumAsString;
-    /// <summary>
-    /// 是否将普通object编码为数组
-    /// 1.如果开启该选项，将不写入object的字段名，只是顺序写入object的所有字段值。
-    /// 2.这可以避免大量的字符串编解码，从而提升性能 - 适用于非持久化场景。
-    /// 3.该选项仅对<see cref="IDsonCodec.AutoStartEnd"/>为true的编码器有效。
-    /// 4.不可以有基于name进行Switch编解码的codec。
-    /// 5.对象字段不可以有特殊的初始值 -- 否则会被反序列化覆盖。
-    /// </summary>
-    public readonly bool writeObjectAsArray;
+    public readonly DeserializeFeatures decodeFeatures;
 
     /// <summary>
     /// 是否启用随机读
@@ -111,6 +86,8 @@ public class ConverterOptions
     public readonly IArrayPool<byte> bufferPool;
     /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
     public readonly IObjectPool<StringBuilder> stringBuilderPool;
+    /** reader缓存池 */
+    public readonly IObjectPool<DsonCollectionReader<string>> readerPool;
 
     /** 二进制解码设置 */
     public readonly DsonReaderSettings binReaderSettings;
@@ -123,12 +100,8 @@ public class ConverterOptions
 
     public ConverterOptions(Builder builder) {
         this.typeWritePolicy = builder.TypeWritePolicy;
-        this.appendDef = builder.AppendDef;
-        this.appendNull = builder.AppendNull;
-        this.mapEncodePolicy = builder.MapEncodePolicy;
-        this.writeEnumAsString = builder.WriteEnumAsString;
-        this.writeObjectAsArray = builder.WriteObjectAsArray;
-
+        this.encodeFeatures = builder.EncodeFeatures;
+        this.decodeFeatures = builder.DecodeFeatures;
         this.randomRead = builder.RandomRead;
         this.readAsImmutable = builder.ReadAsImmutable;
         this.enableBeforeEncode = builder.EnableBeforeEncode;
@@ -141,6 +114,7 @@ public class ConverterOptions
         this.maxBufferLength = builder.MaxBufferLength;
         this.bufferPool = builder.BufferPool;
         this.stringBuilderPool = builder.StringBuilderPool;
+        this.readerPool = builder.ReaderPool;
 
         this.binReaderSettings = builder.BinReaderSettings;
         this.binWriterSettings = builder.BinWriterSettings;
@@ -157,12 +131,8 @@ public class ConverterOptions
     /** 允许子类重写 */
     public virtual void AssignToBuilder(Builder builder) {
         builder.TypeWritePolicy = typeWritePolicy;
-        builder.AppendDef = appendDef;
-        builder.AppendNull = appendNull;
-        builder.MapEncodePolicy = mapEncodePolicy;
-        builder.WriteEnumAsString = writeEnumAsString;
-        builder.WriteObjectAsArray = writeObjectAsArray;
-
+        builder.EncodeFeatures = encodeFeatures;
+        builder.DecodeFeatures = decodeFeatures;
         builder.RandomRead = randomRead;
         builder.ReadAsImmutable = readAsImmutable;
         builder.EnableBeforeEncode = enableBeforeEncode;
@@ -175,6 +145,7 @@ public class ConverterOptions
         builder.MaxBufferLength = maxBufferLength;
         builder.BufferPool = bufferPool;
         builder.StringBuilderPool = stringBuilderPool;
+        builder.ReaderPool = readerPool;
 
         builder.BinReaderSettings = binReaderSettings;
         builder.BinWriterSettings = binWriterSettings;
@@ -182,8 +153,15 @@ public class ConverterOptions
         builder.TextWriterSettings = textWriterSettings;
     }
 
-    /** 默认的Options */
-    public static readonly ConverterOptions DEFAULT = NewBuilder().Build(); // 有初始化顺序依赖
+    /// <summary>
+    /// 共享Reader池，注意初始化顺序
+    /// </summary>
+    private static readonly ConcurrentObjectPool<DsonCollectionReader<string>> SHARED_READER_POOL = new(
+        DsonCollectionReader<string>.UnsafeCreate, e => e.Dispose());
+    /// <summary>
+    /// 默认的Options
+    /// </summary>
+    public static readonly ConverterOptions DEFAULT = NewBuilder().Build();
 
     public static Builder NewBuilder() {
         return new Builder();
@@ -192,11 +170,8 @@ public class ConverterOptions
     public class Builder
     {
         public TypeWritePolicy TypeWritePolicy { get; set; } = TypeWritePolicy.Optimized;
-        public bool AppendDef { get; set; } = true;
-        public bool AppendNull { get; set; } = true;
-        public MapEncodePolicy MapEncodePolicy { get; set; } = MapEncodePolicy.Array;
-        public bool WriteEnumAsString { get; set; } = false;
-        public bool WriteObjectAsArray { get; set; } = false;
+        public SerializeFeatures EncodeFeatures { get; set; }
+        public DeserializeFeatures DecodeFeatures { get; set; }
         public bool RandomRead { get; set; } = true;
         public bool ReadAsImmutable { get; set; } = false;
         public bool EnableBeforeEncode { get; set; } = false;
@@ -209,6 +184,7 @@ public class ConverterOptions
         public int MaxBufferLength { get; set; } = 1024 * 1024;
         public IArrayPool<byte> BufferPool { get; set; } = IArrayPool<byte>.Shared;
         public IObjectPool<StringBuilder> StringBuilderPool { get; set; } = ConcurrentObjectPool.SharedStringBuilderPool;
+        public IObjectPool<DsonCollectionReader<string>> ReaderPool { get; set; } = SHARED_READER_POOL;
 
         public DsonReaderSettings BinReaderSettings { get; set; } = DsonReaderSettings.Default;
         public DsonWriterSettings BinWriterSettings { get; set; } = DsonWriterSettings.Default;

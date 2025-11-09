@@ -23,14 +23,12 @@ namespace Wjybxx.Dson.Codec.Codecs
 {
 public class DoubleCodec : IDsonCodec<double>
 {
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in double inst, Type declaredType, ObjectStyle style) {
-        writer.WriteDouble(null, inst, NumberStyles.Simple); // double无需声明类型
+    public void WriteObject(IDsonObjectWriter writer, double inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteDouble(inst, features); // double无需声明类型
     }
 
     public double ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadDouble(null);
+        return reader.ReadDouble();
     }
 }
 }

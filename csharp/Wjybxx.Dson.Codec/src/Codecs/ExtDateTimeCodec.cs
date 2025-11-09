@@ -24,14 +24,12 @@ namespace Wjybxx.Dson.Codec.Codecs
 {
 public class ExtDateTimeCodec : IDsonCodec<ExtDateTime>
 {
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in ExtDateTime inst, Type declaredType, ObjectStyle style) {
-        writer.WriteExtDateTime(null, in inst);
+    public void WriteObject(IDsonObjectWriter writer, ExtDateTime inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteExtDateTime(in inst);
     }
 
     public ExtDateTime ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadExtDateTime(null);
+        return reader.ReadExtDateTime();
     }
 }
 }

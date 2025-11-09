@@ -24,12 +24,12 @@ namespace Wjybxx.Dson.Codec.Codecs
 {
 public class TimestampCodec : IDsonCodec<Timestamp>
 {
-    public void WriteObject(IDsonObjectWriter writer, in Timestamp inst, Type declaredType, ObjectStyle style) {
-        writer.WriteTimestamp(null, in inst);
+    public void WriteObject(IDsonObjectWriter writer, Timestamp inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteTimestamp(in inst);
     }
 
     public Timestamp ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadTimestamp(null);
+        return reader.ReadTimestamp();
     }
 }
 }

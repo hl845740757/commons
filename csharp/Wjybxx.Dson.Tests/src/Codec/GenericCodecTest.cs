@@ -37,8 +37,8 @@ public class GenericCodecTest
     public void SetUp() {
         IList<TypeMeta> typeMetas = new List<TypeMeta>()
         {
-            TypeMeta.Of(typeof(Vector3), ObjectStyle.Flow, "V3", "Vector3"),
-            TypeMeta.Of(typeof(MyDictionary<,>), ObjectStyle.Indent, "MyDictionary")
+            TypeMeta.Of(typeof(Vector3), SerializeFeatures.ObjectFlow, "V3", "Vector3"),
+            TypeMeta.Of(typeof(MyDictionary<,>), "MyDictionary")
         };
         DsonCodecConfig codecConfig = new DsonCodecConfig()
             .AddCodec(new Vector3Codec());
@@ -47,7 +47,7 @@ public class GenericCodecTest
         if (codecType == null) {
             throw new Exception("The codec has not been generated");
         }
-        
+
         codecConfig.AddGenericCodec(typeof(MyDictionary<,>), codecType,
             typeof(MyDictionary<,>), "FACTORY");
 

@@ -34,13 +34,13 @@ namespace Wjybxx.Dson.Codec
 /// 2.配置文件读写
 /// 配置文件通常是无类型的，因此读取到内存中通常是一个字典结构；程序在输出配置文件时，同样需要将字典结构输出为object结构。
 /// </summary>
-public enum MapEncodePolicy
+public enum MapStyle
 {
     /// <summary>
     /// 将字典编码为普通数组
     /// 
     /// <code>
-    ///  [K1, V1, K2, V2, K3, V3]
+    /// [K1, V1, K2, V2, K3, V3]
     /// </code>
     /// </summary>
     Array = 0,

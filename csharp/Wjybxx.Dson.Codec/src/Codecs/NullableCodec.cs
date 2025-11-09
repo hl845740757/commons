@@ -21,27 +21,32 @@ using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
+public interface INullableCodec<T>
+{
+    bool HasValue(in T value);
+}
+
 /// <summary>
 /// <see cref="Nullable{T}"/>的模板编解码器
 /// 注意：Nullable编码时不会再封装一层，而是直接写内部值。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class NullableCodec<T> : IDsonCodec<T?> where T : struct
+public class NullableCodec<T> : IDsonCodec<T?>, INullableCodec<T?> where T : struct
 {
-    public bool AutoStartEnd => false;
+    public bool HasValue(in T? inst) => inst.HasValue;
 
-    public void WriteObject(IDsonObjectWriter writer, in T? inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, T? inst, Type declaredType, SerializeFeatures features) {
         // declaredType 是Nullable<T>的类型，不是T的声明类型
         // 为避免外部测试是否为null导致装箱，Nullable结构体的null测试由Codec处理
         if (inst.HasValue) {
-            writer.WriteObject(null, inst.Value);
+            writer.WriteObject(inst.Value, features.GetElementFeatures());
         } else {
-            writer.WriteNull(null);
+            writer.WriteNull();
         }
     }
 
     public T? ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadObject<T>(null, factory);
+        return reader.ReadObject<T>(factory);
     }
 }
 }

@@ -29,7 +29,10 @@ namespace Wjybxx.Dson.Codec
 public interface ITypeMetaRegistry
 {
     /// <summary>
-    /// 通过类型信息查询类型元数据.
+    /// 通过类型信息查询类型元数据
+    ///
+    /// 1.如果类型元数据不存在，通常意味着不支持序列化；
+    /// 2.Codec关联的类型必须都在该注册表中存在。 
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>

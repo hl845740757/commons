@@ -461,7 +461,7 @@ public sealed class DsonCodecConfig
         // CollectionCodec默认测试了常见的集合类型
         config.AddGenericCodec(typeof(ICollection<>), typeof(CollectionCodec<>));
         config.AddGenericCodec(typeof(IList<>), typeof(CollectionCodec<>));
-        config.AddGenericCodec(typeof(List<>), typeof(CollectionCodec<>));
+        config.AddGenericCodec(typeof(List<>), typeof(ListCodec<>));
         // 
         config.AddGenericCodec(typeof(ISet<>), typeof(CollectionCodec<>));
         config.AddGenericCodec(typeof(HashSet<>), typeof(CollectionCodec<>));
@@ -479,7 +479,6 @@ public sealed class DsonCodecConfig
         config.AddGenericCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
         // 特殊组件
-        config.AddGenericCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
         config.AddGenericCodec(typeof(Nullable<>), typeof(NullableCodec<>));
         config.AddGenericCodec(typeof(KeyValuePair<,>), typeof(PairCodec<,>));
 
@@ -513,37 +512,8 @@ public sealed class DsonCodecConfig
         config.AddCodec(new DateTimeCodec());
         config.AddCodec(new DateTimeOffsetCodec());
 
-        // 基本类型数组
-        config.AddCodec(new MoreArrayCodecs.ByteArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.IntArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.LongArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.FloatArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.DoubleArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.BoolArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.StringArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.UIntArrayCodec());
-        config.AddCodec(new MoreArrayCodecs.ULongArrayCodec());
-
-        // 特化List
-        config.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(List<int>)));
-        config.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(List<long>)));
-        config.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(List<float>)));
-        config.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(List<double>)));
-        config.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(List<bool>)));
-        config.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(List<string>)));
-        config.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(List<uint>)));
-        config.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(List<ulong>)));
-        // 接口类型也支持下
-        config.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(IList<int>)));
-        config.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(IList<long>)));
-        config.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(IList<float>)));
-        config.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(IList<double>)));
-        config.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(IList<bool>)));
-        config.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(IList<string>)));
-        config.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(IList<uint>)));
-        config.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(IList<ulong>)));
-        
         // TODO 特殊Codec绑定
+        config.AddCodec(new ObjectCodec());
         config.AddCodec(new ObjectPathCodec());
     }
 

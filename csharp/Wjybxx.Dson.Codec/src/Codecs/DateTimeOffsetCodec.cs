@@ -24,16 +24,14 @@ namespace Wjybxx.Dson.Codec.Codecs
 {
 public class DateTimeOffsetCodec : IDsonCodec<DateTimeOffset>
 {
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in DateTimeOffset inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, DateTimeOffset inst, Type declaredType, SerializeFeatures features) {
         int offset = (int)inst.Offset.TotalSeconds;
         ExtDateTime extDateTime = ExtDateTime.OfDateTime(inst.DateTime).WithOffset(offset);
-        writer.WriteExtDateTime(null, extDateTime);
+        writer.WriteExtDateTime(extDateTime);
     }
 
     public DateTimeOffset ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        ExtDateTime extDateTime = reader.ReadExtDateTime(null);
+        ExtDateTime extDateTime = reader.ReadExtDateTime();
         DateTime dateTime = extDateTime.ToDateTime();
         return new DateTimeOffset(dateTime, TimeSpan.FromSeconds(extDateTime.Offset));
     }

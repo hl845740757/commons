@@ -48,7 +48,6 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
         SetContext(context);
     }
 
-
     /// <summary>
     /// 获取传入的OutList
     ///

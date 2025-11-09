@@ -59,22 +59,25 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             return null;
         }
 
-        ObjectStyle style;
+        SerializeFeatures encodeFeatures;
+        DeserializeFeatures decodeFeatures;
         if (type.IsArray) {
-            style = ObjectStyle.Indent;
+            encodeFeatures = default;
+            decodeFeatures = default;
         } else {
             Type rawType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
             TypeMeta rawTypeMeta = _config.OfType(rawType);
             if (rawTypeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            style = rawTypeMeta.style; // 保留泛型类的Style
+            encodeFeatures = rawTypeMeta.encodeFeatures; // 保留泛型类的Style
+            decodeFeatures = rawTypeMeta.decodeFeatures;
         }
         TypeName typeName = NameOfType(type); // 放前方可检测泛型
         string mainClsName = typeName.ToString();
 
         // 需要动态生成TypeMeta并缓存下来
-        typeMeta = TypeMeta.Of(type, style, mainClsName);
+        typeMeta = TypeMeta.Of(type, encodeFeatures, decodeFeatures, mainClsName);
         type2MetaDic.TryAdd(type, typeMeta);
         name2MetaDic.TryAdd(mainClsName, typeMeta);
         return typeMeta;
@@ -111,7 +114,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             clsNames.AddRange(typeMeta.clsNames);
             clsNames.Add(clsName);
 
-            typeMeta = TypeMeta.Of(type, typeMeta.style, clsNames);
+            typeMeta = TypeMeta.Of(type, typeMeta.encodeFeatures, typeMeta.decodeFeatures, clsNames);
             type2MetaDic[type] = typeMeta;
             foreach (string clsName2 in clsNames) {
                 name2MetaDic[clsName2] = typeMeta;

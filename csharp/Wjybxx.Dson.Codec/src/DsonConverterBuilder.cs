@@ -68,31 +68,6 @@ public class DsonConverterBuilder
         return this;
     }
 
-    public DsonConverterBuilder AddTypeMetas(params TypeMeta[] typeMetas) {
-        typeMetaConfig.AddAll(typeMetas);
-        return this;
-    }
-
-    public DsonConverterBuilder AddTypeMeta(Type type, string clsName) {
-        typeMetaConfig.Add(type, clsName);
-        return this;
-    }
-
-    public DsonConverterBuilder AddTypeMeta(Type type, params string[] clsNames) {
-        typeMetaConfig.Add(type, clsNames);
-        return this;
-    }
-
-    public DsonConverterBuilder AddTypeMeta(Type type, ObjectStyle style, string clsName) {
-        typeMetaConfig.Add(type, style, clsName);
-        return this;
-    }
-
-    public DsonConverterBuilder AddTypeMeta(Type type, ObjectStyle style, params string[] clsNames) {
-        typeMetaConfig.Add(type, style, clsNames);
-        return this;
-    }
-
     #endregion
 
     # region 非泛型codec

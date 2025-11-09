@@ -17,21 +17,18 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
 public class BinaryCodec : IDsonCodec<Binary>
 {
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in Binary inst, Type declaredType, ObjectStyle style) {
-        writer.WriteBinary(null, inst);
+    public void WriteObject(IDsonObjectWriter writer, Binary inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteBinary(inst, features);
     }
 
     public Binary ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadBinary(null);
+        return reader.ReadBinary();
     }
 }
 }

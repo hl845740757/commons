@@ -18,9 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Wjybxx.Commons.Apt;
@@ -62,10 +64,12 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_TypeInfo = "Wjybxx.Commons.TypeInfo";
     private const string CNAME_TypeName = "Wjybxx.Commons.TypeName";
 
-    private const string CNAME_COLLECTION_UTIL = "Wjybxx.Commons.Collections.CollectionUtil";
     private const string CNAME_IList = "System.Collections.Generic.IList`1";
     private const string CNAME_ISet = "System.Collections.Generic.ISet`1";
     private const string CNAME_IDictionary = "System.Collections.Generic.IDictionary`2";
+
+    private const string CNAME_SERIALIZE_REFERENCES = "Wjybxx.Commons.SerializeReference";
+    private const string CNAME_UNITY_SERIALIZE_REFERENCES = "UnityEngine.SerializeReference";
 
     // dson
     private const string CNAME_SERIALIZABLE = "Wjybxx.Dson.Codec.Attributes.DsonSerializableAttribute";
@@ -92,15 +96,11 @@ public class CodecProcessor : ISourceGenerator
     internal const string MNAME_WRITE_FIELDS = "WriteFields";
     internal const string MNAME_NEW_INSTANCE = "NewInstance";
     internal const string MNAME_READ_FIELDS = "ReadFields";
+    internal const string MNAME_READ_FIELD = "ReadField";
     internal const string MNAME_AFTER_DECODE = "AfterDecode";
 
-    internal static readonly ClassName typeName_CollectionUtil = AptUtils.ClassNameOfCanonicalName(CNAME_COLLECTION_UTIL);
-    internal static readonly ClassName typeName_WireType = AptUtils.ClassNameOfCanonicalName(CNAME_WireType);
-    internal static readonly ClassName typeName_NumberStyle = AptUtils.ClassNameOfCanonicalName(CNAME_NumberStyle);
-    internal static readonly ClassName typeName_StringStyle = AptUtils.ClassNameOfCanonicalName(CNAME_StringStyle);
-    internal static readonly ClassName typeName_ObjectStyle = AptUtils.ClassNameOfCanonicalName(CNAME_ObjectStyle);
-    internal static readonly ClassName typeName_NumberStyles = AptUtils.ClassNameOfCanonicalName(CNAME_NumberStyles);
-    internal static readonly ClassName typeName_ContextType = AptUtils.ClassNameOfCanonicalName(CNAME_ContextType);
+    internal static readonly TypeName typeName_EncodeFeatures = ClassName.Get("Wjybxx.Dson.Codec", "SerializeFeatures");
+    internal static readonly TypeName typeName_DecodeFeatures = ClassName.Get("Wjybxx.Dson.Codec", "DeserializeFeatures");
 
     #endregion
 
@@ -137,15 +137,13 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_ISET;
     internal INamedTypeSymbol type_IDICTIONARY;
 
-    internal INamedTypeSymbol type_NumberStyle;
-    internal INamedTypeSymbol type_StringStyle;
-    internal INamedTypeSymbol type_ObjectStyle;
-
     private GeneratorExecutionContext sourceProductionContext;
     private Compilation compilation;
     private string buildingAssemblyName;
     private AttributeSpec processorInfoAnnotation;
+
     private readonly CodeWriter _codeWriter = new CodeWriter(indent: "    ");
+    private readonly Dictionary<string, Assembly> _loadedAssembly = new();
 
     #endregion
 
@@ -188,10 +186,6 @@ public class CodecProcessor : ISourceGenerator
         type_ILIST = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IList_T);
         type_ISET = compilation.GetTypeByMetadataName(CNAME_ISet);
         type_IDICTIONARY = compilation.GetTypeByMetadataName(CNAME_IDictionary);
-
-        type_NumberStyle = compilation.GetTypeByMetadataName(CNAME_NumberStyle);
-        type_StringStyle = compilation.GetTypeByMetadataName(CNAME_StringStyle);
-        type_ObjectStyle = compilation.GetTypeByMetadataName(CNAME_ObjectStyle);
     }
 
     private void ReportDiagnostic(DiagnosticSeverity severity, ISymbol? symbol, int code, string msgFormat, params object[] args) {
@@ -401,7 +395,7 @@ public class CodecProcessor : ISourceGenerator
         context.allMembers = BeanUtils.GetAllMembersWithInherit(context.type);
         // 反射字段--第三方程序集字段
         Dictionary<FieldKey, FieldInfo> reflectionFieldDic = new();
-        List<MemberInfo> reflectionMembers = GetReflectionMembers(context.type);
+        List<MemberInfo> reflectionMembers = GetReflectionMembers(context.type, context.linkerSymbol);
         foreach (MemberInfo memberInfo in reflectionMembers) {
             if (memberInfo.MemberType != MemberTypes.Field) continue;
             FieldInfo fieldInfo = (FieldInfo)memberInfo;
@@ -419,9 +413,6 @@ public class CodecProcessor : ISourceGenerator
         foreach (ISymbol symbol in context.allMembers) {
             if (symbol.Kind != SymbolKind.Field || symbol.IsStatic) continue;
             IFieldSymbol fieldSymbol = (IFieldSymbol)symbol;
-            if (!IsBuildingAssemblyNode(fieldSymbol.ContainingType)) {
-                continue;
-            }
             // 检查属性 -- 属性类型和字段类型不同的跳过
             IPropertySymbol propertySymbol = BeanUtils.FindProperty(fieldSymbol.Name, context.allMembers);
             if (propertySymbol != null && !fieldSymbol.Type.IsSameType(propertySymbol.Type)) {
@@ -451,23 +442,59 @@ public class CodecProcessor : ISourceGenerator
         context.allFields = allFields;
     }
 
-    private List<MemberInfo> GetReflectionMembers(INamedTypeSymbol typeSymbol) {
-        string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
-        if (assemblyName == null) {
+    private List<MemberInfo> GetReflectionMembers(INamedTypeSymbol typeSymbol, ISymbol linkerSymbol) {
+        INamedTypeSymbol thirdPartyType = GetThirdPartyType(typeSymbol);
+        if (thirdPartyType == null) {
             return new List<MemberInfo>();
         }
-        string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
+        string typeFullName = AptUtils.GetFullMetadataName(thirdPartyType!);
+        string typePath = $"{typeFullName}, {thirdPartyType.ContainingAssembly.Name}";
         Type reflectType = Type.GetType(typePath, false);
-        if (reflectType == null) {
+        if (reflectType == null && (reflectType = TryLoadThirdPartyType(thirdPartyType, typeFullName)) == null) {
+            ReportDiagnostic(DiagnosticSeverity.Warning, linkerSymbol, 1004,
+                "The assembly '{0}' of '{1}' cannot be loaded, the generated codec maybe partial",
+                thirdPartyType.ContainingAssembly.Name, thirdPartyType!.Name);
             return new List<MemberInfo>();
         }
         return BeanUtils.GetAllMembersWithInherit(reflectType, MemberTypes.Field | MemberTypes.Property)
             .ToList();
     }
 
+
+    private Type TryLoadThirdPartyType(ITypeSymbol thirdPartyType, string typeFullName) {
+        IAssemblySymbol assemblySymbol = thirdPartyType.ContainingAssembly;
+        if (_loadedAssembly.TryGetValue(assemblySymbol.Name, out Assembly? assembly)) {
+            return assembly?.GetType(typeFullName, false);
+        }
+        _loadedAssembly[assemblySymbol.Name] = null; // 避免总是尝试加载
+        //
+        foreach (Assembly assembly2 in AppDomain.CurrentDomain.GetAssemblies()) {
+            if (assembly2.GetName().Name == assemblySymbol.Name) {
+                _loadedAssembly[assemblySymbol.Name] = assembly2;
+                return assembly2.GetType(typeFullName, true); // 抛出异常暴露依赖问题
+            }
+        }
+        //
+        MetadataReference reference = compilation.GetMetadataReference(assemblySymbol);
+        if (reference is PortableExecutableReference executableReference && executableReference.FilePath != null) {
+            string filePath = executableReference.FilePath.Replace(".ref.dll", ".dll");
+            if (!File.Exists(filePath)) {
+                return null;
+            }
+            try {
+                assembly = Assembly.LoadFrom(filePath);
+                _loadedAssembly[assemblySymbol.Name] = assembly;
+                return assembly.GetType(typeFullName, false);
+            }
+            catch (Exception) {
+                // ignored
+            }
+        }
+        return null;
+    }
+
     /** 返回Null表示没有依赖的第三方程序集 */
-    private string? GetThirdPartyAssemblyName(INamedTypeSymbol typeSymbol,
-                                              out INamedTypeSymbol? thirdPartyType) {
+    private INamedTypeSymbol? GetThirdPartyType(INamedTypeSymbol typeSymbol) {
         int index = 0;
         List<INamedTypeSymbol> namedTypeSymbols = AptUtils.FlatInherit(typeSymbol);
         for (; index < namedTypeSymbols.Count; index++) {
@@ -478,11 +505,8 @@ public class CodecProcessor : ISourceGenerator
             }
         }
         if (index < namedTypeSymbols.Count) {
-            INamedTypeSymbol namedTypeSymbol = namedTypeSymbols[index];
-            thirdPartyType = namedTypeSymbol;
-            return namedTypeSymbol.ContainingAssembly.Name;
+            return namedTypeSymbols[index];
         }
-        thirdPartyType = null;
         return null;
     }
 
@@ -493,10 +517,14 @@ public class CodecProcessor : ISourceGenerator
                 continue;
             }
             // dson-property
-            AptFieldProps aptFieldProps = AptFieldProps.Parse(fieldInfo, CNAME_PROPERTY,
-                type_NumberStyle, type_StringStyle, type_ObjectStyle, compilation);
+            AptFieldProps aptFieldProps = AptFieldProps.Parse(fieldInfo, CNAME_PROPERTY, compilation);
             // dson-ignore
             aptFieldProps.ParseIgnore(fieldInfo, CNAME_DSON_IGNORE);
+            // serialize-reference
+            aptFieldProps.ParseSerializeReference(fieldInfo, CNAME_SERIALIZE_REFERENCES);
+            if (aptFieldProps.serializeReference == null) {
+                aptFieldProps.ParseSerializeReference(fieldInfo, CNAME_UNITY_SERIALIZE_REFERENCES);
+            }
             //
             context.fieldPropsMap[fieldInfo] = aptFieldProps;
         }
@@ -555,7 +583,6 @@ public class CodecProcessor : ISourceGenerator
             return;
         }
         CheckConstructor(context);
-        CheckThirdPartyAssembly(context);
 
         List<ISymbol> allMembers = context.allMembers;
         foreach (AptFieldInfo fieldInfo in context.allFields) {
@@ -625,24 +652,6 @@ public class CodecProcessor : ISourceGenerator
         //
         ReportDiagnostic(DiagnosticSeverity.Error, typeSymbol, 1003,
             "SerializableClass must contains public no-args constructor or reader-args constructor!");
-    }
-
-    private void CheckThirdPartyAssembly(Context context) {
-        INamedTypeSymbol typeSymbol = context.type;
-        string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
-        if (assemblyName == null) {
-            return;
-        }
-        // 其实可以测试一下是否是系统库，但在Unity下可能兼容性不够好
-        if (thirdPartyType!.SpecialType != SpecialType.None) {
-            return;
-        }
-        string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
-        if (Type.GetType(typePath, false) == null) {
-            ReportDiagnostic(DiagnosticSeverity.Warning, context.linkerSymbol, 1004,
-                "The assembly '{0}' of '{1}' cannot be loaded, the generated codec maybe partial",
-                assemblyName, thirdPartyType!.Name);
-        }
     }
 
     #endregion
@@ -857,6 +866,14 @@ public class CodecProcessor : ISourceGenerator
 
     public MethodSpec.Builder NewReadFieldsMethodBuilder(INamedTypeSymbol superDeclaredType) {
         IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_READ_FIELDS);
+        if (methodInfo == null) {
+            throw new InvalidOperationException();
+        }
+        return AptUtils.Overriding(methodInfo);
+    }
+
+    public MethodSpec.Builder NewReadFieldMethodBuilder(INamedTypeSymbol superDeclaredType) {
+        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_READ_FIELD);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }

@@ -60,7 +60,7 @@ public sealed class TypeName : IEquatable<TypeName>
     /// <summary>
     /// 泛型参数信息，无泛型时为空List
     /// </summary>
-    public readonly IList<TypeName> typeArgs;
+    public readonly ImmutableList<TypeName> typeArgs;
     /// <summary>
     /// HashCode缓存 -- hashcode查询频率高，因此缓存。
     /// (此优化不破坏不可变约束)

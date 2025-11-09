@@ -1,6 +1,6 @@
 #region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,20 +16,21 @@
 
 #endregion
 
-using System;
-using Wjybxx.Dson.Text;
-using Wjybxx.Dson.Types;
-
-namespace Wjybxx.Dson.Codec.Codecs
+namespace Wjybxx.Dson.Codec
 {
-public class ObjectPtrCodec : IDsonCodec<ObjectPtr>
+/// <summary>
+/// 字典的键解码器
+/// </summary>
+public interface IKeyCodec<T>
 {
-    public void WriteObject(IDsonObjectWriter writer, ObjectPtr inst, Type declaredType, SerializeFeatures features) {
-        writer.WritePtr(in inst);
-    }
+    /// <summary>
+    /// features必须是最终的特征值，该方法内部不查询上下文信息
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="features"></param>
+    /// <returns></returns>
+    string EncodeKey(T value, SerializeFeatures features);
 
-    public ObjectPtr ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadPtr();
-    }
+    T DecodeKey(string keyString);
 }
 }

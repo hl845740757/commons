@@ -21,27 +21,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using Wjybxx.Commons;
 using Wjybxx.Dson.Codec.Attributes;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
-/// <summary>
-/// 抽象类不添加Struct和Enum限制，该接口用于避免拆装箱等问题
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public interface IEnumCodec<T> : IDsonCodec<T>
-{
-    bool Contains(T value);
-
-    bool ForNumber(int number, out T result);
-
-    bool ForName(string name, out T result);
-
-    int GetNumber(T value);
-
-    string GetName(T value);
-}
-
 /// <summary>
 /// 单个枚举值信息
 /// </summary>
@@ -51,11 +33,13 @@ public readonly struct EnumValueInfo<T>
     public readonly T value;
     public readonly int number;
     public readonly string name;
+    public readonly string numberString;
 
     public EnumValueInfo(T value, int number, string name) {
         this.value = value;
         this.number = number;
         this.name = name ?? throw new ArgumentNullException(nameof(name));
+        this.numberString = string.Intern(number.ToString());
     }
 }
 
@@ -64,7 +48,7 @@ public readonly struct EnumValueInfo<T>
 /// 注意：默认不支持序列化未在枚举中定义的枚举值 —— 其它特殊情况，建议直接使用int值。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
+public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct, Enum
 {
     private readonly Dictionary<T, EnumValueInfo<T>> _value2EnumDic;
     private readonly Dictionary<int, EnumValueInfo<T>> _number2EnumDic;
@@ -114,47 +98,27 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
 
     #region 避免装箱
 
-    public bool Contains(T value) {
-        return _value2EnumDic.ContainsKey(value);
+    public string EncodeKey(T value, SerializeFeatures features) {
+        if (_value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)) {
+            return (features & SerializeFeatures.EnumKeyAsString) != 0
+                ? valueInfo.name
+                : valueInfo.numberString;
+        }
+        throw new DsonCodecException($"invalid enum key: {value}, type: {typeof(T)}");
     }
 
-    public bool ForNumber(int number, out T result) {
-        if (_number2EnumDic.TryGetValue(number, out EnumValueInfo<T> valueInfo)) {
-            result = valueInfo.value;
-            return true;
+    public T DecodeKey(string keyString) {
+        // 枚举Key必须存在对应的名字
+        if (int.TryParse(keyString, out int number)) {
+            if (_number2EnumDic.TryGetValue(number, out EnumValueInfo<T> valueInfo)) {
+                return valueInfo.value;
+            }
+        } else {
+            if (_name2EnumDic.TryGetValue(keyString, out EnumValueInfo<T> valueInfo)) {
+                return valueInfo.value;
+            }
         }
-        if (_isFlags) {
-            result = (T)Enum.ToObject(typeof(T), number);
-            return true;
-        }
-        result = default;
-        return false;
-    }
-
-    public bool ForName(string name, out T result) {
-        if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {
-            result = valueInfo.value;
-            return true;
-        }
-        result = default;
-        return false;
-    }
-
-    public int GetNumber(T value) {
-        if (_isFlags) {
-            return EnumUtil.GetIntValue(value);
-        }
-        if (!_value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)) {
-            throw new DsonCodecException($"invalid enum value: {value}, type: {typeof(T)}");
-        }
-        return valueInfo.number;
-    }
-
-    public string GetName(T value) {
-        if (!_value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)) {
-            throw new DsonCodecException($"invalid enum value: {value}, type: {typeof(T)}");
-        }
-        return valueInfo.name;
+        throw new DsonCodecException($"invalid enum key: {keyString}, type: {typeof(T)}");
     }
 
     #endregion
@@ -162,46 +126,57 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     /// <summary>
     /// false 可以将枚举简单写为整数
     /// </summary>
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style) {
-        if (_isFlags && !writer.Options.writeEnumAsString) {
-            writer.WriteInt(null, EnumUtil.GetIntValue(inst));
-            return;
-        }
+    public void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, SerializeFeatures features) {
         if (!_value2EnumDic.TryGetValue(inst, out EnumValueInfo<T> valueInfo)) {
+            if (_isFlags) {
+                writer.WriteInt(EnumUtil.GetIntValue(inst));
+                return;
+            }
             throw new DsonCodecException($"invalid enum value: {inst}, type: {typeof(T)}");
         }
-        if (writer.Options.writeEnumAsString) {
-            writer.WriteString(null, valueInfo.name, StringStyle.Unquote);
+        bool isWriteAsString = IsWriteAsString(features, writer);
+        if (isWriteAsString) {
+            writer.WriteString(valueInfo.name, SerializeFeatures.StringUnquote);
         } else {
-            writer.WriteInt(null, valueInfo.number);
+            writer.WriteInt(valueInfo.number);
         }
     }
 
     public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        if (_isFlags && reader.CurrentDsonType == DsonType.Int32) {
-            int number = reader.ReadInt(null);
-            return (T)Enum.ToObject(typeof(T), number);
-        }
         if (reader.CurrentDsonType == DsonType.String) {
-            string name = reader.ReadString(null);
+            string name = reader.ReadString();
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {
                 return valueInfo.value;
             }
-            if (name.Contains('|')) {
+            if (name.Contains('|')) { // Flags格式
                 int number = ParseFlags(name);
                 return (T)Enum.ToObject(typeof(T), number);
             }
             throw new DsonCodecException($"invalid enum value: {name}, type: {typeof(T)}");
         } else {
-            int number = reader.ReadInt(null);
+            int number = reader.ReadInt();
             if (_number2EnumDic.TryGetValue(number, out EnumValueInfo<T> valueInfo)) {
                 return valueInfo.value;
+            }
+            if (_isFlags) { // Flags
+                return (T)Enum.ToObject(typeof(T), number);
             }
             // 不做number转enum支持 -- 存在跨语言兼容性问题
             throw new DsonCodecException($"invalid enum value: {number}, type: {typeof(T)}");
         }
+    }
+
+    private bool IsWriteAsString(SerializeFeatures features, IDsonObjectWriter writer) {
+        if ((features & SerializeFeatures.EnumAsString) != 0) return true;
+        if ((features & SerializeFeatures.EnumAsNumber) != 0) return false;
+        TypeMeta typeMeta = writer.ContainerTypeMeta;
+        if (typeMeta != null) {
+            features = typeMeta.encodeFeatures;
+            if ((features & SerializeFeatures.EnumAsString) != 0) return true;
+            if ((features & SerializeFeatures.EnumAsNumber) != 0) return false;
+        }
+        features = writer.Options.encodeFeatures;
+        return (features & SerializeFeatures.EnumAsString) != 0;
     }
 
     private int ParseFlags(string str) {

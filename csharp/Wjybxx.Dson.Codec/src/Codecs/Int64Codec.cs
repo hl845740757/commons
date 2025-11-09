@@ -21,19 +21,25 @@ using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
-public class Int64Codec : IDsonCodec<long>
+public class Int64Codec : IDsonCodec<long>, IKeyCodec<long>
 {
-    public bool AutoStartEnd => false;
+    public string EncodeKey(long value, SerializeFeatures features) {
+        return features.ToNumberStyle().ToString(value).Value;
+    }
 
-    public void WriteObject(IDsonObjectWriter writer, in long inst, Type declaredType, ObjectStyle style) {
-        INumberStyle numberStyle = declaredType == typeof(long)
-            ? NumberStyles.Simple
-            : NumberStyles.Typed;
-        writer.WriteLong(null, inst, numberStyle);
+    public long DecodeKey(string keyString) {
+        return DsonTexts.ParseInt64(keyString);
+    }
+
+    public void WriteObject(IDsonObjectWriter writer, long inst, Type declaredType, SerializeFeatures features) {
+        if (declaredType != typeof(long)) {
+            features |= SerializeFeatures.NumberTyped;
+        }
+        writer.WriteLong(inst, features);
     }
 
     public long ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadLong(null);
+        return reader.ReadLong();
     }
 }
 }

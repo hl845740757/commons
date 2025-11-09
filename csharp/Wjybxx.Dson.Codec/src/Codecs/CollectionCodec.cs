@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -77,8 +76,6 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 
     public Type GetEncoderType() => encoderType;
 
-    public bool AutoStartEnd => false;
-
     private ICollection<T> NewCollection(Func<object>? userFactory, int count) {
         if (userFactory != null) return (ICollection<T>)userFactory();
         if (factory != null) return factory();
@@ -92,7 +89,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         };
     }
 
-    protected virtual ICollection<T> ToImmutable(Type declaredType, ICollection<T> result) {
+    private static ICollection<T> ToImmutable(Type declaredType, ICollection<T> result) {
         if (declaredType.IsInterface) {
             if (DsonConverterUtils.IsSet(declaredType)) {
                 return ImmutableSet<T>.CreateRange(result);
@@ -112,23 +109,46 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         return result;
     }
 
-    public void WriteObject(IDsonObjectWriter writer, in ICollection<T> inst, Type declaredType, ObjectStyle style) {
-        writer.WriteStartArray(style);
-        writer.WriteTypeInfo(encoderType, declaredType, inst.Count);
-        foreach (T value in inst) {
-            writer.WriteObject(null, in value); // value向上转型为T
+    public void WriteObject(IDsonObjectWriter writer, ICollection<T> inst, Type declaredType, SerializeFeatures features) {
+        SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+        SerializeFeatures elementFeatures = features.GetElementFeatures();
+        // T就是声明类型
+        DsonCodecImpl<T> elementCodec = writer.GetInlinableCodec<T>();
+        if (elementCodec != null) {
+            Type elementType = typeof(T);
+            writer.WriteStartArray(encoderType, declaredType, selfFeatures, inst.Count);
+            foreach (T value in inst) {
+                elementCodec.WriteObject(writer, in value, elementType, elementFeatures);
+            }
+            writer.WriteEndArray();
+        } else {
+            writer.WriteStartArray(encoderType, declaredType, selfFeatures, inst.Count);
+            foreach (T value in inst) {
+                writer.WriteObject(in value, elementFeatures);
+            }
+            writer.WriteEndArray();
         }
-        writer.WriteEndArray();
     }
 
     public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        int count = reader.ReadStartArray();
+        int count = reader.ReadStartArray().count;
         ICollection<T> result = NewCollection(factory, count);
-        while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>(null);
-            result.Add(value);
+        // T就是声明类型
+        DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();
+        if (elementCodec != null) {
+            Type elementType = typeof(T);
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                T value = elementCodec.ReadObject(reader, elementType, null);
+                result.Add(value);
+            }
+        } else {
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                T value = reader.ReadObject<T>();
+                result.Add(value);
+            }
         }
         reader.ReadEndArray();
+
         // 处理默认的不可变集合
         if (declaredType.IsGenericType) {
             if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)) {

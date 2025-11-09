@@ -23,17 +23,15 @@ namespace Wjybxx.Dson.Codec.Codecs
 {
 public class FloatCodec : IDsonCodec<float>
 {
-    public bool AutoStartEnd => false;
-
-    public void WriteObject(IDsonObjectWriter writer, in float inst, Type declaredType, ObjectStyle style) {
-        INumberStyle numberStyle = declaredType == typeof(float)
-            ? NumberStyles.Simple
-            : NumberStyles.Typed;
-        writer.WriteFloat(null, inst, numberStyle);
+    public void WriteObject(IDsonObjectWriter writer, float inst, Type declaredType, SerializeFeatures features) {
+        if (declaredType != typeof(float)) {
+            features |= SerializeFeatures.NumberTyped;
+        }
+        writer.WriteFloat(inst, features);
     }
 
     public float ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadFloat(null);
+        return reader.ReadFloat();
     }
 }
 }

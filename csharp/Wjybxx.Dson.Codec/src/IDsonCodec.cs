@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -31,37 +30,16 @@ public interface IDsonCodec
     /// </summary>
     /// <returns></returns>
     Type GetEncoderType();
-
-    /// <summary>
-    /// 该方法用于告知<see cref="DsonCodecImpl{T}"/>是否自动调用以下方法：
-    /// <see cref="IDsonObjectWriter.WriteStartObject"/>
-    /// <see cref="IDsonObjectWriter.WriteEndObject"/>
-    /// <see cref="IDsonObjectReader.ReadStartObject()"/>
-    /// <see cref="IDsonObjectReader.ReadEndObject"/>
-    /// 
-    /// Q：禁用该属性有什么用？
-    /// A：对于写；你可以将当前转换为另一个对象，然后再使用对应的codec进行编码；对于读：你可以使用另一个codec来解码当前二进制对象。
-    /// 即：关闭该属性可以实现读替换(readReplace)和写替换(writeReplace)功能。
-    /// 另外，还可以自行决定是写为Array还是Object。
-    /// </summary>
-    bool AutoStartEnd => true;
-
-    /// <summary>
-    /// 当前对象是否按照数组格式编码。
-    /// 1.默认情况下，Map是被看做普通的数组的
-    /// 2.该属性只有<see cref="AutoStartEnd"/>为true的时候有效。
-    /// </summary>
-    bool IsWriteAsArray => DsonConverterUtils.IsEncodeAsArray(GetEncoderType());
 }
 
 /// <summary>
 /// 对象编解码器。
 /// Codec与<see cref="DsonCodecImpl{T}"/>协调工作，为典型的桥接模式。
 /// 
-/// 
 /// 1. 编码的对象可能是'T'的子类；解码返回的对象也可能是'T'的子类。
 /// 2. Codec的泛型'T'和参数declaredType可能并不兼容，因此必须显式传入。
 /// 3. 泛型codec可以包含接收<see cref="Type"/>的构造函数，还可以接收一个Factory。
+/// 4. 手写Codec尽量继承<see cref="AbstractDsonCodec{T}"/>.
 ///
 /// <code>Struct(Type encoderType)</code>
 /// <code>Struct(Type encoderType, Func factory)</code>
@@ -89,8 +67,8 @@ public interface IDsonCodec<T> : IDsonCodec
     /// <param name="writer">writer</param>
     /// <param name="inst">要编码的实例</param>
     /// <param name="declaredType">对象的声明类型，用于判断是否写入类型信息</param>
-    /// <param name="style">文本编码样式</param>
-    void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style);
+    /// <param name="features"></param>
+    void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, SerializeFeatures features);
 
     /// <summary>
     /// 从输入流中解析指定对象。

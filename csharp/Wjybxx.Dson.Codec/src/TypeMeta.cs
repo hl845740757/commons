@@ -42,11 +42,6 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
     /// </summary>
     public readonly Type type;
     /// <summary>
-    /// 文本编码时的输出格式。
-    /// 当编码字段时，如果未指定样式，则使用类型的默认样式。
-    /// </summary>
-    public readonly ObjectStyle style;
-    /// <summary>
     /// 支持的类型名。
     /// 如果是泛型，使用泛型原型的名字或别名，如：
     /// <code>
@@ -55,47 +50,87 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
     /// List`1
     /// </code>
     /// </summary>
-    public readonly IList<string> clsNames;
+    public readonly ImmutableList<string> clsNames;
 
-    private TypeMeta(Type type, ObjectStyle style, IList<string> clsNames) {
-        if (clsNames.Count == 0) throw new ArgumentException("clsNames is empty");
-        this.type = type;
-        this.style = style;
+    /// <summary>
+    /// 序列化特征值
+    /// </summary>
+    public readonly SerializeFeatures encodeFeatures;
+    /// <summary>
+    /// 反序列化特征值
+    /// </summary>
+    public readonly DeserializeFeatures decodeFeatures;
+
+    public TypeMeta(Type type, IList<string> clsNames,
+                    SerializeFeatures encodeFeatures = default,
+                    DeserializeFeatures decodeFeatures = default) {
+        this.type = type ?? throw new ArgumentNullException(nameof(type));
         this.clsNames = clsNames.ToImmutableList2();
+        this.encodeFeatures = encodeFeatures;
+        this.decodeFeatures = decodeFeatures;
     }
 
     /** 类的主别名 */
     public string MainClsName => clsNames[0];
 
-    /** 替换Style */
-    public TypeMeta WithStyle(ObjectStyle style) {
-        return new TypeMeta(type, style, clsNames);
+    /** 替换特征值 */
+    public TypeMeta WithFeatures(SerializeFeatures encodeFeatures, DeserializeFeatures decodeFeatures) {
+        return new TypeMeta(type, clsNames, encodeFeatures, decodeFeatures);
+    }
+
+    /** 替换clsNames */
+    public TypeMeta WithClsNames(IList<string> clsNames) {
+        return new TypeMeta(type, clsNames, encodeFeatures, decodeFeatures);
     }
 
     #region factory
 
     public static TypeMeta Of(Type clazz, string clsName) {
-        return new TypeMeta(clazz, ObjectStyle.Indent, ImmutableList<string>.Create(clsName));
+        return new TypeMeta(clazz, ImmutableList<string>.Create(clsName));
     }
 
     public static TypeMeta Of(Type clazz, params string[] clsNames) {
-        return new TypeMeta(clazz, ObjectStyle.Indent, ImmutableList<string>.CreateRange(clsNames));
+        return new TypeMeta(clazz, ImmutableList<string>.CreateRange(clsNames));
     }
 
-    public static TypeMeta Of(Type clazz, ObjectStyle style) {
-        return new TypeMeta(clazz, style, ImmutableList<string>.Create(clazz.Name));
+    public static TypeMeta Of(Type clazz,
+                              SerializeFeatures encodeFeatures,
+                              DeserializeFeatures decodeFeatures) {
+        return new TypeMeta(clazz, ImmutableList<string>.Create(clazz.Name), encodeFeatures, decodeFeatures);
     }
 
-    public static TypeMeta Of(Type clazz, ObjectStyle style, string clsName) {
-        return new TypeMeta(clazz, style, ImmutableList<string>.Create(clsName));
+    public static TypeMeta Of(Type clazz,
+                              SerializeFeatures encodeFeatures,
+                              DeserializeFeatures decodeFeatures,
+                              string clsName) {
+        return new TypeMeta(clazz, ImmutableList<string>.Create(clsName), encodeFeatures, decodeFeatures);
     }
 
-    public static TypeMeta Of(Type clazz, ObjectStyle style, params string[] clsNames) {
-        return new TypeMeta(clazz, style, ImmutableList<string>.CreateRange(clsNames));
+    public static TypeMeta Of(Type clazz,
+                              SerializeFeatures encodeFeatures,
+                              DeserializeFeatures decodeFeatures,
+                              params string[] clsNames) {
+        return new TypeMeta(clazz, clsNames.ToImmutableList2(), encodeFeatures, decodeFeatures);
     }
 
-    public static TypeMeta Of(Type clazz, ObjectStyle style, List<string> clsNames) {
-        return new TypeMeta(clazz, style, clsNames.ToImmutableList2());
+    public static TypeMeta Of(Type clazz,
+                              SerializeFeatures encodeFeatures,
+                              DeserializeFeatures decodeFeatures,
+                              List<string> clsNames) {
+        return new TypeMeta(clazz, clsNames.ToImmutableList2(), encodeFeatures, decodeFeatures);
+    }
+
+    //
+    public static TypeMeta Of(Type clazz,
+                              SerializeFeatures encodeFeatures,
+                              string clsName) {
+        return new TypeMeta(clazz, ImmutableList<string>.Create(clsName), encodeFeatures);
+    }
+
+    public static TypeMeta Of(Type clazz,
+                              SerializeFeatures encodeFeatures,
+                              params string[] clsNames) {
+        return new TypeMeta(clazz, clsNames.ToImmutableList2(), encodeFeatures);
     }
 
     #endregion
@@ -108,13 +143,13 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
         return type == other.type
-               && style == other.style
+               && encodeFeatures == other.encodeFeatures
                && clsNames.SequenceEqual(other.clsNames);
     }
 
     public override int GetHashCode() {
         int hashCode = type.GetHashCode();
-        hashCode = hashCode * 31 + style.GetHashCode();
+        hashCode = hashCode * 31 + encodeFeatures.GetHashCode();
         hashCode = hashCode * 31 + CollectionUtil.HashCode(clsNames);
         return hashCode;
     }
@@ -128,7 +163,7 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
     }
 
     public override string ToString() {
-        return $"{nameof(type)}: {type}, {nameof(style)}: {style}, {nameof(clsNames)}: {CollectionUtil.ToString(clsNames)}";
+        return $"{nameof(type)}: {type}, {nameof(encodeFeatures)}: {encodeFeatures}, {nameof(clsNames)}: {CollectionUtil.ToString(clsNames)}";
     }
 }
 }

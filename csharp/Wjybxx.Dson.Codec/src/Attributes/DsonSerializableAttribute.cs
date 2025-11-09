@@ -19,7 +19,6 @@
 using System;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Attributes
 {
@@ -42,17 +41,20 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 4. 如果类提供了非私有的<code>BeforeEncode(ConverterOptions)</code>方法，且在options中启用，则自动调用 -- 通常用于数据转换。
 /// 5. 如果类提供了非私有的<code>ReadObject(IDsonObjectReader)</code>方法，将自动调用 -- 该方法可用于忽略字段。
 /// 6. 如果类提供了非私有的<code>WriteObject(IDsonObjectWriter)</code>方法，将自动调用 -- 该方法可用于final和忽略字段。
-/// 7. 如果是通过<see cref="DsonCodecLinkerBeanAttribute"/>配置的类，这些方法都需要转换为静态方法。
+/// 7. 如果类提供了非私有的<code>ReadField(DsonObjectReader reader, string dsonName)</code>方法，将自动调用 -- 即用户支持Switch-Case随机读。
+/// 8. 如果是通过<see cref="DsonCodecLinkerBeanAttribute"/>配置的类，这些方法都需要转换为静态方法。
+/// 9. 关于钩子函数，可阅读<see cref="AbstractDsonCodec{T}"/>实现。
 ///
 /// <pre><code>
 ///   public static Bean NewInstance(DsonObjectReader reader){}
-///   public void ReadObject(DsonObjectReader reader){}
+///   public void ReadObject(DsonObjectReader reader){} // 读取特殊字段
+///   public void ReadField(DsonObjectReader reader, string dsonName); // 随机读
 ///   public void AfterDecode(ConverterOptions options){} // 实例方法支持无参
 /// 
 ///   public void BeforeEncode(ConverterOptions options){} // 实例方法支持无参
-///   public void WriteObject(DsonObjectWriter writer){}
+///   public void WriteObject(DsonObjectWriter writer){} // 写特殊字段，如被框架忽略的字段
 /// 
-///   public void ReadField1(DsonObjectReader reader, String dsonName){}
+///   public void ReadField1(DsonObjectReader reader, String dsonName){} // 字段代理
 ///   public void WriteField1(DsonObjectWriter writer, String dsonName){}
 /// </code></pre>
 ///
@@ -100,9 +102,9 @@ public class DsonSerializableAttribute : Attribute
     public string[] Names { get; set; } = Array.Empty<string>();
 
     /// <summary>
-    /// 编码的布局样式
+    /// 序列化特征值
     /// </summary>
-    public ObjectStyle Style { get; set; } = ObjectStyle.Indent;
+    public SerializeFeatures Features { get; set; }
 
     /// <summary>
     /// 获取单例的方法名（兼容属性）

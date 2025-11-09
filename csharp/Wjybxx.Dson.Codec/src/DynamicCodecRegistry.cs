@@ -91,8 +91,8 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
                 codecImpl = GetEncoder(type);
             }
         }
+        encoderDic.TryAdd(type, codecImpl); // 加入缓存避免每次全流程
         if (codecImpl != null) {
-            encoderDic.TryAdd(type, codecImpl);
             if (type == codecImpl.GetEncoderType()) {
                 decoderDic.TryAdd(type, codecImpl);
             }
@@ -133,8 +133,8 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
                 codecImpl = GetDecoder(type);
             }
         }
+        decoderDic.TryAdd(type, codecImpl); // 加入缓存避免每次全流程
         if (codecImpl != null) {
-            decoderDic.TryAdd(type, codecImpl);
             if (type == codecImpl.GetEncoderType()) {
                 encoderDic.TryAdd(type, codecImpl);
             }
