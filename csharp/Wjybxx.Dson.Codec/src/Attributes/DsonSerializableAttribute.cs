@@ -118,7 +118,6 @@ public class DsonSerializableAttribute : Attribute
     /// <summary>
     /// 字段名使用蛇形命名法(TODO)
     /// 
-    /// 注：
     /// 1.用于编译期代码生成，非运行时属性；
     /// 2.尽量还是通过<see cref="DsonPropertyAttribute"/>指定字段名。
     /// </summary>

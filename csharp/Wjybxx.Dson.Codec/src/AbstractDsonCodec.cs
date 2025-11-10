@@ -199,7 +199,7 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     /// <summary>
     /// 读取所有字段
     ///
-    /// 注：注意减
+    /// 注：如果支持随机读，请重写<see cref="ReadField"/>方法。
     /// </summary>
     [StableName]
     protected abstract void ReadFields(IDsonObjectReader reader, ref T inst);

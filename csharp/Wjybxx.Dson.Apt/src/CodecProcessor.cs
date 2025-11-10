@@ -94,6 +94,7 @@ public class CodecProcessor : ISourceGenerator
     internal const string MNAME_GET_ENCODER_TYPE = "GetEncoderType";
     internal const string MNAME_BEFORE_ENCODE = "BeforeEncode";
     internal const string MNAME_WRITE_FIELDS = "WriteFields";
+    
     internal const string MNAME_NEW_INSTANCE = "NewInstance";
     internal const string MNAME_READ_FIELDS = "ReadFields";
     internal const string MNAME_READ_FIELD = "ReadField";
@@ -703,6 +704,12 @@ public class CodecProcessor : ISourceGenerator
     internal bool ContainsWriteObjectMethod(List<ISymbol> allMembers) {
         return ContainsHookMethod(allMembers, MNAME_WRITE_OBJECT, type_DsonWriter);
     }
+    
+    /** 是否包含 writeObject(writer) 实例方法 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool ContainsWriteFieldsMethod(List<ISymbol> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_WRITE_FIELDS, type_DsonWriter);
+    }
 
     /** 是否包含 beforeEncode 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -858,7 +865,7 @@ public class CodecProcessor : ISourceGenerator
     #region overring util
 
     public MethodSpec NewGetEncoderTypeMethod(INamedTypeSymbol superDeclaredType, TypeName encoderTypeName) {
-        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_GET_ENCODER_TYPE);
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_GET_ENCODER_TYPE);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }
@@ -869,7 +876,15 @@ public class CodecProcessor : ISourceGenerator
     }
 
     public MethodSpec.Builder NewNewInstanceMethodBuilder(INamedTypeSymbol superDeclaredType) {
-        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_NEW_INSTANCE);
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_NEW_INSTANCE);
+        if (methodInfo == null) {
+            throw new InvalidOperationException();
+        }
+        return AptUtils.Overriding(methodInfo);
+    }
+
+    public MethodSpec.Builder NewReadObjectMethodBuilder(INamedTypeSymbol superDeclaredType) {
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_READ_OBJECT);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }
@@ -877,7 +892,7 @@ public class CodecProcessor : ISourceGenerator
     }
 
     public MethodSpec.Builder NewReadFieldsMethodBuilder(INamedTypeSymbol superDeclaredType) {
-        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_READ_FIELDS);
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_READ_FIELDS);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }
@@ -885,7 +900,7 @@ public class CodecProcessor : ISourceGenerator
     }
 
     public MethodSpec.Builder NewReadFieldMethodBuilder(INamedTypeSymbol superDeclaredType) {
-        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_READ_FIELD);
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_READ_FIELD);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }
@@ -893,7 +908,7 @@ public class CodecProcessor : ISourceGenerator
     }
 
     public MethodSpec.Builder NewAfterDecodeMethodBuilder(INamedTypeSymbol superDeclaredType) {
-        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_AFTER_DECODE);
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_AFTER_DECODE);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }
@@ -901,7 +916,15 @@ public class CodecProcessor : ISourceGenerator
     }
 
     public MethodSpec.Builder NewBeforeEncodeMethodBuilder(INamedTypeSymbol superDeclaredType) {
-        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_BEFORE_ENCODE);
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_BEFORE_ENCODE);
+        if (methodInfo == null) {
+            throw new InvalidOperationException();
+        }
+        return AptUtils.Overriding(methodInfo);
+    }
+
+    public MethodSpec.Builder NewWriteObjectMethodBuilder(INamedTypeSymbol superDeclaredType) {
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_WRITE_OBJECT);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }
@@ -909,11 +932,21 @@ public class CodecProcessor : ISourceGenerator
     }
 
     public MethodSpec.Builder NewWriteFieldsMethodBuilder(INamedTypeSymbol superDeclaredType) {
-        IMethodSymbol? methodInfo = superDeclaredType.GetFirstMethod(MNAME_WRITE_FIELDS);
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_WRITE_FIELDS);
         if (methodInfo == null) {
             throw new InvalidOperationException();
         }
         return AptUtils.Overriding(methodInfo);
+    }
+
+    private static IMethodSymbol GetFirstVirtualMethod(ITypeSymbol typeSymbol, string name) {
+        foreach (ISymbol member in typeSymbol.GetMembers()) {
+            if (member.Kind == SymbolKind.Method && (member.IsVirtual || member.IsAbstract)
+                                                 && member.Name == name) {
+                return (IMethodSymbol?)member;
+            }
+        }
+        return null;
     }
 
     #endregion

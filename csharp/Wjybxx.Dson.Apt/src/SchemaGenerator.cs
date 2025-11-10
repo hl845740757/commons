@@ -101,7 +101,8 @@ internal class SchemaGenerator
                 // 自动属性字段使用属性名
                 dsonName = fieldInfo.propertySymbol!.Name;
             } else {
-                dsonName = fieldName;
+                // 删除首字符下划线
+                dsonName = fieldName[0] == '_' ? fieldName.Substring(1) : fieldName;
             }
             if (!dsonNameSet.Add(dsonName)) {
                 throw new Exception($"dsonName {dsonName} is duplicate, Type: {context.type}");
