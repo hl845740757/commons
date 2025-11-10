@@ -42,13 +42,6 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private final List<? extends Element> allMembers;
 
     private final ClassName rawTypeName;
-    private boolean containsReaderConstructor;
-    private boolean containsNewInstanceMethod;
-    private boolean containsReadObjectMethod;
-    private boolean containsWriteObjectMethod;
-    private Map.Entry<Boolean, Integer> containsBeforeEncodeMethod;
-    private Map.Entry<Boolean, Integer> containsAfterDecodeMethod;
-
     private MethodSpec.Builder newInstanceMethodBuilder;
     private MethodSpec.Builder readFieldsMethodBuilder;
     private MethodSpec.Builder afterDecodeMethodBuilder;
@@ -73,13 +66,6 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     /** 子类需要初始化 fieldsClassName */
     protected void init() {
-        containsReaderConstructor = processor.containsReaderConstructor(typeElement);
-        containsNewInstanceMethod = processor.containsNewInstanceMethod(typeElement);
-        containsReadObjectMethod = processor.containsReadObjectMethod(allMembers);
-        containsWriteObjectMethod = processor.containsWriteObjectMethod(allMembers);
-        containsBeforeEncodeMethod = processor.containsBeforeEncodeMethod(allMembers);
-        containsAfterDecodeMethod = processor.containsAfterDecodeMethod(allMembers);
-
         // 需要先初始化superDeclaredType
         DeclaredType superDeclaredType = context.superDeclaredType;
         newInstanceMethodBuilder = processor.newNewInstanceMethodBuilder(superDeclaredType);
@@ -142,19 +128,19 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     /** 调用用户的readObject方法 */
     private boolean genReadObjectMethod(AptClassProps aptClassProps) {
+        String methodName = CodecProcessor.MNAME_READ_OBJECT;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(CodecProcessor.MNAME_READ_OBJECT)) {
+            if (linkerContext.containsHookMethod(methodName)) {
                 // CodecProxy.readObject(inst, reader);
                 readFieldsMethodBuilder.addStatement("$T.$L(inst, reader)",
-                        linkerContext.rawTypeName, CodecProcessor.MNAME_READ_OBJECT);
+                        linkerContext.rawTypeName, methodName);
                 return true;
             }
         } else {
-            if (containsReadObjectMethod) {
+            if (processor.containsReadObjectMethod(allMembers)) {
                 // inst.readObject(reader);
-                readFieldsMethodBuilder.addStatement("inst.$L(reader)",
-                        CodecProcessor.MNAME_READ_OBJECT);
+                readFieldsMethodBuilder.addStatement("inst.$L(reader)", methodName);
                 return true;
             }
         }
@@ -163,19 +149,19 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     /** 调用用户的writeObject方法 */
     private boolean genWriteObjectMethod(AptClassProps aptClassProps) {
+        String methodName = CodecProcessor.MNAME_WRITE_OBJECT;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(CodecProcessor.MNAME_WRITE_OBJECT)) {
+            if (linkerContext.containsHookMethod(methodName)) {
                 // CodecProxy.writeObject(inst, writer);
                 writeFieldsMethodBuilder.addStatement("$T.$L(inst, writer)",
-                        linkerContext.rawTypeName, CodecProcessor.MNAME_WRITE_OBJECT);
+                        linkerContext.rawTypeName, methodName);
                 return true;
             }
         } else {
-            if (containsWriteObjectMethod) {
+            if (processor.containsWriteObjectMethod(allMembers)) {
                 // inst.writeObject(writer);
-                writeFieldsMethodBuilder.addStatement("inst.$L(writer)",
-                        CodecProcessor.MNAME_WRITE_OBJECT);
+                writeFieldsMethodBuilder.addStatement("inst.$L(writer)", methodName);
                 return true;
             }
         }
@@ -184,54 +170,54 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     /** 调用用户beforeEncode钩子方法 -- 需要支持codecProxy来处理 */
     private boolean genBeforeEncodeMethod(AptClassProps aptClassProps) {
+        String methodName = CodecProcessor.MNAME_BEFORE_ENCODE;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(CodecProcessor.MNAME_BEFORE_ENCODE)) {
+            if (linkerContext.containsHookMethod(methodName)) {
                 // CodecProxy.beforeEncode(inst, writer.options());
                 beforeEncodeMethodBuilder.addStatement("$T.$L(inst, writer.options())",
-                        linkerContext.rawTypeName, CodecProcessor.MNAME_BEFORE_ENCODE);
+                        linkerContext.rawTypeName, methodName);
                 return true;
             }
-        } else {
-            if (containsBeforeEncodeMethod.getKey()) {
-                if (containsBeforeEncodeMethod.getValue() > 0) {
-                    // inst.beforeEncode(writer.options());
-                    beforeEncodeMethodBuilder.addStatement("inst.$L(writer.options())",
-                            CodecProcessor.MNAME_BEFORE_ENCODE);
-                } else {
-                    // inst.beforeEncode();
-                    beforeEncodeMethodBuilder.addStatement("inst.$L()",
-                            CodecProcessor.MNAME_BEFORE_ENCODE);
-                }
-                return true;
+            return false;
+        }
+        Map.Entry<Boolean, Integer> tuple = processor.containsBeforeEncodeMethod(allMembers);
+        if (tuple.getKey()) {
+            if (tuple.getValue() > 0) {
+                // inst.beforeEncode(writer.options());
+                beforeEncodeMethodBuilder.addStatement("inst.$L(writer.options())", methodName);
+            } else {
+                // inst.beforeEncode();
+                beforeEncodeMethodBuilder.addStatement("inst.$L()", methodName);
             }
+            return true;
         }
         return false;
     }
 
     /** 调用用户afterDecode钩子方法 -- 需要支持CodecProxy来处理 */
     private boolean genAfterDecodeMethod(AptClassProps aptClassProps) {
+        String methodName = CodecProcessor.MNAME_AFTER_DECODE;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(CodecProcessor.MNAME_AFTER_DECODE)) {
+            if (linkerContext.containsHookMethod(methodName)) {
                 // CodecProxy.afterDecode(inst, reader.options());
                 afterDecodeMethodBuilder.addStatement("$T.$L(inst, reader.options())",
-                        linkerContext.rawTypeName, CodecProcessor.MNAME_AFTER_DECODE);
+                        linkerContext.rawTypeName, methodName);
                 return true;
             }
-        } else {
-            if (containsAfterDecodeMethod.getKey()) {
-                if (containsAfterDecodeMethod.getValue() > 0) {
-                    // inst.afterDecode(reader.options());
-                    afterDecodeMethodBuilder.addStatement("inst.$L(reader.options())",
-                            CodecProcessor.MNAME_AFTER_DECODE);
-                } else {
-                    // inst.afterDecode();
-                    afterDecodeMethodBuilder.addStatement("inst.$L()",
-                            CodecProcessor.MNAME_AFTER_DECODE);
-                }
-                return true;
+            return false;
+        }
+        Map.Entry<Boolean, Integer> tuple = processor.containsAfterDecodeMethod(allMembers);
+        if (tuple.getKey()) {
+            if (tuple.getValue() > 0) {
+                // inst.afterDecode(reader.options());
+                afterDecodeMethodBuilder.addStatement("inst.$L(reader.options())", methodName);
+            } else {
+                // inst.afterDecode();
+                afterDecodeMethodBuilder.addStatement("inst.$L()", methodName);
             }
+            return true;
         }
         return false;
     }
@@ -256,21 +242,21 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
             return;
         }
 
+        String methodName = CodecProcessor.MNAME_NEW_INSTANCE;
         if (linkerContext != null
-                && linkerContext.containsHookMethod(CodecProcessor.MNAME_NEW_INSTANCE)) {
-            // CodecProxy.newInstance(reader, getEncoderType());
+                && linkerContext.containsHookMethod(methodName)) {
+            // CodecProxy.newInstance(reader);
             newInstanceMethodBuilder.addStatement("return $T.$L(reader, $L())",
-                    linkerContext.rawTypeName, CodecProcessor.MNAME_NEW_INSTANCE, CodecProcessor.MNAME_GET_ENCODER_TYPE);
+                    linkerContext.rawTypeName, methodName, CodecProcessor.MNAME_GET_ENCODER_TYPE);
             return;
         }
-        if (containsNewInstanceMethod) { // 静态解析方法，优先级更高
-            // MyBean.NewInstance(reader, getEncoderType());
-            newInstanceMethodBuilder.addStatement("return $T.$L(reader, $L())", rawTypeName, CodecProcessor.MNAME_NEW_INSTANCE, CodecProcessor.MNAME_GET_ENCODER_TYPE);
-        } else if (containsReaderConstructor) { // 解析构造方法
-            // return new MyBean(reader, getEncoderType());
+        if (processor.containsNewInstanceMethod(typeElement)) { // 静态解析方法，优先级更高
+            // MyBean.NewInstance(reader);
+            newInstanceMethodBuilder.addStatement("return $T.$L(reader, $L())", rawTypeName, methodName, CodecProcessor.MNAME_GET_ENCODER_TYPE);
+        } else if (processor.containsReaderConstructor(typeElement)) { // 解析构造方法
+            // return new MyBean(reader);
             newInstanceMethodBuilder.addStatement("return new $T(reader, $L())", rawTypeName, CodecProcessor.MNAME_GET_ENCODER_TYPE);
         } else {
-            // MyBean.NewInstance();
             newInstanceMethodBuilder.addStatement("return new $T()", rawTypeName);
         }
     }
@@ -278,24 +264,21 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     // region field
 
-    private boolean containsAutoReadFields() {
-        AptClassProps aptClassProps = context.aptClassProps;
-        for (AptFieldInfo fieldInfo : context.serialFields) {
-            AptFieldProps aptFieldProps = context.fieldPropsMap.get(fieldInfo);
-            if (processor.isAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void genReadFieldsMethod() {
-        // 可能没有需要自动读的字段
-        if (!containsAutoReadFields()) {
-            return;
-        }
         AptClassProps aptClassProps = context.aptClassProps;
         MethodSpec.Builder builder = readFieldsMethodBuilder;
+        // 如果用户实现了ReadFields方法，则全权委托给用户
+        String methodName = CodecProcessor.MNAME_READ_FIELDS;
+        Context linkerContext = context.linkerContext;
+        if (linkerContext != null && linkerContext.containsHookMethod(methodName)) {
+            builder.addStatement("$T.$L(inst, reader)",
+                    linkerContext.rawTypeName, methodName);
+            return;
+        }
+        if (processor.containsReadFieldsMethod(context.allMembers)) {
+            builder.addStatement("inst.$L(reader)", methodName);
+            return;
+        }
         // ReadObject或构造函数可能导致输入流结束 - 不必手动处理
         // builder.addStatement("if (reader.getCurrentDsonType() == $T.END_OF_OBJECT) return", CodecProcessor.typeName_DsonType);
         builder.beginControlFlow("if (reader.getContextType() == $T.ARRAY)", CodecProcessor.typeName_ContextType);

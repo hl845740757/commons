@@ -158,18 +158,18 @@ public interface IDsonObjectWriter : IDisposable
     void WriteName(string name);
 
     /// <summary>
-    /// 
-    /// <param name="encoderType">需要存储在上下文中</param>
-    /// <param name="features">主要用于计算Style</param>
+    /// 虽然目前来看，encoderType(TypeMeta)并非必要属性，但还是建议用户正确传入
     /// </summary>
-    void WriteStartObject(Type encoderType, SerializeFeatures features);
+    /// <param name="encoderType">类型信息，用于嵌套对象获取信息</param>
+    /// <param name="features">主要用于计算Style</param>
+    void WriteStartObject(Type? encoderType, SerializeFeatures features);
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="typeMeta">根据encoderType查询到的类型信息</param>
-    /// <param name="features"></param>
-    void WriteStartObject(TypeMeta typeMeta, SerializeFeatures features);
+    /// <param name="typeMeta">类型信息，用于嵌套对象获取信息</param>
+    /// <param name="features">主要用于计算Style</param>
+    void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features);
 
     void WriteEndObject();
 
@@ -196,7 +196,9 @@ public interface IDsonObjectWriter : IDisposable
     /// <summary>
     /// 当前容器的类型元数据
     /// 
-    /// 注：如果当前是顶层对象，则为null。
+    /// 注：
+    /// 1.如果当前是顶层对象，则为null；
+    /// 2.如果用户在WriteStartObject/WriteStartArray方法时没有传入类型信息，则为null。
     /// </summary>
     TypeMeta? ContainerTypeMeta { get; }
 

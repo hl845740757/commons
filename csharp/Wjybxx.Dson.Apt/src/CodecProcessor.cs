@@ -686,6 +686,18 @@ public class CodecProcessor : ISourceGenerator
         return ContainsHookMethod(allMembers, MNAME_READ_OBJECT, type_DsonReader);
     }
 
+    /** 是否包含 ReadFields(reader) 实例方法 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool ContainsReadFieldsMethod(List<ISymbol> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_READ_FIELDS, type_DsonReader);
+    }
+
+    /** 是否包含 ReadField(reader, name) 实例方法 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool ContainsReadFieldMethod(List<ISymbol> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_READ_FIELD, type_DsonReader);
+    }
+
     /** 是否包含 writeObject(writer) 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ContainsWriteObjectMethod(List<ISymbol> allMembers) {

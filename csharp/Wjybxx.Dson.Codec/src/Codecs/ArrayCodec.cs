@@ -51,10 +51,10 @@ public sealed class ArrayCodec<T> : IDsonCodec<T[]>
     }
 
     public T[] ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        DeserializeFeatures selfFeatures = features.GetElementFeatures();
+        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         // count非精确值，不可以直接创建数组
-        int count = reader.ReadStartArray(typeof(T[]), selfFeatures).count;
+        int count = reader.ReadStartArray(typeof(T[])).count;
         List<T> result = new List<T>(count);
         // T就是声明类型
         DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();

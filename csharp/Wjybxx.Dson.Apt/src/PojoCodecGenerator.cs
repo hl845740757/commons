@@ -41,13 +41,6 @@ internal class PojoCodecGenerator
     private readonly List<ISymbol> allMembers;
 
     private readonly ClassName rawTypeName;
-    private bool containsReaderConstructor;
-    private bool containsNewInstanceMethod;
-    private bool containsReadObjectMethod;
-    private bool containsWriteObjectMethod;
-    private (bool contains, int argCount) containsBeforeEncodeMethod;
-    private (bool contains, int argCount) containsAfterDecodeMethod;
-
     private MethodSpec.Builder newInstanceMethodBuilder;
     private MethodSpec.Builder readFieldsMethodBuilder;
     private MethodSpec.Builder readFieldMethodBuilder;
@@ -72,13 +65,6 @@ internal class PojoCodecGenerator
     }
 
     private void Init() {
-        containsReaderConstructor = processor.ContainsReaderConstructor(typeSymbol);
-        containsNewInstanceMethod = processor.ContainsNewInstanceMethod(typeSymbol);
-        containsReadObjectMethod = processor.ContainsReadObjectMethod(allMembers);
-        containsWriteObjectMethod = processor.ContainsWriteObjectMethod(allMembers);
-        containsBeforeEncodeMethod = processor.ContainsBeforeEncodeMethod(allMembers);
-        containsAfterDecodeMethod = processor.ContainsAfterDecodeMethod(allMembers);
-
         // 需要先初始化superDeclaredType
         INamedTypeSymbol superDeclaredType = context.superDeclaredType;
         newInstanceMethodBuilder = processor.NewNewInstanceMethodBuilder(superDeclaredType);
@@ -131,22 +117,23 @@ internal class PojoCodecGenerator
 
     /** 调用用户的readObject方法 */
     private bool GenReadObjectMethod(AptClassProps aptClassProps) {
+        const string methodName = CodecProcessor.MNAME_READ_OBJECT;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(CodecProcessor.MNAME_READ_OBJECT)) {
+            if (linkerContext.ContainsHookMethod(methodName)) {
                 string format = typeSymbol.IsValueType
                     ? "$T.$L(ref inst, reader)"
                     : "$T.$L(inst, reader)";
                 // CodecProxy.ReadObject(inst, reader);
                 readFieldsMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, CodecProcessor.MNAME_READ_OBJECT);
+                    linkerContext.rawTypeName, methodName);
                 return true;
             }
         } else {
-            if (containsReadObjectMethod) {
+            if (processor.ContainsReadObjectMethod(allMembers)) {
                 // inst.ReadObject(reader);
                 readFieldsMethodBuilder.codeBuilder.AddStatement("inst.$L(reader)",
-                    CodecProcessor.MNAME_READ_OBJECT);
+                    methodName);
                 return true;
             }
         }
@@ -155,22 +142,23 @@ internal class PojoCodecGenerator
 
     /** 调用用户的writeObject方法 */
     private bool GenWriteObjectMethod(AptClassProps aptClassProps) {
+        const string methodName = CodecProcessor.MNAME_WRITE_OBJECT;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(CodecProcessor.MNAME_WRITE_OBJECT)) {
+            if (linkerContext.ContainsHookMethod(methodName)) {
                 string format = typeSymbol.IsValueType
                     ? "$T.$L(ref inst, writer)"
                     : "$T.$L(inst, writer)";
                 // CodecProxy.WriteObject(inst, writer);
                 writeFieldsMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, CodecProcessor.MNAME_WRITE_OBJECT);
+                    linkerContext.rawTypeName, methodName);
                 return true;
             }
         } else {
-            if (containsWriteObjectMethod) {
+            if (processor.ContainsWriteObjectMethod(allMembers)) {
                 // inst.WriteObject(writer);
                 writeFieldsMethodBuilder.codeBuilder.AddStatement("inst.$L(writer)",
-                    CodecProcessor.MNAME_WRITE_OBJECT);
+                    methodName);
                 return true;
             }
         }
@@ -179,60 +167,62 @@ internal class PojoCodecGenerator
 
     /** 调用用户BeforeEncode钩子方法 -- 需要支持codecProxy来处理 */
     private bool GenBeforeEncodeMethod(AptClassProps aptClassProps) {
+        const string methodName = CodecProcessor.MNAME_BEFORE_ENCODE;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(CodecProcessor.MNAME_BEFORE_ENCODE)) {
+            if (linkerContext.ContainsHookMethod(methodName)) {
                 string format = typeSymbol.IsValueType
                     ? "$T.$L(ref inst, writer.Options)"
                     : "$T.$L(inst, writer.Options)";
                 // CodecProxy.BeforeEncode(inst, writer.Options);
                 beforeEncodeMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, CodecProcessor.MNAME_BEFORE_ENCODE);
+                    linkerContext.rawTypeName, methodName);
                 return true;
             }
-        } else {
-            if (containsBeforeEncodeMethod.contains) {
-                if (containsBeforeEncodeMethod.argCount == 1) {
-                    // inst.BeforeEncode(writer.Options);
-                    beforeEncodeMethodBuilder.codeBuilder.AddStatement("inst.$L(writer.Options)",
-                        CodecProcessor.MNAME_BEFORE_ENCODE);
-                } else {
-                    // inst.BeforeEncode();
-                    beforeEncodeMethodBuilder.codeBuilder.AddStatement("inst.$L()",
-                        CodecProcessor.MNAME_BEFORE_ENCODE);
-                }
-                return true;
+            return false;
+        }
+        (bool contains, int argCount) tuple = processor.ContainsBeforeEncodeMethod(allMembers);
+        if (tuple.contains) {
+            if (tuple.argCount == 1) {
+                // inst.BeforeEncode(writer.Options);
+                beforeEncodeMethodBuilder.codeBuilder.AddStatement("inst.$L(writer.Options)",
+                    methodName);
+            } else {
+                // inst.BeforeEncode();
+                beforeEncodeMethodBuilder.codeBuilder.AddStatement("inst.$L()",
+                    methodName);
             }
+            return true;
         }
         return false;
     }
 
     /** 调用用户AfterDecode钩子方法 -- 需要支持CodecProxy来处理 */
     private bool GenAfterDecodeMethod(AptClassProps aptClassProps) {
+        const string methodName = CodecProcessor.MNAME_AFTER_DECODE;
         Context linkerContext = context.linkerContext;
         if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(CodecProcessor.MNAME_AFTER_DECODE)) {
+            if (linkerContext.ContainsHookMethod(methodName)) {
                 string format = typeSymbol.IsValueType
                     ? "$T.$L(ref inst, reader.Options)"
                     : "$T.$L(inst, reader.Options)";
                 // CodecProxy.AfterDecode(inst, reader.Options);
                 afterDecodeMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, CodecProcessor.MNAME_AFTER_DECODE);
+                    linkerContext.rawTypeName, methodName);
                 return true;
             }
-        } else {
-            if (containsAfterDecodeMethod.contains) {
-                if (containsAfterDecodeMethod.argCount == 1) {
-                    // inst.AfterDecode(reader.Options);
-                    afterDecodeMethodBuilder.codeBuilder.AddStatement("inst.$L(reader.Options)",
-                        CodecProcessor.MNAME_AFTER_DECODE);
-                } else {
-                    // inst.AfterDecode();
-                    afterDecodeMethodBuilder.codeBuilder.AddStatement("inst.$L()",
-                        CodecProcessor.MNAME_AFTER_DECODE);
-                }
-                return true;
+            return false;
+        }
+        (bool contains, int argCount) tuple = processor.ContainsAfterDecodeMethod(allMembers);
+        if (tuple.contains) {
+            if (tuple.argCount == 1) {
+                // inst.AfterDecode(reader.Options);
+                afterDecodeMethodBuilder.codeBuilder.AddStatement("inst.$L(reader.Options)", methodName);
+            } else {
+                // inst.AfterDecode();
+                afterDecodeMethodBuilder.codeBuilder.AddStatement("inst.$L()", methodName);
             }
+            return true;
         }
         return false;
     }
@@ -259,22 +249,26 @@ internal class PojoCodecGenerator
                 holderTypeName, aptClassProps.singleton!);
             return;
         }
-        if (typeSymbol.IsAbstract) { // 抽象类
+        // 抽象类
+        if (typeSymbol.IsAbstract) {
             newInstanceMethodBuilder.codeBuilder.AddStatement("throw new $T()", typeof(NotImplementedException));
             return;
         }
-
+        //
+        const string methodName = CodecProcessor.MNAME_NEW_INSTANCE;
         if (linkerContext != null
-            && linkerContext.ContainsHookMethod(CodecProcessor.MNAME_NEW_INSTANCE)) {
+            && linkerContext.ContainsHookMethod(methodName)) {
             // CodecProxy.NewInstance(reader);
             newInstanceMethodBuilder.codeBuilder.AddStatement("return $T.$L(reader)",
-                linkerContext.rawTypeName, CodecProcessor.MNAME_NEW_INSTANCE);
+                linkerContext.rawTypeName, methodName);
             return;
         }
-        if (containsNewInstanceMethod) { // 静态解析方法，优先级更高
-            newInstanceMethodBuilder.codeBuilder.AddStatement("return $T.$L(reader)", rawTypeName,
-                CodecProcessor.MNAME_NEW_INSTANCE);
-        } else if (containsReaderConstructor) { // 解析构造方法
+        //
+        if (processor.ContainsNewInstanceMethod(typeSymbol)) { // 静态解析方法，优先级更高
+            // MyBean.NewInstance(reader);
+            newInstanceMethodBuilder.codeBuilder.AddStatement("return $T.$L(reader)", rawTypeName, methodName);
+        } else if (processor.ContainsReaderConstructor(typeSymbol)) { // 解析构造方法
+            // return new MyBean(reader);
             newInstanceMethodBuilder.codeBuilder.AddStatement("return new $T(reader)", rawTypeName);
         } else if (typeSymbol.IsValueType) { // 值类型
             newInstanceMethodBuilder.codeBuilder.AddStatement("return default");
@@ -290,6 +284,23 @@ internal class PojoCodecGenerator
     private void GenReadFieldsMethod() {
         AptClassProps aptClassProps = context.aptClassProps;
         CodeBlock.Builder codeBuilder = readFieldsMethodBuilder.codeBuilder;
+        // 如果用户实现了ReadFields方法，则全权委托给用户
+        const string methodName = CodecProcessor.MNAME_READ_FIELDS;
+        Context linkerContext = context.linkerContext;
+        if (linkerContext != null && linkerContext.ContainsHookMethod(methodName)) {
+            if (typeSymbol.IsValueType) {
+                codeBuilder.AddStatement("$T.$L(ref inst, reader)",
+                    linkerContext.rawTypeName, methodName);
+            } else {
+                codeBuilder.AddStatement("$T.$L(inst, reader)",
+                    linkerContext.rawTypeName, methodName);
+            }
+            return;
+        }
+        if (processor.ContainsReadFieldsMethod(context.allMembers)) {
+            codeBuilder.AddStatement("inst.$L(reader)", methodName);
+            return;
+        }
         // array格式
         foreach (AptFieldInfo? fieldInfo in context.serialFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
@@ -304,6 +315,24 @@ internal class PojoCodecGenerator
     private void GenReadFieldMethod() {
         AptClassProps aptClassProps = context.aptClassProps;
         CodeBlock.Builder codeBuilder = readFieldMethodBuilder.codeBuilder;
+        // 如果用户实现了ReadField方法，则全权委托给用户
+        const string methodName = CodecProcessor.MNAME_READ_FIELD;
+        Context linkerContext = context.linkerContext;
+        if (linkerContext != null && linkerContext.ContainsHookMethod(methodName)) {
+            if (typeSymbol.IsValueType) {
+                codeBuilder.AddStatement("$T.$L(ref inst, reader)",
+                    linkerContext.rawTypeName, methodName);
+            } else {
+                codeBuilder.AddStatement("$T.$L(inst, reader)",
+                    linkerContext.rawTypeName, methodName);
+            }
+            return;
+        }
+        if (processor.ContainsReadFieldsMethod(context.allMembers)) {
+            codeBuilder.AddStatement("inst.$L(reader)", methodName);
+            return;
+        }
+
         // object样式
         codeBuilder.BeginControlFlow("switch (name)");
         foreach (AptFieldInfo? fieldInfo in context.serialFields) {
@@ -381,25 +410,44 @@ internal class PojoCodecGenerator
 
     private void GenWriteFieldsMethod() {
         AptClassProps aptClassProps = context.aptClassProps;
+        CodeBlock.Builder codeBuilder = writeFieldsMethodBuilder.codeBuilder;
+        // 如果用户实现了WriteFields方法，则全权委托给用户
+        const string methodName = CodecProcessor.MNAME_WRITE_FIELDS;
+        Context linkerContext = context.linkerContext;
+        if (linkerContext != null && linkerContext.ContainsHookMethod(methodName)) {
+            if (typeSymbol.IsValueType) {
+                codeBuilder.AddStatement("$T.$L(ref inst, writer)",
+                    linkerContext.rawTypeName, methodName);
+            } else {
+                codeBuilder.AddStatement("$T.$L(inst, writer)",
+                    linkerContext.rawTypeName, methodName);
+            }
+            return;
+        }
+        if (processor.ContainsReadFieldsMethod(context.allMembers)) {
+            codeBuilder.AddStatement("inst.$L(writer)", methodName);
+            return;
+        }
+        //
         foreach (AptFieldInfo? fieldInfo in context.serialFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
             if (processor.IsAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
-                AddWriteStatement(fieldInfo, aptFieldProps, aptClassProps);
+                AddWriteStatement(codeBuilder, fieldInfo, aptFieldProps, aptClassProps);
             }
         }
     }
 
-    private void AddWriteStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
+    private void AddWriteStatement(CodeBlock.Builder codeBuilder, AptFieldInfo fieldInfo,
+                                   AptFieldProps fieldProps, AptClassProps aptClassProps) {
         string fieldName = fieldInfo.Name;
-        MethodSpec.Builder builder = this.writeFieldsMethodBuilder;
         if (!string.IsNullOrWhiteSpace(fieldProps.writeProxy)) { // 自定义写
             Context linkerContext = context.linkerContext;
             if (linkerContext != null) {
                 // 方法名是CodecProxy指定的，因此应当存在，不做校验
-                builder.codeBuilder.AddStatement("$T.$L(inst, writer, $L)",
+                codeBuilder.AddStatement("$T.$L(inst, writer, $L)",
                     linkerContext.rawTypeName, fieldProps.writeProxy, SerialName(fieldName));
             } else {
-                builder.codeBuilder.AddStatement("inst.$L(writer, $L)",
+                codeBuilder.AddStatement("inst.$L(writer, $L)",
                     fieldProps.writeProxy, SerialName(fieldName));
             }
             return;
@@ -424,13 +472,13 @@ internal class PojoCodecGenerator
                                                || writeMethodName == MNAME_WRITE_OBJECT)) {
             // int,long,float,double,uint,ulong,short,ushort,byte,sbyte...
             // writer.writeInt(names_fieldName, inst.field, (SerializeFeatures)0x01)
-            builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, ($T)$L)",
+            codeBuilder.AddStatement("writer.$L($L, inst.$L, ($T)$L)",
                 writeMethodName, SerialName(fieldName), fieldAccess,
                 CodecProcessor.typeName_EncodeFeatures, fieldProps.encodeFeatures);
         } else {
             // 未对DateTime等结构体做in优化，因为通过属性访问时，无法使用in
             // writer.writeInt(names_fieldName, inst.field)
-            builder.codeBuilder.AddStatement("writer.$L($L, inst.$L)",
+            codeBuilder.AddStatement("writer.$L($L, inst.$L)",
                 writeMethodName, SerialName(fieldName), fieldAccess);
         }
     }

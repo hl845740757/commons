@@ -143,9 +143,9 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         DsonType containerType = reader.CurrentDsonType;
         if (containerType == DsonType.Object) {
-            reader.ReadStartObject(GetEncoderType(), features);
+            reader.ReadStartObject(GetEncoderType());
         } else {
-            reader.ReadStartArray(GetEncoderType(), features);
+            reader.ReadStartArray(GetEncoderType());
         }
         // cast失败则抛出异常，不能测试类型导致隐藏错误
         T inst = factory != null ? (T)factory() : NewInstance(reader);

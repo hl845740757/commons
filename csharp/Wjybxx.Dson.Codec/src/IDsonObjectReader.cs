@@ -178,19 +178,18 @@ public interface IDsonObjectReader : IDisposable
     string CurrentName { get; }
 
     /// <summary>
-    /// 
-    /// <param name="encoderType">需要存储在上下文中</param>
-    /// <param name="features">主要用于计算Style</param>
+    /// 虽然目前来看，encoderType(TypeMeta)并非必要属性，但还是建议用户正确传入
     /// </summary>
-    SerializeHeader ReadStartObject(Type encoderType, DeserializeFeatures features);
+    /// <param name="encoderType">类型信息，用于嵌套对象获取信息</param>
+    SerializeHeader ReadStartObject(Type encoderType);
 
-    SerializeHeader ReadStartObject(TypeMeta typeMeta, DeserializeFeatures features);
+    SerializeHeader ReadStartObject(TypeMeta? typeMeta);
 
     void ReadEndObject();
 
-    SerializeHeader ReadStartArray(Type encoderType, DeserializeFeatures features);
+    SerializeHeader ReadStartArray(Type encoderType);
 
-    SerializeHeader ReadStartArray(TypeMeta typeMeta, DeserializeFeatures features);
+    SerializeHeader ReadStartArray(TypeMeta typeMeta);
 
     void ReadEndArray();
 
@@ -211,8 +210,10 @@ public interface IDsonObjectReader : IDisposable
 
     /// <summary>
     /// 获取当前容器的类型元数据
-    /// 
-    /// 注：如果当前是顶层对象，则返回值为null。
+    ///
+    /// 注：
+    /// 1.如果当前是顶层对象，则为null；
+    /// 2.如果用户在ReadStartObject/ReadStartArray方法时没有传入类型信息，则为null。
     /// </summary>
     /// <value></value>
     TypeMeta? ContainerTypeMeta { get; }

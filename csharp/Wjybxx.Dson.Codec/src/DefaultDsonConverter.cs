@@ -77,25 +77,29 @@ public class DefaultDsonConverter : IDsonConverter
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
         // 外部销毁流，确保buffer规划到池
         using var outputStream = DsonOutputs.NewInstance(options.bufferPool, options.bufferLength, options.maxBufferLength);
-        EncodeObject(outputStream, value, declaredType, features);
+        using DsonBinaryWriter<string> dsonWriter = new DsonBinaryWriter<string>(options.binWriterSettings, outputStream, autoClose: false);
+        EncodeObject(dsonWriter, value, declaredType, features);
         return ArrayUtil.CopyOf(outputStream.Buffer, 0, outputStream.Position);
     }
 
     public object Read(byte[] source, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         using IDsonInput inputStream = DsonInputs.NewInstance(source);
-        return DecodeObject(inputStream, declaredType, features, factory);
+        using DsonBinaryReader<string> dsonReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
+        return DecodeObject(dsonReader, declaredType, features, factory);
     }
 
     public void Write(object value, Type declaredType, DsonChunk chunk, SerializeFeatures features) {
         if (value == null) throw new ArgumentNullException(nameof(value));
         using IDsonOutput outputStream = DsonOutputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
-        EncodeObject(outputStream, value, declaredType, features);
+        using DsonBinaryWriter<string> dsonWriter = new DsonBinaryWriter<string>(options.binWriterSettings, outputStream, autoClose: false);
+        EncodeObject(dsonWriter, value, declaredType, features);
         chunk.Used = outputStream.Position;
     }
 
     public object Read(DsonChunk chunk, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         using IDsonInput inputStream = DsonInputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
-        object result = DecodeObject(inputStream, declaredType, features, factory);
+        using DsonBinaryReader<string> dsonReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
+        object result = DecodeObject(dsonReader, declaredType, features, factory);
         chunk.Used = inputStream.Position;
         return result;
     }
@@ -103,35 +107,25 @@ public class DefaultDsonConverter : IDsonConverter
     public void Write(object value, Type declaredType, IDsonOutput output, SerializeFeatures features) {
         if (value == null) throw new ArgumentNullException(nameof(value));
         if (output == null) throw new ArgumentNullException(nameof(output));
-        EncodeObject(output, value, declaredType, features);
+        using DsonBinaryWriter<string> dsonWriter = new DsonBinaryWriter<string>(options.binWriterSettings, output, autoClose: false);
+        EncodeObject(dsonWriter, value, declaredType, features);
     }
 
     public object Read(IDsonInput input, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         if (input == null) throw new ArgumentNullException(nameof(input));
-        return DecodeObject(input, declaredType, features, factory);
+        using DsonBinaryReader<string> dsonReader = new DsonBinaryReader<string>(options.binReaderSettings, input, autoClose: false);
+        return DecodeObject(dsonReader, declaredType, features, factory);
     }
 
     public object CloneObject(object? value, Type declaredType, Type targetType, Func<object>? factory = null) {
         if (value == null) return null!;
-        using var dsonOutput = DsonOutputs.NewInstance(options.bufferPool, options.bufferLength, options.maxBufferLength);
-        EncodeObject(dsonOutput, value, declaredType, default);
+        using var outputStream = DsonOutputs.NewInstance(options.bufferPool, options.bufferLength, options.maxBufferLength);
+        using DsonBinaryWriter<string> dsonWriter = new DsonBinaryWriter<string>(options.binWriterSettings, outputStream, autoClose: false);
+        EncodeObject(dsonWriter, value, declaredType, default);
         // 不销毁
-        IDsonInput inputStream = DsonInputs.NewInstance(dsonOutput.Buffer, 0, dsonOutput.Position);
-        return DecodeObject(inputStream, targetType, 0, factory);
-    }
-
-    /** 注意：由外部销毁输出流 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void EncodeObject(IDsonOutput outputStream, object value, Type declaredType, SerializeFeatures features) {
-        using DsonBinaryWriter<string> binaryWriter = new DsonBinaryWriter<string>(options.binWriterSettings, outputStream, autoClose: false);
-        EncodeObject(binaryWriter, value, declaredType, features);
-    }
-
-    /** 注意：由外部销毁输入流 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private object DecodeObject(IDsonInput inputStream, Type declaredType, DeserializeFeatures features, Func<object>? factory) {
-        using DsonBinaryReader<string> binaryReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
-        return DecodeObject(binaryReader, declaredType, features, factory);
+        IDsonInput inputStream = DsonInputs.NewInstance(outputStream.Buffer, 0, outputStream.Position);
+        DsonBinaryReader<string> dsonReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
+        return DecodeObject(dsonReader, targetType, 0, factory);
     }
 
     private void EncodeObject(IDsonWriter<string> dsonWriter, object value, Type declaredType, SerializeFeatures features) {
@@ -152,7 +146,7 @@ public class DefaultDsonConverter : IDsonConverter
         DefaultDsonObjectReader wrapper = DefaultDsonObjectReader.GetPooled();
         try {
             wrapper.Init(this);
-            wrapper.AddReference(collection);
+            wrapper.AddReferences(collection);
             return wrapper.ReadFirst(declaredType, features, factory);
         }
         finally {
@@ -178,8 +172,9 @@ public class DefaultDsonConverter : IDsonConverter
     }
 
     public object ReadFromDson(string source, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, source);
-        return DecodeObject(textReader, declaredType, features, factory);
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        DsonTextReader dsonReader = new DsonTextReader(options.textReaderSettings, source);
+        return DecodeObject(dsonReader, declaredType, features, factory);
     }
 
     public void WriteAsDson(object value, Type declaredType, TextWriter writer, SerializeFeatures features) {
@@ -190,19 +185,39 @@ public class DefaultDsonConverter : IDsonConverter
     }
 
     public object ReadFromDson(TextReader source, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, Dsons.NewStreamScanner(source, false));
-        return DecodeObject(textReader, declaredType, features, factory);
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        using DsonTextReader dsonReader = new DsonTextReader(options.textReaderSettings, Dsons.NewStreamScanner(source, false));
+        return DecodeObject(dsonReader, declaredType, features, factory);
+    }
+
+    public DsonArray<string> WriteAsDsonCollection(object value, Type declaredType, SerializeFeatures features = default) {
+        using DsonCollectionWriter<string> dsonWriter = new DsonCollectionWriter<string>(options.binWriterSettings, new DsonArray<string>());
+        EncodeObject(dsonWriter, value, declaredType, features);
+        return dsonWriter.OutList;
+    }
+
+    public object ReadFromDsonCollection(DsonArray<string> collection, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null) {
+        if (collection == null) throw new ArgumentNullException(nameof(collection));
+        DefaultDsonObjectReader wrapper = DefaultDsonObjectReader.GetPooled();
+        try {
+            wrapper.Init(this);
+            wrapper.AddReferences(collection);
+            return wrapper.ReadFirst(declaredType, features, factory);
+        }
+        finally {
+            DefaultDsonObjectReader.Release(wrapper);
+        }
     }
 
     #endregion
 
     #region dson-colletion
 
-    public string WriteCollectionAsDson(IEnumerable<object> collection, Type declaredType, SerializeFeatures features = default) {
+    public string WriteCollectionAsDson<T>(IEnumerable<T> collection, SerializeFeatures features = default) {
         StringBuilder stringBuilder = options.stringBuilderPool.Acquire();
         using DsonTextWriter dsonWriter = new DsonTextWriter(options.textWriterSettings, new StringWriter(stringBuilder), false);
         try {
-            WriteCollection(dsonWriter, collection, declaredType, features);
+            WriteCollection(dsonWriter, collection, features);
             return stringBuilder.ToString();
         }
         finally {
@@ -210,44 +225,43 @@ public class DefaultDsonConverter : IDsonConverter
         }
     }
 
-    public List<T> ReadCollectionFromDson<T>(string dson, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public List<T> ReadCollectionFromDson<T>(string dson, DeserializeFeatures features, Func<object>? factory = null) {
         using DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, dson);
         DsonArray<string> collection = Dsons.ReadCollection(textReader);
-        return ReadCollection<T>(collection, declaredType, features, factory);
+        return ReadCollection<T>(collection, features, factory);
     }
 
-    public DsonArray<string> WriteCollectionAsDsonCollection(IEnumerable<object> collection, Type declaredType, SerializeFeatures features) {
+    public DsonArray<string> WriteCollectionAsDsonCollection<T>(IEnumerable<T> collection, SerializeFeatures features) {
         if (collection == null) throw new ArgumentNullException(nameof(collection));
         using DsonCollectionWriter<string> dsonWriter = new DsonCollectionWriter<string>(options.binWriterSettings, new DsonArray<string>());
-        WriteCollection(dsonWriter, collection, declaredType, features);
+        WriteCollection(dsonWriter, collection, features);
         return dsonWriter.OutList;
     }
 
-    public List<T> ReadCollectionFromDsonCollection<T>(DsonArray<string> collection, Type declaredType,
+    public List<T> ReadCollectionFromDsonCollection<T>(DsonArray<string> collection,
                                                        DeserializeFeatures features, Func<object>? factory = null) {
         if (collection == null) throw new ArgumentNullException(nameof(collection));
-        return ReadCollection<T>(collection, declaredType, features, factory);
+        return ReadCollection<T>(collection, features, factory);
     }
 
-    private List<T> ReadCollection<T>(DsonArray<string> collection, Type declaredType,
-                                      DeserializeFeatures features, Func<object>? factory = null) {
+    private List<T> ReadCollection<T>(DsonArray<string> collection, DeserializeFeatures features, Func<object>? factory = null) {
         DefaultDsonObjectReader wrapper = DefaultDsonObjectReader.GetPooled();
         try {
             wrapper.Init(this);
-            wrapper.AddReference(collection);
-            return wrapper.ReadAll<T>(declaredType, features, factory);
+            wrapper.AddReferences(collection);
+            return wrapper.ReadAll<T>(features, factory);
         }
         finally {
             DefaultDsonObjectReader.Release(wrapper);
         }
     }
 
-    private void WriteCollection(IDsonWriter<string> dsonWriter, IEnumerable<object> collection, Type declaredType, SerializeFeatures features) {
+    private void WriteCollection<T>(IDsonWriter<string> dsonWriter, IEnumerable<T> collection, SerializeFeatures features) {
         DefaultDsonObjectWriter wrapper = DefaultDsonObjectWriter.GetPooled();
         try {
             wrapper.Init(this, dsonWriter);
             wrapper.AddReferences(collection);
-            wrapper.WriteAll(declaredType, features);
+            wrapper.WriteAll(typeof(T), features);
             wrapper.Flush();
         }
         finally {

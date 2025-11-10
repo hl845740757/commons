@@ -48,14 +48,14 @@ public class PairCodec<K, V> : IDsonCodec<KeyValuePair<K, V>>
         //
         Type encoderType = typeof(KeyValuePair<K, V>);
         if (reader.CurrentDsonType == DsonType.Object) {
-            reader.ReadStartObject(encoderType, selfFeatures);
+            reader.ReadStartObject(encoderType);
             K key = reader.ReadObject<K>("key", 0);
             V value = reader.ReadObject<V>("value", elementFeatures);
             reader.ReadEndObject();
             return new KeyValuePair<K, V>(key, value);
         } else {
             // Array
-            reader.ReadStartArray(encoderType, selfFeatures);
+            reader.ReadStartArray(encoderType);
             K key = reader.ReadObject<K>(0);
             V value = reader.ReadObject<V>(elementFeatures);
             reader.ReadEndArray();

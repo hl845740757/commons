@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
@@ -79,9 +80,9 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         return ptr;
     }
 
-    public void AddReferences(IEnumerable<object> collection) {
+    public void AddReferences(IEnumerable collection) {
         foreach (object obj in collection) {
-            AddReference(obj);
+            AddReference(obj ?? throw new NullReferenceException("collection has null elements"));
         }
     }
 
@@ -374,13 +375,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteStartObject(Type encoderType, SerializeFeatures features) {
         TypeMeta? typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
-        if (typeMeta == null) {
-            throw DsonCodecException.UnsupportedType(encoderType);
-        }
         WriteStartObject(typeMeta, features);
     }
 
-    public void WriteStartObject(TypeMeta typeMeta, SerializeFeatures features) {
+    public void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features) {
         ObjectStyle style = GetObjectStyle(features, typeMeta);
         writer.WriteStartObject(style);
         writer.Attach(typeMeta);
@@ -392,13 +390,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteStartArray(Type encoderType, SerializeFeatures features) {
         TypeMeta? typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
-        if (typeMeta == null) {
-            throw DsonCodecException.UnsupportedType(encoderType);
-        }
         WriteStartArray(typeMeta, features);
     }
 
-    public void WriteStartArray(TypeMeta typeMeta, SerializeFeatures features) {
+    public void WriteStartArray(TypeMeta? typeMeta, SerializeFeatures features) {
         ObjectStyle style = GetObjectStyle(features, typeMeta);
         writer.WriteStartArray(style);
         writer.Attach(typeMeta);
@@ -540,12 +535,15 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         return (features & SerializeFeatures.SerializeReference) != 0;
     }
 
-    private static ObjectStyle GetObjectStyle(SerializeFeatures features, TypeMeta typeMeta) {
+    private static ObjectStyle GetObjectStyle(SerializeFeatures features, TypeMeta? typeMeta) {
         if ((features & SerializeFeatures.ObjectFlow) != 0) return ObjectStyle.Flow;
         if ((features & SerializeFeatures.ObjectIndent) != 0) return ObjectStyle.Indent;
-        return (typeMeta.encodeFeatures & SerializeFeatures.ObjectFlow) != 0
-            ? ObjectStyle.Flow
-            : ObjectStyle.Indent;
+        if (typeMeta != null) {
+            return (typeMeta.encodeFeatures & SerializeFeatures.ObjectFlow) != 0
+                ? ObjectStyle.Flow
+                : ObjectStyle.Indent;
+        }
+        return ObjectStyle.Indent;
     }
 
     private class ReferenceComparer : IEqualityComparer<object>

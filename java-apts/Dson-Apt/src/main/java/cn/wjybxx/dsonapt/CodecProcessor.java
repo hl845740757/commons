@@ -79,6 +79,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     public static final String MNAME_WRITE_FIELDS = "writeFields";
     public static final String MNAME_NEW_INSTANCE = "newInstance";
     public static final String MNAME_READ_FIELDS = "readFields";
+    public static final String MNAME_READ_FIELD = "readField";
     public static final String MNAME_AFTER_DECODE = "afterDecode";
 
     public static final ClassName typeName_TypeInfo = AptUtils.classNameOfCanonicalName(CNAME_TypeInfo);
@@ -514,6 +515,16 @@ public class CodecProcessor extends MyAbstractProcessor {
     /** 是否包含 readerObject(reader) 实例方法 */
     public boolean containsReadObjectMethod(List<? extends Element> allMembers) {
         return containsHookMethod(allMembers, MNAME_READ_OBJECT, typeMirror_DsonReader);
+    }
+
+    /** 是否包含 readerFields(reader) 实例方法 */
+    public boolean containsReadFieldsMethod(List<? extends Element> allMembers) {
+        return containsHookMethod(allMembers, MNAME_READ_FIELDS, typeMirror_DsonReader);
+    }
+
+    /** 是否包含 readerField(reader, name) 实例方法 */
+    public boolean containsReadFieldMethod(List<? extends Element> allMembers) {
+        return containsHookMethod(allMembers, MNAME_READ_FIELD, typeMirror_DsonReader);
     }
 
     /** 是否包含 writeObject(writer) 实例方法 */

@@ -54,7 +54,7 @@ public sealed class ListCodec<T> : IDsonCodec<List<T>>
         DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
-        int count = reader.ReadStartArray(typeof(List<T>), selfFeatures).count;
+        int count = reader.ReadStartArray(typeof(List<T>)).count;
         List<T> result = new List<T>(count);
         // T就是声明类型
         DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();

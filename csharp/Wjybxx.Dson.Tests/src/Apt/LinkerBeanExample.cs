@@ -44,6 +44,10 @@ public class LinkerBeanExample
     /// </summary>
     public int Sex { get; set; }
 
+    public void ReadField(ThirdPartyBean2 inst, IDsonObjectReader reader, string name) {
+        
+    }
+    
     public static void BeforeEncode(ThirdPartyBean2 inst, ConverterOptions options) {
     }
 

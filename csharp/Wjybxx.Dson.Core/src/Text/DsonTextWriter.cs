@@ -296,7 +296,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.Print('"');
         int softLineLength = this._settings.softLineLength;
         // 使用小buffer多次编码代替大的buffer，一方面节省内存，一方面控制行长度
-        int segment = 8;
+        const int segment = 16;
         Span<char> cBuffer = stackalloc char[segment * 2];
         int loop = length / segment;
         for (int i = 0; i < loop; i++) {

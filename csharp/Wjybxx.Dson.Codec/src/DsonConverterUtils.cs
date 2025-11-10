@@ -269,23 +269,16 @@ public static class DsonConverterUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string WriteCollectionAsDson<T>(this IDsonConverter converter, IEnumerable<object> collection,
-                                                  SerializeFeatures features = default) {
-        return converter.WriteCollectionAsDson(collection, typeof(T), features);
+    public static DsonArray<string> WriteAsDsonCollection<T>(this IDsonConverter converter, T value,
+                                                             SerializeFeatures features = default) {
+        return converter.WriteAsDsonCollection(value, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static List<T> ReadCollectionFromDson<T>(this IDsonConverter converter, string dson,
-                                                    DeserializeFeatures features = default,
-                                                    Func<object>? factory = null) {
-        return converter.ReadCollectionFromDson<T>(dson, typeof(T), features, factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static List<T> ReadFromDsonCollection<T>(this IDsonConverter converter, DsonArray<string> dsonArray,
-                                                    DeserializeFeatures features = default,
-                                                    Func<object>? factory = null) {
-        return converter.ReadCollectionFromDsonCollection<T>(dsonArray, typeof(T), features, factory);
+    public static T ReadFromDsonCollection<T>(this IDsonConverter converter, DsonArray<string> source,
+                                              DeserializeFeatures features = default,
+                                              Func<object>? factory = null) {
+        return (T)converter.ReadFromDsonCollection(source, typeof(T), features, factory);
     }
 
     #endregion
@@ -544,6 +537,7 @@ public static class DsonConverterUtils
     /// </summary>
     /// <param name="features"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static SerializeFeatures GetElementFeatures(this SerializeFeatures features) {
         SerializeFeatures elementFeatures = (features & SerializeFeatures.MaskElementFeatures);
         if ((features & SerializeFeatures.ElementIndent) != 0) {
@@ -559,6 +553,7 @@ public static class DsonConverterUtils
     /// 擦除Nullable/List/Map元素的写入特征值
     /// (应该只比GetElementFeatures少一处调用 —— Nullable)
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static SerializeFeatures ErasureElementFeatures(this SerializeFeatures features) {
         const SerializeFeatures mask = SerializeFeatures.MaskElementFeatures
                                        | SerializeFeatures.ElementIndent
@@ -566,13 +561,81 @@ public static class DsonConverterUtils
         return features & ~mask;
     }
 
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DeserializeFeatures GetElementFeatures(this DeserializeFeatures features) {
-        return features;
+        return features & DeserializeFeatures.MaskElementFeatures;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DeserializeFeatures ErasureElementFeatures(this DeserializeFeatures features) {
-        return features;
+        return features & ~DeserializeFeatures.MaskElementFeatures;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static NumberStyle ToNumberStyle(this SerializeFeatures features) {
+        ToNumberStyle(features, out NumberStyle style);
+        return style;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static StringStyle ToStringStyle(this SerializeFeatures features) {
+        ToStringStyle(features, out StringStyle style);
+        return style;
+    }
+
+    public static bool ToNumberStyle(this SerializeFeatures features, out NumberStyle style) {
+        if ((features & SerializeFeatures.MaskNumberStyles) == 0) { // 大概率
+            style = NumberStyle.Simple;
+            return false;
+        }
+        if ((features & SerializeFeatures.NumberHex) != 0) {
+            style = (features & SerializeFeatures.NumberUnsigned) != 0
+                ? NumberStyle.UnsignedHex
+                : NumberStyle.SignedHex;
+        } else if ((features & SerializeFeatures.NumberUnsigned) != 0) {
+            style = (features & SerializeFeatures.NumberTyped) != 0
+                ? NumberStyle.TypedUnsigned
+                : NumberStyle.Unsigned;
+        } else {
+            style = (features & SerializeFeatures.NumberTyped) != 0
+                ? NumberStyle.Typed
+                : NumberStyle.Simple;
+        }
+        return true;
+    }
+
+    public static bool ToStringStyle(this SerializeFeatures features, out StringStyle style) {
+        if ((features & SerializeFeatures.MaskStringStyles) == 0) { // 大概率
+            style = StringStyle.AutoQuote;
+            return false;
+        }
+        if ((features & SerializeFeatures.StringUnquote) != 0) {
+            style = StringStyle.Unquote;
+        } else if ((features & SerializeFeatures.StringText) != 0) {
+            style = StringStyle.DsonText;
+        } else if ((features & SerializeFeatures.StringLine) != 0) {
+            style = StringStyle.SingleLine;
+        } else {
+            style = StringStyle.AutoQuote;
+        }
+        return true;
+    }
+
+    public static bool ToMapStyle(this SerializeFeatures features, out MapStyle style) {
+        if ((features & SerializeFeatures.MaskMapStyles) == 0) { // 大概率
+            style = MapStyle.Array;
+            return false;
+        }
+        if ((features & SerializeFeatures.MapAsDocument) != 0) { // 大概率
+            style = MapStyle.Document;
+        } else if ((features & SerializeFeatures.PairAsArray) != 0) {
+            style = MapStyle.PairAsArray;
+        } else if ((features & SerializeFeatures.PairAsDocument) != 0) {
+            style = MapStyle.PairAsDocument;
+        } else {
+            style = MapStyle.Array;
+        }
+        return true;
     }
 
     #endregion

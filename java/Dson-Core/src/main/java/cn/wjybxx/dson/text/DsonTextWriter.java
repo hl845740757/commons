@@ -40,7 +40,7 @@ import java.util.Objects;
  */
 public final class DsonTextWriter extends AbstractDsonWriter {
 
-    private final char[] cBuffer = new char[16];
+    private final char[] cBuffer = new char[32];
     private final StyleOut styleOut = new StyleOut();
 
     private DsonTextWriterSettings settings;

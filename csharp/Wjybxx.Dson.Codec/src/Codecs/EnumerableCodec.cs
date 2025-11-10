@@ -48,10 +48,10 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
 
     public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         if (factory != null) {
-            DeserializeFeatures selfFeatures = features.GetElementFeatures();
+            DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             //
-            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
+            int count = reader.ReadStartArray(encoderType).count;
             ICollection<T> result = factory() as ICollection<T> ?? new List<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 T value = reader.ReadObject<T>(elementFeatures);
@@ -68,7 +68,7 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
         DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
-        int count = reader.ReadStartArray(encoderType, selfFeatures).count;
+        int count = reader.ReadStartArray(encoderType).count;
         List<T> result = new List<T>(count);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             T value = reader.ReadObject<T>(elementFeatures);
