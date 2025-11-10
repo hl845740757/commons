@@ -104,12 +104,25 @@ public class DsonSerializableAttribute : Attribute
     /// <summary>
     /// 序列化特征值
     /// </summary>
-    public SerializeFeatures Features { get; set; }
+    public SerializeFeatures EncodeFeatures { get; set; }
+    /// <summary>
+    /// 反序列化特征值
+    /// </summary>
+    public DeserializeFeatures DecodeFeatures { get; set; }
 
     /// <summary>
     /// 获取单例的方法名（兼容属性）
     /// </summary>
     [StableName] public string? Singleton { get; set; }
+
+    /// <summary>
+    /// 字段名使用蛇形命名法(TODO)
+    /// 
+    /// 注：
+    /// 1.用于编译期代码生成，非运行时属性；
+    /// 2.尽量还是通过<see cref="DsonPropertyAttribute"/>指定字段名。
+    /// </summary>
+    [StableName] public bool SnakeCase { get; set; }
 
     /// <summary>
     /// 不自动编解码的字段和属性，通常用于跳过不能直接访问的超类字段和属性，然后手动编解码。

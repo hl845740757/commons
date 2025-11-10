@@ -46,10 +46,11 @@ public interface IConverter
     /// 注意：如果对象的声明类型和写入的类型不兼容，则表示投影；factory用于支持将数据读取到既有实例或子类实例上。
     /// </summary>
     /// <param name="source">数据源</param>
-    /// <param name="declaredType"></param>
+    /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">反序列特征值</param>
     /// <param name="factory">对象工厂</param>
     /// <returns></returns>
-    object Read(byte[] source, Type declaredType, Func<object>? factory = null);
+    object Read(byte[] source, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     /// <summary>
     /// 将一个对象转换为字节数组
@@ -69,9 +70,10 @@ public interface IConverter
     /// </summary>
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">反序列特征值</param>
     /// <param name="factory">对象工厂</param>
     /// <returns></returns>
-    object Read(DsonChunk source, Type declaredType, Func<object>? factory = null);
+    object Read(DsonChunk source, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     #region Clone
 

@@ -210,6 +210,8 @@ public sealed class TypeMetaConfig
             config.Add(typeof(IList<>), "IList", "IList`1");
             config.Add(typeof(List<>), "List", "List`1");
             config.Add(typeof(HashSet<>), "HashSet", "HashSet`1");
+            config.Add(typeof(Stack<>), "Stack", "Stack`1");
+            config.Add(typeof(Queue<>), "Queue", "Queue`1");
             //
             config.Add(typeof(IDictionary<,>), "IDictionary", "IDictionary`2");
             config.Add(typeof(Dictionary<,>), "Dictionary", "Dictionary`2");

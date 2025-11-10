@@ -46,32 +46,32 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
         writer.WriteEndArray();
     }
 
-    /// <summary>
-    /// <inheritdoc cref="IDsonCodec{T}.ReadObject"/>
-    /// </summary>
-    /// <param name="reader">reader</param>
-    /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="factory">支持factory为集合类型</param>
-    /// <returns></returns>
-    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         if (factory != null) {
-            int count = reader.ReadStartArray().count;
+            DeserializeFeatures selfFeatures = features.GetElementFeatures();
+            DeserializeFeatures elementFeatures = features.GetElementFeatures();
+            //
+            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
             ICollection<T> result = factory() as ICollection<T> ?? new List<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>();
+                T value = reader.ReadObject<T>(elementFeatures);
                 result.Add(value);
             }
             reader.ReadEndArray();
             return result;
         }
-        return ReadAsList(reader);
+        return ReadAsList(reader, encoderType, features);
     }
 
-    public static List<T> ReadAsList(IDsonObjectReader reader) {
-        int count = reader.ReadStartArray().count;
+    public static List<T> ReadAsList(IDsonObjectReader reader, Type encoderType,
+                                     DeserializeFeatures features) {
+        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
+        DeserializeFeatures elementFeatures = features.GetElementFeatures();
+        //
+        int count = reader.ReadStartArray(encoderType, selfFeatures).count;
         List<T> result = new List<T>(count);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>();
+            T value = reader.ReadObject<T>(elementFeatures);
             result.Add(value);
         }
         reader.ReadEndArray();

@@ -50,21 +50,23 @@ public sealed class ListCodec<T> : IDsonCodec<List<T>>
         }
     }
 
-    public List<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        // count非精确值，不可以直接创建数组
-        int count = reader.ReadStartArray().count;
+    public List<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
+        DeserializeFeatures elementFeatures = features.GetElementFeatures();
+        //
+        int count = reader.ReadStartArray(typeof(List<T>), selfFeatures).count;
         List<T> result = new List<T>(count);
         // T就是声明类型
         DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();
         if (elementCodec != null) {
             Type elementType = typeof(T);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = elementCodec.ReadObject(reader, elementType, null);
+                T value = elementCodec.ReadObject(reader, elementType, elementFeatures);
                 result.Add(value);
             }
         } else {
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>();
+                T value = reader.ReadObject<T>(elementFeatures);
                 result.Add(value);
             }
         }

@@ -48,9 +48,10 @@ public interface IDsonConverter : IConverter
     /// </summary>
     /// <param name="input">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    object Read(IDsonInput input, Type declaredType, Func<object>? factory = null);
+    object Read(IDsonInput input, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     /// <summary>
     /// 将一个对象转换为字节数组
@@ -69,9 +70,10 @@ public interface IDsonConverter : IConverter
     /// </summary>
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    object ReadFromDson(string source, Type declaredType, Func<object>? factory = null);
+    object ReadFromDson(string source, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     /// <summary>
     /// 将一个对象写入Writer
@@ -89,8 +91,9 @@ public interface IDsonConverter : IConverter
     /// </summary>
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">实例工厂</param>
-    object ReadFromDson(TextReader source, Type declaredType, Func<object>? factory = null);
+    object ReadFromDson(TextReader source, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     /// <summary>
     /// 序列化集合信息
@@ -104,13 +107,14 @@ public interface IDsonConverter : IConverter
 
     /// <summary>
     /// 从数据源中读取所有对象
-    ///
+    /// 
     /// 注：泛型T用于处理集合类型协变问题。
     /// </summary>
     /// <param name="dson">对象集合</param>
     /// <param name="declaredType">集合元素的声明类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">集合元素的factory</param>
-    List<T> ReadCollectionFromDson<T>(string dson, Type declaredType, Func<object>? factory = null);
+    List<T> ReadCollectionFromDson<T>(string dson, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     /// <summary>
     /// 序列化多个对象，保留对象引用关系
@@ -119,17 +123,20 @@ public interface IDsonConverter : IConverter
     /// <param name="declaredType">集合元素的声明类型</param>
     /// <param name="features">序列化特征值</param>
     /// <returns></returns>
-    DsonArray<string> WriteCollectionAsDsonCollection(IEnumerable<object> collection, Type declaredType, SerializeFeatures features = default);
+    DsonArray<string> WriteCollectionAsDsonCollection(IEnumerable<object> collection, Type declaredType,
+                                                      SerializeFeatures features = default);
 
     /// <summary>
     /// 从数据源中读取所有对象
-    ///
+    /// 
     /// 注：用户可以缓存资源文件解析得到的<see cref="DsonArray{TK}"/>对象，以支持快速复制对象。
     /// </summary>
     /// <param name="collection">对象集合</param>
     /// <param name="declaredType">集合元素的声明类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">集合元素的factory</param>
-    List<T> ReadCollectionFromDsonCollection<T>(DsonArray<string> collection, Type declaredType, Func<object>? factory = null);
+    List<T> ReadCollectionFromDsonCollection<T>(DsonArray<string> collection, Type declaredType,
+                                                DeserializeFeatures features = default, Func<object>? factory = null);
 
     #endregion
 

@@ -38,7 +38,7 @@ public abstract class DsonCodecImpl
     // 解决泛型协变逆变问题 - 不会导致装箱，但会多一次cast
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, SerializeFeatures features);
 
-    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, Func<object>? factory);
+    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory);
 
     /** 创建Impl实例 */
     internal static DsonCodecImpl CreateInstance(IDsonCodec codec) {
@@ -94,8 +94,8 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, Func<object>? factory) {
-        return ReadObject(reader, declaredType, factory);
+    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        return ReadObject(reader, declaredType, features, factory);
     }
 
     /// <summary>
@@ -115,11 +115,12 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// </summary>
     /// <param name="reader">reader</param>
     /// <param name="declaredType"></param>
+    /// <param name="features"></param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory) {
-        return _codec.ReadObject(reader, declaredType, factory);
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        return _codec.ReadObject(reader, declaredType, features, factory);
     }
 
     #region nullabel支持

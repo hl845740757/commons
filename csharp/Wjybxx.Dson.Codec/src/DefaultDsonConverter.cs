@@ -81,9 +81,9 @@ public class DefaultDsonConverter : IDsonConverter
         return ArrayUtil.CopyOf(outputStream.Buffer, 0, outputStream.Position);
     }
 
-    public object Read(byte[] source, Type declaredType, Func<object>? factory = null) {
+    public object Read(byte[] source, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         using IDsonInput inputStream = DsonInputs.NewInstance(source);
-        return DecodeObject(inputStream, declaredType, factory);
+        return DecodeObject(inputStream, declaredType, features, factory);
     }
 
     public void Write(object value, Type declaredType, DsonChunk chunk, SerializeFeatures features) {
@@ -93,9 +93,9 @@ public class DefaultDsonConverter : IDsonConverter
         chunk.Used = outputStream.Position;
     }
 
-    public object Read(DsonChunk chunk, Type declaredType, Func<object>? factory = null) {
+    public object Read(DsonChunk chunk, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         using IDsonInput inputStream = DsonInputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
-        object result = DecodeObject(inputStream, declaredType, factory);
+        object result = DecodeObject(inputStream, declaredType, features, factory);
         chunk.Used = inputStream.Position;
         return result;
     }
@@ -106,9 +106,9 @@ public class DefaultDsonConverter : IDsonConverter
         EncodeObject(output, value, declaredType, features);
     }
 
-    public object Read(IDsonInput input, Type declaredType, Func<object>? factory = null) {
+    public object Read(IDsonInput input, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         if (input == null) throw new ArgumentNullException(nameof(input));
-        return DecodeObject(input, declaredType, factory);
+        return DecodeObject(input, declaredType, features, factory);
     }
 
     public object CloneObject(object? value, Type declaredType, Type targetType, Func<object>? factory = null) {
@@ -117,7 +117,7 @@ public class DefaultDsonConverter : IDsonConverter
         EncodeObject(dsonOutput, value, declaredType, default);
         // 不销毁
         IDsonInput inputStream = DsonInputs.NewInstance(dsonOutput.Buffer, 0, dsonOutput.Position);
-        return DecodeObject(inputStream, targetType, factory);
+        return DecodeObject(inputStream, targetType, 0, factory);
     }
 
     /** 注意：由外部销毁输出流 */
@@ -129,9 +129,9 @@ public class DefaultDsonConverter : IDsonConverter
 
     /** 注意：由外部销毁输入流 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private object DecodeObject(IDsonInput inputStream, Type declaredType, Func<object>? factory) {
+    private object DecodeObject(IDsonInput inputStream, Type declaredType, DeserializeFeatures features, Func<object>? factory) {
         using DsonBinaryReader<string> binaryReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
-        return DecodeObject(binaryReader, declaredType, factory);
+        return DecodeObject(binaryReader, declaredType, features, factory);
     }
 
     private void EncodeObject(IDsonWriter<string> dsonWriter, object value, Type declaredType, SerializeFeatures features) {
@@ -147,13 +147,13 @@ public class DefaultDsonConverter : IDsonConverter
         }
     }
 
-    private object DecodeObject(IDsonReader<string> dsonReader, Type declaredType, Func<object>? factory) {
+    private object DecodeObject(IDsonReader<string> dsonReader, Type declaredType, DeserializeFeatures features, Func<object>? factory) {
         DsonArray<string> collection = Dsons.ReadCollection(dsonReader);
         DefaultDsonObjectReader wrapper = DefaultDsonObjectReader.GetPooled();
         try {
             wrapper.Init(this);
             wrapper.AddReference(collection);
-            return wrapper.ReadFirst(declaredType, factory);
+            return wrapper.ReadFirst(declaredType, features, factory);
         }
         finally {
             DefaultDsonObjectReader.Release(wrapper);
@@ -177,9 +177,9 @@ public class DefaultDsonConverter : IDsonConverter
         }
     }
 
-    public object ReadFromDson(string source, Type declaredType, Func<object>? factory = null) {
+    public object ReadFromDson(string source, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, source);
-        return DecodeObject(textReader, declaredType, factory);
+        return DecodeObject(textReader, declaredType, features, factory);
     }
 
     public void WriteAsDson(object value, Type declaredType, TextWriter writer, SerializeFeatures features) {
@@ -189,9 +189,9 @@ public class DefaultDsonConverter : IDsonConverter
         EncodeObject(textWriter, value, declaredType, features);
     }
 
-    public object ReadFromDson(TextReader source, Type declaredType, Func<object>? factory = null) {
+    public object ReadFromDson(TextReader source, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, Dsons.NewStreamScanner(source, false));
-        return DecodeObject(textReader, declaredType, factory);
+        return DecodeObject(textReader, declaredType, features, factory);
     }
 
     #endregion
@@ -210,10 +210,10 @@ public class DefaultDsonConverter : IDsonConverter
         }
     }
 
-    public List<T> ReadCollectionFromDson<T>(string dson, Type declaredType, Func<object>? factory = null) {
+    public List<T> ReadCollectionFromDson<T>(string dson, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         using DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, dson);
         DsonArray<string> collection = Dsons.ReadCollection(textReader);
-        return ReadCollection<T>(collection, declaredType, factory);
+        return ReadCollection<T>(collection, declaredType, features, factory);
     }
 
     public DsonArray<string> WriteCollectionAsDsonCollection(IEnumerable<object> collection, Type declaredType, SerializeFeatures features) {
@@ -223,17 +223,19 @@ public class DefaultDsonConverter : IDsonConverter
         return dsonWriter.OutList;
     }
 
-    public List<T> ReadCollectionFromDsonCollection<T>(DsonArray<string> collection, Type declaredType, Func<object>? factory = null) {
+    public List<T> ReadCollectionFromDsonCollection<T>(DsonArray<string> collection, Type declaredType,
+                                                       DeserializeFeatures features, Func<object>? factory = null) {
         if (collection == null) throw new ArgumentNullException(nameof(collection));
-        return ReadCollection<T>(collection, declaredType, factory);
+        return ReadCollection<T>(collection, declaredType, features, factory);
     }
 
-    private List<T> ReadCollection<T>(DsonArray<string> collection, Type declaredType, Func<object>? factory = null) {
+    private List<T> ReadCollection<T>(DsonArray<string> collection, Type declaredType,
+                                      DeserializeFeatures features, Func<object>? factory = null) {
         DefaultDsonObjectReader wrapper = DefaultDsonObjectReader.GetPooled();
         try {
             wrapper.Init(this);
             wrapper.AddReference(collection);
-            return wrapper.ReadAll<T>(declaredType, factory);
+            return wrapper.ReadAll<T>(declaredType, features, factory);
         }
         finally {
             DefaultDsonObjectReader.Release(wrapper);

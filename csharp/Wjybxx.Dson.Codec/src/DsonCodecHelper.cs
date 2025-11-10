@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
+using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -219,6 +220,73 @@ internal static class DsonCodecHelper
             }
             default: throw new AssertionError(dsonType.ToString()); // null和容器都前面测试了
         }
+    }
+
+    #endregion
+
+    #region features
+
+    public static NumberStyle ToNumberStyle(this SerializeFeatures features) {
+        if ((features & SerializeFeatures.MaskNumberStyles) == 0) { // 大概率
+            return NumberStyle.Simple;
+        }
+        if ((features & SerializeFeatures.NumberHex) != 0) {
+            return (features & SerializeFeatures.NumberUnsigned) != 0
+                ? NumberStyle.UnsignedHex
+                : NumberStyle.SignedHex;
+        }
+        if ((features & SerializeFeatures.NumberUnsigned) != 0) {
+            return (features & SerializeFeatures.NumberTyped) != 0
+                ? NumberStyle.TypedUnsigned
+                : NumberStyle.Unsigned;
+        }
+        return (features & SerializeFeatures.NumberTyped) != 0
+            ? NumberStyle.Typed
+            : NumberStyle.Simple;
+    }
+
+    public static StringStyle ToStringStyle(this SerializeFeatures features) {
+        if ((features & SerializeFeatures.MaskStringStyles) == 0) { // 大概率
+            return StringStyle.AutoQuote;
+        }
+        if ((features & SerializeFeatures.StringUnquote) != 0) {
+            return StringStyle.Unquote;
+        }
+        if ((features & SerializeFeatures.StringText) != 0) {
+            return StringStyle.DsonText;
+        }
+        if ((features & SerializeFeatures.StringLine) != 0) {
+            return StringStyle.SingleLine;
+        }
+        return StringStyle.AutoQuote;
+    }
+
+    public static bool ToMapStyle(this SerializeFeatures features, out MapStyle style) {
+        if ((features & SerializeFeatures.MaskMapStyles) == 0) { // 大概率
+            style = MapStyle.Array;
+            return false;
+        }
+        if ((features & SerializeFeatures.MapAsDocument) != 0) { // 大概率
+            style = MapStyle.Document;
+        } else if ((features & SerializeFeatures.PairAsArray) != 0) {
+            style = MapStyle.PairAsArray;
+        } else if ((features & SerializeFeatures.PairAsDocument) != 0) {
+            style = MapStyle.PairAsDocument;
+        } else {
+            style = MapStyle.Array;
+        }
+        return true;
+    }
+
+    public static bool IsReadAsImmutable(DeserializeFeatures features, IDsonObjectReader reader) {
+        if ((features & DeserializeFeatures.ReadAsImmutable) != 0) return true;
+        TypeMeta typeMeta = reader.ContainerTypeMeta;
+        if (typeMeta != null) {
+            features = typeMeta.decodeFeatures;
+            if ((features & DeserializeFeatures.ReadAsImmutable) != 0) return true;
+        }
+        features = reader.Options.decodeFeatures;
+        return (features & DeserializeFeatures.ReadAsImmutable) != 0;
     }
 
     #endregion

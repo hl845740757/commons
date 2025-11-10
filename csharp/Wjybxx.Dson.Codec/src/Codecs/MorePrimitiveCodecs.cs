@@ -43,8 +43,8 @@ public static class MorePrimitiveCodecs
             writer.WriteInt((int)inst, features | SerializeFeatures.NumberUnsigned);
         }
 
-        public uint ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (uint)reader.ReadInt();
+        public uint ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+            return (uint)reader.ReadInt(features);
         }
     }
 
@@ -65,8 +65,8 @@ public static class MorePrimitiveCodecs
             writer.WriteLong((long)inst, features | SerializeFeatures.NumberUnsigned);
         }
 
-        public ulong ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (ulong)reader.ReadLong();
+        public ulong ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+            return (ulong)reader.ReadLong(features);
         }
     }
 
@@ -87,8 +87,8 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features);
         }
 
-        public short ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (short)reader.ReadInt();
+        public short ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+            return (short)reader.ReadInt(features);
         }
     }
 
@@ -109,8 +109,8 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features | SerializeFeatures.NumberUnsigned);
         }
 
-        public ushort ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (ushort)reader.ReadInt();
+        public ushort ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+            return (ushort)reader.ReadInt(features);
         }
     }
 
@@ -123,8 +123,8 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features); // c# byte是无符号数
         }
 
-        public byte ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (byte)reader.ReadInt();
+        public byte ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+            return (byte)reader.ReadInt(features);
         }
     }
 
@@ -137,8 +137,8 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features);
         }
 
-        public sbyte ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (sbyte)reader.ReadInt();
+        public sbyte ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+            return (sbyte)reader.ReadInt(features);
         }
     }
 
@@ -151,8 +151,8 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features);
         }
 
-        public char ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            return (char)reader.ReadInt();
+        public char ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+            return (char)reader.ReadInt(features);
         }
     }
 }

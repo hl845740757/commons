@@ -39,8 +39,8 @@ public class Int32Codec : IDsonCodec<int>, IKeyCodec<int>
         writer.WriteInt(inst, features);
     }
 
-    public int ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadInt();
+    public int ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        return reader.ReadInt(features);
     }
 }
 }

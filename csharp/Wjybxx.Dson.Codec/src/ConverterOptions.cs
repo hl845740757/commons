@@ -39,7 +39,7 @@ public class ConverterOptions
     /// </summary>
     public readonly SerializeFeatures encodeFeatures;
     /// <summary>
-    /// 全局反序列化特征值(TODO)
+    /// 全局反序列化特征值
     /// </summary>
     public readonly DeserializeFeatures decodeFeatures;
 
@@ -51,11 +51,6 @@ public class ConverterOptions
     /// 另一种方式是先反序列化，然后完整序列化为字节数组，再通过字节数组反序列化 -- 可关闭随机读。
     /// </summary>
     public readonly bool randomRead;
-    /// <summary>
-    /// 集合类型是否读取为不可变
-    /// 其它类型的对象也可以使用该设置
-    /// </summary>
-    public readonly bool readAsImmutable;
     /// <summary>
     /// 是否启用BeforeEncode钩子方法。
     /// 默认不启用！因为启用该特性要求同一个Bean不能被多线程同时序列化 -- 只适用单线程序列化场景，
@@ -103,7 +98,6 @@ public class ConverterOptions
         this.encodeFeatures = builder.EncodeFeatures;
         this.decodeFeatures = builder.DecodeFeatures;
         this.randomRead = builder.RandomRead;
-        this.readAsImmutable = builder.ReadAsImmutable;
         this.enableBeforeEncode = builder.EnableBeforeEncode;
         this.enableAfterDecode = builder.EnableAfterDecode;
 
@@ -134,7 +128,6 @@ public class ConverterOptions
         builder.EncodeFeatures = encodeFeatures;
         builder.DecodeFeatures = decodeFeatures;
         builder.RandomRead = randomRead;
-        builder.ReadAsImmutable = readAsImmutable;
         builder.EnableBeforeEncode = enableBeforeEncode;
         builder.EnableAfterDecode = enableAfterDecode;
 
@@ -173,7 +166,6 @@ public class ConverterOptions
         public SerializeFeatures EncodeFeatures { get; set; }
         public DeserializeFeatures DecodeFeatures { get; set; }
         public bool RandomRead { get; set; } = true;
-        public bool ReadAsImmutable { get; set; } = false;
         public bool EnableBeforeEncode { get; set; } = false;
         public bool EnableAfterDecode { get; set; } = true;
 

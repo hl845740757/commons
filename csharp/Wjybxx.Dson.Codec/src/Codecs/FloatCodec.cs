@@ -30,8 +30,8 @@ public class FloatCodec : IDsonCodec<float>
         writer.WriteFloat(inst, features);
     }
 
-    public float ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadFloat();
+    public float ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        return reader.ReadFloat(features);
     }
 }
 }

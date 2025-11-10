@@ -30,7 +30,7 @@ public class DateTimeOffsetCodec : IDsonCodec<DateTimeOffset>
         writer.WriteExtDateTime(extDateTime);
     }
 
-    public DateTimeOffset ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public DateTimeOffset ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         ExtDateTime extDateTime = reader.ReadExtDateTime();
         DateTime dateTime = extDateTime.ToDateTime();
         return new DateTimeOffset(dateTime, TimeSpan.FromSeconds(extDateTime.Offset));

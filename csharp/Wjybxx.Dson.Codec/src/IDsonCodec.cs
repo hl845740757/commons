@@ -67,7 +67,7 @@ public interface IDsonCodec<T> : IDsonCodec
     /// <param name="writer">writer</param>
     /// <param name="inst">要编码的实例</param>
     /// <param name="declaredType">对象的声明类型，用于判断是否写入类型信息</param>
-    /// <param name="features"></param>
+    /// <param name="features">序列化特征值</param>
     void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, SerializeFeatures features);
 
     /// <summary>
@@ -79,8 +79,9 @@ public interface IDsonCodec<T> : IDsonCodec
     /// </summary>
     /// <param name="reader">reader</param>
     /// <param name="declaredType">对象的声明类型(判断是否可以转不可变等)</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null);
+    T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null);
 }
 }

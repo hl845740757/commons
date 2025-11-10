@@ -130,20 +130,23 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         }
     }
 
-    public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        int count = reader.ReadStartArray().count;
+    public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        DeserializeFeatures selfFeatures = features.GetElementFeatures();
+        DeserializeFeatures elementFeatures = features.GetElementFeatures();
+        //
+        int count = reader.ReadStartArray(encoderType, selfFeatures).count;
         ICollection<T> result = NewCollection(factory, count);
         // T就是声明类型
         DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();
         if (elementCodec != null) {
             Type elementType = typeof(T);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = elementCodec.ReadObject(reader, elementType, null);
+                T value = elementCodec.ReadObject(reader, elementType, elementFeatures);
                 result.Add(value);
             }
         } else {
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>();
+                T value = reader.ReadObject<T>(elementFeatures);
                 result.Add(value);
             }
         }
@@ -158,7 +161,9 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
                 return result.ToImmutableSet2();
             }
         }
-        return reader.Options.readAsImmutable ? ToImmutable(declaredType, result) : result;
+        return DsonCodecHelper.IsReadAsImmutable(features, reader)
+            ? ToImmutable(declaredType, result)
+            : result;
     }
 }
 }

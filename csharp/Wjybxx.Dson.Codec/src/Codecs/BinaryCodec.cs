@@ -27,7 +27,7 @@ public class BinaryCodec : IDsonCodec<Binary>
         writer.WriteBinary(inst);
     }
 
-    public Binary ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public Binary ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         return reader.ReadBinary();
     }
 }

@@ -30,7 +30,7 @@ public class ObjectPathCodec : IDsonCodec<ObjectPath>
         writer.WritePtr(in obj);
     }
 
-    public ObjectPath ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public ObjectPath ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         return reader.ReadPtr();
     }
 }

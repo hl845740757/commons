@@ -16,28 +16,34 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
 /// 反序列化特征值(TODO)
 ///
 /// 1.反序列化特征值主要用于处理数据异常的情况，因此大多仅为字段级别特征值。
-/// 2.
-/// 
-/// 注：这里的特征值并未完全生效，只为了保持接口稳定预先添加了该枚举。
+/// 2.这里的特征值大多数未生效，只为了保持接口稳定预先添加了该枚举。
 /// </summary>
+[Flags]
 public enum DeserializeFeatures
 {
     /// <summary>
-    /// 读取为不可变对象
+    /// 读取为不可变对象，主要用于集合。
     ///
-    /// PS：其实直接声明为不可变集合就好，非要用接口类型咱也拦不住。
+    /// 1.声明类型应当为接口类型，否则不会生效。
+    /// 2.字段也可直接声明为不可变集合，但局限于Commons库的不可变集合。
     /// </summary>
     ReadAsImmutable = 0x01,
     /// <summary>
-    /// 数字类型尝试从字符串中解析
+    /// Enum解码时忽略大小写
     /// </summary>
-    TryParseString = 0x02,
+    EnumIgnoreCase = 0x02,
+    /// <summary>
+    /// 数字类型尝试从字符串中解析（字段级别）
+    /// </summary>
+    TryParseString = 0x04,
 
     /// <summary>
     /// 不跳过Null字段赋值
@@ -56,13 +62,16 @@ public enum DeserializeFeatures
     /// </summary>
     SkipZeroValue = 0x04 << 8,
 
+    EmptyStringAsEmpty = 0x10 << 8,
     /// <summary>
     /// 空字符串转换为Null值（对应序列化特征值）
     /// </summary>
-    EmptyStringAsNull = 0x10 << 8,
+    EmptyStringAsNull = 0x20 << 8,
+
     /// <summary>
-    /// Enum解码时忽略大小写
+    /// 集合元素的特征值
     /// </summary>
-    EnumIgnoreCase = 0x20 << 8,
+    MaskElementFeatures = EnumIgnoreCase | TryParseString
+                                         | EmptyStringAsEmpty | EmptyStringAsNull
 }
 }

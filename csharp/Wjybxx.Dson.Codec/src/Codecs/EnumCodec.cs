@@ -145,7 +145,7 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
         }
     }
 
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         if (reader.CurrentDsonType == DsonType.String) {
             string name = reader.ReadString();
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {
@@ -170,6 +170,17 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
             // 不做number转enum支持 -- 存在跨语言兼容性问题
             throw new DsonCodecException($"invalid enum value: {number}, type: {typeof(T)}");
         }
+    }
+
+    private bool IsIgnoreCase(DeserializeFeatures features, IDsonObjectReader reader) {
+        if ((features & DeserializeFeatures.EnumIgnoreCase) != 0) return true;
+        TypeMeta typeMeta = reader.ContainerTypeMeta;
+        if (typeMeta != null) {
+            features = typeMeta.decodeFeatures;
+            if ((features & DeserializeFeatures.EnumIgnoreCase) != 0) return true;
+        }
+        features = reader.Options.decodeFeatures;
+        return (features & DeserializeFeatures.EnumIgnoreCase) != 0;
     }
 
     private bool IsWriteAsString(SerializeFeatures features, IDsonObjectWriter writer) {

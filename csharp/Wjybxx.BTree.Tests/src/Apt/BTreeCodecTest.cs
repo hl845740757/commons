@@ -92,7 +92,7 @@ public class BTreeCodecTest
 
     [Test]
     public void ReadCollectionTest() {
-        List<Task<string>> list = converter.ReadFromDsonCollectionString<Task<string>>(dsonString2);
+        List<Task<string>> list = converter.ReadCollectionFromDson<Task<string>>(dsonString2);
         SimpleRandom<string> simpleRandom = list[1] as SimpleRandom<string>;
         Assert.NotNull(simpleRandom);
         Assert.AreEqual(0.5, simpleRandom.P);
@@ -104,7 +104,7 @@ public class BTreeCodecTest
 
     [Test]
     public void SerializeTest() {
-        List<Task<string>> list = converter.ReadFromDsonCollectionString<Task<string>>(dsonString2);
+        List<Task<string>> list = converter.ReadCollectionFromDson<Task<string>>(dsonString2);
         string collectionString = converter.WriteAsDson(list, typeof(Task<string>));
         Console.WriteLine(collectionString);
     }

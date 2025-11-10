@@ -34,8 +34,8 @@ public class BoolCodec : IDsonCodec<bool>, IKeyCodec<bool>
         writer.WriteBool(inst, features);
     }
 
-    public bool ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadBool();
+    public bool ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        return reader.ReadBool(features);
     }
 }
 }

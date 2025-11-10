@@ -28,7 +28,7 @@ public class ExtDateTimeCodec : IDsonCodec<ExtDateTime>
         writer.WriteExtDateTime(in inst);
     }
 
-    public ExtDateTime ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public ExtDateTime ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         return reader.ReadExtDateTime();
     }
 }

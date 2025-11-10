@@ -28,7 +28,7 @@ public class TimestampCodec : IDsonCodec<Timestamp>
         writer.WriteTimestamp(in inst);
     }
 
-    public Timestamp ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+    public Timestamp ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         return reader.ReadTimestamp();
     }
 }

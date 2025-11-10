@@ -38,8 +38,8 @@ public class Int64Codec : IDsonCodec<long>, IKeyCodec<long>
         writer.WriteLong(inst, features);
     }
 
-    public long ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadLong();
+    public long ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        return reader.ReadLong(features);
     }
 }
 }

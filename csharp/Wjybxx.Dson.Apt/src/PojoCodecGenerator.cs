@@ -338,7 +338,6 @@ internal class PojoCodecGenerator
             return;
         }
 
-        string readMethodName = GetReadMethodName(fieldInfo);
         // 优先用setter，否则直接赋值 -- C#的属性和字段样式一致
         bool hasCustomSetter = !string.IsNullOrWhiteSpace(fieldProps.setter);
         string fieldAccess;
@@ -347,20 +346,34 @@ internal class PojoCodecGenerator
         } else {
             fieldAccess = fieldName;
         }
+        // 处理需要传入Features的类型
+        string readMethodName = GetReadMethodName(fieldInfo);
         if (readMethodName == MNAME_READ_OBJECT) {
-            // 读对象时要传入类型信息和Factory -- C#还要传泛型参数，泛型方法自动匹配
-            // inst.name = reader.readObject<Type>(names_name, factories_name)
+            // 读Object时需要传入类型信息和Factory -- C#还要传泛型参数，泛型方法自动匹配
+            // inst.name = reader.readObject<Type>(features, factories_name)
             TypeName fieldTypeName = fieldInfo.typeName!;
             if (fieldProps.implTypeName != null) {
-                codeBuilder.Add("inst.$L = reader.$L<$T>($L)",
+                codeBuilder.Add("inst.$L = reader.$L<$T>(($T)$L, $L)",
                     fieldAccess, readMethodName, fieldTypeName,
+                    CodecProcessor.typeName_DecodeFeatures, fieldProps.decodeFeatures,
                     SerialFactory(fieldName));
             } else {
-                codeBuilder.Add("inst.$L = reader.$L<$T>()",
-                    fieldAccess, readMethodName, fieldTypeName);
+                codeBuilder.Add("inst.$L = reader.$L<$T>(($T)$L)",
+                    fieldAccess, readMethodName, fieldTypeName,
+                    CodecProcessor.typeName_DecodeFeatures, fieldProps.decodeFeatures);
             }
+            return;
+        }
+        if (fieldProps.decodeFeatures != 0 && (fieldInfo.FieldType!.IsPrimitiveNumber()
+                                               || readMethodName == MNAME_READ_BOOL
+                                               || readMethodName == MNAME_READ_STRING
+                                               || readMethodName == MNAME_READ_BYTES)) {
+            // inst.name = reader.readString(features)
+            codeBuilder.Add("inst.$L = reader.$L(($T)$L)",
+                fieldAccess, readMethodName,
+                CodecProcessor.typeName_DecodeFeatures, fieldProps.decodeFeatures);
         } else {
-            // inst.name = reader.readString(names_name)
+            // inst.name = reader.readString()
             codeBuilder.Add("inst.$L = reader.$L()",
                 fieldAccess, readMethodName);
         }
@@ -404,20 +417,19 @@ internal class PojoCodecGenerator
 
         // 处理需要传入Features的类型
         string writeMethodName = GetWriteMethodName(fieldInfo);
-        if (fieldInfo.FieldType!.IsPrimitiveNumber()
-            || writeMethodName == MNAME_WRITE_BOOL
-            || writeMethodName == MNAME_WRITE_STRING
-            || writeMethodName == MNAME_WRITE_BYTES
-            || writeMethodName == MNAME_WRITE_OBJECT) {
+        if (fieldProps.encodeFeatures != 0 && (fieldInfo.FieldType!.IsPrimitiveNumber()
+                                               || writeMethodName == MNAME_WRITE_BOOL
+                                               || writeMethodName == MNAME_WRITE_STRING
+                                               || writeMethodName == MNAME_WRITE_BYTES
+                                               || writeMethodName == MNAME_WRITE_OBJECT)) {
             // int,long,float,double,uint,ulong,short,ushort,byte,sbyte...
             // writer.writeInt(names_fieldName, inst.field, (SerializeFeatures)0x01)
             builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, ($T)$L)",
                 writeMethodName, SerialName(fieldName), fieldAccess,
                 CodecProcessor.typeName_EncodeFeatures, fieldProps.encodeFeatures);
-            return;
-        }
-        // 其它类型 - 未对DateTime等结构体做in优化，因为通过属性访问时，无法使用in
-        {
+        } else {
+            // 未对DateTime等结构体做in优化，因为通过属性访问时，无法使用in
+            // writer.writeInt(names_fieldName, inst.field)
             builder.codeBuilder.AddStatement("writer.$L($L, inst.$L)",
                 writeMethodName, SerialName(fieldName), fieldAccess);
         }
@@ -463,6 +475,7 @@ internal class PojoCodecGenerator
         return MNAME_READ_OBJECT;
     }
 
+    private const string MNAME_READ_BOOL = "ReadBool";
     private const string MNAME_READ_STRING = "ReadString";
     private const string MNAME_READ_BYTES = "ReadBytes";
     private const string MNAME_READ_BINARY = "ReadBinary";

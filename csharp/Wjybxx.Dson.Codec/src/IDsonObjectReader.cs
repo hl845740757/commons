@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -30,23 +29,23 @@ public interface IDsonObjectReader : IDisposable
 {
     #region 基础值
 
-    int ReadInt(string name);
+    int ReadInt(string name, DeserializeFeatures features = default);
 
-    long ReadLong(string name);
+    long ReadLong(string name, DeserializeFeatures features = default);
 
-    float ReadFloat(string name);
+    float ReadFloat(string name, DeserializeFeatures features = default);
 
-    double ReadDouble(string name);
+    double ReadDouble(string name, DeserializeFeatures features = default);
 
-    bool ReadBool(string name);
+    bool ReadBool(string name, DeserializeFeatures features = default);
 
-    string ReadString(string name);
+    string ReadString(string name, DeserializeFeatures features = default);
 
     void ReadNull(string name);
 
-    byte[]? ReadBytes(string name);
+    byte[]? ReadBytes(string name, DeserializeFeatures features = default);
 
-    Binary? ReadBinary(string name);
+    Binary? ReadBinary(string name, DeserializeFeatures features = default);
 
     ObjectPtr ReadPtr(string name);
 
@@ -61,26 +60,26 @@ public interface IDsonObjectReader : IDisposable
 
     #region 基础值-无name版
 
-    int ReadInt();
+    int ReadInt(DeserializeFeatures features = default);
 
-    long ReadLong();
+    long ReadLong(DeserializeFeatures features = default);
 
-    float ReadFloat();
+    float ReadFloat(DeserializeFeatures features = default);
 
-    double ReadDouble();
+    double ReadDouble(DeserializeFeatures features = default);
 
-    bool ReadBool();
+    bool ReadBool(DeserializeFeatures features = default);
 
-    string ReadString();
+    string ReadString(DeserializeFeatures features = default);
 
     void ReadNull();
 
-    byte[]? ReadBytes() {
+    byte[]? ReadBytes(DeserializeFeatures features = default) {
         Binary binary = ReadBinary();
         return binary.UnsafeBuffer;
     }
 
-    Binary ReadBinary();
+    Binary ReadBinary(DeserializeFeatures features = default);
 
     ObjectPtr ReadPtr();
 
@@ -105,35 +104,39 @@ public interface IDsonObjectReader : IDisposable
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
     /// <returns></returns>
-    object ReadObject(string name, Type declaredType, Func<object>? factory = null);
+    object ReadObject(string name, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     /// <summary>
     /// 从输入流中读取一个对象
     /// 
     /// 该方法用于避免结构体类型装箱
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
     /// </summary>
-    T ReadObject<T>(string name, Func<object>? factory = null);
+    T ReadObject<T>(string name, DeserializeFeatures features, Func<object>? factory = null);
 
     /// <summary>
     /// 从输入流中读取一个对象
     /// </summary>
     /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
     /// <returns></returns>
-    object ReadObject(Type declaredType, Func<object>? factory = null);
+    object ReadObject(Type declaredType, DeserializeFeatures features, Func<object>? factory = null);
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
+    /// <param name="features">反序列化特征值</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
     /// <returns></returns>
-    T ReadObject<T>(Func<object>? factory = null);
+    T ReadObject<T>(DeserializeFeatures features, Func<object>? factory = null);
 
     #endregion
 
@@ -174,11 +177,20 @@ public interface IDsonObjectReader : IDisposable
 
     string CurrentName { get; }
 
-    SerializeHeader ReadStartObject();
+    /// <summary>
+    /// 
+    /// <param name="encoderType">需要存储在上下文中</param>
+    /// <param name="features">主要用于计算Style</param>
+    /// </summary>
+    SerializeHeader ReadStartObject(Type encoderType, DeserializeFeatures features);
+
+    SerializeHeader ReadStartObject(TypeMeta typeMeta, DeserializeFeatures features);
 
     void ReadEndObject();
 
-    SerializeHeader ReadStartArray();
+    SerializeHeader ReadStartArray(Type encoderType, DeserializeFeatures features);
+
+    SerializeHeader ReadStartArray(TypeMeta typeMeta, DeserializeFeatures features);
 
     void ReadEndArray();
 
@@ -199,11 +211,11 @@ public interface IDsonObjectReader : IDisposable
 
     /// <summary>
     /// 获取当前容器的类型元数据
-    ///
+    /// 
     /// 注：如果当前是顶层对象，则返回值为null。
     /// </summary>
-    /// <returns></returns>
-    TypeMeta? GetContainerTypeMeta();
+    /// <value></value>
+    TypeMeta? ContainerTypeMeta { get; }
 
     /// <summary>
     /// 查询可用于内联编码的Codec

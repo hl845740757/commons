@@ -86,10 +86,10 @@ public interface IDsonObjectWriter : IDisposable
     void WriteBytes(byte[] bytes, int offset, int len);
 
     /** bytes默认为不可共享对象 -- 如果不期望拷贝，可先包装为Binary */
-    void WriteBytes(byte[]? bytes);
+    void WriteBytes(byte[]? bytes, SerializeFeatures features = default);
 
     /** Binary默认为可共享对象 -- feature用于处理null值 */
-    void WriteBinary(Binary? binary);
+    void WriteBinary(Binary? binary, SerializeFeatures features = default);
 
     // 内建结构体
     void WritePtr(in ObjectPtr objectPtr);

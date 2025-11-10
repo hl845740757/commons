@@ -152,7 +152,7 @@ public enum SerializeFeatures : uint
     /// Q：为什么序列化需要支持Null值转为非Null值(默认值)，而反序列化不需要？
     /// A：因为程序可以主动处理null和默认值以实现安全性，而序列化得到的数据可能需要更严格的规范以保证安全性。
     /// </summary>
-    NullValueAsNull = 0x01 << 16,
+    NullStringAsNull = 0x01 << 16,
     /// <summary>
     /// 将Null字符串值写为空字符串。
     /// </summary>
@@ -210,13 +210,6 @@ public enum SerializeFeatures : uint
     /// 数字编码为16进制（不支持浮点数）
     /// </summary>
     NumberHex = 0x40 << 20,
-
-    /// <summary>
-    /// 使用蛇形命名法（默认字段名）
-    /// 
-    /// 注：只适用编辑期APT生成，非运行时属性。
-    /// </summary>
-    SnakeCase = 0x01 << 28,
 #pragma warning restore CA1069
 
     /// <summary>
@@ -236,7 +229,7 @@ public enum SerializeFeatures : uint
     /// </summary>
     MaskElementFeatures = SerializeReference | SerializeInline | WriteTypeName
                           | EnumAsNumber | EnumAsString
-                          | NullValueAsNull | NullStringAsEmpty
+                          | NullStringAsNull | NullStringAsEmpty
                           | MaskStringStyles | MaskNumberStyles
 }
 }

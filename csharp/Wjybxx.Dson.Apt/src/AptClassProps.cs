@@ -33,6 +33,11 @@ internal class AptClassProps
     /// </summary>
     public string? singleton = null;
     /// <summary>
+    /// 字段名是否使用"snake_case"风格
+    /// </summary>
+    public bool snakeCase;
+
+    /// <summary>
     /// 跳过的字段 -- HashSet加快查询
     /// </summary>
     public readonly HashSet<string> skipFields = new();
@@ -66,6 +71,9 @@ internal class AptClassProps
         {
             if (AptUtils.GetAttributeValue(attributeData, "Singleton", out TypedConstant attributeValue)) {
                 props.singleton = attributeValue.GetValueAsString();
+            }
+            if (AptUtils.GetAttributeValue(attributeData, "SnakeCase", out attributeValue)) {
+                props.snakeCase = attributeValue.Value is bool value && value;
             }
         }
         // 解析不自动编解码的字段
