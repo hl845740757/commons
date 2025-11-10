@@ -259,6 +259,11 @@ public static class DsonOutputs
             }
         }
 
+        public void Reset() {
+            _bufferPos = _rawOffset;
+            _posLimit = _rawLimit;
+        }
+
         /// <summary>
         /// 关联的Buffer池
         /// </summary>

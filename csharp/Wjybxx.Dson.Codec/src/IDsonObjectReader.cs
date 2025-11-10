@@ -140,8 +140,9 @@ public interface IDsonObjectReader : IDisposable
     #region 流程
 
     IDsonConverter Converter { get; }
-
     ConverterOptions Options { get; }
+    ITypeMetaRegistry TypeMetaRegistry { get; }
+    IDsonCodecRegistry CodecRegistry { get; }
 
     DsonContextType ContextType { get; }
 

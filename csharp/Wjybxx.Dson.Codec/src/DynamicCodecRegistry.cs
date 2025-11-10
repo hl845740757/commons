@@ -195,8 +195,8 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         for (int index = _casters.Count - 1; index >= 0; index--) {
             IDsonCodecCaster caster = _casters[index];
             Type superType = caster.CastEncoderType(type);
-            if (superType == null) continue;
-            return superType == type ? null : superType; // fix用户返回当前类
+            if (superType == type) continue;
+            return superType;
         }
         // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
         Type castType = type.GetInterface(typeof(IList<>).Name);
@@ -224,8 +224,8 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         for (int index = _casters.Count - 1; index >= 0; index--) {
             IDsonCodecCaster caster = _casters[index];
             Type subType = caster.CastDecoderType(type);
-            if (subType == null) continue;
-            return subType == type ? null : subType; // fix用户返回当前类
+            if (subType == type) continue;
+            return subType;
         }
         // readonly系列集合...
         if (type.IsGenericType) {

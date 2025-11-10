@@ -88,7 +88,7 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
 
     public void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, SerializeFeatures features) {
         Type encoderType = GetEncoderType();
-        TypeMeta typeMeta = writer.Converter.TypeMetaRegistry.OfType(encoderType);
+        TypeMeta typeMeta = writer.TypeMetaRegistry.OfType(encoderType);
         if (typeMeta == null) {
             throw DsonCodecException.UnsupportedKeyType(encoderType);
         }

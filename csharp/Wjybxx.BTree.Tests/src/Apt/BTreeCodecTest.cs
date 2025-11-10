@@ -67,9 +67,10 @@ public class BTreeCodecTest
             Type encoderType = codecType.BaseType!.GenericTypeArguments[0].GetGenericTypeDefinition();
             builder.AddGenericCodec(encoderType, codecType);
 
-            TypeMeta typeMeta = TypeMeta.Of(encoderType, RemoveGenericInfo(encoderType.Name));
+            TypeMeta typeMeta = TypeMeta.Of(encoderType, SerializeFeatures.SerializeReference, RemoveGenericInfo(encoderType.Name));
             builder.AddTypeMeta(typeMeta);
         }
+        builder.AddTypeMeta(TypeMeta.Of(typeof(Task<>), "Task"));
         converter = builder.Build();
     }
 
@@ -104,7 +105,7 @@ public class BTreeCodecTest
     [Test]
     public void SerializeTest() {
         List<Task<string>> list = converter.ReadFromDsonCollectionString<Task<string>>(dsonString2);
-        string collectionString = converter.WriteAsDsonCollectionString(list, typeof(Task<string>));
+        string collectionString = converter.WriteAsDson(list, typeof(Task<string>));
         Console.WriteLine(collectionString);
     }
 }

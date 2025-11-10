@@ -86,10 +86,10 @@ public interface IDsonObjectWriter : IDisposable
     void WriteBytes(byte[] bytes, int offset, int len);
 
     /** bytes默认为不可共享对象 -- 如果不期望拷贝，可先包装为Binary */
-    void WriteBytes(byte[]? bytes, SerializeFeatures features = default);
+    void WriteBytes(byte[]? bytes);
 
     /** Binary默认为可共享对象 -- feature用于处理null值 */
-    void WriteBinary(Binary? binary, SerializeFeatures features = default);
+    void WriteBinary(Binary? binary);
 
     // 内建结构体
     void WritePtr(in ObjectPtr objectPtr);
@@ -108,7 +108,7 @@ public interface IDsonObjectWriter : IDisposable
     /// <summary>
     /// 写嵌套对象
     /// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
-    /// 2.小心：显式传入声明类型会导致装箱！
+    /// 2.如果尚未写入name且value为null，则根据features决定是否写入null。
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="value">要写入的对象</param>
@@ -142,9 +142,13 @@ public interface IDsonObjectWriter : IDisposable
     #region 流程
 
     IDsonConverter Converter { get; }
-
     ConverterOptions Options { get; }
+    ITypeMetaRegistry TypeMetaRegistry { get; }
+    IDsonCodecRegistry CodecRegistry { get; }
 
+    /// <summary>
+    /// 当前字段的名字
+    /// </summary>
     string CurrentName { get; }
 
     /// <summary>
@@ -197,7 +201,7 @@ public interface IDsonObjectWriter : IDisposable
     TypeMeta? ContainerTypeMeta { get; }
 
     /// <summary>
-    /// 查询可用于内联编码的Codec
+    /// 查询可用于内联编码的Codec（用于集合加速）
     /// </summary>
     DsonCodecImpl<T>? GetInlinableCodec<T>();
 

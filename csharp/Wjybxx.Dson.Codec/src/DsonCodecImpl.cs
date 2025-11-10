@@ -61,7 +61,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     private readonly Type _encoderType;
     private readonly INullableCodec<T>? _nullableCodec;
     private readonly IKeyCodec<T>? _keyCodec;
-    private readonly bool _disableSerilizeReference;
+    private readonly bool _disableSerializeReference;
     private readonly bool _inlinableCodec;
 
     internal DsonCodecImpl(IDsonCodec<T> codec) {
@@ -69,18 +69,18 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         _encoderType = codec.GetEncoderType();
         _nullableCodec = codec as INullableCodec<T>;
         _keyCodec = codec as IKeyCodec<T>;
-        //
-        _disableSerilizeReference = _encoderType.IsValueType
-                                    || _encoderType == typeof(string)
-                                    || _encoderType.IsArray
-                                    || DsonConverterUtils.IsCollection(_encoderType)
-                                    || DsonConverterUtils.IsDictionary(_encoderType);
+        // 数组/List/Map都禁止序列化为引用
+        _disableSerializeReference = _encoderType.IsValueType
+                                     || _encoderType == typeof(string)
+                                     || _encoderType.IsArray
+                                     || DsonConverterUtils.IsCollection(_encoderType)
+                                     || DsonConverterUtils.IsDictionary(_encoderType);
         // codec需要能正确处理null
         _inlinableCodec = _encoderType.IsValueType
                           || _encoderType == typeof(string);
     }
 
-    internal override bool DisableSerializeReference => _disableSerilizeReference;
+    internal override bool DisableSerializeReference => _disableSerializeReference;
 
     internal override bool IsInlinableCodec => _inlinableCodec;
 

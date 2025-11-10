@@ -24,7 +24,8 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class Int32Codec : IDsonCodec<int>, IKeyCodec<int>
 {
     public string EncodeKey(int value, SerializeFeatures features) {
-        return features.ToNumberStyle().ToString(value).Value;
+        return value.ToString();
+        // return features.ToNumberStyle().ToString(value).Value;
     }
 
     public int DecodeKey(string keyString) {

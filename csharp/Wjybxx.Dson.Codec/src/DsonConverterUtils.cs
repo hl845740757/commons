@@ -257,19 +257,19 @@ public static class DsonConverterUtils
     public static string WriteAsDsonCollectionString<T>(this IDsonConverter converter,
                                                         IEnumerable<object> collection,
                                                         SerializeFeatures features = default) {
-        return converter.WriteAsDsonCollectionString(collection, typeof(T), features);
+        return converter.WriteCollectionAsDson(collection, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T> ReadFromDsonCollectionString<T>(this IDsonConverter converter,
                                                           string dson, Func<object>? factory = null) {
-        return converter.ReadFromDsonCollectionString<T>(dson, typeof(T), factory);
+        return converter.ReadCollectionFromDson<T>(dson, typeof(T), factory);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T> ReadFromDsonCollection<T>(this IDsonConverter converter,
                                                     DsonArray<string> dsonArray, Func<object>? factory = null) {
-        return converter.ReadFromDsonCollection<T>(dsonArray, typeof(T), factory);
+        return converter.ReadCollectionFromDsonCollection<T>(dsonArray, typeof(T), factory);
     }
 
     #endregion

@@ -206,16 +206,16 @@ public final class TypeMetaConfig {
     public static TypeMetaConfig newDefaultConfig(boolean includeCollections) {
         TypeMetaConfig config = new TypeMetaConfig();
         // dson内建结构
-        config.add(int.class, DsonTexts.LABEL_INT32, "int", "int32", "ui", "uint", "uint32");
-        config.add(long.class, DsonTexts.LABEL_INT64, "long", "int64", "uL", "ulong", "uint64");
+        config.add(int.class, DsonTexts.LABEL_INT32, "int32", "int", "ui", "uint", "uint32");
+        config.add(long.class, DsonTexts.LABEL_INT64, "int64", "long", "uL", "ulong", "uint64");
         config.add(float.class, DsonTexts.LABEL_FLOAT, "float");
         config.add(double.class, DsonTexts.LABEL_DOUBLE, "double");
         config.add(boolean.class, DsonTexts.LABEL_BOOL, "bool", "boolean");
         config.add(String.class, DsonTexts.LABEL_STRING, "string");
         config.add(Binary.class, DsonTexts.LABEL_BINARY, "bytes");
-        config.add(ObjectPtr.class, DsonTexts.LABEL_PTR);
-        config.add(ExtDateTime.class, DsonTexts.LABEL_DATETIME);
-        config.add(Timestamp.class, DsonTexts.LABEL_TIMESTAMP);
+        config.add(ObjectPtr.class, DsonTexts.LABEL_PTR, "Pointer");
+        config.add(ExtDateTime.class, DsonTexts.LABEL_DATETIME, "DateTime");
+        config.add(Timestamp.class, DsonTexts.LABEL_TIMESTAMP, "Timestamp");
         // 基础类型
         config.add(short.class, "short", "int16", "uint16");
         config.add(byte.class, "byte", "sbyte");
@@ -237,6 +237,7 @@ public final class TypeMetaConfig {
             config.add(Collection.class, "ICollection", "ICollection`1");
             config.add(List.class, "IList", "IList`1");
             config.add(ArrayList.class, "List", "List`1");
+            config.add(HashSet.class, "HashSet", "HashSet`1");
 
             config.add(Map.class, "IDictionary", "IDictionary`2");
             config.add(HashMap.class, "HashMap", "HashMap`2"); // c#的字典有毒，不删除的情况下有序，导致Java映射困难

@@ -113,6 +113,10 @@ final class DsonCodecHelper {
             case FLOAT -> reader.readFloat(name) != 0;
             case DOUBLE -> reader.readDouble(name) != 0;
             case BOOL -> reader.readBool(name);
+            case STRING -> {
+                String value = reader.readString(name);
+                yield value.equals("true") || value.equals("1");
+            }
             case NULL -> {
                 reader.readNull(name);
                 yield false;

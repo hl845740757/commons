@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 using Wjybxx.Dson.Types;
 
@@ -26,12 +27,9 @@ internal static class DsonCodecHelper
 {
     #region reader
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DsonType ReadOrGetDsonType(IDsonReader<string> reader) {
-        if (reader.IsAtType) {
-            return reader.ReadDsonType();
-        } else {
-            return reader.CurrentDsonType;
-        }
+        return reader.IsAtType ? reader.ReadDsonType() : reader.CurrentDsonType;
     }
 
     public static int ReadInt(IDsonReader<string> reader, string? name) {
@@ -110,6 +108,10 @@ internal static class DsonCodecHelper
             case DsonType.Float: return reader.ReadFloat(name) != 0;
             case DsonType.Double: return reader.ReadDouble(name) != 0;
             case DsonType.Bool: return reader.ReadBool(name);
+            case DsonType.String: {
+                string value = reader.ReadString(name);
+                return value == "true" || value == "1";
+            }
             case DsonType.Null: {
                 reader.ReadNull(name);
                 return false;

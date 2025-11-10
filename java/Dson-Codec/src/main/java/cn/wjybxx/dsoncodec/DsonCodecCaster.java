@@ -41,7 +41,7 @@ public interface DsonCodecCaster {
      * 5.集合类型通常转换为其对应的接口类型。
      *
      * @param type 要转换的类，泛型类的话是泛型定义类
-     * @return 要转换的编码类型；null表示找不到合适的类型，将继续查找下一个；返回参数表示中断查询
+     * @return 要转换的编码类型；返回参数表示继续查找，返回null表示结束
      */
     @Nullable
     TypeInfo castEncoderType(TypeInfo type);
@@ -54,7 +54,7 @@ public interface DsonCodecCaster {
      * 4.转换后的类型必须存在对应的Codec和TypeMeta。
      *
      * @param type 要转换的类，泛型类的话是泛型定义类
-     * @return 要转换的解码类型；null表示找不到合适的类型，将继续查找下一个；返回参数表示中断查询
+     * @return 要转换的解码类型；返回参数表示继续查找，返回null表示结束
      */
     @Nullable
     TypeInfo castDecoderType(TypeInfo type);

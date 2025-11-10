@@ -25,7 +25,10 @@ using Wjybxx.Dson.Text;
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
+///
+/// <h3>对象图</h3>
+/// 最新版本已支持对象图，Read方法默认只读取第一个对象以及它引用的对象；
+/// 要想读取所有的对象，需要调用DsonCollection相关接口。
 /// </summary>
 public interface IDsonConverter : IConverter
 {
@@ -43,16 +46,17 @@ public interface IDsonConverter : IConverter
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="declaredType"></param>
-    /// <param name="factory"></param>
+    /// <param name="input">数据源</param>
+    /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="factory">实例工厂</param>
     /// <returns></returns>
     object Read(IDsonInput input, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
     /// 将一个对象转换为字节数组
     /// 
-    /// 注：如果对象的运行时类型和声明类型一致，则可省去编码结果中的类型信息。
+    /// 1.如果对象的运行时类型和声明类型一致，则可省去编码结果中的类型信息。
+    /// 2.被引用的对象会编码为顶层对象。
     /// </summary>
     /// <param name="value">要序列化的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
@@ -62,8 +66,6 @@ public interface IDsonConverter : IConverter
 
     /// <summary>
     /// 从数据源中读取一个对象
-    ///
-    /// 注：该方式仅支持读取第一个顶层对象，其它顶层对象只有被第一个顶层对象引用时才会被读取。
     /// </summary>
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
@@ -91,10 +93,14 @@ public interface IDsonConverter : IConverter
     object ReadFromDson(TextReader source, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
-    /// 序列化多个对象，保留对象引用关系
+    /// 序列化集合信息
+    ///
+    /// 注：与WriteAsDson的区别在于，该方法不写入集合自身的数据 —— 建议通过测试用例观察。
     /// </summary>
-    string WriteAsDsonCollectionString(IEnumerable<object> collection, Type declaredType,
-                                       SerializeFeatures features = default);
+    /// <param name="collection">对象集合</param>
+    /// <param name="declaredType">集合元素的声明类型</param>
+    /// <param name="features">序列化特征值</param>
+    string WriteCollectionAsDson(IEnumerable<object> collection, Type declaredType, SerializeFeatures features = default);
 
     /// <summary>
     /// 从数据源中读取所有对象
@@ -104,7 +110,7 @@ public interface IDsonConverter : IConverter
     /// <param name="dson">对象集合</param>
     /// <param name="declaredType">集合元素的声明类型</param>
     /// <param name="factory">集合元素的factory</param>
-    List<T> ReadFromDsonCollectionString<T>(string dson, Type declaredType, Func<object>? factory = null);
+    List<T> ReadCollectionFromDson<T>(string dson, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
     /// 序列化多个对象，保留对象引用关系
@@ -113,16 +119,17 @@ public interface IDsonConverter : IConverter
     /// <param name="declaredType">集合元素的声明类型</param>
     /// <param name="features">序列化特征值</param>
     /// <returns></returns>
-    DsonArray<string> WriteAsDsonCollection(IEnumerable<object> collection, Type declaredType,
-                                            SerializeFeatures features = default);
+    DsonArray<string> WriteCollectionAsDsonCollection(IEnumerable<object> collection, Type declaredType, SerializeFeatures features = default);
 
     /// <summary>
     /// 从数据源中读取所有对象
+    ///
+    /// 注：用户可以缓存资源文件解析得到的<see cref="DsonArray{TK}"/>对象，以支持快速复制对象。
     /// </summary>
     /// <param name="collection">对象集合</param>
     /// <param name="declaredType">集合元素的声明类型</param>
     /// <param name="factory">集合元素的factory</param>
-    List<T> ReadFromDsonCollection<T>(DsonArray<string> collection, Type declaredType, Func<object>? factory = null);
+    List<T> ReadCollectionFromDsonCollection<T>(DsonArray<string> collection, Type declaredType, Func<object>? factory = null);
 
     #endregion
 

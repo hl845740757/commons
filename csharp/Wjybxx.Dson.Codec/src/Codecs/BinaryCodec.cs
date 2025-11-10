@@ -24,7 +24,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class BinaryCodec : IDsonCodec<Binary>
 {
     public void WriteObject(IDsonObjectWriter writer, Binary inst, Type declaredType, SerializeFeatures features) {
-        writer.WriteBinary(inst, features);
+        writer.WriteBinary(inst);
     }
 
     public Binary ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {

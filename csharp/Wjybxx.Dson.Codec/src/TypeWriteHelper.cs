@@ -19,12 +19,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 用于实现不同Converter不同的数据
+/// 
 /// </summary>
 public sealed class TypeWriteHelper
 {
@@ -39,6 +40,14 @@ public sealed class TypeWriteHelper
         foreach (KeyValuePair<TypePair, bool> pair in configs) {
             cacheDic[pair.Key] = pair.Value;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool RequireTypeName(TypeWritePolicy policy, Type encoderType, Type declaredType) {
+        if (policy == TypeWritePolicy.Optimized) {
+            return !IsOptimizable(encoderType, declaredType);
+        }
+        return policy == TypeWritePolicy.Always;
     }
 
     /// <summary>

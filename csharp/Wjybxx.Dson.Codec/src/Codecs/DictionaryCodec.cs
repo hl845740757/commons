@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson.Codec.Codecs
@@ -94,7 +95,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     }
 
     public void WriteObject(IDsonObjectWriter writer, IDictionary<K, V> inst, Type declaredType, SerializeFeatures features) {
-        DsonCodecImpl<K> keyEncoder = writer.Converter.CodecRegistry.GetEncoder(typeof(K)) as DsonCodecImpl<K>;
+        DsonCodecImpl<K> keyEncoder = writer.CodecRegistry.GetEncoder(typeof(K)) as DsonCodecImpl<K>;
         if (keyEncoder == null || !keyEncoder.IsKeyCodec) {
             SerializeFeatures selfFeatures = features.ErasureElementFeatures();
             SerializeFeatures elementFeatures = features.GetElementFeatures();
@@ -112,7 +113,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         reader.SetEnableNameIntern(false); // 禁用字典的name池化
-        DsonCodecImpl<K> keyEncoder = reader.Converter.CodecRegistry.GetDecoder(typeof(K)) as DsonCodecImpl<K>;
+        DsonCodecImpl<K> keyEncoder = reader.CodecRegistry.GetDecoder(typeof(K)) as DsonCodecImpl<K>;
         IDictionary<K, V> result;
         if (keyEncoder == null || !keyEncoder.IsKeyCodec) {
             int count = reader.ReadStartArray().count;
@@ -259,8 +260,9 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         return result;
     }
 
-    private TypeMeta GetPairTypeMeta(IDsonObjectWriter writer) {
-        return writer.Converter.TypeMetaRegistry.OfType(typeof(KeyValuePair<K, V>))!;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static TypeMeta GetPairTypeMeta(IDsonObjectWriter writer) {
+        return writer.TypeMetaRegistry.OfType(typeof(KeyValuePair<K, V>))!;
     }
 
     private MapStyle GetMapStyle(SerializeFeatures features, IDsonObjectWriter writer, MapStyle def) {

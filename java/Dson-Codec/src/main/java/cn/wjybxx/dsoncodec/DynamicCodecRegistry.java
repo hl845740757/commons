@@ -188,8 +188,8 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         for (int i = casters.size() - 1; i >= 0; i--) {
             DsonCodecCaster caster = casters.get(i);
             TypeInfo superType = caster.castEncoderType(type);
-            if (superType == null) continue;
-            return superType.rawType == rawType ? null : superType; // fix用户返回当前类
+            if (superType == type) continue;
+            return superType; // fix用户返回当前类
         }
         // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
         // 这里其实也需要测试是否可以继承泛型参数，但不想增加复杂度了，用户通过Caster解决
@@ -213,8 +213,8 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         for (int i = casters.size() - 1; i >= 0; i--) {
             DsonCodecCaster caster = casters.get(i);
             TypeInfo subType = caster.castDecoderType(type);
-            if (subType == null) continue;
-            return subType.rawType == type.rawType ? null : subType; // fix用户返回当前类
+            if (subType == type) continue;
+            return subType; // fix用户返回当前类
         }
         return null;
     }

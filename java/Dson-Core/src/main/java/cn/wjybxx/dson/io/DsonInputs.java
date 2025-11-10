@@ -297,6 +297,11 @@ public class DsonInputs {
 
         }
 
+        public void reset() {
+            bufferPos = rawOffset;
+            posLimit = rawLimit;
+        }
+
         @Override
         public void close() {
 

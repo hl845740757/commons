@@ -148,6 +148,9 @@ public enum SerializeFeatures : uint
 
     /// <summary>
     /// 将Null值保持为Null值，禁用转换
+    ///
+    /// Q：为什么序列化需要支持Null值转为非Null值(默认值)，而反序列化不需要？
+    /// A：因为程序可以主动处理null和默认值以实现安全性，而序列化得到的数据可能需要更严格的规范以保证安全性。
     /// </summary>
     NullValueAsNull = 0x01 << 16,
     /// <summary>

@@ -30,26 +30,36 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// TODO 池化
 /// </summary>
-public class DefaultDsonObjectWriter : IDsonObjectWriter
+internal class DefaultDsonObjectWriter : IDsonObjectWriter
 {
-    private readonly IDsonConverter converter;
-    private readonly TypeWriteHelper typeWriteHelper;
-    private readonly IDsonWriter<string> writer;
 #nullable disable
+    private DefaultDsonConverter converter;
+    private IDsonWriter<string> writer;
+
     private long _nextLocalId;
-    private readonly LinkedDictionary<object, ObjectPtr> referenceTable;
+    private readonly LinkedDictionary<object, ObjectPtr> referenceTable = new(ReferenceComparer.Inst);
     private ObjectPtr _stack; // 当前写的是第几个Value
 #nullable restore
-
-    public DefaultDsonObjectWriter(IDsonConverter converter, TypeWriteHelper typeWriteHelper,
-                                   IDsonWriter<string> writer) {
-        this.converter = converter;
-        this.typeWriteHelper = typeWriteHelper;
-        this.writer = writer;
-        this.referenceTable = new LinkedDictionary<object, ObjectPtr>(ReferenceComparer.Inst);
+    private DefaultDsonObjectWriter() {
     }
 
-    internal void AddReference(object reference, ObjectPtr ptr) {
+    private static readonly ConcurrentObjectPool<DefaultDsonObjectWriter> pool = new(
+        () => new DefaultDsonObjectWriter(), e => e.Dispose());
+
+    public static DefaultDsonObjectWriter GetPooled() {
+        return pool.Acquire();
+    }
+
+    public static void Release(DefaultDsonObjectWriter reader) {
+        pool.Release(reader);
+    }
+
+    public void Init(DefaultDsonConverter converter, IDsonWriter<string> writer) {
+        this.converter = converter;
+        this.writer = writer;
+    }
+
+    public void AddReference(object reference, ObjectPtr ptr) {
         if (reference == null) {
             throw new ArgumentNullException(nameof(reference));
         }
@@ -59,7 +69,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         referenceTable.Add(reference, ptr);
     }
 
-    internal ObjectPtr AddReference(object reference) {
+    public ObjectPtr AddReference(object reference) {
         if (reference == null) {
             throw new ArgumentNullException(nameof(reference));
         }
@@ -72,7 +82,13 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         return ptr;
     }
 
-    internal void WriteAll(Type declaredType, SerializeFeatures features) {
+    public void AddReferences(IEnumerable<object> collection) {
+        foreach (object obj in collection) {
+            AddReference(obj);
+        }
+    }
+
+    public void WriteAll(Type declaredType, SerializeFeatures features) {
         if (referenceTable.Count == 0) {
             return;
         }
@@ -220,7 +236,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteBinary(bytes, offset, len);
     }
 
-    public void WriteBytes(byte[]? bytes, SerializeFeatures features) {
+    public void WriteBytes(byte[]? bytes) {
         if (bytes == null) {
             WriteNull();
         } else {
@@ -228,7 +244,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
-    public void WriteBinary(Binary? binary, SerializeFeatures features) {
+    public void WriteBinary(Binary? binary) {
         if (binary == null) {
             WriteNull();
         } else {
@@ -331,7 +347,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     private void WriteNull(string? name, Type declaredType, SerializeFeatures features) {
         if (declaredType == typeof(string)) {
-            WriteString(name, features);
+            WriteString(name!, null, features);
         } else {
             WriteNull(name!, features);
         }
@@ -348,6 +364,14 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     public ConverterOptions Options {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => converter.Options;
+    }
+    public ITypeMetaRegistry TypeMetaRegistry {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => converter.TypeMetaRegistry;
+    }
+    public IDsonCodecRegistry CodecRegistry {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => converter.CodecRegistry;
     }
     public string CurrentName {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -410,9 +434,8 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             header.localId = _stack.LocalId;
         }
         TypeWritePolicy typePolicy = converter.Options.typeWritePolicy;
-        bool typed = ((features & SerializeFeatures.WriteTypeName) != 0)
-                     || (typePolicy == TypeWritePolicy.Optimized && !typeWriteHelper.IsOptimizable(encoderType, declaredType))
-                     || (typePolicy == TypeWritePolicy.Always); // 大概率false
+        bool typed = (features & SerializeFeatures.WriteTypeName) != 0
+                     || converter.TypeWriteHelper.RequireTypeName(typePolicy, encoderType, declaredType);
         bool headerIsEmpty = header.isEmpty;
         if (!typed && headerIsEmpty) {
             return;
@@ -523,13 +546,15 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         if (codecImpl.DisableSerializeReference) {
             return false;
         }
-        if ((features & SerializeFeatures.SerializeReference) != 0) return true;
         if ((features & SerializeFeatures.SerializeInline) != 0) return false;
+        if ((features & SerializeFeatures.SerializeReference) != 0) return true;
         TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(codecImpl.GetEncoderType());
         if (typeMeta == null) {
             throw DsonCodecException.UnsupportedType(codecImpl.GetEncoderType());
         }
-        return (typeMeta.encodeFeatures & SerializeFeatures.SerializeReference) != 0;
+        features = typeMeta.encodeFeatures;
+        if ((features & SerializeFeatures.SerializeInline) != 0) return false;
+        return (features & SerializeFeatures.SerializeReference) != 0;
     }
 
     private static ObjectStyle GetObjectStyle(SerializeFeatures features, TypeMeta typeMeta) {

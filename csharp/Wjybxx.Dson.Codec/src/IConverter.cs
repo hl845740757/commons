@@ -23,7 +23,8 @@ namespace Wjybxx.Dson.Codec
 {
 /// <summary>
 /// 
-/// Converter接口去除了泛型相关的接口，这有利于减少API。
+/// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入。
+/// 2.Converter接口去除了泛型相关的接口，这有利于减少API。
 /// 这并不会对效率产生影响，因为Converter接收的对象绝大多数情况下都是Class，鲜有Struct。
 /// </summary>
 public interface IConverter

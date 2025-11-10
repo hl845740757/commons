@@ -117,6 +117,9 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
             if (_name2EnumDic.TryGetValue(keyString, out EnumValueInfo<T> valueInfo)) {
                 return valueInfo.value;
             }
+            if (Enum.TryParse(keyString, true, out T value)) {
+                return value;
+            }
         }
         throw new DsonCodecException($"invalid enum key: {keyString}, type: {typeof(T)}");
     }
@@ -151,6 +154,9 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
             if (name.Contains('|')) { // Flags格式
                 int number = ParseFlags(name);
                 return (T)Enum.ToObject(typeof(T), number);
+            }
+            if (Enum.TryParse(name, true, out T value)) {
+                return value;
             }
             throw new DsonCodecException($"invalid enum value: {name}, type: {typeof(T)}");
         } else {

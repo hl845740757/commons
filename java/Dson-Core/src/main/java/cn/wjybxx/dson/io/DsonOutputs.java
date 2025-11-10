@@ -250,6 +250,11 @@ public class DsonOutputs {
 
         }
 
+        public void reset() {
+            bufferPos = rawOffset;
+            posLimit = rawLimit;
+        }
+
         @Override
         public void close() {
             // 需要归还buffer

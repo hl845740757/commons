@@ -291,6 +291,11 @@ public static class DsonInputs
 
         #endregion
 
+        public void Reset() {
+            _bufferPos = _rawOffset;
+            _posLimit = _rawLimit;
+        }
+
         public void Dispose() {
         }
     }

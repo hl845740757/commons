@@ -24,7 +24,8 @@ namespace Wjybxx.Dson.Codec
 /// <h3>Key限制</h3>
 /// 1.当字典的Key需要转换为字符串时，仅支持：int32、int64、uint32、uint64、enum、string。
 /// 2.当字典的Key需要转换为字符串时，<b>Key的运行时类型必须和声明类型相同</b>。
-/// 3.当字典的key不是约定的类型时，仅可以使用<see cref="Array"/>和<see cref="PairAsArray"/>两种策略。
+/// 3.当字典的key不是约定的类型时，仅可以使用<see cref="Array"/>策略。
+/// 4.现已扩展Key类型，实现为<see cref="IKeyCodec{T}"/>的类型即可写为Document。
 ///
 /// <h3>字典的本质是数组</h3>
 /// 本质上讲，Map是数组，而不是普通的Object，因为标准的Map是允许复杂key的，因此Map默认应该序列化为数组。但存在两个特殊的场景：

@@ -42,7 +42,7 @@ public interface IDsonCodecCaster
     /// 
     /// </summary>
     /// <param name="clazz">要转换的类，运行时类型</param>
-    /// <returns>要转换的编码类型；null表示找不到合适的类型，将继续查找下一个；返回参数表示中断查询</returns>
+    /// <returns>要转换的编码类型；返回参数表示继续查找，返回null表示结束</returns>
     Type? CastEncoderType(Type clazz);
 
     /// <summary>
@@ -54,7 +54,7 @@ public interface IDsonCodecCaster
     /// 
     /// </summary>
     /// <param name="clazz">要转换的类，运行时类型</param>
-    /// <returns>要转换的解码类型；null表示找不到合适的类型，将继续查找下一个；返回参数表示中断查询</returns>
+    /// <returns>要转换的解码类型；返回参数表示继续查找，返回null表示结束</returns>
     Type? CastDecoderType(Type clazz);
 }
 }

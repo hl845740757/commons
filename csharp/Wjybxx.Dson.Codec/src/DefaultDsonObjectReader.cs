@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
@@ -30,24 +31,38 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// TODO 池化
 /// </summary>
-public class DefaultDsonObjectReader : IDsonObjectReader
+internal class DefaultDsonObjectReader : IDsonObjectReader
 {
 #nullable disable
-    private IDsonConverter converter;
-    private LinkedDictionary<ObjectPtr, ItemContext> referenceTable;
+    private DefaultDsonConverter converter;
+    private readonly LinkedDictionary<ObjectPtr, ItemContext> referenceTable = new(PointerComparer.Inst);
     private DsonCollectionReader<string> reader;
     private ObjectPtr _stack;
 
     private Type _rootDeclaredType;
     private Func<object>? _rootFactory;
+    private readonly List<ObjectPtr> _listCache = new List<ObjectPtr>();
 #nullable restore
 
-    public DefaultDsonObjectReader(IDsonConverter converter) {
-        this.converter = converter;
-        this.referenceTable = new LinkedDictionary<ObjectPtr, ItemContext>(PointerComparer.Inst);
+    private DefaultDsonObjectReader() {
     }
 
-    internal void Initialize(DsonArray<string> collection) {
+    private static readonly ConcurrentObjectPool<DefaultDsonObjectReader> pool = new(
+        () => new DefaultDsonObjectReader(), e => e.Dispose());
+
+    public static DefaultDsonObjectReader GetPooled() {
+        return pool.Acquire();
+    }
+
+    public static void Release(DefaultDsonObjectReader reader) {
+        pool.Release(reader);
+    }
+
+    public void Init(DefaultDsonConverter converter) {
+        this.converter = converter;
+    }
+
+    public void AddReference(DsonArray<string> collection) {
         if (collection.Count == 0) {
             throw new Exception("Empty collection");
         }
@@ -64,19 +79,22 @@ public class DefaultDsonObjectReader : IDsonObjectReader
         }
     }
 
-    internal object ReadFirst(Type declaredType, Func<object>? factory = null) {
+    public object ReadFirst(Type declaredType, Func<object>? factory = null) {
         _rootDeclaredType = declaredType;
         _rootFactory = factory;
         ObjectPtr ptr = referenceTable.PeekFirstKey();
         return GetReference(ptr);
     }
 
-    internal List<T> ReadAll<T>(Type declaredType, Func<object>? factory = null) {
+    public List<T> ReadAll<T>(Type declaredType, Func<object>? factory = null) {
         _rootDeclaredType = declaredType;
         _rootFactory = factory;
-        List<ObjectPtr> pointers = new List<ObjectPtr>(referenceTable.Keys); // 需保留原始顺序
+        // 用于保留原始顺序
+        _listCache.Clear();
+        _listCache.AddRange(referenceTable.Keys);
+        //
         List<T> result = new List<T>(referenceTable.Count);
-        foreach (ObjectPtr ptr in pointers) {
+        foreach (ObjectPtr ptr in _listCache) {
             result.Add((T)GetReference(ptr));
         }
         return result;
@@ -126,8 +144,11 @@ public class DefaultDsonObjectReader : IDsonObjectReader
         if (container is DsonObject<string> dsonObject) {
             dsonHeader = dsonObject.Header;
         } else {
-            // 顶层应当尽量避免出现Array类型，可能导致奇怪的语义问题
             dsonHeader = container.AsArray().Header;
+        }
+        // DsonHeader使用的是ArrayDictionary，查询效率不好
+        if (dsonHeader.IsEmpty) {
+            return default;
         }
         SerializeHeader header = default;
         if (dsonHeader.TryGetValue(DsonHeader.Names_ClassName, out DsonValue tempValue)) {
@@ -364,8 +385,22 @@ public class DefaultDsonObjectReader : IDsonObjectReader
 
     #region 流程
 
-    public IDsonConverter Converter => converter;
-    public ConverterOptions Options => converter.Options;
+    public IDsonConverter Converter {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => converter;
+    }
+    public ConverterOptions Options {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => converter.Options;
+    }
+    public ITypeMetaRegistry TypeMetaRegistry {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => converter.TypeMetaRegistry;
+    }
+    public IDsonCodecRegistry CodecRegistry {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => converter.CodecRegistry;
+    }
     public DsonContextType ContextType => reader.ContextType;
 
     public DsonType ReadDsonType() {
@@ -429,6 +464,10 @@ public class DefaultDsonObjectReader : IDsonObjectReader
         reader.SetKeyItr(context, DsonNull.NULL);
         reader.Attach(context);
         //
+        if (reader.ContextDepth == 1) {
+            ItemContext itemContext = referenceTable[_stack];
+            return itemContext.header;
+        }
         DsonValue dsonValue = reader.GetContainer();
         return ReadHeader(dsonValue);
     }
@@ -450,6 +489,10 @@ public class DefaultDsonObjectReader : IDsonObjectReader
             reader.SkipValue();
         }
         //
+        if (reader.ContextDepth == 1) {
+            ItemContext itemContext = referenceTable[_stack];
+            return itemContext.header;
+        }
         DsonValue dsonValue = reader.GetContainer();
         return ReadHeader(dsonValue);
     }
@@ -497,12 +540,13 @@ public class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public void Dispose() {
+        this.converter = null;
+        this.referenceTable.Clear();
+        this.reader = null;
         _stack = default;
         _rootDeclaredType = null;
         _rootFactory = null;
-        this.reader = null;
-        this.referenceTable?.Clear();
-        this.converter = null;
+        _listCache.Clear();
     }
 
     #endregion

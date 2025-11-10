@@ -181,19 +181,19 @@ public sealed class TypeMetaConfig
     /// <returns></returns>
     public static TypeMetaConfig NewDefaultConfig(bool includeCollections = true) {
         TypeMetaConfig config = new TypeMetaConfig();
-        config.Add(typeof(int), DsonTexts.LabelInt32, "int", "int32");
-        config.Add(typeof(long), DsonTexts.LabelInt64, "long", "int64");
+        config.Add(typeof(int), DsonTexts.LabelInt32, "int32", "int");
+        config.Add(typeof(long), DsonTexts.LabelInt64, "int64", "long");
         config.Add(typeof(float), DsonTexts.LabelFloat, "float");
         config.Add(typeof(double), DsonTexts.LabelDouble, "double");
         config.Add(typeof(bool), DsonTexts.LabelBool, "bool", "boolean");
         config.Add(typeof(string), DsonTexts.LabelString, "string");
         config.Add(typeof(Binary), DsonTexts.LabelBinary, "bytes");
-        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr);
-        config.Add(typeof(ExtDateTime), DsonTexts.LabelDateTime);
-        config.Add(typeof(Timestamp), DsonTexts.LabelTimestamp);
+        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, "Pointer");
+        config.Add(typeof(ExtDateTime), DsonTexts.LabelDateTime, "DateTime");
+        config.Add(typeof(Timestamp), DsonTexts.LabelTimestamp, "Timestamp");
         // 基础类型
-        config.Add(typeof(uint), DsonTexts.LabelUInt32, "uint", "uint32");
-        config.Add(typeof(ulong), DsonTexts.LabelUInt64, "ulong", "uint64");
+        config.Add(typeof(uint), DsonTexts.LabelUInt32, "uint32", "uint");
+        config.Add(typeof(ulong), DsonTexts.LabelUInt64, "uint64", "ulong");
         config.Add(typeof(short), "int16", "short");
         config.Add(typeof(ushort), "uint16", "ushort");
         config.Add(typeof(byte), "byte");
@@ -209,11 +209,16 @@ public sealed class TypeMetaConfig
             config.Add(typeof(ICollection<>), "ICollection", "ICollection`1");
             config.Add(typeof(IList<>), "IList", "IList`1");
             config.Add(typeof(List<>), "List", "List`1");
-
+            config.Add(typeof(HashSet<>), "HashSet", "HashSet`1");
+            //
             config.Add(typeof(IDictionary<,>), "IDictionary", "IDictionary`2");
             config.Add(typeof(Dictionary<,>), "Dictionary", "Dictionary`2");
             config.Add(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2");
             config.Add(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2");
+            //
+            config.Add(typeof(ImmutableList<>), "ImmutableList", "ImmutableList`1");
+            config.Add(typeof(ImmutableSet<>), "ImmutableSet", "ImmutableSet`1");
+            config.Add(typeof(ImmutableDictionary<,>), "ImmutableDictionary", "ImmutableDictionary`2");
         }
         return config;
     }
