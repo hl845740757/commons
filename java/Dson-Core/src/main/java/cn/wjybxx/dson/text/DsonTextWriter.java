@@ -311,23 +311,17 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         char[] cBuffer = this.cBuffer;
         int loop = length / segment;
         for (int i = 0; i < loop; i++) {
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             DsonInternals.encodeHex(buffer, offset + i * segment, segment, cBuffer, 0);
             printer.fastPrint(cBuffer, 0, cBuffer.length);
         }
         int remain = length - loop * segment;
         if (remain > 0) {
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             DsonInternals.encodeHex(buffer, offset + loop * segment, remain, cBuffer, 0);
             printer.fastPrint(cBuffer, 0, remain * 2);
         }
         printer.print('"');
-    }
-
-    private void checkLineLength(DsonPrinter printer, int softLineLength) {
-        if (printer.getColumn() >= softLineLength) {
-            printer.println();
-        }
     }
 
     // endregion
@@ -456,21 +450,21 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         }
         if (objectPtr.hasLocalPath()) {
             printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             printer.fastPrint(ObjectPtr.NAMES_LOCAL_PATH);
             printer.fastPrint(": ");
             printString(printer, objectPtr.getLocalPath(), StringStyle.AUTO_QUOTE);
         }
         if (objectPtr.hasCollection()) {
             printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             printer.fastPrint(ObjectPtr.NAMES_COLLECTION);
             printer.fastPrint(": ");
             printString(printer, objectPtr.getCollection(), StringStyle.AUTO_QUOTE);
         }
         if (objectPtr.getType() != 0) {
             printer.fastPrint(", ");
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             printer.fastPrint(ObjectPtr.NAMES_TYPE);
             printer.fastPrint(": ");
             printer.fastPrint(Integer.toString(objectPtr.getType()));
@@ -499,14 +493,14 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             if (dateTime.hasDate()) {
                 printer.fastPrint(", ");
             }
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             printer.fastPrint(ExtDateTime.NAMES_TIME);
             printer.fastPrint(": ");
             printer.fastPrint(ExtDateTime.formatTime(dateTime.getSeconds()));
             // nanos跟随time
             if (dateTime.getNanos() > 0) {
                 printer.fastPrint(", ");
-                checkLineLength(printer, softLineLength);
+                printer.printlnIfExceed(softLineLength);
                 if (dateTime.canConvertNanosToMillis()) {
                     printer.fastPrint(ExtDateTime.NAMES_MILLIS);
                     printer.fastPrint(": ");
@@ -522,7 +516,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             if (dateTime.hasDate() || dateTime.hasTime()) {
                 printer.fastPrint(", ");
             }
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             printer.fastPrint(ExtDateTime.NAMES_OFFSET);
             printer.fastPrint(": ");
             printer.fastPrint(ExtDateTime.formatOffset(dateTime.getOffset()));
@@ -549,7 +543,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer.fastPrint(Long.toString(timestamp.getSeconds()));
             printer.fastPrint(", ");
 
-            checkLineLength(printer, softLineLength);
+            printer.printlnIfExceed(softLineLength);
             printer.fastPrint(Timestamp.NAMES_NANOS);
             printer.fastPrint(": ");
             printer.fastPrint(Integer.toString(timestamp.getNanos()));

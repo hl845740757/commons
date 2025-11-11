@@ -68,17 +68,16 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             if (dsonValue.DsonType == DsonType.Header) {
                 continue; // 文件头
             }
-            AddReference(dsonValue);
+            ItemContext itemContext = new ItemContext()
+            {
+                header = ReadHeader(dsonValue),
+                dsonValue = dsonValue,
+            };
+            // 默认覆盖的话容易隐藏错误，还是抛出异常更安全
+            if (!referenceTable.TryAdd(itemContext.pointer, itemContext)) {
+                throw new Exception("Duplicate pointer: " + itemContext.pointer);
+            }
         }
-    }
-
-    public void AddReference(DsonValue dsonValue) {
-        ItemContext itemContext = new ItemContext()
-        {
-            header = ReadHeader(dsonValue),
-            dsonValue = dsonValue,
-        };
-        referenceTable[itemContext.pointer] = itemContext; // localId重复时覆盖
     }
 
     public object ReadFirst(Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
@@ -141,7 +140,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         }
     }
 
-    private SerializeHeader ReadHeader(DsonValue container) {
+    private static SerializeHeader ReadHeader(DsonValue container) {
         DsonHeader<string> dsonHeader;
         if (container is DsonObject<string> dsonObject) {
             dsonHeader = dsonObject.Header;
@@ -153,19 +152,25 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             return default;
         }
         SerializeHeader header = default;
+        int count = 0;
         if (dsonHeader.TryGetValue(DsonHeader.Names_ClassName, out DsonValue tempValue)) {
+            count++;
             header.clsName = tempValue.AsString();
         }
-        if (dsonHeader.TryGetValue(DsonHeader.Names_Collection, out tempValue)) {
-            header.collection = tempValue.AsString();
+        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_LocalId, out tempValue)) {
+            count++;
+            header.localId = tempValue.AsNumber().LongValue;
         }
-        if (dsonHeader.TryGetValue(DsonHeader.Names_LocalId, out tempValue)) {
-            header.localId = tempValue.AsNumber().LongValue; // 手写文本可能是double
-        }
-        if (dsonHeader.TryGetValue(DsonHeader.Names_Count, out tempValue)) {
+        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Count, out tempValue)) {
+            count++;
             header.count = tempValue.AsNumber().IntValue;
         }
-        if (dsonHeader.TryGetValue(DsonHeader.Names_Version, out tempValue)) {
+        // 不常用属性
+        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Collection, out tempValue)) {
+            count++;
+            header.collection = tempValue.AsString();
+        }
+        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Version, out tempValue)) {
             header.version = tempValue.AsNumber().IntValue;
         }
         return header;

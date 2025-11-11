@@ -109,16 +109,19 @@ internal class PojoCodecGenerator
             // WriteFields
             typeBuilder.AddMethod(writeFieldsMethodBuilder.Build(true));
         }
-        //
-        typeBuilder.AddMethod(newInstanceMethodBuilder.Build());
-        if (!aptClassProps.IsSingleton) {
+        {
+            // NewInstance
+            typeBuilder.AddMethod(newInstanceMethodBuilder.Build());
             // ReadObject回调
             if (!readObjectMethodBuilder.codeBuilder.IsEmpty) {
                 typeBuilder.AddMethod(readObjectMethodBuilder.Build());
             }
-            // ReadFields + ReadField
+            // ReadFields
             typeBuilder.AddMethod(readFieldsMethodBuilder.Build(true));
-            typeBuilder.AddMethod(readFieldMethodBuilder.Build(true));
+            // ReadField
+            if (!readFieldMethodBuilder.codeBuilder.IsEmpty) {
+                typeBuilder.AddMethod(readFieldMethodBuilder.Build(true));
+            }
             // AfterDecode回调
             if (!afterDecodeMethodBuilder.codeBuilder.IsEmpty) {
                 typeBuilder.AddMethod(afterDecodeMethodBuilder.Build());

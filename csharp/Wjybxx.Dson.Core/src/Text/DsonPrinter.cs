@@ -286,6 +286,14 @@ public class DsonPrinter : IDisposable
 
     #region 缩进
 
+    /** 超出指定长度的情况下换行 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void PrintlnIfExceed(int lineLength) {
+        if (_column >= lineLength) {
+            Println();
+        }
+    }
+
     /** 换行 */
     public void Println() {
         _builder.Append(_settings.lineSeparator);

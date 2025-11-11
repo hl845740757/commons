@@ -266,6 +266,11 @@ public final class DsonPrinter implements AutoCloseable {
 
     // region 缩进
 
+    /** 超出长度后打印换行 */
+    public void printlnIfExceed(int lineLength) {
+        if (column >= lineLength) println();
+    }
+
     /** 换行 */
     public void println() {
         builder.append(settings.lineSeparator);

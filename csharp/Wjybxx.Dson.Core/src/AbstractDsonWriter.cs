@@ -140,25 +140,25 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #region 简单值
 
-    public void WriteInt32(TName name, int value, NumberStyle style) {
+    public void WriteInt32(TName name, int value, NumberStyle style = NumberStyle.Typed) {
         AdvanceToValueState(name);
         DoWriteInt32(value, style);
         SetNextState();
     }
 
-    public void WriteInt64(TName name, long value, NumberStyle style) {
+    public void WriteInt64(TName name, long value, NumberStyle style = NumberStyle.Typed) {
         AdvanceToValueState(name);
         DoWriteInt64(value, style);
         SetNextState();
     }
 
-    public void WriteFloat(TName name, float value, NumberStyle style) {
+    public void WriteFloat(TName name, float value, NumberStyle style = NumberStyle.Typed) {
         AdvanceToValueState(name);
         DoWriteFloat(value, style);
         SetNextState();
     }
 
-    public void WriteDouble(TName name, double value, NumberStyle style) {
+    public void WriteDouble(TName name, double value, NumberStyle style = NumberStyle.Simple) {
         AdvanceToValueState(name);
         DoWriteDouble(value, style);
         SetNextState();
@@ -219,25 +219,25 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #region 无name版
 
-    public void WriteInt32(int value, NumberStyle style) {
+    public void WriteInt32(int value, NumberStyle style = NumberStyle.Typed) {
         EnsureValueState(context);
         DoWriteInt32(value, style);
         SetNextState();
     }
 
-    public void WriteInt64(long value, NumberStyle style) {
+    public void WriteInt64(long value, NumberStyle style = NumberStyle.Typed) {
         EnsureValueState(context);
         DoWriteInt64(value, style);
         SetNextState();
     }
 
-    public void WriteFloat(float value, NumberStyle style) {
+    public void WriteFloat(float value, NumberStyle style = NumberStyle.Typed) {
         EnsureValueState(context);
         DoWriteFloat(value, style);
         SetNextState();
     }
 
-    public void WriteDouble(double value, NumberStyle style) {
+    public void WriteDouble(double value, NumberStyle style = NumberStyle.Simple) {
         EnsureValueState(context);
         DoWriteDouble(value, style);
         SetNextState();

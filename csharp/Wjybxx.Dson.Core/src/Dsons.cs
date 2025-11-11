@@ -99,6 +99,16 @@ public static class Dsons
         return ByteBufferUtil.GetInt32(headerBytes, 0) == MagicNumber;
     }
 
+    /** 获取value的header */
+    public static DsonHeader<string>? GetHeader(DsonValue dsonValue) {
+        return dsonValue switch
+        {
+            DsonObject<string> dsonObject => dsonObject.Header,
+            DsonArray<string> dsonArray => dsonArray.Header,
+            _ => null
+        };
+    }
+
     #endregion
 
     #region Check

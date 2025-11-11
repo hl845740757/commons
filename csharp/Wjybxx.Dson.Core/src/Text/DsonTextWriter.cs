@@ -300,23 +300,17 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         Span<char> cBuffer = stackalloc char[segment * 2];
         int loop = length / segment;
         for (int i = 0; i < loop; i++) {
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             DsonInternals.EncodeHex(buffer, offset + i * segment, segment, cBuffer);
             printer.FastPrint(cBuffer);
         }
         int remain = length - loop * segment;
         if (remain > 0) {
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             DsonInternals.EncodeHex(buffer, offset + loop * segment, remain, cBuffer);
             printer.FastPrint(cBuffer.Slice(0, remain * 2));
         }
         printer.Print('"');
-    }
-
-    private void CheckLineLength(DsonPrinter printer, int softLineLength) {
-        if (printer.Column >= softLineLength) {
-            printer.Println();
-        }
     }
 
     #endregion
@@ -435,21 +429,21 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         }
         if (objectPtr.HashLocalPath) {
             printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(ObjectPtr.NamesLocalPath);
             printer.FastPrint(": ");
             PrintString(printer, objectPtr.LocalPath, StringStyle.AutoQuote);
         }
         if (objectPtr.HasCollection) {
             printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(ObjectPtr.NamesCollection);
             printer.FastPrint(": ");
             PrintString(printer, objectPtr.Collection, StringStyle.AutoQuote);
         }
         if (objectPtr.Type != 0) {
             printer.FastPrint(", ");
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(ObjectPtr.NamesType);
             printer.FastPrint(": ");
             printer.FastPrint(objectPtr.Type.ToString());
@@ -477,14 +471,14 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             if (dateTime.HasDate) {
                 printer.FastPrint(", ");
             }
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(ExtDateTime.NamesTime);
             printer.FastPrint(": ");
             printer.FastPrint(ExtDateTime.FormatTime(dateTime.Seconds));
             // nanos跟随time
             if (dateTime.Nanos > 0) {
                 printer.FastPrint(", ");
-                CheckLineLength(printer, softLineLength);
+                printer.PrintlnIfExceed(softLineLength);
                 if (dateTime.CanConvertNanosToMillis()) {
                     printer.FastPrint(ExtDateTime.NamesMillis);
                     printer.FastPrint(": ");
@@ -500,7 +494,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             if (dateTime.HasDate || dateTime.HasTime) {
                 printer.FastPrint(", ");
             }
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(ExtDateTime.NamesOffset);
             printer.FastPrint(": ");
             printer.FastPrint(ExtDateTime.FormatOffset(dateTime.Offset));
@@ -526,7 +520,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             printer.FastPrint(timestamp.Seconds.ToString());
             printer.FastPrint(", ");
 
-            CheckLineLength(printer, softLineLength);
+            printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(Timestamp.NamesNanos);
             printer.FastPrint(": ");
             printer.FastPrint(timestamp.Nanos.ToString());

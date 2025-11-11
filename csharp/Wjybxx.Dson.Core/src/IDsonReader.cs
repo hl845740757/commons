@@ -181,18 +181,6 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     void ReadEndHeader();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ReadStartArray(TName name) {
-        ReadName(name);
-        ReadStartArray();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ReadStartObject(TName name) {
-        ReadName(name);
-        ReadStartObject();
-    }
-
     #endregion
 
     #region 特殊

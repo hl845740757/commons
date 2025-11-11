@@ -133,22 +133,6 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     #region 容器
 
-    void WriteStartArray(ObjectStyle style = ObjectStyle.Indent);
-
-    void WriteEndArray();
-
-    void WriteStartObject(ObjectStyle style = ObjectStyle.Indent);
-
-    void WriteEndObject();
-
-    /// <summary>
-    /// Header应该保持简单，因此通常应该使用Flow模式
-    /// </summary>
-    /// <param name="style">文本格式</param>
-    void WriteStartHeader(ObjectStyle style = ObjectStyle.Flow);
-
-    void WriteEndHeader();
-
     /// <summary>
     /// 开始写一个数组
     /// 1.数组内元素没有名字，因此name传 null、空字符串、0 即可
@@ -160,13 +144,9 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     ///    writer.WriteEndArray();
     /// </code>
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="style"></param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray(TName name, ObjectStyle style = ObjectStyle.Indent) {
-        WriteName(name);
-        WriteStartArray(style);
-    }
+    void WriteStartArray(ObjectStyle style = ObjectStyle.Indent);
+
+    void WriteEndArray();
 
     /// <summary>
     /// 开始写一个普通对象
@@ -177,13 +157,17 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     ///    writer.WriteEndObject();
     /// </code>
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="style"></param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject(TName name, ObjectStyle style = ObjectStyle.Indent) {
-        WriteName(name);
-        WriteStartObject(style);
-    }
+    void WriteStartObject(ObjectStyle style = ObjectStyle.Indent);
+
+    void WriteEndObject();
+
+    /// <summary>
+    /// Header应该保持简单，因此通常应该使用Flow模式
+    /// </summary>
+    /// <param name="style">文本格式</param>
+    void WriteStartHeader(ObjectStyle style = ObjectStyle.Flow);
+
+    void WriteEndHeader();
 
     #endregion
 
