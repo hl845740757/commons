@@ -316,6 +316,47 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// 索引首个非空白字符
+    /// </summary>
+    public static int IndexOfNonWhitespace(string cs, int startIndex = 0) {
+        if (startIndex < 0) {
+            throw new ArgumentException("startIndex " + startIndex);
+        }
+        int length = ObjectUtil.Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        for (int i = startIndex; i < length; i++) {
+            if (!char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 反向索引首个非空白字符
+    /// </summary>
+    public static int LastIndexOfNonWhitespace(string cs, int startIndex = -1) {
+        if (startIndex < -1) {
+            throw new ArgumentException("startIndex " + startIndex);
+        }
+        int length = ObjectUtil.Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        if (startIndex == -1 || startIndex >= length) {
+            startIndex = length - 1;
+        }
+        for (int i = startIndex; i >= 0; i--) {
+            if (!char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    /// <summary>
     /// 删除字符串中的空白字符
     /// </summary>
     /// <param name="str"></param>

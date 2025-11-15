@@ -101,7 +101,8 @@ public final class DsonPrinter implements AutoCloseable {
      */
     public void print(char c) {
         if (c == '\n') {
-            throw new IllegalArgumentException("println is required");
+           println();
+           return;
         }
         builder.append(c);
         if (c == '\t') {

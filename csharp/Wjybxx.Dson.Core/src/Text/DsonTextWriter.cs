@@ -44,9 +44,14 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         SetContext(context);
     }
 
-    /** 用于在Object或Array上下文中自行控制换行 -- 打印得更好看 */
+    /** 用于在Object或Array上下文中自行控制换行 */
     public void Println() {
         _printer.Println();
+    }
+
+    /** 在下次打印name之前打印该文本 */
+    public void PrintBeforeName(string text) {
+        GetContext().textBeforeName = text;
     }
 
     public new DsonTextWriterSettings Settings => _settings;
@@ -90,6 +95,11 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         // 处理value之间分隔符
         if (context.contextType != DsonContextType.TopLevel && context.count > 0) {
             printer.Print(',');
+        }
+        // 用于用户追加注释
+        if (context.textBeforeName != null) {
+            printer.Print(context.textBeforeName);
+            context.textBeforeName = null;
         }
         // 先处理长度超出，再处理缩进
         if (printer.Column >= _settings.softLineLength) {
@@ -626,6 +636,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         internal ObjectStyle style = ObjectStyle.Indent;
         internal int headerCount = 0;
         internal int count = 0;
+        internal string textBeforeName;
 
         public Context() {
         }
@@ -641,6 +652,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             style = ObjectStyle.Indent;
             headerCount = 0;
             count = 0;
+            textBeforeName = null;
         }
     }
 

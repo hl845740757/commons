@@ -59,9 +59,14 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         setContext(context);
     }
 
-    /** 用于在Object或Array上下文中自行控制换行 -- 打印得更好看 */
+    /** 用于在Object或Array上下文中自行控制换行 */
     public void println() {
         printer.println();
+    }
+
+    /** 在下次打印name之前打印指定文本 */
+    public void PrintBeforeName(String text) {
+        getContext().textBeforeName = text;
     }
 
     @Override
@@ -110,6 +115,10 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         // 处理value之间分隔符-换行之前
         if (context.contextType != DsonContextType.TOP_LEVEL && context.count > 0) {
             printer.print(',');
+        }
+        if (context.textBeforeName != null) {
+            printer.print(context.textBeforeName);
+            context.textBeforeName = null;
         }
         // 先处理长度超出，再处理缩进
         if (printer.getColumn() >= settings.softLineLength) {
@@ -646,6 +655,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         ObjectStyle style = ObjectStyle.INDENT;
         int headerCount = 0;
         int count = 0;
+        String textBeforeName;
 
         public Context() {
         }
@@ -659,6 +669,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             style = ObjectStyle.INDENT;
             headerCount = 0;
             count = 0;
+            textBeforeName = null;
         }
 
         @Override

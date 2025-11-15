@@ -96,7 +96,8 @@ public class DsonPrinter : IDisposable
      */
     public void Print(char c) {
         if (c == '\n') {
-            throw new ArgumentException("println is required");
+            Println();
+            return;
         }
         _builder.Append(c);
         if (c == '\t') {
