@@ -32,7 +32,8 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 {
 #nullable disable
     private DefaultDsonConverter converter;
-    private readonly LinkedDictionary<ObjectPtr, ItemContext> referenceTable = new(PointerComparer.Inst);
+    private readonly LinkedDictionary<ObjectPtr, ItemContext> referenceTable = new(LocalIdComparer.Inst);
+    // private readonly LinkedDictionary<ObjectPtr, ObjectPtr> pointerLink = new(LocalPathComparer.Inst);
     private DsonCollectionReader<string> reader;
     private ObjectPtr _stack;
 
@@ -68,9 +69,10 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             if (dsonValue.DsonType == DsonType.Header) {
                 continue; // 文件头
             }
+            SerializeHeader header = ReadHeader(dsonValue);
             ItemContext itemContext = new ItemContext()
             {
-                header = ReadHeader(dsonValue),
+                header = header,
                 dsonValue = dsonValue,
             };
             // 默认覆盖的话容易隐藏错误，还是抛出异常更安全
@@ -147,31 +149,35 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         } else {
             dsonHeader = container.AsArray().Header;
         }
-        // DsonHeader使用的是ArrayDictionary，查询效率不好
         if (dsonHeader.IsEmpty) {
             return default;
         }
+        // DsonHeader使用的是ArrayDictionary，查询效率不好
         SerializeHeader header = default;
-        int count = 0;
-        if (dsonHeader.TryGetValue(DsonHeader.Names_ClassName, out DsonValue tempValue)) {
-            count++;
-            header.clsName = tempValue.AsString();
-        }
-        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_LocalId, out tempValue)) {
-            count++;
-            header.localId = tempValue.AsNumber().LongValue;
-        }
-        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Count, out tempValue)) {
-            count++;
-            header.count = tempValue.AsNumber().IntValue;
-        }
-        // 不常用属性
-        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Collection, out tempValue)) {
-            count++;
-            header.collection = tempValue.AsString();
-        }
-        if (count < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Version, out tempValue)) {
-            header.version = tempValue.AsNumber().IntValue;
+        foreach (var pair in dsonHeader) {
+            DsonValue value = pair.Value;
+            switch (pair.Key) {
+                case DsonHeader.Names_ClassName: {
+                    header.clsName = value.AsString();
+                    break;
+                }
+                case DsonHeader.Names_LocalId: {
+                    header.localId = value.AsNumber().LongValue;
+                    break;
+                }
+                case DsonHeader.Names_Collection: {
+                    header.collection = value.AsString();
+                    break;
+                }
+                case DsonHeader.Names_Count: {
+                    header.count = value.AsNumber().IntValue;
+                    break;
+                }
+                case DsonHeader.Names_Version: {
+                    header.version = value.AsNumber().IntValue;
+                    break;
+                }
+            }
         }
         return header;
     }
@@ -332,11 +338,12 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             reader.ReadNull(name);
             return default;
         }
-        if (dsonType == DsonType.Pointer && !declaredType.IsValueType) { // 引用解析
-            ObjectPtr ptr = reader.CurrentValue.AsPointer(); // 注意：未触发Read
-            if (ptr.LocalId != 0 && referenceTable.ContainsKey(ptr)) {
-                reader.ReadPtr();
-                return (T)GetReference(ptr);
+        if (dsonType == DsonType.Pointer // 引用解析，值类型也可能是顶层对象
+            && declaredType != typeof(ObjectPath)
+            && declaredType != typeof(ObjectPtr)) {
+            ObjectPtr ptr = reader.CurrentValue.AsPointer();
+            if (TryReadReference(ptr, out object value)) {
+                return (T)value;
             }
         }
         // DsonValue接收原始数据
@@ -364,6 +371,19 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             // 默认类型转换-声明类型可能是个抽象类型，eg：Number
             return (T)DsonCodecHelper.ReadDsonValueValue(reader, name);
         }
+    }
+
+    private bool TryReadReference(ObjectPtr rawPtr, out object? value) {
+        if (rawPtr.LocalId != 0) { // 引用中可能包含额外数据，需要清理
+            ObjectPtr ptr = new ObjectPtr(rawPtr.Collection, null, rawPtr.LocalId);
+            if (referenceTable.ContainsKey(ptr)) {
+                reader.ReadPtr();
+                value = GetReference(ptr);
+                return true;
+            }
+        }
+        value = null;
+        return false;
     }
 
     private static string? GetClassName(DsonValue dsonValue) {
@@ -694,9 +714,9 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         object? IEnumerator.Current => Current;
     }
 
-    private class PointerComparer : IEqualityComparer<ObjectPtr>
+    private class LocalIdComparer : IEqualityComparer<ObjectPtr>
     {
-        public static readonly PointerComparer Inst = new PointerComparer();
+        public static readonly LocalIdComparer Inst = new LocalIdComparer();
 
         public bool Equals(ObjectPtr x, ObjectPtr y) {
             return x.LocalId == y.LocalId
@@ -705,6 +725,22 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
         public int GetHashCode(ObjectPtr obj) {
             int hashCode = obj.LocalId.GetHashCode();
+            hashCode = (hashCode * 397) ^ (obj.Collection != null ? obj.Collection.GetHashCode() : 0);
+            return hashCode;
+        }
+    }
+
+    private class LocalPathComparer : IEqualityComparer<ObjectPtr>
+    {
+        public static readonly LocalPathComparer Inst = new LocalPathComparer();
+
+        public bool Equals(ObjectPtr x, ObjectPtr y) {
+            return x.LocalPath == y.LocalPath
+                   && x.Collection == y.Collection;
+        }
+
+        public int GetHashCode(ObjectPtr obj) {
+            int hashCode = obj.LocalPath.GetHashCode();
             hashCode = (hashCode * 397) ^ (obj.Collection != null ? obj.Collection.GetHashCode() : 0);
             return hashCode;
         }

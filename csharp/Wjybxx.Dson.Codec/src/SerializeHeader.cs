@@ -17,6 +17,7 @@
 #endregion
 
 using System.Collections.Generic;
+using System.Text;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -32,7 +33,7 @@ public struct SerializeHeader
     /// </summary>
     public string? collection;
     /// <summary>
-    /// 集合内部id
+    /// 集合内id
     /// </summary>
     public long localId;
 
@@ -63,5 +64,25 @@ public struct SerializeHeader
                            && string.IsNullOrEmpty(clsName)
                            && count == 0
                            && version == 0;
+
+    public override string ToString() {
+        StringBuilder sb = new StringBuilder();
+        if (!string.IsNullOrEmpty(collection)) {
+            sb.Append(nameof(collection)).Append(": ").Append(collection);
+        }
+        if (localId != 0) {
+            sb.Append(nameof(localId)).Append(": ").Append(localId);
+        }
+        if (!string.IsNullOrEmpty(clsName)) {
+            sb.Append(nameof(clsName)).Append(": ").Append(clsName);
+        }
+        if (count > 0) {
+            sb.Append(nameof(count)).Append(": ").Append(count);
+        }
+        if (version != 0) {
+            sb.Append(nameof(version)).Append(": ").Append(version);
+        }
+        return sb.ToString();
+    }
 }
 }

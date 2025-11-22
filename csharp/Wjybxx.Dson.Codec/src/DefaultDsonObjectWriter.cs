@@ -36,7 +36,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     private long _nextLocalId;
     private readonly LinkedDictionary<object, ObjectPtr> referenceTable = new(ReferenceComparer.Inst);
-    private ObjectPtr _stack; // 当前写的是第几个Value
+    private ObjectPtr _stack;
 #nullable restore
     private DefaultDsonObjectWriter() {
     }

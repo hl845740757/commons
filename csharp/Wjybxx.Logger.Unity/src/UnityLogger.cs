@@ -94,6 +94,9 @@ internal class UnityLogger : ILogger
                 Debug.LogFormat($"[{_name}] {format}", Array.Empty<object>());
                 break;
         }
+        if (ex != null) {
+            Debug.LogException(ex);
+        }
     }
 
     public void Log(Level level, Exception? ex, string format, params object?[] args) {
