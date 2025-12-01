@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -91,6 +92,30 @@ public static class ExecutorUtil
     /// <returns></returns>
     public static FutureAwaitable<T> GetAwaitable<T>(this IFuture<T> future, IExecutor executor, int options = 0) {
         return new FutureAwaitable<T>(future, executor, options);
+    }
+
+    /// <summary>
+    /// 任务失败的情况下抛出异常
+    /// (不返回结果以避免装箱)
+    /// </summary>
+    /// <param name="future"></param>
+    /// <exception cref="IllegalStateException"></exception>
+    public static void ThrowIfFailedOrCancelled(this IFuture future) {
+        switch (future.Status) {
+            case TaskStatus.Success: {
+                break;
+            }
+            case TaskStatus.Failed:
+            case TaskStatus.Cancelled: {
+                future.Join();
+                break;
+            }
+            case TaskStatus.Pending:
+            case TaskStatus.Computing:
+            default: {
+                throw new IllegalStateException("Task has not completed");
+            }
+        }
     }
 
     /// <summary>
@@ -370,7 +395,7 @@ public static class ExecutorUtil
 
     #endregion
 
-    #region all
+    #region aggregate
 
     public static IFuture<object> AnyOf(IEnumerable<IFuture> futures) {
         return new FutureCombiner()
@@ -682,7 +707,11 @@ public static class ExecutorUtil
                     promise.TrySetResult(task.ResultNow());
                     break;
                 }
-                case TaskStatus.Failed:
+                case TaskStatus.Failed: {
+                    ExceptionDispatchInfo dispatchInfoNow = (ExceptionDispatchInfo)task.ExceptionOrDispatchInfoNow();
+                    promise.TrySetException(dispatchInfoNow);
+                    break;
+                }
                 case TaskStatus.Cancelled: {
                     promise.TrySetException(task.ExceptionNow(false));
                     break;
@@ -700,7 +729,11 @@ public static class ExecutorUtil
                     SetPromise(promise, task.ResultNow());
                     break;
                 }
-                case TaskStatus.Failed:
+                case TaskStatus.Failed: {
+                    ExceptionDispatchInfo dispatchInfoNow = (ExceptionDispatchInfo)task.ExceptionOrDispatchInfoNow();
+                    promise.TrySetException(dispatchInfoNow);
+                    break;
+                }
                 case TaskStatus.Cancelled: {
                     promise.TrySetException(task.ExceptionNow(false));
                     break;

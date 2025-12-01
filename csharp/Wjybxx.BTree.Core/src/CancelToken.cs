@@ -42,7 +42,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     /** 取消码 -- 0表示未收到信号 */
     private int code;
     /** 监听器列表 -- 通知期间可能会被重用 */
-    private readonly SmallDynamicArray<ICancelTokenListener> listeners = new(4);
+    private readonly SmallDynamicArray<ICancelTokenListener> listeners = new();
     /** 用于检测复用 -- short应当足够 */
     private short reentryId;
 

@@ -67,17 +67,19 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     /// ps：通常而言，该接口由StateMachine调用，因此接口参数为<see cref="Action"/>。
     /// </summary>
     /// <param name="continuation">回调任务</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation);
-    }
-
-    public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation);
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void OnCompleted(Action<object> continuation, object state) {
-        _future.OnCompleted(continuation, state, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
+    public void UnsafeOnCompleted(Action continuation) {
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
+        _future.OnCompleted(continuation, state, _executor, _options | extraOptions);
     }
 }
 
@@ -121,17 +123,19 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
     /// ps：通常而言，该接口由StateMachine调用，因此接口参数为<see cref="Action"/>。
     /// </summary>
     /// <param name="continuation">回调任务</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation);
-    }
-
-    public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation);
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void OnCompleted(Action<object> continuation, object state) {
-        _future.OnCompleted(continuation, state, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
+    public void UnsafeOnCompleted(Action continuation) {
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
+        _future.OnCompleted(continuation, state, _executor, _options | extraOptions);
     }
 }
 }

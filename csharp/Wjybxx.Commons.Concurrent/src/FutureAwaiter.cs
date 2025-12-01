@@ -71,20 +71,22 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// ps：通常而言，该接口由StateMachine调用，因此接口参数为<see cref="Action"/>。
     /// </summary>
     /// <param name="continuation">回调任务</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(invoker, continuation);
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(invoker, continuation);
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
-    public void OnCompleted(Action<object> continuation, object state) {
+    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(continuation, state, _options);
+            _future.OnCompleted(continuation, state, _options | extraOptions);
         } else {
-            _future.OnCompletedAsync(_executor, continuation, state, _options);
+            _future.OnCompletedAsync(_executor, continuation, state, _options | extraOptions);
         }
     }
 }
@@ -137,20 +139,22 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// ps：通常而言，该接口由StateMachine调用，因此接口参数为<see cref="Action"/>。
     /// </summary>
     /// <param name="continuation">回调任务</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation);
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation);
+        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
-    public void OnCompleted(Action<object> continuation, object state) {
+    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(continuation, state, _options);
+            _future.OnCompleted(continuation, state, _options | extraOptions);
         } else {
-            _future.OnCompletedAsync(_executor, continuation, state, _options);
+            _future.OnCompletedAsync(_executor, continuation, state, _options | extraOptions);
         }
     }
 }

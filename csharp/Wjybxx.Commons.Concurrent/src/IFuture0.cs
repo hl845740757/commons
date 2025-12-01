@@ -117,12 +117,6 @@ public interface IFuture
     /// <returns></returns>
     object ExceptionOrDispatchInfoNow();
 
-    /// <summary>
-    /// 如果任务失败，则抛出异常
-    /// (不返回结果以避免装箱)
-    /// </summary>
-    void ThrowIfFailedOrCancelled() => ThrowIfFailedOrCancelled(this);
-
     #endregion
 
     #region 阻塞结果查询
@@ -282,29 +276,6 @@ public interface IFuture
 
     IFuture ThenRunAsync(IExecutor executor,
                          Action<object> fn, object? ctx, int options = 0);
-
-    #endregion
-
-    #region util
-
-    public static void ThrowIfFailedOrCancelled(IFuture future) {
-        switch (future.Status) {
-            case TaskStatus.Success: {
-                break;
-            }
-            case TaskStatus.Failed: {
-                throw new CompletionException(null, future.ExceptionNow(false));
-            }
-            case TaskStatus.Cancelled: {
-                throw future.ExceptionNow(false);
-            }
-            case TaskStatus.Pending:
-            case TaskStatus.Computing:
-            default: {
-                throw new IllegalStateException("Task has not completed");
-            }
-        }
-    }
 
     #endregion
 }

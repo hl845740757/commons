@@ -68,7 +68,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         _executor = executor;
     }
 
-    private Promise(IExecutor? executor, T result, object? ex) {
+    protected Promise(IExecutor? executor, T result, object? ex) {
         this._executor = executor;
         if (ex == null) {
             this._result = result;
@@ -113,6 +113,14 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SetExecutor(IExecutor e) {
         _executor = e;
+    }
+
+    /// <summary>
+    /// Promise进入执行状态
+    ///
+    /// 注意：该方法不一定会被执行，取决于用户是否调用<see cref="TrySetComputing"/>方法，只在特定场景下有用。
+    /// </summary>
+    protected virtual void OnComputing() {
     }
 
     /// <summary>
@@ -239,11 +247,19 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public bool TrySetComputing() {
         object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
-        return preState == null;
+        if (preState == null) {
+            OnComputing();
+            return true;
+        }
+        return false;
     }
 
     public TaskStatus TrySetComputing2() {
         object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
+        if (preState == null) {
+            OnComputing();
+            return TaskStatus.Pending;
+        }
         return (TaskStatus)PeekState(preState);
     }
 
@@ -339,10 +355,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return ExceptionOrDispatchInfoNow(PollState(), _ex);
     }
 
-    public void ThrowIfFailedOrCancelled() {
-        IFuture.ThrowIfFailedOrCancelled(this);
-    }
-
     /** 上报future的执行结果 -- 取消以外的异常都将被包装为<see cref="CompletionException"/> */
     private T ReportJoin(int state) {
         Debug.Assert(state > 0);
@@ -407,7 +419,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return PushCompletion(awaiter) ? awaiter : null;
     }
 
-    public IFuture<T> Await() {
+    public virtual IFuture<T> Await() {
         if (IsCompleted) {
             return this;
         }
@@ -419,7 +431,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return this;
     }
 
-    public IFuture<T> AwaitUninterruptibly() {
+    public virtual IFuture<T> AwaitUninterruptibly() {
         if (IsCompleted) {
             return this;
         }
@@ -431,7 +443,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return this;
     }
 
-    public bool Await(TimeSpan timeout) {
+    public virtual bool Await(TimeSpan timeout) {
         if (IsCompleted) {
             return true;
         }
@@ -443,7 +455,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return true;
     }
 
-    public bool AwaitUninterruptibly(TimeSpan timeout) {
+    public virtual bool AwaitUninterruptibly(TimeSpan timeout) {
         if (IsCompleted) {
             return true;
         }
