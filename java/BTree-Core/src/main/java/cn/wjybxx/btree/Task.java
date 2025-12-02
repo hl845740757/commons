@@ -257,7 +257,7 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /** 任务是否已失败或被取消 */
     public final boolean isFailedOrCancelled() {
-        return status >= TaskStatus.CANCELLED;
+        return status > TaskStatus.SUCCESS;
     }
 
     // endregion

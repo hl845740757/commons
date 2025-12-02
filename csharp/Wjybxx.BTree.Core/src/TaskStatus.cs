@@ -85,11 +85,10 @@ public class TaskStatus
     /** 任务是否已失败或被取消 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFailedOrCancelled(int status) {
-        return status >= TaskStatus.CANCELLED;
+        return status > TaskStatus.SUCCESS;
     }
 
     //
-
     /** 将给定状态码归一化，所有的失败码将被转为<code>ERROR</code>  */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Normalize(int status) {

@@ -72,7 +72,7 @@ public class TaskStatus {
     }
 
     public static boolean isFailedOrCancelled(int status) {
-        return status >= TaskStatus.CANCELLED;
+        return status > TaskStatus.SUCCESS;
     }
 
     //

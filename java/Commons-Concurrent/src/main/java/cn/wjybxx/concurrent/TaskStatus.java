@@ -56,7 +56,7 @@ public enum TaskStatus {
 
     /** 是否表示失败或被取消 */
     public boolean isFailedOrCancelled() {
-        return value >= 3;
+        return value > 2;
     }
 
     /** 转换为jdk的状态枚举 */

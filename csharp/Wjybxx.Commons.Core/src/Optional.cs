@@ -50,14 +50,7 @@ public readonly struct Optional<T>
     /// 获取关联值
     /// 注：当值不存在时会抛出异常。
     /// </summary>
-    public T Value {
-        get {
-            if (_hasValue) {
-                return _value;
-            }
-            throw new InvalidOperationException("no value");
-        }
-    }
+    public T Value => _hasValue ? _value : throw new InvalidOperationException("no value");
 
     /// <summary>
     /// 当值不存在时返回系统默认值

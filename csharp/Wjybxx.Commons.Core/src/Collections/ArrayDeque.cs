@@ -46,9 +46,9 @@ public class ArrayDeque<T> : IDeque<T>
     /// </summary>
     /// <param name="capacity">初始容量</param>
     /// <exception cref="ArgumentException"></exception>
-    public ArrayDeque(int capacity = 16) {
+    public ArrayDeque(int capacity = 10) {
         if (capacity < 0) throw new ArgumentException(nameof(capacity));
-        _elements = new T[Math.Max(8, capacity)]; // 初始容量不能过小，否则影响扩容逻辑
+        _elements = capacity == 0 ? Array.Empty<T>() : new T[capacity];
         _head = _tail = -1;
     }
 
@@ -161,7 +161,7 @@ public class ArrayDeque<T> : IDeque<T>
     public bool TryAddFirst(T item) {
         T[] elements = _elements;
         if (elements.Length == 0) {
-            return false;
+            elements = _elements = new T[4];
         }
         int head = _head;
         if (head >= 0) {
@@ -184,7 +184,7 @@ public class ArrayDeque<T> : IDeque<T>
     public bool TryAddLast(T item) {
         T[] elements = _elements;
         if (elements.Length == 0) {
-            return false;
+            elements = _elements = new T[4];
         }
         int tail = _tail;
         if (tail >= 0) {

@@ -247,7 +247,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 任务是否已失败或被取消 */
     public bool IsFailedOrCancelled {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => status >= TaskStatus.CANCELLED;
+        get => status > TaskStatus.SUCCESS;
     }
 
     #endregion

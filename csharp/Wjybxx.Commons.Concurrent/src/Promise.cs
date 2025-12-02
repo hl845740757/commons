@@ -236,7 +236,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public bool IsCancelled => PeekState(_ex) == ST_CANCELLED;
 
     public bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
-    public bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
+    public bool IsFailedOrCancelled => PeekState(_ex) > ST_SUCCESS;
 
     internal sealed override bool IsRelaxedCompleted => PeekState(_ex, false) >= ST_SUCCESS;
     internal sealed override bool IsStrictlyCompleted => PeekState(_ex) >= ST_SUCCESS;
@@ -337,6 +337,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     #region 非阻塞结果查询
 
     public T ResultNow() {
+        if (_ex == EX_SUCCESS) {
+            return _result;
+        }
         int state = PollState();
         return state switch
         {

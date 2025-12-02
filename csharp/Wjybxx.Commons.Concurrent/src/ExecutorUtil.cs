@@ -135,7 +135,7 @@ public static class ExecutorUtil
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFailedOrCancelled(this TaskStatus state) {
-        return state >= TaskStatus.Failed;
+        return state > TaskStatus.Success;
     }
 
     #endregion
