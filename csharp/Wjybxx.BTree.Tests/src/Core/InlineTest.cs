@@ -55,18 +55,18 @@ public class InlineTest
         branch.AddChild(eventAcceptor);
 
         // TaskInlineHelper.enableInline = false;
-        taskEntry.Update(0); // 先启动
+        taskEntry.Update(); // 先启动
 
         // 测试事件是否直接到达末端 -- 这个似乎只能debug看调用栈
         string message = "message";
         taskEntry.OnEvent(message);
         Assert.AreEqual(message, eventAcceptor.eventObj);
 
-        taskEntry.Update(1); // debug查看心跳调用栈
-        taskEntry.UpdateInlined(2); // debug查看心跳调用栈
+        taskEntry.Update(); // debug查看心跳调用栈
+        taskEntry.UpdateInlined(); // debug查看心跳调用栈
 
         taskEntry.OnEvent(successMessage);
-        taskEntry.Update(3); // debug查看心跳调用栈--查看内联修复过程
+        taskEntry.Update(); // debug查看心跳调用栈--查看内联修复过程
     }
 
     private class EventAcceptor : LeafTask<Blackboard>
@@ -74,9 +74,6 @@ public class InlineTest
         internal object? eventObj;
 
         protected override void Execute() {
-            if (RunFrames >= 10) {
-                SetSuccess();
-            }
         }
 
         protected override void OnEventImpl(object eventObj) {

@@ -18,7 +18,6 @@ package cn.wjybxx.btree;
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ex.InfiniteLoopException;
 import cn.wjybxx.btree.decorator.Inverter;
-import cn.wjybxx.btree.leaf.WaitFrame;
 
 import java.util.Random;
 import java.util.function.IntConsumer;
@@ -32,20 +31,24 @@ class BtreeTestUtil {
 
     static final RandomGenerator random = new Random();
 
-    public static TaskEntry<Blackboard> newTaskEntry() {
-        return new TaskEntry<>("Main", null, new Blackboard(), null, TreeLoader.nullLoader());
+    public static TimingTaskEntry<Blackboard> newTaskEntry() {
+        return new TimingTaskEntry<>("Main", null, new Blackboard(), null, TreeLoader.nullLoader());
     }
 
-    public static TaskEntry<Blackboard> newTaskEntry(Task<Blackboard> root) {
-        return new TaskEntry<>("Main", root, new Blackboard(), null, TreeLoader.nullLoader());
+    public static TimingTaskEntry<Blackboard> newTaskEntry(Task<Blackboard> root) {
+        return new TimingTaskEntry<>("Main", root, new Blackboard(), null, TreeLoader.nullLoader());
     }
 
     public static void untilCompleted(TaskEntry<?> entry) {
+        TimingTaskEntry<?> timingEntry = entry instanceof TimingTaskEntry<?> temp ? temp : null;
         for (int idx = 0; idx < 200; idx++) { // 避免死循环
+            if (timingEntry != null) {
+                timingEntry.frameCount = idx;
+            }
             if (MathCommon.isEven(idx)) {
-                entry.update(idx);
+                entry.update();
             } else {
-                entry.updateInlined(idx);
+                entry.updateInlined();
             }
             if (entry.isCompleted()) return;
         }
@@ -57,8 +60,12 @@ class BtreeTestUtil {
      * @param frameAction 帧回调，初始帧号0；在task执行后调用
      */
     public static void untilCompleted(TaskEntry<?> entry, IntConsumer frameAction) {
+        TimingTaskEntry<?> timingEntry = entry instanceof TimingTaskEntry<?> temp ? temp : null;
         for (int idx = 0; idx < 200; idx++) { // 避免死循环
-            entry.update(idx);
+            if (timingEntry != null) {
+                timingEntry.frameCount = idx;
+            }
+            entry.update();
             frameAction.accept(idx);
             if (entry.isCompleted()) return;
         }

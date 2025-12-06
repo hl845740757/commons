@@ -39,10 +39,15 @@ namespace Wjybxx.BTree
 /// 1.心跳为主，事件为辅。
 /// 2.心跳不是事件！心跳自顶向下驱动，事件则无规律。
 ///
+/// <h3>帧数统计</h3>
+/// 新版本下删除了默认的帧数统计实现，是因为默认的帧数统计固定依赖于<see cref="TaskEntry{T}"/>的帧数信息；
+/// 这在大多数情况下确实没有问题，但当我们在行为树的中部节点插入特殊的调度器时，就会产生冲突；
+/// TaskEntry级别的时间信息依赖还是太大，如果用户需要为任务附加帧数信息，可以通过<see cref="Decorator{T}"/>实现。
+/// 
 /// <h3>关于泛型</h3>
 /// Task是泛型的，我的Dson库将支持泛型类的序列化；BTree.Codec中的编解码器由Dson库的注解处理器生成。
 /// (脚本在测试用例模块)
-///
+/// 
 /// <typeparam name="T">黑板的类型</typeparam>
 /// </summary>
 [SerializeReference]
@@ -115,10 +120,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     [NonSerialized] private int status;
     /** 任务运行时的控制信息(bits) -- 每次运行时会重置，仅保留override信息 */
     [NonSerialized] private int ctl;
-    /** 启动时的帧号 -- 每次运行时重置为0 */
-    [NonSerialized] private int enterFrame;
-    /** 结束时的帧号 -- 每次运行时重置为0 */
-    [NonSerialized] private int exitFrame;
     /** 重入Id，只增不减 -- 用于事件驱动下检测冲突（递归）；reset时不重置，甚至也增加 */
     [NonSerialized] private short reentryId;
 
@@ -178,22 +179,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     public object ControlData {
         get => controlData;
         set => controlData = value;
-    }
-
-    /// <summary>
-    /// 慎重调用set
-    /// </summary>
-    public int EnterFrame {
-        get => enterFrame;
-        set => enterFrame = value;
-    }
-
-    /// <summary>
-    /// 慎重调用set
-    /// </summary>
-    public int ExitFrame {
-        get => exitFrame;
-        set => exitFrame = value;
     }
 
     #endregion
@@ -269,22 +254,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 #nullable restore
-
-    /// <summary>
-    /// 运行的帧数
-    /// 1.任务如果在首次<see cref="Execute"/>的时候就进入完成状态，那么运行帧数0
-    /// 2.运行帧数是非常重要的统计属性，值得我们定义在顶层.
-    /// </summary>
-    /// <value></value>
-    public int RunFrames {
-        get {
-            if (status == TaskStatus.RUNNING) {
-                return taskEntry.CurFrame - enterFrame;
-            }
-            // 不测试taskEntry，是因为child可能在运行后被删除
-            return exitFrame - enterFrame;
-        }
-    }
 
     /// <summary>
     /// 获取任务前一次的执行结果
@@ -391,7 +360,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
                 cancelToken.RemListener(this);
             }
-            exitFrame = taskEntry.CurFrame;
             StopRunningChildren();
             if ((ctl & TaskOverrides.MASK_EXIT) != 0) {
                 Exit();
@@ -401,7 +369,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         } else {
             // 未调用Enter和Exit，需要补偿 -- 保留当前的ctl会更好
             this.PrevStatus = prevStatus;
-            this.enterFrame = exitFrame;
             this.reentryId++;
             this.ctl |= MASK_STILLBORN;
             this.status = status;
@@ -547,8 +514,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         status = 0;
         ctl &= MASK_OVERRIDES; // 保留Overrides信息
-        enterFrame = 0;
-        exitFrame = 0;
         reentryId++; // 上下文变动，和之前的执行分开
     }
 
@@ -814,7 +779,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         initMask |= (prevStatus << OFFSET_PREV_STATUS);
         ctl = initMask;
         status = TaskStatus.RUNNING; // 先更新为running状态，以避免执行过程中外部查询task的状态时仍处于上一次的结束status
-        enterFrame = exitFrame = taskEntry.CurFrame;
         short reentryId = ++this.reentryId; // 和上次执行的exit分开
         // beforeEnter
         if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {

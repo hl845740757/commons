@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 #endregion
 
-namespace Wjybxx.BTree.Leaf
-{
-/// <summary>
-/// 等待一定帧数
-/// </summary>
-/// <typeparam name="T"></typeparam>
+using Wjybxx.BTree;
+
+namespace BTree.Tests;
+
 public class WaitFrame<T> : LeafTask<T> where T : class
 {
-    private int required;
+    private int required = 1;
+    private int _enterFrame;
+    private int _exitFrame;
 
     public WaitFrame() {
     }
@@ -33,10 +33,30 @@ public class WaitFrame<T> : LeafTask<T> where T : class
         this.required = required;
     }
 
+    protected new TimingTaskEntry<T> taskEntry => (TimingTaskEntry<T>)TaskEntry;
+
+    public int RunFrames {
+        get {
+            if (IsRunning) {
+                return taskEntry.frameCount - _enterFrame;
+            }
+            return _exitFrame - _enterFrame;
+        }
+    }
+
+    protected override void Enter(int reentryId) {
+        _enterFrame = taskEntry.frameCount;
+    }
+
     protected override void Execute() {
-        if (RunFrames >= required) {
+        int count = taskEntry.frameCount - _enterFrame;
+        if (count >= required) {
             SetSuccess();
         }
+    }
+
+    protected override void Exit() {
+        _exitFrame = taskEntry.frameCount;
     }
 
     protected override void OnEventImpl(object _) {
@@ -49,5 +69,4 @@ public class WaitFrame<T> : LeafTask<T> where T : class
         get => required;
         set => required = value;
     }
-}
 }

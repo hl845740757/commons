@@ -29,7 +29,7 @@ import java.util.Objects;
  * 3. Entry的数据尽量也保存在黑板中，尤其是绑定的实体（Entity），尽可能使业务逻辑仅依赖黑板即可完成。
  * 4. Entry默认不检查{@link #getGuard()}，如果需要由用户（逻辑上的control）检查。
  * 5. 如果要复用行为树，应当以树为单位整体复用，万莫以Task为单位复用 -- 节点之间的引用千丝万缕，容易内存泄漏。
- * 6. 该行为树虽然是事件驱动的，但心跳不是事件，仍需要每一帧调用{@link #update(int)}方法。
+ * 6. 该行为树虽然是事件驱动的，但心跳不是事件，仍需要每一帧调用{@link #update()}方法。
  * 7. 避免直接使用外部的{@link CancelToken}，可将Entry的Token注册为外部的Child。
  *
  * @author wjybxx
@@ -41,14 +41,12 @@ public class TaskEntry<T> extends Task<T> {
     @SerializeReference
     private Task<T> rootTask;
     /** 行为树的类型 -- 用于加载时筛选 */
-    private byte type;
+    private int type;
 
     /** 行为树绑定的实体 -- 最好也存储在黑板里；这里的字段本是为了提高性能 */
     protected transient Object entity;
     /** 行为树加载器 -- 用于加载Task或配置 */
     protected transient TreeLoader treeLoader;
-    /** 当前帧号 */
-    private transient int curFrame;
     /** 用于Entry的事件驱动 */
     protected transient TaskEntryHandler<T> handler;
     /** 用于内联优化 */
@@ -56,6 +54,10 @@ public class TaskEntry<T> extends Task<T> {
 
     public TaskEntry() {
         this(null, null, null, null, null);
+    }
+
+    public TaskEntry(String name, Task<T> rootTask, T blackboard) {
+        this(name, rootTask, blackboard, null, null);
     }
 
     public TaskEntry(String name, Task<T> rootTask, T blackboard,
@@ -80,11 +82,11 @@ public class TaskEntry<T> extends Task<T> {
         this.rootTask = rootTask;
     }
 
-    public byte getType() {
+    public int getType() {
         return type;
     }
 
-    public void setType(byte type) {
+    public void setType(int type) {
         this.type = type;
     }
 
@@ -113,9 +115,6 @@ public class TaskEntry<T> extends Task<T> {
         return entity;
     }
 
-    public final int getCurFrame() {
-        return curFrame;
-    }
     // endregion
 
     // region logic
@@ -134,8 +133,7 @@ public class TaskEntry<T> extends Task<T> {
     /**
      * 普通update。
      */
-    public void update(int curFrame) {
-        this.curFrame = curFrame;
+    public void update() {
         if (isRunning()) {
             template_execute(true); // 用户就是control
         } else {
@@ -148,8 +146,7 @@ public class TaskEntry<T> extends Task<T> {
      * 以内联的方式update。
      * 一般情况下，TaskEntry除了驱动root节点运行外，便没有额外逻辑，因此以内联的方式运行可省一些不必要的调用栈。
      */
-    public void updateInlined(int curFrame) {
-        this.curFrame = curFrame;
+    public void updateInlined() {
         if (isRunning()) {
             if (getCtlBit(MASK_NOT_ACTIVE_SELF)) {
                 return;
@@ -250,7 +247,6 @@ public class TaskEntry<T> extends Task<T> {
     public void resetForRestart() {
         super.resetForRestart();
         cancelToken.reset();
-        curFrame = 0;
     }
 
     final boolean isInited() {

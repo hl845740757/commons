@@ -19,7 +19,6 @@ import cn.wjybxx.btree.branch.*;
 import cn.wjybxx.btree.leaf.Failure;
 import cn.wjybxx.btree.leaf.SimpleRandom;
 import cn.wjybxx.btree.leaf.Success;
-import cn.wjybxx.btree.leaf.WaitFrame;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -151,7 +150,8 @@ public class SingleRunningTest1 {
 
         @Override
         protected void execute() {
-            if (taskEntry.getCurFrame() >= frame) {
+            TimingTaskEntry<T> taskEntry = (TimingTaskEntry<T>) this.taskEntry;
+            if (taskEntry.frameCount >= frame) {
                 setFailed(TaskStatus.ERROR);
             } else {
                 setSuccess();

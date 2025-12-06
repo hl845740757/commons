@@ -42,7 +42,7 @@ public class ActiveTest
     /// </summary>
     [Test]
     public void testWaitFrame() {
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<Blackboard>(5));
+        TimingTaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<Blackboard>(5));
 
         const int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame => {
@@ -53,13 +53,14 @@ public class ActiveTest
                 taskEntry.SetActive(true);
             }
         });
-        Assert.AreEqual(10, taskEntry.RootTask.RunFrames);
+        Assert.AreEqual(10, taskEntry.frameCount);
     }
     
     /** 测试active为false的情况下在第9帧取消 */
     [Test]
     public void testCancel() {
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<Blackboard>(5));
+        WaitFrame<Blackboard> rootTask = new WaitFrame<Blackboard>(5);
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(rootTask);
 
         const int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame => {
@@ -71,6 +72,6 @@ public class ActiveTest
                 taskEntry.SetActive(true);
             }
         });
-        Assert.AreEqual(10, taskEntry.RootTask.RunFrames);
+        Assert.AreEqual(10, rootTask.RunFrames);
     }
 }

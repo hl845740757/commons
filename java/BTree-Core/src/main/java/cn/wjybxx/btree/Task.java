@@ -38,6 +38,11 @@ import java.util.Objects;
  * 1.心跳为主，事件为辅。
  * 2.心跳不是事件！心跳自顶向下驱动，事件则无规律。
  *
+ * <h3>帧数统计</h3>
+ * 新版本下删除了默认的帧数统计实现，是因为默认的帧数统计固定依赖于{@link TaskEntry}的帧数信息；
+ * 这在大多数情况下确实没有问题，但当我们在行为树的中途节点插入特殊的调度器时，就会产生冲突；
+ * TaskEntry级别的时间信息依赖还是太大，如果用户需要为任务附加帧数信息，可以通过{@link Decorator}实现。
+ *
  * @param <T> 黑板的类型
  * @author wjybxx
  * date - 2023/11/25
@@ -122,10 +127,6 @@ public abstract class Task<T> implements ICancelTokenListener {
     private transient int status;
     /** 任务运行时的控制信息(bits) -- 每次运行时会重置为0 */
     private transient int ctl;
-    /** 启动时的帧号 -- 每次运行时会重置，仅保留override信息 */
-    private transient int enterFrame;
-    /** 结束时的帧号 -- 每次运行时重置为0 */
-    private transient int exitFrame;
     /** 重入Id，只增不减 -- 用于事件驱动下检测冲突（递归）；reset时不重置，甚至也增加 */
     private transient short reentryId;
 
@@ -199,23 +200,6 @@ public abstract class Task<T> implements ICancelTokenListener {
         this.sharedProps = sharedProps;
     }
 
-    public final int getEnterFrame() {
-        return enterFrame;
-    }
-
-    public final int getExitFrame() {
-        return exitFrame;
-    }
-
-    /** 慎重调用 */
-    public final void setEnterFrame(int enterFrame) {
-        this.enterFrame = enterFrame;
-    }
-
-    /** 慎重调用 */
-    public final void setExitFrame(int exitFrame) {
-        this.exitFrame = exitFrame;
-    }
     // endregion
 
     // region status
@@ -270,19 +254,6 @@ public abstract class Task<T> implements ICancelTokenListener {
             throw new IllegalStateException("This task has never run");
         }
         return taskEntry.getEntity();
-    }
-
-    /**
-     * 运行的帧数
-     * 1.任务如果在首次{@link #execute()}的时候就进入完成状态，那么运行帧数0
-     * 2.运行帧数是非常重要的统计属性，值得我们定义在顶层.
-     */
-    public final int getRunFrames() {
-        if (status == TaskStatus.RUNNING) {
-            return taskEntry.getCurFrame() - enterFrame;
-        }
-        // 不测试taskEntry，是因为child可能在运行后被删除
-        return exitFrame - enterFrame;
     }
 
     /**
@@ -392,7 +363,6 @@ public abstract class Task<T> implements ICancelTokenListener {
             if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
                 cancelToken.remListener(this);
             }
-            exitFrame = taskEntry.getCurFrame();
             stopRunningChildren();
             if ((ctl & TaskOverrides.MASK_EXIT) != 0) {
                 exit();
@@ -402,7 +372,6 @@ public abstract class Task<T> implements ICancelTokenListener {
         } else {
             // 未调用Enter和Exit，需要补偿 -- 保留当前的ctl会更好
             setPrevStatus(prevStatus);
-            this.enterFrame = exitFrame;
             this.reentryId++;
             this.ctl |= MASK_STILLBORN;
             this.status = status;
@@ -549,8 +518,6 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
         status = 0;
         ctl &= MASK_OVERRIDES; // 保留Overrides信息
-        enterFrame = 0;
-        exitFrame = 0;
         reentryId++; // 上下文变动，和之前的执行分开
     }
 
@@ -817,7 +784,6 @@ public abstract class Task<T> implements ICancelTokenListener {
         initMask |= (prevStatus << OFFSET_PREV_STATUS);
         ctl = initMask;
         status = TaskStatus.RUNNING; // 先更新为running状态，以避免执行过程中外部查询task的状态时仍处于上一次的结束status
-        enterFrame = exitFrame = taskEntry.getCurFrame();
         final short reentryId = ++this.reentryId;  // 和上次执行的exit分开
         // beforeEnter
         if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {

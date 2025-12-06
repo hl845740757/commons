@@ -28,9 +28,9 @@ public class LeafTest
     [Test]
     public void waitFrameTest() {
         int expectedFrame = 10;
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<Blackboard>(expectedFrame));
+        TimingTaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<Blackboard>(expectedFrame));
         BtreeTestUtil.untilCompleted(taskEntry);
-        Assert.AreEqual(expectedFrame, taskEntry.CurFrame);
+        Assert.AreEqual(expectedFrame, taskEntry.frameCount);
     }
 
     /** 测试ctl中记录的上一次执行结果的正确性 */

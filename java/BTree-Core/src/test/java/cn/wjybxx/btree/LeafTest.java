@@ -16,7 +16,6 @@
 package cn.wjybxx.btree;
 
 import cn.wjybxx.btree.leaf.ActionTask;
-import cn.wjybxx.btree.leaf.WaitFrame;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -33,9 +32,9 @@ public class LeafTest {
     @Test
     void waitFrameTest() {
         int expectedFrame = 10;
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<>(expectedFrame));
+        TimingTaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<>(expectedFrame));
         BtreeTestUtil.untilCompleted(taskEntry);
-        Assertions.assertEquals(expectedFrame, taskEntry.getCurFrame());
+        Assertions.assertEquals(expectedFrame, taskEntry.frameCount);
     }
 
     /** 测试ctl中记录的上一次执行结果的正确性 */

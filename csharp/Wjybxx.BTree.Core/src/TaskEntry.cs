@@ -40,14 +40,12 @@ public class TaskEntry<T> : Task<T> where T : class
     /** 行为树的根节点 */
     [SerializeReference] private Task<T>? rootTask;
     /** 行为树的类型 -- 用于加载时筛选 */
-    private byte type;
+    private int type;
 
     /** 行为树绑定的实体 -- 最好也存储在黑板里；这里的字段本是为了提高性能 */
     [NonSerialized] protected object? entity;
     /** 行为树加载器 -- 用于加载Task或配置 */
     [NonSerialized] protected ITreeLoader treeLoader;
-    /** 当前帧号 */
-    [NonSerialized] private int curFrame;
     /** 用于Entry的事件驱动 */
     [NonSerialized] protected ITaskEntryHandler<T>? handler;
     /** 用于内联优化 */
@@ -76,7 +74,7 @@ public class TaskEntry<T> : Task<T> where T : class
         set => rootTask = value;
     }
 
-    public byte Type {
+    public int Type {
         get => type;
         set => type = value;
     }
@@ -95,8 +93,6 @@ public class TaskEntry<T> : Task<T> where T : class
         get => entity;
         set => entity = value;
     }
-
-    public int CurFrame => curFrame;
 
     #endregion
 
@@ -124,9 +120,7 @@ public class TaskEntry<T> : Task<T> where T : class
     /// <summary>
     /// 普通Update
     /// </summary>
-    /// <param name="curFrame">当前帧号</param>
-    public void Update(int curFrame) {
-        this.curFrame = curFrame;
+    public void Update() {
         if (IsRunning) {
             Template_Execute(true); // 用户就是control
         } else {
@@ -139,9 +133,7 @@ public class TaskEntry<T> : Task<T> where T : class
     /// 以内联的方式Update。
     /// 一般情况下，TaskEntry除了驱动root节点运行外，便没有额外逻辑，因此以内联的方式运行可省一些不必要的调用栈。
     /// </summary>
-    /// <param name="curFrame">当前帧号</param>
-    public void UpdateInlined(int curFrame) {
-        this.curFrame = curFrame;
+    public void UpdateInlined() {
         if (IsRunning) {
             if (GetCtlBit(MASK_NOT_ACTIVE_SELF)) {
                 return;
@@ -233,7 +225,6 @@ public class TaskEntry<T> : Task<T> where T : class
     public override void ResetForRestart() {
         base.ResetForRestart();
         cancelToken.Reset();
-        curFrame = 0;
     }
 
     internal bool IsInited() {

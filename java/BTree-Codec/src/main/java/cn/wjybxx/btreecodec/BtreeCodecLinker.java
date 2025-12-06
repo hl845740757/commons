@@ -108,6 +108,6 @@ public class BtreeCodecLinker {
         private Running<?> running;
         private SimpleRandom<?> simpleRandom;
         private Success<?> success;
-        private WaitFrame<?> waitFrame;
+        private SimpleWaitFrame<?> waitFrame;
     }
 }

@@ -22,7 +22,6 @@ import cn.wjybxx.btree.fsm.handler.RedoStateMachineHandler;
 import cn.wjybxx.btree.fsm.handler.UndoStateMachineHandler;
 import cn.wjybxx.btree.leaf.ActionTask;
 import cn.wjybxx.btree.leaf.Success;
-import cn.wjybxx.btree.leaf.WaitFrame;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -307,7 +306,7 @@ public class StateMachineTest {
 
         String message = "message";
 
-        taskEntry.update(0); // 先启动
+        taskEntry.update(); // 先启动
         taskEntry.onEvent(message);
         Assertions.assertEquals(nextState.message, message);
     }
@@ -316,16 +315,21 @@ public class StateMachineTest {
     private static class ClassicalState<T> extends LeafTask<T> {
 
         public Object message;
+        private int enterFrame;
 
         @Override
         protected void beforeEnter() {
             super.beforeEnter();
             setSlowStart(true);
+
+            TimingTaskEntry<T> taskEntry = (TimingTaskEntry<T>) this.taskEntry;
+            enterFrame = taskEntry.frameCount;
         }
 
         @Override
         protected void execute() {
-            if (getRunFrames() != 1) {
+            TimingTaskEntry<T> taskEntry = (TimingTaskEntry<T>) this.taskEntry;
+            if (taskEntry.frameCount != (enterFrame + 1)) {
                 throw new IllegalStateException();
             }
             setSuccess();
@@ -370,11 +374,12 @@ public class StateMachineTest {
         StateMachineTask<Blackboard> rootStateMachine = taskEntry.getRootStateMachine();
         rootStateMachine.setHandler((stateMachineTask, curState, nextState) -> {
             if (curState != null && nextState != null) {
-                Assertions.assertEquals(runFrames, curState.getRunFrames());
+                WaitFrame<Blackboard> curState2 = (WaitFrame<Blackboard>) curState;
+                Assertions.assertEquals(runFrames, curState2.getRunFrames());
             }
         });
         rootStateMachine.changeState(new WaitFrame<>(runFrames));
-        taskEntry.update(0); // 启动任务树，使行为树处于运行状态
+        taskEntry.update(); // 启动任务树，使行为树处于运行状态
 
         rootStateMachine.changeState(new WaitFrame<>(1), ChangeStateArgs.PLAIN_WHEN_COMPLETED);
         BtreeTestUtil.untilCompleted(taskEntry);

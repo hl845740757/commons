@@ -30,20 +30,24 @@ internal class BtreeTestUtil
 {
     internal static readonly Random random = new Random();
 
-    public static TaskEntry<Blackboard> newTaskEntry() {
-        return new TaskEntry<Blackboard>("Main", null, new Blackboard());
+    public static TimingTaskEntry<Blackboard> newTaskEntry() {
+        return new TimingTaskEntry<Blackboard>("Main", null, new Blackboard());
     }
 
-    public static TaskEntry<Blackboard> newTaskEntry(Task<Blackboard> root) {
-        return new TaskEntry<Blackboard>("Main", root, new Blackboard());
+    public static TimingTaskEntry<Blackboard> newTaskEntry(Task<Blackboard> root) {
+        return new TimingTaskEntry<Blackboard>("Main", root, new Blackboard());
     }
 
     public static void untilCompleted<T>(TaskEntry<T> entry) where T : class {
+        TimingTaskEntry<T> timingEntry = entry as TimingTaskEntry<T>;
         for (int idx = 0; idx < 200; idx++) { // 避免死循环
+            if (timingEntry != null) {
+                timingEntry.frameCount = idx;
+            }
             if (MathCommon.IsEven(idx)) {
-                entry.Update(idx);
+                entry.Update();
             } else {
-                entry.UpdateInlined(idx);
+                entry.UpdateInlined();
             }
             if (entry.IsCompleted) return;
         }
@@ -58,8 +62,12 @@ internal class BtreeTestUtil
     /// <typeparam name="T"></typeparam>
     /// <exception cref="InfiniteLoopException"></exception>
     public static void untilCompleted<T>(TaskEntry<T> entry, Action<int> frameAction) where T : class {
+        TimingTaskEntry<T> timingEntry = entry as TimingTaskEntry<T>;
         for (int idx = 0; idx < 200; idx++) { // 避免死循环
-            entry.Update(idx);
+            if (timingEntry != null) {
+                timingEntry.frameCount = idx;
+            }
+            entry.Update();
             frameAction.Invoke(idx);
             if (entry.IsCompleted) return;
         }

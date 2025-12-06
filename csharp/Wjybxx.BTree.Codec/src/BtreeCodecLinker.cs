@@ -113,7 +113,7 @@ public class BtreeCodecLinker
         private Running<object> running;
         private SimpleRandom<object> simpleRandom;
         private Success<object> success;
-        private WaitFrame<object> waitFrame;
+        private SimpleWaitFrame<object> waitFrame;
     }
 }
 }

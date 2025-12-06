@@ -16,7 +16,6 @@
 
 package cn.wjybxx.btree;
 
-import cn.wjybxx.btree.leaf.WaitFrame;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +30,8 @@ public class ActiveTest {
      */
     @Test
     void testWaitFrame() {
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<>(5));
+        WaitFrame<Blackboard> rootTask = new WaitFrame<>(5);
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(rootTask);
 
         int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame -> {
@@ -42,13 +42,14 @@ public class ActiveTest {
                 taskEntry.setActive(true);
             }
         });
-        Assertions.assertEquals(10, taskEntry.getRootTask().getRunFrames());
+        Assertions.assertEquals(10, rootTask.getRunFrames());
     }
 
     /** 测试active为false的情况下在第9帧取消 */
     @Test
     void testCancel() {
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<>(5));
+        WaitFrame<Blackboard> rootTask = new WaitFrame<>(5);
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(rootTask);
 
         int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame -> {
@@ -61,6 +62,6 @@ public class ActiveTest {
             }
         });
         Assertions.assertTrue(taskEntry.isCancelled());
-        Assertions.assertEquals(10, taskEntry.getRootTask().getRunFrames());
+        Assertions.assertEquals(10, rootTask.getRunFrames());
     }
 }

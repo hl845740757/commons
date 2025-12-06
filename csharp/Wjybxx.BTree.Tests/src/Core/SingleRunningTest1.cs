@@ -172,7 +172,8 @@ public class SingleRunningTest1
         }
 
         protected override void Execute() {
-            if (taskEntry.CurFrame >= frame) {
+            TimingTaskEntry<T> taskEntry = (TimingTaskEntry<T>)TaskEntry;
+            if (taskEntry.frameCount >= frame) {
                 SetFailed(TaskStatus.ERROR);
             } else {
                 SetSuccess();

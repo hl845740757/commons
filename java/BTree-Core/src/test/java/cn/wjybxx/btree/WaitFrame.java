@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.wjybxx.btree.leaf;
 
-import cn.wjybxx.btree.LeafTask;
+package cn.wjybxx.btree;
 
 import javax.annotation.Nonnull;
 
 /**
- * 等待N帧
- *
  * @author wjybxx
- * date - 2023/11/26
+ * date - 2025/12/6
  */
 public class WaitFrame<T> extends LeafTask<T> {
 
     private int required = 1;
+    private transient int enterFrame;
+    private transient int exitFrame;
 
     public WaitFrame() {
     }
@@ -36,11 +35,33 @@ public class WaitFrame<T> extends LeafTask<T> {
         this.required = required;
     }
 
+    private TimingTaskEntry<T> getTaskEntry0() {
+        return (TimingTaskEntry<T>) taskEntry;
+    }
+
+    public int getRunFrames() {
+        if (isRunning()) {
+            return getTaskEntry0().frameCount - enterFrame;
+        }
+        return exitFrame - enterFrame;
+    }
+
+    @Override
+    protected void enter(int reentryId) {
+        enterFrame = getTaskEntry0().frameCount;
+    }
+
     @Override
     protected void execute() {
-        if (getRunFrames() >= required) {
+        int count = getTaskEntry0().frameCount - enterFrame;
+        if (count >= required) {
             setSuccess();
         }
+    }
+
+    @Override
+    protected void exit() {
+        exitFrame = getTaskEntry0().frameCount;
     }
 
     @Override
