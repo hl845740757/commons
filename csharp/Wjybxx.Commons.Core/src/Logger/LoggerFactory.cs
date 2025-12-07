@@ -53,6 +53,21 @@ public static class LoggerFactory
         }
     }
 
+    /// <summary>
+    /// 获取底层Provider
+    /// </summary>
+    /// <returns></returns>
+    public static ILoggerFactory GetProvider() {
+        return provider;
+    }
+
+    /// <summary>
+    /// 关闭Logger
+    /// </summary>
+    public static void Shutdown() {
+        provider.Dispose();
+    }
+
     #region GetLogger
 
     /// <summary>
@@ -91,9 +106,8 @@ public static class LoggerFactory
             return fullName;
         }
         // 内部类或泛型类
-        string[] clsNames = fullName.Split('+');
         StringBuilder sb = new StringBuilder(fullName.Length);
-        foreach (string clsName in clsNames) {
+        foreach (string clsName in fullName.Split('+')) {
             if (sb.Length > 0) {
                 sb.Append('.'); // 内部类之间改为点
             }

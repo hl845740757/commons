@@ -90,7 +90,9 @@ public interface IEventLoopAgent<T extends IAgentEvent> extends IAgentEventHandl
     boolean checkMainLoop(long threadTime);
 
     /** 在每次开始主循环之前调用 */
-    void beforeMainLoop(long threadTime);
+    default void beforeMainLoop(long threadTime) {
+
+    }
 
     /** 在每次主循环结束后调用 */
     default void afterMainLoop(long threadTime) {

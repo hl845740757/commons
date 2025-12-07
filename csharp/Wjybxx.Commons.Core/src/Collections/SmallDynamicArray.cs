@@ -24,8 +24,7 @@ using System.Runtime.CompilerServices;
 namespace Wjybxx.Commons.Collections
 {
 /// <summary>
-/// 小型动态数组，最大支持64个监听器。
-/// 适合监听器列表这样的场景，一个事件的监听器通常是比较少的。
+/// 小型动态数组，最大支持64个元素。
 ///
 /// <h3>null元素比重</h3>
 /// 如果等于0，则总是压缩空间；如果等于1，则全为null才压缩空间；如果大于1，则表示不主动压缩空间；
@@ -33,12 +32,10 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="E"></typeparam>
 public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
 {
-    private const int MAX_CAPACITY = 128;
+    private const int MAX_CAPACITY = 64;
 
     private E?[] elements;
-    // private long elementsMask;
-    private long lowBits;
-    private long highBits;
+    private long elementsMask;
     private readonly float nullFactor;
 
     private int len;
@@ -146,12 +143,11 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     public void Clear() {
-        if (ElementCount == 0) {
+        if (elementsMask == 0) {
             return;
         }
         ArrayUtil.Fill2(elements, 0, len, null);
-        lowBits = 0;
-        highBits = 0;
+        elementsMask = 0;
         if (recursionDepth == 0) {
             len = 0;
         }
@@ -201,12 +197,17 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
 
     private int FirstNullIndex() {
         if (len == 0) return -1;
-        return DynamicArrayHelper.FirstNullIndex(lowBits, highBits, len, ElementCount);
+        // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
+        return MathCommon.NumberOfTrailingZeros(~elementsMask);
     }
 
     private int LastNullIndex() {
         if (len == 0) return -1;
-        return DynamicArrayHelper.LastNullIndex(lowBits, highBits, len, ElementCount);
+        // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
+        long tempMask = len == 64
+            ? (elementsMask)
+            : (elementsMask | (-1L << len));
+        return 63 - MathCommon.NumberOfLeadingZeros(~tempMask);
     }
 
     #endregion
@@ -214,9 +215,9 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     #region len
 
     public int Length => len;
-    public int ElementCount => MathCommon.BitCount(lowBits) + MathCommon.BitCount(highBits);
-    public int NullCount => len - (MathCommon.BitCount(lowBits) + MathCommon.BitCount(highBits));
-    public bool ContainsNull => len > 0 && len > (MathCommon.BitCount(lowBits) + MathCommon.BitCount(highBits));
+    public int ElementCount => MathCommon.BitCount(elementsMask);
+    public int NullCount => len - MathCommon.BitCount(elementsMask);
+    public bool ContainsNull => len > MathCommon.BitCount(elementsMask);
 
     #endregion
 
@@ -289,40 +290,20 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
 
     #region internal
 
-    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetBit(int index, bool val) {
-        if (index < 64) {
-            if (val) {
-                lowBits |= (1L << index);
-            } else {
-                lowBits &= ~(1L << index);
-            }
+        if (val) {
+            elementsMask |= (1L << index);
         } else {
-            index -= 64;
-            if (val) {
-                highBits |= (1L << index);
-            } else {
-                highBits &= ~(1L << index);
-            }
+            elementsMask &= ~(1L << index);
         }
     }
 
-    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void InsertBit(int index) {
-        if (index < 64) {
-            highBits <<= 1;
-            if (lowBits < 0) {
-                highBits |= 1;
-            }
-            long high = (lowBits << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-            long lower = (lowBits) & ((1L << index) - 1); // [0, index -1] 全1
-            lowBits = high | lower;
-        } else {
-            index -= 64;
-            long high = (highBits << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-            long lower = (highBits) & ((1L << index) - 1); // [0, index -1] 全1
-            highBits = high | lower;
-        }
+        long high = (elementsMask << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
+        long lower = (elementsMask) & ((1L << index) - 1); // [0, index -1] 全1
+        elementsMask = high | lower;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -352,8 +333,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
         }
         if (elementCount == 0) {
             this.len = 0;
-            this.lowBits = 0;
-            this.highBits = 0;
+            this.elementsMask = 0;
             return;
         }
         // 零散前移
@@ -375,13 +355,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
         }
         ArrayUtil.Fill2(elements, elementCount, len, null);
         this.len = elementCount;
-        if (elementCount < 64) {
-            lowBits = (1L << elementCount) - 1;
-            highBits = 0;
-        } else {
-            lowBits = -1;
-            highBits = (1L << (elementCount - 64)) - 1;
-        }
+        this.elementsMask = (1L << elementCount) - 1;
     }
 
     #endregion

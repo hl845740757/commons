@@ -46,7 +46,7 @@ public class DynamicArrayTest
     public void SetUp() {
         cacheMap.Clear();
         if (MathCommon.IsOdd(repeat++)) {
-            capacity = 128;
+            capacity = 64;
             dynamicArray = new SmallDynamicArray<Indexed>(capacity / 3); // 测试扩容
         } else {
             capacity = 1000;

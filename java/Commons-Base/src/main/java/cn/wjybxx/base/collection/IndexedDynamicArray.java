@@ -328,7 +328,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public boolean containsNull() {
-        return elementCount < len;
+        return len > elementCount;
     }
 
     // endregion

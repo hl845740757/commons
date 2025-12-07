@@ -53,7 +53,7 @@ public class DynamicArrayTest {
     void setUp() {
         cacheMap.clear();
         if (MathCommon.isOdd(repeat++)) {
-            capacity = 128;
+            capacity = 64;
             dynamicArray = new SmallDynamicArray<>(capacity / 3); // 测试扩容
         } else {
             capacity = 1000;

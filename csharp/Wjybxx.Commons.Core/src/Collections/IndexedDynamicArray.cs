@@ -298,7 +298,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
 
     public int NullCount => len - elementCount;
 
-    public bool ContainsNull => elementCount < len;
+    public bool ContainsNull => len > elementCount;
 
     #endregion
 

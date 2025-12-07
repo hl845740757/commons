@@ -87,11 +87,11 @@ public class Projection
     public const string KEY_ELEM = "$elem";
 
     /** object投影的特殊键 */
-    private static readonly IGenericSet<string> OBJECT_KEYS = new[] { KEY_OBJECT, KEY_ALL }.ToImmutableSet2();
+    private static readonly ImmutableSet<string> OBJECT_KEYS = new[] { KEY_OBJECT, KEY_ALL }.ToImmutableSet2();
     /** 数组投影的特殊键 */
-    public static readonly IGenericSet<string> ARRAY_KEYS = new[] { KEY_ARRAY, KEY_SLICE, KEY_ELEM }.ToImmutableSet2();
+    private static readonly ImmutableSet<string> ARRAY_KEYS = new[] { KEY_ARRAY, KEY_SLICE, KEY_ELEM }.ToImmutableSet2();
     /** 所有的特殊键 */
-    public static readonly IGenericSet<string> ALL_SPECIAL_KEYS;
+    public static readonly ImmutableSet<string> ALL_SPECIAL_KEYS;
 
     static Projection() {
         HashSet<string> tempKeys = new HashSet<string>();
