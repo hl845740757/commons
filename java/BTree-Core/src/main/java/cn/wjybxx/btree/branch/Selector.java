@@ -73,7 +73,7 @@ public class Selector<T> extends SingleRunningChildBranch<T> {
         }
         if (child.isSucceeded()) {
             setSuccess();
-        } else if (isAllChildCompleted()) {
+        } else if (getCompletedCount() >= children.size()) {
             setCompleted(children.get(0).getStatus(), true);
         } else {
             template_execute(false);

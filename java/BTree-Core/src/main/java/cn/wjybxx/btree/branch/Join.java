@@ -122,14 +122,6 @@ public class Join<T> extends ParallelBranch<T> {
     }
 
     // region
-    public boolean isAllChildCompleted() {
-        return completedCount >= children.size();
-    }
-
-    public boolean isAllChildSucceeded() {
-        return succeededCount >= children.size();
-    }
-
     public int getCompletedCount() {
         return completedCount;
     }

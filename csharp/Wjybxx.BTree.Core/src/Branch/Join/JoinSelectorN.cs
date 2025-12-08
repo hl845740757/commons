@@ -61,7 +61,7 @@ public class JoinSelectorN<T> : JoinPolicy<T> where T : class
     public void OnChildCompleted(Join<T> join, Task<T> child) {
         if (join.SucceededCount >= required && CheckSequence(join)) {
             join.SetSuccess();
-        } else if (join.IsAllChildCompleted || CheckFailFast(join)) {
+        } else if (join.CompletedCount >= join.ChildCount || CheckFailFast(join)) {
             join.SetFailed(TaskStatus.ERROR);
         }
     }

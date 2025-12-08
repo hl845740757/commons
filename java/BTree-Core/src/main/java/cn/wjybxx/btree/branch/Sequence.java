@@ -71,7 +71,7 @@ public class Sequence<T> extends SingleRunningChildBranch<T> {
         }
         if (child.isFailed()) { // 失败码有传递的价值
             setCompleted(child.getStatus(), true);
-        } else if (isAllChildCompleted()) {
+        } else if (getCompletedCount() >= children.size()) {
             setSuccess();
         } else {
             template_execute(false);

@@ -57,7 +57,7 @@ public class JoinSequence<T> implements JoinPolicy<T> {
     public void onChildCompleted(Join<T> join, Task<T> child) {
         if (!child.isSucceeded()) {
             join.setCompleted(child.getStatus(), true);
-        } else if (join.isAllChildSucceeded()) {
+        } else if (join.getSucceededCount() >= join.getChildCount()) {
             join.setSuccess();
         }
     }

@@ -68,7 +68,7 @@ public class JoinSelectorN<T> implements JoinPolicy<T> {
     public void onChildCompleted(Join<T> join, Task<T> child) {
         if (join.getSucceededCount() >= required && checkSequence(join)) {
             join.setSuccess();
-        } else if (join.isAllChildCompleted() || checkFailFast(join)) {
+        } else if (join.getCompletedCount() >= join.getChildCount() || checkFailFast(join)) {
             join.setFailed(TaskStatus.ERROR);
         }
     }

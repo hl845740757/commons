@@ -56,7 +56,7 @@ public class Foreach<T> extends SingleRunningChildBranch<T> {
             setCancelled();
             return;
         }
-        if (isAllChildCompleted()) {
+        if (getCompletedCount() >= children.size()) {
             setSuccess();
         } else {
             template_execute(false);

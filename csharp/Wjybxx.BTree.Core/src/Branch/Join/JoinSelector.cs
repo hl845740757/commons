@@ -44,7 +44,7 @@ public class JoinSelector<T> : JoinPolicy<T> where T : class
     public void OnChildCompleted(Join<T> join, Task<T> child) {
         if (child.IsSucceeded) {
             join.SetSuccess();
-        } else if (join.IsAllChildCompleted) {
+        } else if (join.CompletedCount >= join.ChildCount) {
             join.SetFailed(TaskStatus.ERROR);
         }
     }

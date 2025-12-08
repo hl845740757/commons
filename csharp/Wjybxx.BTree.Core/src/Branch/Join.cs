@@ -114,16 +114,8 @@ public class Join<T> : ParallelBranch<T> where T : class
         policy.OnEvent(this, eventObj);
     }
 
-    // region
-
-    public bool IsAllChildCompleted => completedCount >= children.Count;
-
-    public bool IsAllChildSucceeded => succeededCount >= children.Count;
-
     public int CompletedCount => completedCount;
-
     public int SucceededCount => succeededCount;
-    // endregion
 
     public JoinPolicy<T> Policy {
         get => policy;

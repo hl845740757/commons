@@ -274,7 +274,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     /**
      * 查找task最近的状态机节点
      * 1.仅递归查询父节点和长兄节点
-     * 2.优先查找附近的，然后测试长兄节点 - 状态机作为第一个节点的情况比较常见
+     * 2.优先测试父节点，然后测试长兄节点 - 状态机作为第一个节点的情况比较常见
      */
     public static <T> StateMachineTask<T> findStateMachine(Task<T> task) {
         Task<T> control;
@@ -323,8 +323,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     }
 
     private static <T> StateMachineTask<T> castAsStateMachine(Task<T> task, String name) {
-        if (task instanceof StateMachineTask<T> stateMachineTask
-                && Objects.equals(name, stateMachineTask.getName())) {
+        if (task instanceof StateMachineTask<T> stateMachineTask && name.equals(stateMachineTask.getName())) {
             return stateMachineTask;
         }
         return null;

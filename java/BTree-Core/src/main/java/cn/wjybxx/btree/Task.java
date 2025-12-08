@@ -1073,12 +1073,9 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (child == null) throw new NullPointerException("child");
         if (child == this) throw new IllegalArgumentException("add self to children");
         if (child.isRunning()) throw new IllegalArgumentException("child is running");
-
-        if (child.control != this) {
-            // 必须先从旧的父节点上删除，但有可能是自己之前放在一边的子节点
-            if (child.taskEntry != null || child.control != null) {
-                throw new IllegalArgumentException("child.control is not null");
-            }
+        // 必须先从旧的父节点上删除，但有可能是自己之前放在一边的子节点
+        if (child.control != null && child.control != this) {
+            throw new IllegalArgumentException("child.control is not null");
         }
     }
 

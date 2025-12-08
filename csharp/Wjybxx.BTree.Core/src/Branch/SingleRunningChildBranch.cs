@@ -60,11 +60,8 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     /** 获取运行中的子节点 */
     public Task<T>? RunningChild => runningChild;
 
-    /** 是否所有子节点已进入完成状态 */
-    public bool IsAllChildCompleted => runningIndex + 1 >= children.Count;
-
     /** 进入完成状态的子节点数量 */
-    public int CompletedCount => runningIndex + 1;
+    public virtual int CompletedCount => runningIndex + 1;
 
     public ref TaskInlineHelper<T> GetInlineHelper() {
         return ref inlineHelper;

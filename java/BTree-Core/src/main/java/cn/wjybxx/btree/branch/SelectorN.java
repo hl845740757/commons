@@ -102,7 +102,7 @@ public class SelectorN<T> extends SingleRunningChildBranch<T> {
         }
         if (child.isSucceeded() && ++count >= required) {
             setSuccess();
-        } else if (isAllChildCompleted() || checkFailFast()) {
+        } else if (getCompletedCount() >= children.size() || checkFailFast()) {
             setFailed(TaskStatus.ERROR);
         } else {
             template_execute(false);

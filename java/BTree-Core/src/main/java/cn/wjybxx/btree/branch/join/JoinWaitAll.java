@@ -54,7 +54,7 @@ public class JoinWaitAll<T> implements JoinPolicy<T> {
 
     @Override
     public void onChildCompleted(Join<T> join, Task<T> child) {
-        if (join.isAllChildCompleted()) {
+        if (join.getCompletedCount() >= join.getChildCount()) {
             join.setSuccess();
         }
     }

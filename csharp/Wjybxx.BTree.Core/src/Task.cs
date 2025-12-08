@@ -1077,12 +1077,9 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (child == null) throw new ArgumentNullException(nameof(child));
         if (child == this) throw new ArgumentException("add self to children");
         if (child.IsRunning) throw new ArgumentException("child is running");
-
-        if (child.control != this) {
-            // 必须先从旧的父节点上删除，但有可能是自己之前放在一边的子节点
-            if (child.taskEntry != null || child.control != null) {
-                throw new ArgumentException("child.control is not null");
-            }
+        // 必须先从旧的父节点上删除，但有可能是自己之前放在一边的子节点
+        if (child.control != null && child.control != this) {
+            throw new ArgumentException("child.control is not null");
         }
     }
 

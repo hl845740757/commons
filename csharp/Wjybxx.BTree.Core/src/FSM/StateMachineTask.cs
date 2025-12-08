@@ -262,7 +262,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /**
      * 查找task最近的状态机节点
      * 1.仅递归查询父节点和长兄节点
-     * 2.优先查找附近的，然后测试长兄节点 - 状态机作为第一个节点的情况比较常见
+     * 2.优先测试父节点，然后测试长兄节点 - 状态机作为第一个节点的情况比较常见
      */
     public static StateMachineTask<T> FindStateMachine(Task<T> task) {
         Task<T> control;
@@ -310,8 +310,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     }
 
     private static StateMachineTask<T>? CastAsStateMachine(Task<T> task, string name) {
-        if (task is StateMachineTask<T> stateMachineTask
-            && (name == stateMachineTask.name)) {
+        if (task is StateMachineTask<T> stateMachineTask && (name == stateMachineTask.name)) {
             return stateMachineTask;
         }
         return null;
