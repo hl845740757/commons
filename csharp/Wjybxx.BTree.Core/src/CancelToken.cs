@@ -24,6 +24,7 @@ using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.BTree
 {
@@ -85,10 +86,10 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
         // 需要将监听器归还到池
         listeners.BeginItr();
         try {
-            for (int idx = listeners.IndexOf(null), len = listeners.Length; idx < len; idx++) {
+            for (int idx = 0, len = listeners.Length; idx < len; idx++) {
                 var listener = listeners.Set(idx, null);
                 if (listener is Completion completion) {
-                    ReleaseCompletion(completion);
+                    POOL.Release(completion);
                 }
             }
         }
@@ -409,33 +410,23 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     /** 已收到Dispose信号 */
     private const int MASK_DISPOSED = 0x20;
 
-    /** 行为树通常只在业务线程调用，避免多线程开销 */
-    private static readonly ThreadLocal<Stack<Completion>> POOL = new(() => new Stack<Completion>());
+    private static readonly ConcurrentObjectPool<Completion> POOL = new(
+        () => new Completion(), e => e.Reset(), 200);
 
-    /**  申请一个<see cref="Completion"/>实例 */
     private static Completion GetCompletion(IExecutor? executor, int options, CancelToken source,
                                             int type, object action, object? ctx) {
         // 去除用户的低位，记录type
         options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
-        if (!POOL.Value!.TryPop(out Completion completion)) {
-            completion = new Completion();
-        }
-        int rid = completion._rid + 1;
-        completion._rid = rid;
-
+        Completion completion = POOL.Acquire();
+        completion._rid++;
         completion.executor = executor;
         completion.options = options;
         completion.source = source;
         completion.action = action;
         completion.ctx = ctx;
         return completion;
-    }
-
-    private static void ReleaseCompletion(Completion completion) {
-        completion.Reset();
-        POOL.Value!.Push(completion);
     }
 
     /// <summary>
@@ -508,7 +499,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
                 ctx = this.ctx;
                 // 如果已收到取消信号，则直接回收
                 if (action == null || ExecutorUtil.IsCancelRequested(ctx, options)) {
-                    ReleaseCompletion(this);
+                    POOL.Release(this);
                     return;
                 }
                 source = this.source;
@@ -521,7 +512,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
                     fire = false;
                 } else {
                     // 数据已拷贝到临时变量
-                    ReleaseCompletion(this);
+                    POOL.Release(this);
                     fire = true;
                 }
             }
@@ -589,7 +580,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
             ctx = null;
             // 如果当前未进入异步执行，尝试立即回收
             if ((options & MASK_ASYNC_FIRING) == 0 && source.RemListener(this)) {
-                ReleaseCompletion(this);
+                POOL.Release(this);
             }
         }
     }

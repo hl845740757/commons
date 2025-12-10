@@ -20,9 +20,9 @@ import cn.wjybxx.base.IPooledCloseable;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.Registration;
 import cn.wjybxx.base.collection.SmallDynamicArray;
+import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.concurrent.*;
 
-import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
@@ -92,10 +92,10 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
         // 需要将监听器归还到池
         listeners.beginItr();
         try {
-            for (int idx = listeners.indexOf(null), len = listeners.length(); idx < len; idx++) {
+            for (int idx = 0, len = listeners.length(); idx < len; idx++) {
                 var listener = listeners.set(idx, null);
                 if (listener instanceof Completion completion) {
-                    releaseCompletion(completion);
+                    POOL.release(completion);
                 }
             }
         } finally {
@@ -471,20 +471,16 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
     /** 已加入异步队列 -- 不能被立即销毁；必须由TryFire销毁 */
     private static final int MASK_ASYNC_FIRING = 0x10;
 
-    /** 行为树通常只在业务线程调用，避免多线程开销 */
-    private static final ThreadLocal<ArrayDeque<Completion>> POOL = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ConcurrentObjectPool<Completion> POOL = new ConcurrentObjectPool<Completion>(
+            Completion::new, Completion::reset, 200);
 
-    /** 申请一个{@link Completion}对象 */
     private static Completion getCompletion(Executor executor, int options, CancelToken source,
                                             int type, Object action, Object ctx) {
         // 去除用户的低位，记录type
         options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
-        Completion completion = POOL.get().pollFirst();
-        if (completion == null) {
-            completion = new Completion();
-        }
+        Completion completion = POOL.acquire();
         completion.rid++; // 从池中取出时也加1
         completion.executor = executor;
         completion.options = options;
@@ -492,11 +488,6 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
         completion.action = action;
         completion.ctx = ctx;
         return completion;
-    }
-
-    private static void releaseCompletion(Completion completion) {
-        completion.reset();
-        POOL.get().addFirst(completion);
     }
 
     /** 用于关闭监听器 */
@@ -555,7 +546,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
                 ctx = this.ctx;
                 // 如果已收到取消信号，则直接回收
                 if (action == null || ExecutorUtils.isCancelRequested(ctx, options)) {
-                    releaseCompletion(this);
+                    POOL.release(this);
                     return;
                 }
                 source = this.source;
@@ -568,7 +559,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
                     fire = false;
                 } else {
                     // 数据已拷贝到临时变量
-                    releaseCompletion(this);
+                    POOL.release(this);
                     fire = true;
                 }
             }
@@ -633,7 +624,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
             this.ctx = null;
             // 如果当前未进入异步执行，尝试立即回收 -- 可能正处于TryFire等待锁的状态，因此删除可能会失败
             if ((options & MASK_ASYNC_FIRING) == 0 && source.remListener(this)) {
-                releaseCompletion(this);
+                POOL.release(this);
             }
         }
     }
