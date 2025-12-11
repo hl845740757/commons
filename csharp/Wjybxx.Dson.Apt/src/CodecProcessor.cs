@@ -94,7 +94,7 @@ public class CodecProcessor : ISourceGenerator
     internal const string MNAME_GET_ENCODER_TYPE = "GetEncoderType";
     internal const string MNAME_BEFORE_ENCODE = "BeforeEncode";
     internal const string MNAME_WRITE_FIELDS = "WriteFields";
-    
+
     internal const string MNAME_NEW_INSTANCE = "NewInstance";
     internal const string MNAME_READ_FIELDS = "ReadFields";
     internal const string MNAME_READ_FIELD = "ReadField";
@@ -381,15 +381,18 @@ public class CodecProcessor : ISourceGenerator
 
         // 写入文件
         string outputNamespace = context.outputNamespace ?? type.ContainingNamespace.ToDisplayString();
-        CsharpFile csharpFile = CsharpFile.NewBuilder(context.typeBuilder.name)
-            .AddSpec(new MacroSpec("pragma", "warning disable CS1591"))
-            .AddSpec(NamespaceSpec.Of(outputNamespace, context.typeBuilder.Build()))
-            .Build();
+        CsharpFile.Builder csharpFile = CsharpFile.NewBuilder(context.typeBuilder.name)
+            .AddSpec(new MacroSpec("pragma", "warning disable CS1591"));
+        // 导入命名空间别名，解决类型名冲突
+        foreach (KeyValuePair<string, string> pair in context.aptClassProps.namespaceAliases) {
+            csharpFile.AddSpec(new ImportSpec(pair.Key, pair.Value));
+        }
+        csharpFile.AddSpec(NamespaceSpec.Of(outputNamespace, context.typeBuilder.Build()));
 
         _codeWriter.Reset();
         _codeWriter.IndentInsideNamespace = false;
         sourceProductionContext.AddSource(context.typeBuilder.name,
-            _codeWriter.Write(csharpFile));
+            _codeWriter.Write(csharpFile.Build()));
     }
 
     private void CacheFields(Context context) {
@@ -704,7 +707,7 @@ public class CodecProcessor : ISourceGenerator
     internal bool ContainsWriteObjectMethod(List<ISymbol> allMembers) {
         return ContainsHookMethod(allMembers, MNAME_WRITE_OBJECT, type_DsonWriter);
     }
-    
+
     /** 是否包含 writeObject(writer) 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ContainsWriteFieldsMethod(List<ISymbol> allMembers) {

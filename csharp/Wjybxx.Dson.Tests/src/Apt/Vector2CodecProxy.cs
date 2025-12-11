@@ -25,7 +25,10 @@ namespace Wjybxx.Dson.Tests.Apt;
 /// <summary>
 /// 测试外部代理
 /// </summary>
-[DsonCodecLinkerBean(typeof(Vector2))]
+[DsonCodecLinkerBean(typeof(Vector2), NamespaceAliases = new[]
+{
+    "Numerics = System.Numerics"
+})]
 public class Vector2CodecProxy
 {
     public static void BeforeEncode(ref Vector2 inst, ConverterOptions options) {

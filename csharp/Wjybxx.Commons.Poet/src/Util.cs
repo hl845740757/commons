@@ -289,11 +289,13 @@ public static partial class Util
         }
     }
 
-    internal static void TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue value) where TKey : notnull {
+    internal static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue value) where TKey : notnull {
         if (self == null) throw new ArgumentNullException(nameof(self));
-        if (!self.ContainsKey(key)) {
-            self[key] = value;
+        if (self.ContainsKey(key)) {
+            return false;
         }
+        self[key] = value;
+        return true;
     }
 
     internal static void PutAll<TKey, TValue>(this IDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {

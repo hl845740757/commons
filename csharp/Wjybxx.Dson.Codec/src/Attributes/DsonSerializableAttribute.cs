@@ -133,6 +133,12 @@ public class DsonSerializableAttribute : Attribute
     [StableName] public string[] SkipFields { get; set; } = Array.Empty<string>();
 
     /// <summary>
+    /// 命名空间别名，解决第三方程序和当前程序集类型名冲突的问题，APT无法精确解决，因此需要用户处理。
+    /// 
+    /// 格式:<code>BTree = Wjybxx.BTree</code>
+    /// </summary>
+    [StableName] public string[] NamespaceAliases { get; set; } = Array.Empty<string>();
+    /// <summary>
     /// 为生成代码附加的注解(只支持无参注解)
     /// </summary>
     [StableName] public Type[] Attributes { get; set; } = Array.Empty<Type>();

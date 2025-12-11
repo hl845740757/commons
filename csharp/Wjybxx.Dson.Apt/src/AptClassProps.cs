@@ -49,6 +49,10 @@ internal class AptClassProps
     /// 为生成代码附加的注解(只支持无参注解)
     /// </summary>
     public readonly List<INamedTypeSymbol> additionalAnnotations = new();
+    /// <summary>
+    /// 第三方命名空间别名
+    /// </summary>
+    public readonly List<KeyValuePair<string, string>> namespaceAliases = new();
 
     public AptClassProps() {
     }
@@ -86,6 +90,19 @@ internal class AptClassProps
 
                     int spIndex = fieldName.LastIndexOf('.');
                     props.clippedSkipFields.Add(spIndex < 0 ? fieldName : fieldName.Substring(spIndex + 1));
+                }
+            }
+        }
+        // 解析命名空间别名
+        {
+            if (AptUtils.GetAttributeValue(attributeData, "NamespaceAliases", out TypedConstant attributeValue)) {
+                foreach (TypedConstant typedConstant in attributeValue.Values) {
+                    string element = typedConstant.GetValueAsString();
+                    if (string.IsNullOrWhiteSpace(element)) continue;
+                    string[] pair = element.Split('=');
+                    string alias = pair[0].Trim();
+                    string name = pair[1].Trim();
+                    props.namespaceAliases.Add(new KeyValuePair<string, string>(name, alias));
                 }
             }
         }
