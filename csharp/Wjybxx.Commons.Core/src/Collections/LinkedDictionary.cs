@@ -924,6 +924,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         return HashCommon.Mix(keyComparer.GetHashCode(key));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int Find(TKey key) {
+        return Find(key, KeyHash(key, _keyComparer));
+    }
+
     /// <summary>
     /// 如果Table尚未初始化，固定返回-1；如果要插入元素，应当先初始化Table再查询。
     /// 如果key存在，则返回对应的下标(大于等于0)；
@@ -1471,9 +1476,18 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             if (_currNode.IsNull()) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
+            TKey nextKey = default;
+            if (_nextNode != -1) {
+                ref Node nextNode = ref _dictionary._table[_nextNode];
+                nextKey = nextNode.key;
+            }
             _dictionary.RemoveNode(ref _currNode);
             _currNode = default;
             _version = _dictionary._version;
+            // 修正索引
+            if (_nextNode != -1) {
+                _nextNode = _dictionary.Find(nextKey);
+            }
         }
 
         public void Reset() {

@@ -537,6 +537,11 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         return HashCommon.Mix(keyComparer.GetHashCode(key));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int Find(TKey key) {
+        return Find(key, KeyHash(key, _keyComparer));
+    }
+
     /// <summary>
     /// 如果Table尚未初始化，固定返回-1；如果要插入元素，应当先初始化Table再查询。
     /// 如果key存在，则返回对应的下标(大于等于0)；
@@ -876,9 +881,18 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             if (_currNode.IsNull()) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
+            TKey nextKey = default;
+            if (_nextNode != -1) {
+                ref Node nextNode = ref _hashSet._table[_nextNode];
+                nextKey = nextNode.key;
+            }
             _hashSet.RemoveNode(ref _currNode);
             _currNode = default;
             _version = _hashSet._version;
+            // 修正索引
+            if (_nextNode != -1) {
+                _nextNode = _hashSet.Find(nextKey);
+            }
         }
 
         public void Reset() {
