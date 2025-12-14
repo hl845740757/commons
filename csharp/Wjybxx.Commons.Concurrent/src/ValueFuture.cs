@@ -34,6 +34,7 @@ public readonly struct ValueFuture
 {
     private readonly object? _future;
     private readonly int _reentryId;
+    private readonly long _taskId;
 
     private readonly object? _result;
     private readonly object? _ex;
@@ -42,6 +43,7 @@ public readonly struct ValueFuture
     private ValueFuture(object? r, object? ex) {
         _future = null;
         _reentryId = 0;
+        _taskId = 0;
         _result = r;
         _ex = ex != null ? AbstractPromise.WrapException(ex) : null;
     }
@@ -49,6 +51,7 @@ public readonly struct ValueFuture
     public ValueFuture(IFuture future) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = 0;
+        _taskId = 0;
         _result = null;
         _ex = null;
     }
@@ -56,8 +59,17 @@ public readonly struct ValueFuture
     public ValueFuture(IValuePromise future, int reentryId) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
+        _taskId = 0;
         _result = null;
         _ex = null;
+    }
+
+    private ValueFuture(in ValueFuture src, long taskId) {
+        _future = src._future;
+        _reentryId = src._reentryId;
+        _taskId = taskId;
+        _result = src._result;
+        _ex = src._ex;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -130,6 +142,18 @@ public readonly struct ValueFuture
     }
 
     #endregion
+
+    /// <summary>
+    /// 关联的任务id
+    /// </summary>
+    public long TaskId => _taskId;
+
+    /// <summary>
+    /// 绑定任务Id
+    /// </summary>
+    public ValueFuture WithTaskId(long taskId) {
+        return new ValueFuture(in this, taskId);
+    }
 
     /// <summary>
     /// 关联的任务的状态
@@ -358,6 +382,7 @@ public readonly struct ValueFuture<T>
 {
     private readonly object? _future;
     private readonly int _reentryId;
+    private readonly long _taskId;
 
     private readonly T? _result;
     private readonly object? _ex;
@@ -366,6 +391,7 @@ public readonly struct ValueFuture<T>
     private ValueFuture(T? result, object? ex) {
         _future = null;
         _reentryId = 0;
+        _taskId = 0;
         _result = result;
         _ex = ex != null ? AbstractPromise.WrapException(ex) : null;
     }
@@ -373,6 +399,7 @@ public readonly struct ValueFuture<T>
     public ValueFuture(IFuture<T> future) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = 0;
+        _taskId = 0;
         _result = default;
         _ex = null;
     }
@@ -380,6 +407,7 @@ public readonly struct ValueFuture<T>
     public ValueFuture(IValuePromise<T> future, int reentryId) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
+        _taskId = 0;
         _result = default;
         _ex = null;
     }
@@ -387,8 +415,17 @@ public readonly struct ValueFuture<T>
     private ValueFuture(IValuePromise<object> future, int reentryId) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
+        _taskId = 0;
         _result = default;
         _ex = null;
+    }
+
+    private ValueFuture(in ValueFuture<T> src, long taskId) {
+        _future = src._future;
+        _reentryId = src._reentryId;
+        _taskId = taskId;
+        _result = src._result;
+        _ex = src._ex;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -470,6 +507,18 @@ public readonly struct ValueFuture<T>
     }
 
     #endregion
+
+    /// <summary>
+    /// 关联的任务id
+    /// </summary>
+    public long TaskId => _taskId;
+
+    /// <summary>
+    /// 绑定任务Id
+    /// </summary>
+    public ValueFuture<T> WithTaskId(long taskId) {
+        return new ValueFuture<T>(in this, taskId);
+    }
 
     /// <summary>
     /// 获取关联任务的状态

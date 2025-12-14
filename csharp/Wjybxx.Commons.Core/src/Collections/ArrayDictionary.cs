@@ -941,8 +941,11 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
             if (_currNode.IsNull()) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
-            _nextNode = _reversed ? _nextNode + 1 : _nextNode - 1; // 回滚游标
-            _dictionary.RemoveNode(_nextNode);
+            int currIndex = _reversed ? _nextNode + 1 : _nextNode - 1;
+            _dictionary.RemoveNode(currIndex);
+            if (!_reversed) { // 回滚游标
+                _nextNode = currIndex;
+            }
             _currNode = default;
             _version = _dictionary._version;
         }
