@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
@@ -203,6 +204,7 @@ public sealed class TypeMetaConfig
         config.Add(typeof(object), "Object", "object"); // object会作为泛型参数...
         config.Add(typeof(Nullable<>), "Nullable"); // Nullable
         config.Add(typeof(KeyValuePair<,>), "Pair", "KeyValuePair"); // 字典Pair
+        config.Add(typeof(ObjectPath), "ObjectPath");
 
         // 基础集合
         if (includeCollections) {

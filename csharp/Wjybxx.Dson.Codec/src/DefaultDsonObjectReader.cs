@@ -341,10 +341,8 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         if (dsonType == DsonType.Pointer // 引用解析，值类型也可能是顶层对象
             && declaredType != typeof(ObjectPath)
             && declaredType != typeof(ObjectPtr)) {
-            ObjectPtr ptr = reader.CurrentValue.AsPointer();
-            if (TryReadReference(ptr, out object value)) {
-                return (T)value;
-            }
+            ObjectPtr ptr = reader.ReadPtr();
+            return (T)ReadReference(ptr);
         }
         // DsonValue接收原始数据
         if (!declaredType.IsValueType && typeof(DsonValue).IsAssignableFrom(declaredType)) {
@@ -373,17 +371,13 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         }
     }
 
-    private bool TryReadReference(ObjectPtr rawPtr, out object? value) {
-        if (rawPtr.LocalId != 0) { // 引用中可能包含额外数据，需要清理
-            ObjectPtr ptr = new ObjectPtr(rawPtr.Collection, null, rawPtr.LocalId);
-            if (referenceTable.ContainsKey(ptr)) {
-                reader.ReadPtr();
-                value = GetReference(ptr);
-                return true;
-            }
+    private object? ReadReference(ObjectPtr rawPtr) {
+        if (rawPtr.LocalId == 0) {
+            return null;
         }
-        value = null;
-        return false;
+        // 引用中可能包含额外数据，需要清理
+        ObjectPtr ptr = new ObjectPtr(rawPtr.Collection, null, rawPtr.LocalId);
+        return referenceTable.ContainsKey(ptr) ? GetReference(ptr) : null;
     }
 
     private static string? GetClassName(DsonValue dsonValue) {

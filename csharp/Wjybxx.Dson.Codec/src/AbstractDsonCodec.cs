@@ -157,7 +157,10 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
         }
         if ((_overrides & MASK_READ_FIELD) != 0 && containerType == DsonType.Object) {
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                ReadField(reader, ref inst, reader.ReadName());
+                string name = reader.ReadName();
+                if (!ReadField(reader, ref inst, name)) {
+                    reader.SkipValue();
+                }
             }
         } else {
             ReadFields(reader, ref inst);
