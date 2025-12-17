@@ -392,6 +392,16 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     #region 容器
 
+    public void ReadStartArray(TName name) {
+        AdvanceToValueState(name, DsonType.Array);
+        ReadStartContainer(DsonContextType.Array, DsonType.Array);
+    }
+
+    public void ReadStartObject(TName name) {
+        AdvanceToValueState(name, DsonType.Object);
+        ReadStartContainer(DsonContextType.Object, DsonType.Object);
+    }
+
     public void ReadStartArray() {
         ReadStartContainer(DsonContextType.Array, DsonType.Array);
     }
@@ -448,7 +458,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         if (context.contextType != contextType) {
             throw DsonIOException.ContextError(contextType, context.contextType);
         }
-        if (context.state != DsonReaderState.WaitEndObject) {
+        if (context.state != DsonReaderState.WaitEndObject
+            && ReadDsonType() != DsonType.EndOfObject) {
             throw InvalidState(CollectionUtil.NewList(DsonReaderState.WaitEndObject));
         }
     }

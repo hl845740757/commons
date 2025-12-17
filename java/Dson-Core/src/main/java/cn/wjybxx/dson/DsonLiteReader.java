@@ -149,6 +149,10 @@ public interface DsonLiteReader extends AutoCloseable {
 
     // region 容器
 
+    void readStartArray(int name);
+
+    void readStartObject(int name);
+
     void readStartArray();
 
     void readEndArray();
@@ -161,16 +165,6 @@ public interface DsonLiteReader extends AutoCloseable {
     void readStartHeader();
 
     void readEndHeader();
-
-    default void readStartArray(int name) {
-        readName(name);
-        readStartArray();
-    }
-
-    default void readStartObject(int name) {
-        readName(name);
-        readStartObject();
-    }
 
     // endregion
 

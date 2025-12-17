@@ -428,6 +428,18 @@ public abstract class AbstractDsonReader implements DsonReader {
     // region 容器
 
     @Override
+    public void readStartArray(String name) {
+        advanceToValueState(name, DsonType.ARRAY);
+        readStartContainer(DsonContextType.ARRAY, DsonType.ARRAY);
+    }
+
+    @Override
+    public void readStartObject(String name) {
+        advanceToValueState(name, DsonType.OBJECT);
+        readStartContainer(DsonContextType.OBJECT, DsonType.OBJECT);
+    }
+
+    @Override
     public void readStartArray() {
         readStartContainer(DsonContextType.ARRAY, DsonType.ARRAY);
     }
@@ -487,7 +499,8 @@ public abstract class AbstractDsonReader implements DsonReader {
         if (context.contextType != contextType) {
             throw DsonIOException.contextError(contextType, context.contextType);
         }
-        if (context.state != DsonReaderState.WAIT_END_OBJECT) {
+        if (context.state != DsonReaderState.WAIT_END_OBJECT
+                && readDsonType() != DsonType.END_OF_OBJECT) {
             throw invalidState(List.of(DsonReaderState.WAIT_END_OBJECT));
         }
     }

@@ -154,6 +154,9 @@ public interface DsonReader extends AutoCloseable {
     // endregion
 
     // region 容器
+    void readStartArray(String name);
+
+    void readStartObject(String name);
 
     void readStartArray();
 
@@ -167,16 +170,6 @@ public interface DsonReader extends AutoCloseable {
     void readStartHeader();
 
     void readEndHeader();
-
-    default void readStartArray(String name) {
-        readName(name);
-        readStartArray();
-    }
-
-    default void readStartObject(String name) {
-        readName(name);
-        readStartObject();
-    }
 
     // endregion
 

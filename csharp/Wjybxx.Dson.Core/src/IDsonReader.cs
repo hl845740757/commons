@@ -169,6 +169,10 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     #region 容器
 
+    void ReadStartArray(TName name);
+
+    void ReadStartObject(TName name);
+
     void ReadStartArray();
 
     void ReadEndArray();

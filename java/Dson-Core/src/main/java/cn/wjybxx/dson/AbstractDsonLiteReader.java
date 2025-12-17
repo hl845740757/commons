@@ -416,7 +416,20 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
 
     protected abstract Timestamp doReadTimestamp();
     // endregion
+
     // region 容器
+
+    @Override
+    public void readStartArray(int name) {
+        advanceToValueState(name, DsonType.ARRAY);
+        readStartContainer(DsonContextType.ARRAY, DsonType.ARRAY);
+    }
+
+    @Override
+    public void readStartObject(int name) {
+        advanceToValueState(name, DsonType.OBJECT);
+        readStartContainer(DsonContextType.OBJECT, DsonType.OBJECT);
+    }
 
     @Override
     public void readStartArray() {
@@ -477,7 +490,8 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         if (context.contextType != contextType) {
             throw DsonIOException.contextError(contextType, context.contextType);
         }
-        if (context.state != DsonReaderState.WAIT_END_OBJECT) {
+        if (context.state != DsonReaderState.WAIT_END_OBJECT
+                && readDsonType() != DsonType.END_OF_OBJECT) {
             throw invalidState(List.of(DsonReaderState.WAIT_END_OBJECT));
         }
     }

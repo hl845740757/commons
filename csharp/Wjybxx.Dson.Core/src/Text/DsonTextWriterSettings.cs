@@ -77,7 +77,7 @@ public class DsonTextWriterSettings : DsonWriterSettings
          * 另外在美观性上也不好，比如：一个integer写到一半换行。。。
          * 另外，这个行长度是是码元计数，不是字符计数。
          */
-        public int SoftLineLength { get; set; } = 120;
+        public int SoftLineLength { get; set; } = 150;
 
         /**
          * 是否启用纯文本模式

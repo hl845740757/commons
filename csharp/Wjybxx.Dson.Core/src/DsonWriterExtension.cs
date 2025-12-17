@@ -40,17 +40,5 @@ public static class DsonWriterExtension
         writer.WriteName(name);
         writer.WriteStartObject(style);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ReadStartArray<TName>(this IDsonReader<TName> writer, TName name) where TName : IEquatable<TName> {
-        writer.ReadName(name);
-        writer.ReadStartArray();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ReadStartObject<TName>(this IDsonReader<TName> writer, TName name) where TName : IEquatable<TName> {
-        writer.ReadName(name);
-        writer.ReadStartObject();
-    }
 }
 }
