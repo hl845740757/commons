@@ -326,6 +326,16 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #region 容器
 
+    public void WriteStartArray(TName name, ObjectStyle style = ObjectStyle.Indent) {
+        WriteName(name);
+        WriteStartContainer(DsonContextType.Array, DsonType.Array, style);
+    }
+
+    public void WriteStartObject(TName name, ObjectStyle style = ObjectStyle.Indent) {
+        WriteName(name);
+        WriteStartContainer(DsonContextType.Object, DsonType.Object, style);
+    }
+
     public void WriteStartArray(ObjectStyle style) {
         WriteStartContainer(DsonContextType.Array, DsonType.Array, style);
     }

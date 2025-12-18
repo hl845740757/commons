@@ -133,6 +133,11 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     #region 容器
 
+    // 定义为扩展方法会导致Unity项目下IDE提示错误，但又能编译通过
+    void WriteStartArray(TName name, ObjectStyle style = ObjectStyle.Indent);
+
+    void WriteStartObject(TName name, ObjectStyle style = ObjectStyle.Indent);
+
     /// <summary>
     /// 开始写一个数组
     /// 1.数组内元素没有名字，因此name传 null、空字符串、0 即可
