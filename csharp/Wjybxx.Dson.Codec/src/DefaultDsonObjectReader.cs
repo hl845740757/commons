@@ -36,10 +36,6 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     // private readonly LinkedDictionary<ObjectPtr, ObjectPtr> pointerLink = new(LocalPathComparer.Inst);
     private DsonCollectionReader<string> reader;
     private ObjectPtr _stack;
-
-    private Type _rootDeclaredType;
-    private DeserializeFeatures _rootFeatures;
-    private Func<object>? _rootFactory;
     private readonly List<ObjectPtr> _listCache = new List<ObjectPtr>();
 #nullable restore
 
@@ -83,27 +79,21 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public object ReadFirst(Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        _rootDeclaredType = declaredType;
-        _rootFeatures = features;
-        _rootFactory = factory;
         ObjectPtr ptr = referenceTable.PeekFirstKey();
-        return GetReference(ptr);
+        return GetReference(ptr, declaredType, features, factory);
     }
 
     public List<T> ReadAll<T>(DeserializeFeatures features, Func<object>? factory = null) {
-        _rootDeclaredType = typeof(T);
-        _rootFeatures = features;
-        _rootFactory = factory;
         _listCache.AddRange(referenceTable.Keys); // 用于保持原始顺序
         //
         List<T> result = new List<T>(referenceTable.Count);
         foreach (ObjectPtr ptr in _listCache) {
-            result.Add((T)GetReference(ptr));
+            result.Add((T)GetReference(ptr, typeof(T), features, factory));
         }
         return result;
     }
 
-    private object GetReference(ObjectPtr ptr) {
+    private object GetReference(ObjectPtr ptr, Type declaredType, DeserializeFeatures features, Func<object>? factory) {
         ItemContext itemContext = referenceTable[ptr];
         if (itemContext.objectValue != null) {
             return itemContext.objectValue;
@@ -123,7 +113,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         _stack = itemContext.pointer;
         reader = itemContext.reader;
         // 注意：read的过程中，Current可能变更，由ReadEnd发布到目标上下文
-        return ReadObject(_rootDeclaredType, _rootFeatures, _rootFactory);
+        return ReadObject(declaredType, features, factory);
     }
 
     private void BackToPrevContext() {
@@ -342,7 +332,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             && declaredType != typeof(ObjectPath)
             && declaredType != typeof(ObjectPtr)) {
             ObjectPtr ptr = reader.ReadPtr();
-            return (T)ReadReference(ptr);
+            return (T)ReadReference(ptr, declaredType, features, factory);
         }
         // DsonValue接收原始数据
         if (!declaredType.IsValueType && typeof(DsonValue).IsAssignableFrom(declaredType)) {
@@ -371,13 +361,13 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         }
     }
 
-    private object? ReadReference(ObjectPtr rawPtr) {
+    private object? ReadReference(ObjectPtr rawPtr, Type declaredType, DeserializeFeatures features, Func<object>? factory) {
         if (rawPtr.LocalId == 0) {
             return null;
         }
         // 引用中可能包含额外数据，需要清理
         ObjectPtr ptr = new ObjectPtr(rawPtr.Collection, null, rawPtr.LocalId);
-        return referenceTable.ContainsKey(ptr) ? GetReference(ptr) : null;
+        return referenceTable.ContainsKey(ptr) ? GetReference(ptr, declaredType, features, factory) : null;
     }
 
     private static string? GetClassName(DsonValue dsonValue) {
@@ -590,8 +580,6 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         this.referenceTable.Clear();
         this.reader = null;
         _stack = default;
-        _rootDeclaredType = null;
-        _rootFactory = null;
         _listCache.Clear();
     }
 

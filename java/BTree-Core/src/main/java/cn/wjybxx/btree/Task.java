@@ -325,6 +325,11 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /** 设置为执行失败 */
+    public final void setFailed() {
+        setFailed(TaskStatus.ERROR);
+    }
+
+    /** 设置为执行失败 */
     public final void setFailed(int status) {
         if (status < TaskStatus.ERROR) {
             throw new IllegalArgumentException("status " + status);

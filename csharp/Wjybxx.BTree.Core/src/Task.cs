@@ -322,7 +322,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /** 设置为执行失败 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetFailed(int status) {
+    public void SetFailed(int status = TaskStatus.ERROR) {
         if (status < TaskStatus.ERROR) {
             throw new ArgumentException("status " + status);
         }
