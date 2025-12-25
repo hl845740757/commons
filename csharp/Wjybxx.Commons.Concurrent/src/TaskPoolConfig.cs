@@ -119,13 +119,13 @@ public static class TaskPoolConfig
         // 保底方案
         if (poolType == TaskPoolType.ValuePromise
             || poolType == TaskPoolType.PromiseMoveNext) { // await Future
-            return isIntOrObject ? 1000 : 50;
+            return isIntOrObject ? 2000 : 100;
         }
         if (poolType == TaskPoolType.CtsCompletion
             || poolType == TaskPoolType.Coroutine) {
             return 500; // 非泛型类
         }
-        return isIntOrObject ? 100 : 20;
+        return isIntOrObject ? 200 : 50;
     }
 
     /// <summary>

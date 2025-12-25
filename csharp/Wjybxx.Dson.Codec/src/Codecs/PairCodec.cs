@@ -29,7 +29,8 @@ public class PairCodec<K, V> : IDsonCodec<KeyValuePair<K, V>>
         SerializeFeatures elementFeatures = features.GetElementFeatures();
         //
         Type encoderType = typeof(KeyValuePair<K, V>);
-        if ((features & SerializeFeatures.WriteAsArray) != 0) {
+        const SerializeFeatures arrayFeatures = SerializeFeatures.WriteAsArray | SerializeFeatures.PairAsArray;
+        if ((features & arrayFeatures) != 0) {
             writer.WriteStartArray(encoderType, selfFeatures);
             writer.WriteObject(inst.Key);
             writer.WriteObject(inst.Value, elementFeatures);

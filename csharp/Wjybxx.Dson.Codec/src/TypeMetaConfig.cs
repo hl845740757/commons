@@ -219,7 +219,13 @@ public sealed class TypeMetaConfig
             config.Add(typeof(Dictionary<,>), "Dictionary", "Dictionary`2");
             config.Add(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2");
             config.Add(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2");
-            //
+            // 扩展集合
+            config.Add(typeof(ArrayDictionary<,>), "ArrayDictionary", "ArrayDictionary`2");
+            config.Add(typeof(ArrayDeque<>), "ArrayDeque", "ArrayDeque`1");
+            config.Add(typeof(MultiChunkDeque<>), "MultiChunkDeque", "MultiChunkDeque`1");
+            config.Add(typeof(DynamicArray<>), "DynamicArray", "DynamicArray`1");
+            config.Add(typeof(SmallDynamicArray<>), "SmallDynamicArray", "SmallDynamicArray`1");
+            // 不可变集合
             config.Add(typeof(ImmutableList<>), "ImmutableList", "ImmutableList`1");
             config.Add(typeof(ImmutableSet<>), "ImmutableSet", "ImmutableSet`1");
             config.Add(typeof(ImmutableDictionary<,>), "ImmutableDictionary", "ImmutableDictionary`2");

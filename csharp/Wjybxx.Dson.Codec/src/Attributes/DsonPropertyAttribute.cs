@@ -56,7 +56,7 @@ public class DsonPropertyAttribute : Attribute
     /// <summary>
     /// 反序列化特征值
     /// </summary>
-    [StableName] public SerializeFeatures DecodeFeatures { get; set; }
+    [StableName] public DeserializeFeatures DecodeFeatures { get; set; }
 
     #region 多态解析
 

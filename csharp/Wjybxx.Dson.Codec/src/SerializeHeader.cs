@@ -59,8 +59,8 @@ public struct SerializeHeader
     /// <summary>
     /// 是否为空
     /// </summary>
-    public bool isEmpty => string.IsNullOrEmpty(collection)
-                           && localId == 0
+    public bool IsEmpty => localId == 0
+                           && string.IsNullOrEmpty(collection)
                            && string.IsNullOrEmpty(clsName)
                            && count == 0
                            && version == 0;

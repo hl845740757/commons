@@ -35,7 +35,7 @@ namespace Wjybxx.Dson.Codec
 public enum SerializeFeatures : uint
 {
     /// <summary>
-    /// 序列化为引用，
+    /// 序列化为引用
     ///
     /// 1.支持字段 + 类型配置，等效<see cref="Wjybxx.Commons.SerializeReference"/>注解。
     /// 2.不可修改枚举数，代码生成器存在依赖。

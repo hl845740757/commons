@@ -1181,6 +1181,20 @@ public abstract class Task<T> implements ICancelTokenListener {
         child.cancelToken = null;
     }
 
+    /** 自下而上查找第一个指定类型的祖先节点 */
+    public <U> U getFirstAncestorOfType(Class<U> type) {
+        Task<?> control = this.control;
+        if (type.isAssignableFrom(control.getClass())) {
+            return (U) control;
+        }
+        while ((control = control.control) != null) {
+            if (type.isAssignableFrom(control.getClass())) {
+                return (U) control;
+            }
+        }
+        return null;
+    }
+
     /** 停止目标任务 */
     public static void stop(@Nullable Task<?> task) {
         if (task != null && task.status == TaskStatus.RUNNING) {
@@ -1247,5 +1261,5 @@ public abstract class Task<T> implements ICancelTokenListener {
         this.flags = flags;
     }
 
-// endregion
+    // endregion
 }

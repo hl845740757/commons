@@ -414,7 +414,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         TypeWritePolicy typePolicy = converter.Options.typeWritePolicy;
         bool typed = (features & SerializeFeatures.WriteTypeName) != 0
                      || converter.TypeWriteHelper.RequireTypeName(typePolicy, encoderType, declaredType);
-        bool headerIsEmpty = header.isEmpty;
+        bool headerIsEmpty = header.IsEmpty;
         if (!typed && headerIsEmpty) {
             return;
         }

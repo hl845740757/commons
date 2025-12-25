@@ -1178,6 +1178,20 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         child.cancelToken = null;
     }
 
+    /** 自相而上查找第一个指定类型的祖先节点 */
+    public U? GetFirstAncestorOfType<U>() where U : class {
+        Task<T> control = Control;
+        if (control is U ancestor) {
+            return ancestor;
+        }
+        while ((control = control.Control) != null) {
+            if (control is U ancestor2) {
+                return ancestor2;
+            }
+        }
+        return null;
+    }
+
     /** 停止目标任务 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Stop(Task<T>? task) {

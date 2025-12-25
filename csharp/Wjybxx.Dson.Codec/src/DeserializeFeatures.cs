@@ -44,6 +44,10 @@ public enum DeserializeFeatures
     /// 数字类型尝试从字符串中解析（字段级别）
     /// </summary>
     TryParseString = 0x04,
+    /// <summary>
+    /// 拷贝引用指向的对象(未实现)
+    /// </summary>
+    CopyReferenceTarget = 0x08,
 
     /// <summary>
     /// 不跳过Null字段赋值
