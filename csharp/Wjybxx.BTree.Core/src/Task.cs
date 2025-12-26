@@ -121,7 +121,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 任务运行时的控制信息(bits) -- 每次运行时会重置，仅保留override信息 */
     [NonSerialized] private int ctl;
     /** 重入Id，只增不减 -- 用于事件驱动下检测冲突（递归）；reset时不重置，甚至也增加 */
-    [NonSerialized] private short reentryId;
+    [NonSerialized] private int reentryId;
 
     /// <summary>
     /// 节点的名字
@@ -162,6 +162,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     public Task<T> Control => control;
 
     public T Blackboard {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => blackboard;
         set => blackboard = value;
     }
@@ -779,7 +780,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         initMask |= (prevStatus << OFFSET_PREV_STATUS);
         ctl = initMask;
         status = TaskStatus.RUNNING; // 先更新为running状态，以避免执行过程中外部查询task的状态时仍处于上一次的结束status
-        short reentryId = ++this.reentryId; // 和上次执行的exit分开
+        int reentryId = ++this.reentryId; // 和上次执行的exit分开
         // beforeEnter
         if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {
             BeforeEnter(); // 这里用户可能修改控制流标记
@@ -841,7 +842,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
-        short reentryId = this.reentryId;
+        int reentryId = this.reentryId;
         Execute();
         if (reentryId != this.reentryId) {
             return;
@@ -868,8 +869,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return;
         }
         // 如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号
-        short sourceReentryId = source.reentryId;
-        short reentryId = this.reentryId;
+        int sourceReentryId = source.reentryId;
+        int reentryId = this.reentryId;
         // 内联template_execute逻辑
         {
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {

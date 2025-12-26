@@ -41,7 +41,7 @@ public class ObjectPool<T> : IObjectPool<T>
     private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
 
-    private readonly int _poolSize;
+    private int _poolSize;
     private readonly Stack<T> _freeObjects;
 
     /// <summary>
@@ -59,7 +59,18 @@ public class ObjectPool<T> : IObjectPool<T>
         this._freeObjects = new Stack<T>(poolSize / 2);
     }
 
-    public int PoolSize => _poolSize;
+    /// <summary>
+    /// 对象池大小
+    /// </summary>
+    public int PoolSize {
+        get => _poolSize;
+        set {
+            _poolSize = Math.Max(0, value);
+            while (_freeObjects.Count > _poolSize) {
+                _freeObjects.Pop();
+            }
+        }
+    }
 
     public T Acquire() {
         if (_freeObjects.TryPop(out T result)) {
