@@ -71,11 +71,15 @@ public enum DeserializeFeatures
     /// 空字符串转换为Null值（对应序列化特征值）
     /// </summary>
     EmptyStringAsNull = 0x20 << 8,
+    /// <summary>
+    /// 字符串放入常量池
+    /// </summary>
+    InternedString = 0x40 << 8,
 
     /// <summary>
     /// 集合元素的特征值
     /// </summary>
     MaskElementFeatures = EnumIgnoreCase | TryParseString
-                                         | EmptyStringAsEmpty | EmptyStringAsNull
+                                         | EmptyStringAsEmpty | EmptyStringAsNull | InternedString
 }
 }

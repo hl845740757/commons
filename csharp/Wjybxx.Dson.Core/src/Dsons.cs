@@ -364,6 +364,10 @@ public static class Dsons
         while ((dsonType = reader.ReadDsonType()) != DsonType.EndOfObject) {
             if (dsonType == DsonType.Header) {
                 ReadHeader(reader, dsonObject.Header);
+                int count = GetCount(dsonObject.Header);
+                if (count > 0) {
+                    dsonObject.EnsureCapacity(count);
+                }
             } else {
                 name = reader.ReadName();
                 value = ReadDsonValue(reader);
@@ -395,6 +399,10 @@ public static class Dsons
         while ((dsonType = reader.ReadDsonType()) != DsonType.EndOfObject) {
             if (dsonType == DsonType.Header) {
                 ReadHeader(reader, dsonArray.Header);
+                int count = GetCount(dsonArray.Header);
+                if (count > 0) {
+                    dsonArray.EnsureCapacity(count);
+                }
             } else {
                 value = ReadDsonValue(reader);
                 dsonArray.Add(value);
@@ -433,6 +441,14 @@ public static class Dsons
         }
         reader.ReadEndHeader();
         return header;
+    }
+
+    private static int GetCount<TName>(DsonHeader<TName> header) where TName : IEquatable<TName> {
+        if (header is DsonHeader<string> header1
+            && header1.TryGetValue(DsonHeader.Names_Count, out DsonValue boxedCount)) {
+            return boxedCount.AsNumber().IntValue;
+        }
+        return 0;
     }
 
     public static void WriteDsonValue<TName>(IDsonWriter<TName> writer, DsonValue dsonValue, TName? name) where TName : IEquatable<TName> {

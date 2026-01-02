@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson
 {
@@ -48,6 +49,12 @@ public abstract class AbstractDsonArray : DsonValue, IList<DsonValue>, IEquatabl
 
     /** 勿修改Values内容 */
     public IList<DsonValue> Values => _values;
+
+    public void EnsureCapacity(int capacity) {
+        if (_values is List<DsonValue> list) {
+            CollectionUtil.EnsureCapacity(list, capacity);
+        }
+    }
 
     #region 元素检查
 

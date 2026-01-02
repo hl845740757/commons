@@ -148,6 +148,22 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// 通过索引区间获取子字符串。
+    /// C#的字符串接口和Java差异较大，这里提供一个适配方法。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string Substring2(this string value, int start, int end, RangeMode mode) {
+        return mode switch
+        {
+            RangeMode.Closed => value.Substring(start, end - start + 1),
+            RangeMode.Open => value.Substring(start + 1, end - start - 1),
+            RangeMode.LeftClosed => value.Substring(start, end - start),
+            RangeMode.LeftOpen => value.Substring(start + 1, end - start),
+            _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+        };
+    }
+
+    /// <summary>
     /// 该接口用于统一API -- 避免一会用原生API，一会儿用自定义API
     /// </summary>
     /// <param name="value"></param>
@@ -184,6 +200,23 @@ public static class ObjectUtil
             sb.Append(char.ConvertFromUtf32(codePoint));
         }
         return sb;
+    }
+
+    public static int IndexOf(this StringBuilder sb, char c, int index = 0) {
+        for (; index < sb.Length; index++) {
+            if (sb[index] == c) return index;
+        }
+        return -1;
+    }
+
+    public static int LastIndexOf(this StringBuilder sb, char c, int index = -1) {
+        if (index == -1 || index >= sb.Length) {
+            index = sb.Length - 1;
+        }
+        for (; index >= 0; index--) {
+            if (sb[index] == c) return index;
+        }
+        return -1;
     }
 
     /// <summary>
@@ -355,7 +388,7 @@ public static class ObjectUtil
         }
         return -1;
     }
-    
+
     /// <summary>
     /// 删除字符串中的空白字符
     /// </summary>

@@ -133,17 +133,20 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     private static SerializeHeader ReadHeader(DsonValue container) {
+        SerializeHeader header = default;
         DsonHeader<string> dsonHeader;
         if (container is DsonObject<string> dsonObject) {
             dsonHeader = dsonObject.Header;
+            header.count = dsonObject.Count; // 忽略header中的count，更精确
         } else {
-            dsonHeader = container.AsArray().Header;
+            DsonArray<string> dsonArray = container.AsArray();
+            dsonHeader = dsonArray.Header;
+            header.count = dsonArray.Count;
         }
         if (dsonHeader.IsEmpty) {
-            return default;
+            return header;
         }
         // DsonHeader使用的是ArrayDictionary，查询效率不好
-        SerializeHeader header = default;
         foreach (var pair in dsonHeader) {
             DsonValue value = pair.Value;
             switch (pair.Key) {
@@ -157,10 +160,6 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
                 }
                 case DsonHeader.Names_Collection: {
                     header.collection = value.AsString();
-                    break;
-                }
-                case DsonHeader.Names_Count: {
-                    header.count = value.AsNumber().IntValue;
                     break;
                 }
                 case DsonHeader.Names_Version: {
