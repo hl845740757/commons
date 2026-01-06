@@ -71,6 +71,10 @@ public class ObjectPool<T> : IObjectPool<T>
             }
         }
     }
+    /// <summary>
+    /// 可用对象数
+    /// </summary>
+    public int FreeCount => _freeObjects.Count;
 
     public T Acquire() {
         if (_freeObjects.TryPop(out T result)) {

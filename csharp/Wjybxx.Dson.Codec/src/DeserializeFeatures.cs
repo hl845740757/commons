@@ -48,7 +48,12 @@ public enum DeserializeFeatures
     /// 拷贝引用指向的对象(未实现)
     /// </summary>
     CopyReferenceTarget = 0x08,
+    /// <summary>
+    /// 被动随机读(可减少缓冲区分配)
+    /// </summary>
+    PassiveRandomRead = 0x10,
 
+    // null和零值暂未生效
     /// <summary>
     /// 不跳过Null字段赋值
     /// </summary>
@@ -66,6 +71,10 @@ public enum DeserializeFeatures
     /// </summary>
     SkipZeroValue = 0x04 << 8,
 
+    // 字符串特征值未生效
+    /// <summary>
+    /// 保持空字符串为空字符串
+    /// </summary>
     EmptyStringAsEmpty = 0x10 << 8,
     /// <summary>
     /// 空字符串转换为Null值（对应序列化特征值）

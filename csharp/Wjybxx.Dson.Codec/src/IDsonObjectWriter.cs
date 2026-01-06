@@ -162,20 +162,20 @@ public interface IDsonObjectWriter : IDisposable
     /// </summary>
     /// <param name="encoderType">类型信息，用于嵌套对象获取信息</param>
     /// <param name="features">主要用于计算Style</param>
-    void WriteStartObject(Type? encoderType, SerializeFeatures features);
+    void WriteStartObject(Type? encoderType, SerializeFeatures features = default);
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="typeMeta">类型信息，用于嵌套对象获取信息</param>
     /// <param name="features">主要用于计算Style</param>
-    void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features);
+    void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features = default);
 
     void WriteEndObject();
 
-    void WriteStartArray(Type encoderType, SerializeFeatures features);
+    void WriteStartArray(Type encoderType, SerializeFeatures features = default);
 
-    void WriteStartArray(TypeMeta typeMeta, SerializeFeatures features);
+    void WriteStartArray(TypeMeta typeMeta, SerializeFeatures features = default);
 
     void WriteEndArray();
 

@@ -181,15 +181,16 @@ public interface IDsonObjectReader : IDisposable
     /// 虽然目前来看，encoderType(TypeMeta)并非必要属性，但还是建议用户正确传入
     /// </summary>
     /// <param name="encoderType">类型信息，用于嵌套对象获取信息</param>
-    SerializeHeader ReadStartObject(Type encoderType);
+    /// <param name="features">反序列化特征值</param>
+    SerializeHeader ReadStartObject(Type encoderType, DeserializeFeatures features = default);
 
-    SerializeHeader ReadStartObject(TypeMeta? typeMeta);
+    SerializeHeader ReadStartObject(TypeMeta? typeMeta, DeserializeFeatures features = default);
 
     void ReadEndObject();
 
-    SerializeHeader ReadStartArray(Type encoderType);
+    SerializeHeader ReadStartArray(Type encoderType, DeserializeFeatures features = default);
 
-    SerializeHeader ReadStartArray(TypeMeta typeMeta);
+    SerializeHeader ReadStartArray(TypeMeta typeMeta, DeserializeFeatures features = default);
 
     void ReadEndArray();
 

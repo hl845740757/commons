@@ -143,7 +143,8 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
         DsonType containerType = reader.CurrentDsonType;
         if (containerType == DsonType.Object) {
-            reader.ReadStartObject(GetEncoderType());
+            bool randomRead = (_overrides & MASK_READ_FIELD) != 0;
+            reader.ReadStartObject(GetEncoderType(), randomRead ? DeserializeFeatures.PassiveRandomRead : 0);
         } else {
             reader.ReadStartArray(GetEncoderType());
         }

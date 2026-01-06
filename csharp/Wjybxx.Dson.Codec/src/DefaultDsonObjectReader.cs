@@ -194,11 +194,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public string? ReadString(string name, DeserializeFeatures features) {
-        string value = ReadName(name) ? DsonCodecHelper.ReadString(reader, name) : null;
-        if (value != null && value.Length == 0 && IsReadEmptyStringAsNull(features)) {
-            return null;
-        }
-        return value;
+        return ReadName(name) ? DsonCodecHelper.ReadString(reader, name) : null;
     }
 
     public void ReadNull(string name) {
@@ -257,11 +253,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public string? ReadString(DeserializeFeatures features) {
-        string value = DsonCodecHelper.ReadString(reader, null);
-        if (value != null && value.Length == 0 && IsReadEmptyStringAsNull(features)) {
-            return null;
-        }
-        return value;
+        return DsonCodecHelper.ReadString(reader, null);
     }
 
     public void ReadNull() {
@@ -470,23 +462,27 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     public DsonType CurrentDsonType => reader.CurrentDsonType;
     public string CurrentName => reader.CurrentName;
 
-    public SerializeHeader ReadStartObject(Type encoderType) {
+    public SerializeHeader ReadStartObject(Type encoderType, DeserializeFeatures features) {
         TypeMeta? typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
-        return ReadStartObject(typeMeta);
+        return ReadStartObject(typeMeta, features);
     }
 
-    public SerializeHeader ReadStartObject(TypeMeta? typeMeta) {
+    public SerializeHeader ReadStartObject(TypeMeta? typeMeta, DeserializeFeatures features) {
         reader.ReadStartObject();
         if (reader.PeekDsonType() == DsonType.Header) {
             reader.ReadDsonType();
             reader.SkipValue();
         }
         //
-        Context context = contextPool.Acquire();
-        context.SetKeySet(reader.Keys());
-        context.typeMeta = typeMeta;
-        reader.SetKeyItr(context, DsonNull.NULL);
-        reader.Attach(context);
+        if ((features & DeserializeFeatures.PassiveRandomRead) == 0) {
+            Context context = contextPool.Acquire();
+            context.typeMeta = typeMeta;
+            context.SetKeySet(reader.Keys());
+            reader.SetKeyItr(context, DsonNull.NULL);
+            reader.Attach(context);
+        } else {
+            reader.Attach(typeMeta);
+        }
         //
         if (reader.ContextDepth == 1) {
             ItemContext itemContext = referenceTable[_stack];
@@ -497,21 +493,20 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public void ReadEndObject() {
-        // 需要在readEndObject之前保存下来
-        Context context = (Context)reader.Attachment();
+        if (reader.Attach(null) is Context context) {
+            contextPool.Release(context);
+        }
         reader.SkipToEndOfObject();
         reader.ReadEndObject();
-        //
-        contextPool.Release(context);
         BackToPrevContext();
     }
 
-    public SerializeHeader ReadStartArray(Type encoderType) {
+    public SerializeHeader ReadStartArray(Type encoderType, DeserializeFeatures features) {
         TypeMeta? typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
-        return ReadStartArray(typeMeta);
+        return ReadStartArray(typeMeta, features);
     }
 
-    public SerializeHeader ReadStartArray(TypeMeta? typeMeta) {
+    public SerializeHeader ReadStartArray(TypeMeta? typeMeta, DeserializeFeatures features) {
         reader.ReadStartArray();
         if (reader.PeekDsonType() == DsonType.Header) {
             reader.ReadDsonType();
@@ -551,10 +546,12 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
     public TypeMeta? ContainerTypeMeta {
         get {
-            if (reader.Attachment() is Context context) {
-                return context.typeMeta;
-            }
-            return reader.Attachment() as TypeMeta;
+            return reader.Attachment() switch
+            {
+                TypeMeta typeMeta => typeMeta,
+                Context context => context.typeMeta,
+                _ => null
+            };
         }
     }
 
