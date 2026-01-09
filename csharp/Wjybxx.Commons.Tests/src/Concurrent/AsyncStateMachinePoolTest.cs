@@ -26,14 +26,14 @@ public class AsyncStateMachinePoolTest
     [Test]
     public void Test() {
         int expected = 100;
-        TaskPoolConfig.AddPoolConfig<AsyncStateMachinePoolTest, int>(TaskPoolType.ValueFutureStateMachineTask, expected);
-        int poolSize = TaskPoolConfig.GetPoolSize<AsyncStateMachinePoolTest, int>(TaskPoolType.ValueFutureStateMachineTask);
+        TaskPoolConfig.AddPoolConfig<AsyncStateMachinePoolTest, int>(expected);
+        int poolSize = TaskPoolConfig.GetPoolSize<AsyncStateMachinePoolTest, int>();
         Assert.AreEqual(expected, poolSize);
-        
+
         TaskPoolConfig.AddPoolConfig<int>(TaskPoolType.ValuePromise, expected);
         poolSize = TaskPoolConfig.GetPoolSize<int>(TaskPoolType.ValuePromise);
         Assert.AreEqual(expected, poolSize);
-        
+
         TaskPoolConfig.AddPoolConfig(TaskPoolType.Coroutine, 0);
         poolSize = TaskPoolConfig.GetPoolSize<int>(TaskPoolType.Coroutine);
         Assert.AreEqual(0, poolSize);

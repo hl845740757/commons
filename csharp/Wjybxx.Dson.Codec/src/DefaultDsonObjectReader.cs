@@ -146,27 +146,24 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         if (dsonHeader.IsEmpty) {
             return header;
         }
-        // DsonHeader使用的是ArrayDictionary，查询效率不好
-        foreach (var pair in dsonHeader) {
-            DsonValue value = pair.Value;
-            switch (pair.Key) {
-                case DsonHeader.Names_ClassName: {
-                    header.clsName = value.AsString();
-                    break;
-                }
-                case DsonHeader.Names_LocalId: {
-                    header.localId = value.AsNumber().LongValue;
-                    break;
-                }
-                case DsonHeader.Names_Collection: {
-                    header.collection = value.AsString();
-                    break;
-                }
-                case DsonHeader.Names_Version: {
-                    header.version = value.AsNumber().IntValue;
-                    break;
-                }
-            }
+        // DsonHeader使用的是ArrayDictionary，查询效率其实不太好，但我们绝大多数header只有clsName，因此通过read计数优化
+        DsonValue dsonValue;
+        int read = 0;
+        if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_ClassName, out dsonValue)) {
+            header.clsName = dsonValue.AsString();
+            read++;
+        }
+        if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_LocalId, out dsonValue)) {
+            header.localId = dsonValue.AsNumber().LongValue;
+            read++;
+        }
+        if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Collection, out dsonValue)) {
+            header.collection = dsonValue.AsString();
+            read++;
+        }
+        if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Version, out dsonValue)) {
+            header.version = dsonValue.AsNumber().IntValue;
+            read++;
         }
         return header;
     }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -47,6 +48,37 @@ public static class TaskPoolConfig
     }
 
     /// <summary>
+    /// 精确设置某类池的大小
+    /// </summary>
+    /// <param name="poolType">对象池类型</param>
+    /// <param name="poolSize">int和object类型的池大小</param>
+    /// <param name="poolSize2">其它类型的池大小</param>
+    /// <typeparam name="T">结果类型</typeparam>
+    public static void AddPoolConfig<T>(TaskPoolType poolType, int poolSize, int? poolSize2 = null) {
+        Key key = new Key(poolType, typeof(T));
+        Item item = new Item(poolSize, poolSize2 ?? poolSize / 4);
+        configDic[key] = item;
+    }
+
+    /// <summary>
+    /// 精确设置某状态机池的大小
+    /// </summary>
+    /// <param name="poolSize">对象池大小</param>
+    /// <param name="poolSize2">对象池大小</param>
+    /// <typeparam name="S">状态机归属的顶层类</typeparam>
+    /// <typeparam name="T">状态机执行结果</typeparam>
+    public static void AddPoolConfig<S, T>(int poolSize, int? poolSize2 = null) {
+        Type topLevelType = typeof(S);
+        while (topLevelType.IsNested) {
+            topLevelType = topLevelType.DeclaringType!;
+        }
+        string ns = topLevelType.Namespace + "." + ObjectUtil.GetSimpleName(topLevelType);
+        Key key = new Key(TaskPoolType.StateMachineTask, ns, typeof(T));
+        Item item = new Item(poolSize, poolSize2 ?? poolSize / 4);
+        configDic[key] = item;
+    }
+
+    /// <summary>
     /// 通过命名空间或类全限定名设置对象池的大小，适用于状态机
     /// </summary>
     /// <param name="poolType">对象池类型</param>
@@ -57,46 +89,6 @@ public static class TaskPoolConfig
         if (ns == null) throw new ArgumentNullException(nameof(ns));
         Key key = new Key(poolType, ns, null);
         Item item = new Item(poolSize, poolSize2 ?? poolSize / 4);
-        configDic[key] = item;
-    }
-
-    /// <summary>
-    /// 精确设置某类池的大小
-    /// </summary>
-    /// <param name="poolType">对象池类型</param>
-    /// <param name="poolSize">int和object类型的池大小</param>
-    /// <param name="poolSize2">其它类型的池大小</param>
-    /// <typeparam name="T">如果是状态机池，泛型参数为状态机的顶级类</typeparam>
-    public static void AddPoolConfig<T>(TaskPoolType poolType, int poolSize, int? poolSize2 = null) {
-        Type type = typeof(T);
-        if (poolType == TaskPoolType.ValueFutureStateMachineTask) {
-            while (type.IsNested) {
-                type = type.DeclaringType!;
-            }
-            string ns = type.Namespace + "." + ObjectUtil.GetSimpleName(type);
-            AddPoolConfig(poolType, ns, poolSize, poolSize2);
-            return;
-        }
-        Key key = new Key(poolType, type);
-        Item item = new Item(poolSize, 0);
-        configDic[key] = item;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="poolType">对象池类型</param>
-    /// <param name="poolSize">对象池大小</param>
-    /// <typeparam name="S">状态机归属的顶层类</typeparam>
-    /// <typeparam name="T">状态机执行结果</typeparam>
-    public static void AddPoolConfig<S, T>(TaskPoolType poolType, int poolSize) {
-        Type topLevelType = typeof(S);
-        while (topLevelType.IsNested) {
-            topLevelType = topLevelType.DeclaringType!;
-        }
-        string ns = topLevelType.Namespace + "." + ObjectUtil.GetSimpleName(topLevelType);
-        Key key = new Key(poolType, ns, typeof(T));
-        Item item = new Item(poolSize, 0);
         configDic[key] = item;
     }
 
@@ -118,8 +110,8 @@ public static class TaskPoolConfig
         }
         // 保底方案
         if (poolType == TaskPoolType.ValuePromise
-            || poolType == TaskPoolType.PromiseMoveNext) { // await Future
-            return isIntOrObject ? 2000 : 100;
+            || poolType == TaskPoolType.PromiseMoveNext) {
+            return isIntOrObject ? 1000 : 100;
         }
         if (poolType == TaskPoolType.CtsCompletion
             || poolType == TaskPoolType.Coroutine) {
@@ -130,24 +122,23 @@ public static class TaskPoolConfig
 
     /// <summary>
     /// 获取对象池的缓存池大小。
+    /// 
+    /// 注：根据状态机的顶层类配置分配大小。
     /// </summary>
-    /// <param name="poolType">对象池类型</param>
     /// <typeparam name="S">状态机或状态机归属的顶层类</typeparam>
     /// <typeparam name="T">状态机执行结果</typeparam>
     /// <returns></returns>
-    public static int GetPoolSize<S, T>(TaskPoolType poolType) {
-        bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
-        if (poolType == TaskPoolType.ValueFutureStateMachineTask) { // await ValueFuture
-            Type topLevelType = typeof(S);
-            while (topLevelType.IsNested) {
-                topLevelType = topLevelType.DeclaringType!;
-            }
-            if (GetItem(poolType, topLevelType, typeof(T), out Item item, out bool precise)) {
-                return (precise || isIntOrObject) ? item.poolSize : item.poolSize2;
-            }
-            return isIntOrObject ? 200 : 50;
+    public static int GetPoolSize<S, T>() {
+        Type topLevelType = typeof(S);
+        while (topLevelType.IsNested) {
+            topLevelType = topLevelType.DeclaringType!;
         }
-        return isIntOrObject ? 100 : 20;
+        if (GetItem(TaskPoolType.StateMachineTask, topLevelType, typeof(T), out Item item, out bool precise)) {
+            bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
+            return (precise || isIntOrObject) ? item.poolSize : item.poolSize2;
+        }
+        // 考虑到为每一个FSM都创建对象池会导致巨大的对象池系统，因此没有配置的情况下不再分配
+        return 0;
     }
 
     private static bool GetItem(TaskPoolType poolType, Type resultType,
@@ -207,7 +198,7 @@ public static class TaskPoolConfig
     {
         private readonly TaskPoolType _poolType;
         private readonly Type? _type;
-        private readonly string? _name;
+        private readonly string? _name; // 类型名或命名空间
 
         public Key(TaskPoolType poolType, Type? type) : this() {
             _poolType = poolType;
@@ -252,7 +243,7 @@ public enum TaskPoolType
     /// <summary>
     /// ValueFuture状态机任务
     /// </summary>
-    ValueFutureStateMachineTask,
+    StateMachineTask,
 
     /// <summary>
     /// 最基础的<see cref="ValuePromise{T}"/>回调

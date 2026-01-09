@@ -70,7 +70,7 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
     private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>? POOL;
 
     static ValueFutureStateMachineTask() {
-        int poolSize = TaskPoolConfig.GetPoolSize<S, T>(TaskPoolType.ValueFutureStateMachineTask);
+        int poolSize = TaskPoolConfig.GetPoolSize<S, T>();
         if (poolSize > 0) {
             POOL = new ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>(
                 () => new ValueFutureStateMachineTask<S, T>(),
