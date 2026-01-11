@@ -164,7 +164,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public void run() {
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
-        if (cancelToken.isCancelRequested()) {
+        if (cancelToken.isRequested()) {
             promise.trySetCancelled(cancelToken.cancelCode());
             return;
         }

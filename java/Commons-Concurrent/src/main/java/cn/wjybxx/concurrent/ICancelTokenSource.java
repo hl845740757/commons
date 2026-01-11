@@ -16,6 +16,9 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.CancelCodeBuilder;
+import cn.wjybxx.base.concurrent.CancelCodes;
+
 /**
  * 取消令牌源由任务的创建者（发起者）持有，具备取消权限。
  *

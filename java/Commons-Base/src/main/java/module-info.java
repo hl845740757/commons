@@ -10,6 +10,7 @@ module wjybxx.commons.base {
     exports cn.wjybxx.base;
     exports cn.wjybxx.base.annotation;
     exports cn.wjybxx.base.collection;
+    exports cn.wjybxx.base.concurrent;
     exports cn.wjybxx.base.fx;
     exports cn.wjybxx.base.ex;
     exports cn.wjybxx.base.function;
@@ -23,6 +24,7 @@ module wjybxx.commons.base {
     opens cn.wjybxx.base;
     opens cn.wjybxx.base.annotation;
     opens cn.wjybxx.base.collection;
+    opens cn.wjybxx.base.concurrent;
     opens cn.wjybxx.base.fx;
     opens cn.wjybxx.base.ex;
     opens cn.wjybxx.base.function;

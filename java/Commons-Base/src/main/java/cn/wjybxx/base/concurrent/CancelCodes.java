@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
+package cn.wjybxx.base.concurrent;
 
 /**
  * 取消码辅助类

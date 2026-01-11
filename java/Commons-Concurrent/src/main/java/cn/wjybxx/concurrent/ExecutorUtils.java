@@ -517,10 +517,10 @@ public class ExecutorUtils {
             return false;
         }
         if (ctx instanceof ICancelToken cancelToken) {
-            return cancelToken.isCancelRequested();
+            return cancelToken.isRequested();
         }
         if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken().isCancelRequested();
+            return ctx2.cancelToken().isRequested();
         }
         return false;
     }
@@ -607,7 +607,7 @@ public class ExecutorUtils {
                 this.action = null;
                 this.cancelToken = null;
             }
-            if (cancelToken != null && cancelToken.isCancelRequested()) {
+            if (cancelToken != null && cancelToken.isRequested()) {
                 return; // 抛出异常没有意义，检测信号即可
             }
             action.run();

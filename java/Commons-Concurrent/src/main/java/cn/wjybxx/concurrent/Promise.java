@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
 
@@ -1582,7 +1583,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -1636,7 +1637,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -1692,7 +1693,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -1747,7 +1748,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -1806,7 +1807,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -1856,7 +1857,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -1907,7 +1908,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -1957,7 +1958,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -2010,7 +2011,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -2062,7 +2063,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }
@@ -2115,7 +2116,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
-                if (cancelToken.isCancelRequested()) {
+                if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
                 }

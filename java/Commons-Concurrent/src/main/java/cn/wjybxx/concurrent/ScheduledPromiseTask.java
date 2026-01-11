@@ -20,6 +20,7 @@ import cn.wjybxx.base.BitFlags;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import javax.annotation.Nonnull;
@@ -231,7 +232,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         // 先检测取消
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
-        if (cancelToken.isCancelRequested()) {
+        if (cancelToken.isRequested()) {
             trySetCancelled(promise, cancelToken.cancelCode());
             return false;
         }
@@ -274,7 +275,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             FutureLogger.logCause(ex, "periodic task caught exception");
         }
         // 任务执行后检测取消
-        if (cancelToken.isCancelRequested() || !promise.isComputing()) {
+        if (cancelToken.isRequested() || !promise.isComputing()) {
             trySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
             return false;
         }

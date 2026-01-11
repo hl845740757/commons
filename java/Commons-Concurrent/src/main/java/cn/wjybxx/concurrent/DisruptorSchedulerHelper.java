@@ -19,6 +19,7 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.time.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -86,7 +87,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
         assert eventLoop.inEventLoop() && futureTask.getId() >= 0;
         ICancelToken cancelToken = futureTask.getCancelToken();
         // 检测取消和关闭，避免不必要的启动和停止(监听器)
-        if (eventLoop.isShutdown() || cancelToken.isCancelRequested()) {
+        if (eventLoop.isShutdown() || cancelToken.isRequested()) {
             int cancelCode = eventLoop.isShutdown() ? CancelCodes.REASON_SHUTDOWN : cancelToken.cancelCode();
             futureTask.cancel(cancelCode);
             ScheduledPromiseTask.release(futureTask);

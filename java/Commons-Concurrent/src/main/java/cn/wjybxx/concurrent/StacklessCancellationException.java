@@ -15,6 +15,8 @@
  */
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.BetterCancellationException;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.ex.NoLogRequiredException;
 
 /**

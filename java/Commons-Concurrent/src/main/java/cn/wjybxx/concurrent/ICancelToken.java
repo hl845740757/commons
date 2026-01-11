@@ -18,6 +18,8 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.Registration;
+import cn.wjybxx.base.concurrent.BetterCancellationException;
+import cn.wjybxx.base.concurrent.CancelCodes;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
@@ -103,7 +105,7 @@ public interface ICancelToken {
      * 是否已收到取消信号
      * 任务的执行者将持有该令牌，在调度任务前会检测取消信号；如果任务已经开始，则由用户的任务自身检测取消和中断信号。
      */
-    default boolean isCancelRequested() {
+    default boolean isRequested() {
         return cancelCode() != 0;
     }
 

@@ -20,11 +20,6 @@
             <artifactId>commons-base</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>commons-concurrent</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>

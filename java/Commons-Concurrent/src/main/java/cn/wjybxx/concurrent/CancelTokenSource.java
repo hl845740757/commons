@@ -19,6 +19,9 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.IPooledCloseable;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.Registration;
+import cn.wjybxx.base.concurrent.BetterCancellationException;
+import cn.wjybxx.base.concurrent.CancelCodeBuilder;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import javax.annotation.Nullable;
@@ -211,7 +214,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     @Override
-    public boolean isCancelRequested() {
+    public boolean isRequested() {
         return code != 0;
     }
 
@@ -259,7 +262,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAccept(Executor executor, Consumer<? super ICancelToken> action,
                                     int options) {
         Objects.requireNonNull(action);
-        if (isCancelRequested() && executor == null) {
+        if (isRequested() && executor == null) {
             Completion.fireNow(this, TYPE_ACCEPT, action, null);
             return Registration.CLOSED;
         }
@@ -296,7 +299,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super ICancelToken, Object> action,
                                        Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (isCancelRequested() && executor == null) {
+        if (isRequested() && executor == null) {
             Completion.fireNow(this, TYPE_ACCEPT_CTX, action, ctx);
             return Registration.CLOSED;
         }
@@ -332,7 +335,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRun(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(action);
-        if (isCancelRequested() && executor == null) {
+        if (isRequested() && executor == null) {
             Completion.fireNow(this, TYPE_RUN, action, null);
             return Registration.CLOSED;
         }
@@ -368,7 +371,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRunCtx(Executor executor, Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (isCancelRequested() && executor == null) {
+        if (isRequested() && executor == null) {
             Completion.fireNow(this, TYPE_RUN_CTX, action, ctx);
             return Registration.CLOSED;
         }
@@ -403,7 +406,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     private IRegistration uniNotify(Executor executor, ICancelTokenListener listener, Object ctx, int options) {
-        if (isCancelRequested() && executor == null) {
+        if (isRequested() && executor == null) {
             Completion.fireNow(this, TYPE_NOTIFY, listener, ctx);
             return Registration.CLOSED;
         }
@@ -455,10 +458,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private Registration pushCompletion(Completion newHead) {
         ICancelToken cancelToken = ExecutorUtils.getCancelToken(newHead.ctx, newHead.options);
-        if (cancelToken.isCancelRequested()) {
+        if (cancelToken.isRequested()) {
             return Registration.CLOSED;
         }
-        if (isCancelRequested()) {
+        if (isRequested()) {
             newHead.tryFire(SYNC);
             return Registration.CLOSED;
         }
@@ -467,7 +470,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         enterLock();
         outer:
         try {
-            if (isCancelRequested()) {
+            if (isRequested()) {
                 registration = Registration.CLOSED;
                 break outer;
             }
