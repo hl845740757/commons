@@ -127,7 +127,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     public int CancelCode => code;
 
-    public bool IsCancelRequested => code != 0;
+    public bool IsRequested => code != 0;
 
     public int Reason => CancelCodes.GetReason(code);
 
@@ -155,7 +155,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private Registration PushUniAccept(IExecutor? executor, Action<ICancelToken> action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
+        if (IsRequested && executor == null) {
             Completion.FireNow(this, TYPE_ACCEPT, action, null);
             return Registration.Closed;
         }
@@ -178,7 +178,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private Registration PushUniAcceptCtx(IExecutor? executor, Action<ICancelToken, object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
+        if (IsRequested && executor == null) {
             Completion.FireNow(this, TYPE_ACCEPT_CTX, action, state);
             return Registration.Closed;
         }
@@ -201,7 +201,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private Registration PushUniRun(IExecutor? executor, Action action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
+        if (IsRequested && executor == null) {
             Completion.FireNow(this, TYPE_RUN, action, null);
             return Registration.Closed;
         }
@@ -224,7 +224,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private Registration PushUniRunCtx(IExecutor? executor, Action<object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
+        if (IsRequested && executor == null) {
             Completion.FireNow(this, TYPE_RUN_CTX, action, state);
             return Registration.Closed;
         }
@@ -247,7 +247,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private Registration PushUniNotify(IExecutor? executor, ICancelTokenListener listener, object? ctx, int options) {
         if (listener == null) throw new ArgumentNullException(nameof(listener));
-        if (IsCancelRequested && executor == null) {
+        if (IsRequested && executor == null) {
             Completion.FireNow(this, TYPE_NOTIFY, listener, ctx);
             return Registration.Closed;
         }
@@ -285,17 +285,17 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private Registration PushCompletion(Completion newHead) {
         var cancelToken = ExecutorUtil.GetCancelToken(newHead.ctx, newHead.options);
-        if (cancelToken.IsCancelRequested) {
+        if (cancelToken.IsRequested) {
             return default;
         }
-        if (IsCancelRequested) {
+        if (IsRequested) {
             newHead.TryFire(SYNC);
             return default;
         }
         Registration registration;
         EnterLock();
         try {
-            if (IsCancelRequested) {
+            if (IsRequested) {
                 registration = default;
                 goto outer;
             }

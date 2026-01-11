@@ -20,7 +20,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
-using Wjybxx.Commons.Concurrent;
 using static Wjybxx.BTree.TaskAttributes;
 
 namespace Wjybxx.BTree
@@ -359,7 +358,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             this.status = status;
             // template_exit
             if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
-                cancelToken.RemListener(this);
+                cancelToken.UnregisterCallback(this);
             }
             StopRunningChildren();
             if ((ctl & TaskOverrides.MASK_EXIT) != 0) {
@@ -452,7 +451,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// </summary>
     /// <param name="cancelToken">进入取消状态的取消令牌</param>
     /// <param name="ctx">监听取消信号时的传入的参数</param>
-    public virtual void OnCancelRequested(ICancelToken cancelToken, object ctx) {
+    public virtual void OnCancelRequested(CancelToken cancelToken, object ctx) {
         if (IsRunning) SetCompleted(TaskStatus.CANCELLED, false);
     }
 
@@ -590,14 +589,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     #region execute-util
 
     /// <summary>
-    /// 注册取消信号监听器，任务在退出时将自动触发删除
-    /// </summary>
-    public void RegisterCancelListener() {
-        cancelToken.AddListener(this);
-        ctl |= MASK_REGISTERED_LISTENER;
-    }
-
-    /// <summary>
     /// 检查取消
     /// @see #isExited(int)
     /// </summary>
@@ -608,7 +599,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (rid != this.reentryId) { // exit
             return true;
         }
-        if (cancelToken.IsCancelRequested) { // 这里是手动检查
+        if (cancelToken.IsRequested) { // 这里是手动检查
             SetCompleted(TaskStatus.CANCELLED, false);
             return true;
         }
@@ -770,7 +761,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         ctl = initMask;
 
         CancelToken cancelToken = this.cancelToken;
-        if (cancelToken.IsCancelRequested) { // 胎死腹中
+        if (cancelToken.IsRequested) { // 胎死腹中
             ReleaseContext();
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
@@ -790,7 +781,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 ResetChildrenForRestart();
             }
             if (IsAutoListenCancel) {
-                cancelToken.AddListener(this);
+                cancelToken.RegisterCallback(this);
                 ctl |= MASK_REGISTERED_LISTENER;
             }
         }
@@ -800,7 +791,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if (reentryId != this.reentryId) {
                 return;
             }
-            if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
+            if (cancelToken.IsRequested && IsAutoCheckCancel) {
                 SetCompleted(TaskStatus.CANCELLED, false);
                 return;
             }
@@ -817,7 +808,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (reentryId != this.reentryId) {
             return;
         }
-        if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
+        if (cancelToken.IsRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
@@ -838,7 +829,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (fromControl && (ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
             return;
         }
-        if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
+        if (cancelToken.IsRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
@@ -847,7 +838,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (reentryId != this.reentryId) {
             return;
         }
-        if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
+        if (cancelToken.IsRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
@@ -873,7 +864,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         int reentryId = this.reentryId;
         // 内联template_execute逻辑
         {
-            if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
+            if (cancelToken.IsRequested && IsAutoCheckCancel) {
                 SetCompleted(TaskStatus.CANCELLED, false);
                 goto outer;
             }
@@ -881,7 +872,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if (reentryId != this.reentryId) {
                 goto outer;
             }
-            if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
+            if (cancelToken.IsRequested && IsAutoCheckCancel) {
                 SetCompleted(TaskStatus.CANCELLED, false);
             }
         }
@@ -1164,7 +1155,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 设置子节点的取消令牌 -- 会自动传播取消信号 */
     public void SetChildCancelToken(Task<T> child, CancelToken? childCancelToken) {
         if (childCancelToken != null && childCancelToken != cancelToken) {
-            cancelToken.AddListener(childCancelToken);
+            cancelToken.RegisterCallback(childCancelToken);
         }
         child.cancelToken = childCancelToken;
     }
@@ -1173,7 +1164,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     public void UnsetChildCancelToken(Task<T> child) {
         CancelToken? childCancelToken = child.cancelToken;
         if (childCancelToken != null && childCancelToken != cancelToken) {
-            cancelToken.RemListener(childCancelToken);
+            cancelToken.UnregisterCallback(childCancelToken);
             childCancelToken.Reset();
         }
         child.cancelToken = null;

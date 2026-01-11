@@ -95,7 +95,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         Debug.Assert(_eventLoop.InEventLoop() && futureTask.Id >= 0);
         // 检测取消和关闭，避免不必要的启动和停止
         ICancelToken cancelToken = futureTask.GetCancelToken();
-        if (_eventLoop.IsShutdown || cancelToken.IsCancelRequested) {
+        if (_eventLoop.IsShutdown || cancelToken.IsRequested) {
             int cancelCode = _eventLoop.IsShutdown ? CancelCodes.REASON_SHUTDOWN : cancelToken.CancelCode;
             futureTask.Cancel(cancelCode);
             futureTask.Release();

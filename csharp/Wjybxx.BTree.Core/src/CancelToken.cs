@@ -28,6 +28,19 @@ using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.BTree
 {
+public interface ICancelTokenListener
+{
+#nullable disable
+    /// <summary>
+    /// 该方法在取消令牌收到取消信号时执行
+    /// 
+    /// </summary>
+    /// <param name="cancelToken">收到取消信号的令牌</param>
+    /// <param name="ctx">回调上下文</param>
+    void OnCancelRequested(CancelToken cancelToken, object ctx);
+#nullable restore
+}
+
 /// <summary>
 /// 行为树模块使用的取消令牌
 ///
@@ -38,14 +51,14 @@ namespace Wjybxx.BTree
 /// 5.Task在处理取消信号时不需要调用该方法来删除自己，令牌会先删除Listener再通知。
 /// </summary>
 [NotThreadSafe]
-public class CancelToken : ICancelTokenSource, ICancelTokenListener
+public class CancelToken : ICancelTokenListener
 {
-    /** 取消码 -- 0表示未收到信号 */
+    /** 取消码 -- 0表示未收到信号，大于0表示收到取消信号 */
     private int code;
-    /** 监听器列表 -- 通知期间可能会被重用 */
-    private readonly SmallDynamicArray<ICancelTokenListener> listeners = new();
-    /** 用于检测复用 -- short应当足够 */
-    private short reentryId;
+    /** 用于检测复用 */
+    private int reentryId;
+    /** 监听器列表 */
+    private readonly List<CallbackInfo> callbacks = new();
 
     public CancelToken() {
     }
@@ -57,12 +70,8 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
         this.code = code;
     }
 
-    void ICancelTokenListener.OnCancelRequested(ICancelToken cancelToken, object ctx) {
+    void ICancelTokenListener.OnCancelRequested(CancelToken cancelToken, object ctx) {
         Cancel(cancelToken.CancelCode);
-    }
-
-    ICancelTokenSource ICancelTokenSource.NewInstance(bool copyCode) {
-        return NewInstance(copyCode);
     }
 
     /// <summary>
@@ -80,22 +89,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     public virtual void Reset() {
         reentryId++;
         code = 0;
-        if (listeners.ElementCount == 0) {
-            return;
-        }
-        // 需要将监听器归还到池
-        listeners.BeginItr();
-        try {
-            for (int idx = 0, len = listeners.Length; idx < len; idx++) {
-                var listener = listeners.Set(idx, null);
-                if (listener is Completion completion) {
-                    POOL.Release(completion);
-                }
-            }
-        }
-        finally {
-            listeners.EndItr();
-        }
+        callbacks.Clear();
     }
 
     /// <summary>
@@ -103,13 +97,11 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     /// </summary>
     public int ReentryId => reentryId;
 
-    /// <summary>
-    /// 当前是否正在进行通知
-    /// </summary>
-    protected bool IsFiring => listeners.IsIterating;
-
     #region query
 
+    /// <summary>
+    /// 是否支持取消
+    /// </summary>
     public bool CanBeCancelled => true;
 
     /// <summary>
@@ -123,7 +115,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     /// <summary>
     /// 当前是否收到了取消信号
     /// </summary>
-    public bool IsCancelRequested {
+    public bool IsRequested {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => code != 0;
     }
@@ -164,54 +156,102 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     }
 
     private static void PostComplete(CancelToken cancelToken) {
-        SmallDynamicArray<ICancelTokenListener> listeners = cancelToken.listeners;
-        if (listeners.Length == 0) {
+        List<CallbackInfo> callbacks = cancelToken.callbacks;
+        if (callbacks.Count == 0) {
             return;
         }
         int reentryId = cancelToken.reentryId;
-        listeners.BeginItr();
-        try {
-            for (int idx = 0, len = listeners.Length; idx < len; idx++) {
-                var listener = listeners.Set(idx, null);
-                if (listener == null) {
-                    continue;
-                }
-                try {
-                    listener.OnCancelRequested(cancelToken, null);
-                }
-                catch (Exception e) {
-                    TaskLogger.Info(e, "listener caught exception");
-                }
-                // 在通知期间被Reset
-                if (reentryId != cancelToken.reentryId) {
-                    return;
-                }
+        for (int idx = 0, len = callbacks.Count; idx < len; idx++) {
+            var callbackInfo = callbacks[idx];
+            if (callbackInfo.action == null) {
+                continue;
+            }
+            callbacks[idx] = default;
+            try {
+                Invoke(cancelToken, callbackInfo);
+            }
+            catch (Exception e) {
+                TaskLogger.Info(e, "listener caught exception");
+            }
+            if (reentryId != cancelToken.reentryId) {
+                return; // 在通知期间被Reset
             }
         }
-        finally {
-            listeners.EndItr();
+        callbacks.Clear();
+    }
+
+    private static void Invoke(CancelToken cancelToken, CallbackInfo callbackInfo) {
+        switch (callbackInfo.action) {
+            case ICancelTokenListener listener:
+                listener.OnCancelRequested(cancelToken, callbackInfo.state);
+                break;
+            case Action<CancelToken, object> action2:
+                action2(cancelToken, callbackInfo.state);
+                break;
+            default: {
+                Action<CancelToken> action1 = (Action<CancelToken>)callbackInfo.action;
+                action1(cancelToken);
+                break;
+            }
         }
     }
 
     #endregion
 
-    #region 监听器
+    #region 回调
 
+#nullable disable
     /// <summary>
     /// 添加监听器
     /// </summary>
-    public void AddListener(ICancelTokenListener listener) {
+    public void RegisterCallback(ICancelTokenListener listener, object? state = null) {
         if (listener == null) throw new ArgumentNullException(nameof(listener));
         if (listener == this) throw new ArgumentException("add self");
         if (code != 0) {
             try {
-                listener.OnCancelRequested(this, null);
+                listener.OnCancelRequested(this, state);
             }
             catch (Exception e) {
                 TaskLogger.Info(e, "listener caught exception");
             }
         } else {
-            listeners.Add(listener);
+            callbacks.Add(new CallbackInfo(listener, state));
+        }
+    }
+
+    /// <summary>
+    /// 添加回调
+    /// </summary>
+    /// <param name="callback">回调</param>
+    /// <param name="state">回调上下文</param>
+    public void RegisterCallback(Action<CancelToken, object> callback, object? state = null) {
+        if (callback == null) throw new ArgumentNullException(nameof(callback));
+        if (code != 0) {
+            try {
+                callback(this, state);
+            }
+            catch (Exception e) {
+                TaskLogger.Info(e, "listener caught exception");
+            }
+        } else {
+            callbacks.Add(new CallbackInfo(callback, state));
+        }
+    }
+
+    /// <summary>
+    /// 添加回调
+    /// </summary>
+    public void RegisterCallback(Action<CancelToken> callback) {
+        if (callback == null) throw new ArgumentNullException(nameof(callback));
+        if (code != 0) {
+            try {
+                callback(this);
+            }
+            catch (Exception e) {
+                TaskLogger.Info(e, "listener caught exception");
+            }
+        } else {
+            callbacks.Add(new CallbackInfo(callback, null));
         }
     }
 
@@ -219,369 +259,44 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     /// 删除监听器
     /// 注意：Task在处理取消信号时不需要调用该方法来删除自己，令牌会先删除Listener再通知。
     /// </summary>
-    /// <param name="listener">要删除的监听器</param>
+    /// <param name="callback">要删除的回调</param>
     /// <param name="firstOccurrence">是否强制正向查找删除</param>
     /// <returns>存在匹配的监听器则返回true</returns>
-    public bool RemListener(ICancelTokenListener listener, bool firstOccurrence = false) {
-        int index = firstOccurrence
-            ? listeners.IndexOfRef(listener)
-            : listeners.LastIndexOfRef(listener);
+    public bool UnregisterCallback(object callback, bool firstOccurrence = false) {
+        if (callback == null) throw new ArgumentNullException(nameof(callback));
+        int index = IndexOfCallback(callback, firstOccurrence);
         if (index < 0) {
             return false;
         }
-        listeners.Set(index, null);
+        if (code != 0) { // 正在通知
+            callbacks[index] = default;
+        } else {
+            callbacks.RemoveAt(index);
+        }
         return true;
     }
 
-    /// <summary>
-    /// 查询是否存在给定的监听器
-    /// </summary>
-    /// <param name="listener">要查询的监听器</param>
-    /// <returns>如果存在则返回true，否则返回false</returns>
-    public bool HasListener(ICancelTokenListener listener) {
-        return listeners.ContainsRef(listener);
-    }
-
-    /// <summary>
-    /// 监听器数量
-    /// </summary>
-    public int ListenerCount => listeners.ElementCount;
-
-    #endregion
-
-    #region 监听器
-
-    #region uni-accept
-
-    public Registration ThenAccept(Action<ICancelToken> action, int options = 0) {
-        return PushUniAccept(null, action, options);
-    }
-
-    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniAccept(executor, action, options);
-    }
-
-    private Registration PushUniAccept(IExecutor? executor, Action<ICancelToken> action, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
-            Completion.FireNow(this, TYPE_ACCEPT, action, null);
-            return Registration.Closed;
+    private int IndexOfCallback(object action, bool firstOccurrence) {
+        if (firstOccurrence) {
+            for (int idx = 0; idx < callbacks.Count; idx++) {
+                if (Equals(callbacks[idx].action, action)) return idx;
+            }
+        } else {
+            for (int idx = callbacks.Count - 1; idx >= 0; idx--) {
+                if (Equals(callbacks[idx].action, action)) return idx;
+            }
         }
-        Completion completion = GetCompletion(executor, options, this, TYPE_ACCEPT, action, null);
-        return PushCompletion(completion);
+        return -1;
     }
 
-    #endregion
-
-    #region uni-accept-ctx
-
-    public Registration ThenAccept(Action<ICancelToken, object> action, object? ctx, int options = 0) {
-        return PushUniAcceptCtx(null, action, ctx, options);
-    }
-
-    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object> action, object? ctx, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniAcceptCtx(executor, action, ctx, options);
-    }
-
-    private Registration PushUniAcceptCtx(IExecutor? executor, Action<ICancelToken, object> action, object? state, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
-            Completion.FireNow(this, TYPE_ACCEPT_CTX, action, state);
-            return Registration.Closed;
-        }
-        Completion completion = GetCompletion(executor, options, this, TYPE_ACCEPT_CTX, action, state);
-        return PushCompletion(completion);
-    }
-
-    #endregion
-
-    #region uni-run
-
-    public Registration ThenRun(Action action, int options = 0) {
-        return PushUniRun(null, action, options);
-    }
-
-    public Registration ThenRunAsync(IExecutor executor, Action action, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniRun(executor, action, options);
-    }
-
-    private Registration PushUniRun(IExecutor? executor, Action action, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
-            Completion.FireNow(this, TYPE_RUN, action, null);
-            return Registration.Closed;
-        }
-        Completion completion = GetCompletion(executor, options, this, TYPE_RUN, action, null);
-        return PushCompletion(completion);
-    }
-
-    #endregion
-
-    #region uni-run-ctx
-
-    public Registration ThenRun(Action<object> action, object? ctx, int options = 0) {
-        return PushUniRunCtx(null, action, ctx, options);
-    }
-
-    public Registration ThenRunAsync(IExecutor executor, Action<object> action, object? ctx, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniRunCtx(executor, action, ctx, options);
-    }
-
-    private Registration PushUniRunCtx(IExecutor? executor, Action<object> action, object? state, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelRequested && executor == null) {
-            Completion.FireNow(this, TYPE_RUN_CTX, action, state);
-            return Registration.Closed;
-        }
-        Completion completion = GetCompletion(executor, options, this, TYPE_RUN_CTX, action, state);
-        return PushCompletion(completion);
-    }
-
-    #endregion
-
-    #region uni-notify
-
-    public Registration ThenNotify(ICancelTokenListener action, object? ctx, int options = 0) {
-        return PushUniNotify(null, action, ctx, options);
-    }
-
-    public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, object? ctx, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniNotify(executor, action, ctx, options);
-    }
-
-    private Registration PushUniNotify(IExecutor? executor, ICancelTokenListener listener, object? ctx, int options) {
-        if (listener == null) throw new ArgumentNullException(nameof(listener));
-        if (IsCancelRequested && executor == null) {
-            Completion.FireNow(this, TYPE_NOTIFY, listener, ctx);
-            return Registration.Closed;
-        }
-        Completion completion = GetCompletion(executor, options, this, TYPE_NOTIFY, listener, ctx);
-        return PushCompletion(completion);
-    }
-
-    #endregion
-
-    #endregion
-
-    #region core
-
-    private const int SYNC = 0;
-    private const int ASYNC = 1;
-    private const int NESTED = -1;
-
-    private Registration PushCompletion(Completion newHead) {
-        var cancelToken = ExecutorUtil.GetCancelToken(newHead.ctx, newHead.options);
-        if (cancelToken.IsCancelRequested) {
-            return default;
-        }
-        if (IsCancelRequested) {
-            newHead.TryFire(SYNC);
-            return default;
-        }
-        Registration registration = new Registration(newHead, newHead._rid);
-        listeners.Add(newHead);
-
-        if (cancelToken.CanBeCancelled
-            && TaskOptions.IsEnabled(newHead.options, TaskOptions.LISTEN_CANCEL_TOKEN)) {
-            cancelToken.ThenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);
-        }
-        return registration;
-    }
-
-    #endregion
-
-    #region completion
-
-    private const int TYPE_ACCEPT = 0;
-    private const int TYPE_ACCEPT_CTX = 1;
-    private const int TYPE_RUN = 2;
-    private const int TYPE_RUN_CTX = 3;
-    private const int TYPE_NOTIFY = 4;
-
-    /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
-    private const int MASK_TASK_TYPE = 0x0F;
-    /** 已加入异步队列 -- 不能被立即关闭 */
-    private const int MASK_ASYNC_FIRING = 0x10;
-    /** 已收到Dispose信号 */
-    private const int MASK_DISPOSED = 0x20;
-
-    private static readonly ConcurrentObjectPool<Completion> POOL = new(
-        () => new Completion(), e => e.Reset(), 200);
-
-    private static Completion GetCompletion(IExecutor? executor, int options, CancelToken source,
-                                            int type, object action, object? ctx) {
-        // 去除用户的低位，记录type
-        options &= (~TaskOptions.MASK_CTL_RESERVED);
-        options |= type;
-
-        Completion completion = POOL.Acquire();
-        completion._rid++;
-        completion.executor = executor;
-        completion.options = options;
-        completion.source = source;
-        completion.action = action;
-        completion.ctx = ctx;
-        return completion;
-    }
-
-    /// <summary>
-    /// 用于关闭监听器
-    /// </summary>
-    private static readonly Action<object> INVOKER = (ctx => {
-        Registration registration = (Registration)ctx;
-        registration.Dispose();
-    });
-
-    private sealed class Completion : ITask, ICancelTokenListener, IPooledDisposable
+    private readonly struct CallbackInfo
     {
-        /** 重入id -- 只增不减 */
-        internal int _rid;
+        public readonly object action;
+        public readonly object state;
 
-#nullable disable
-        /// <summary>
-        /// 关联的取消令牌
-        /// </summary>
-        internal CancelToken source;
-        /// <summary>
-        /// 绑定的线程
-        /// </summary>
-        internal IExecutor executor;
-        /// <summary>
-        /// 任务的调度选项，包含任务的类型
-        /// </summary>
-        internal int options;
-        /// <summary>
-        /// 用户回调
-        /// </summary>
-        internal object? action;
-        /// <summary>
-        /// 回调关联的参数
-        /// </summary>
-        internal object? ctx;
-#nullable restore
-
-        internal void Reset() {
-            _rid++; // 池化时+1
-            source = null;
-            executor = null;
-            options = 0;
-            action = null;
-            ctx = null;
-        }
-
-        public int Options => options;
-
-        public void Run() {
-            TryFire(ASYNC);
-        }
-
-        public void OnCancelRequested(ICancelToken cancelToken, object ctx) {
-            TryFire(SYNC);
-        }
-
-        internal void TryFire(int mode) {
-            // 如果走到这里，当前Completion一定未被回收，但action可能已被清理，即已收到取消信号
-            CancelToken source;
-            IExecutor executor;
-            int options;
-            object? action;
-            object? ctx;
-            // 代码可参考并发库中的实现
-            bool fire;
-            {
-                options = this.options;
-                action = this.action;
-                ctx = this.ctx;
-                // 如果已收到取消信号，则直接回收
-                if (action == null || ExecutorUtil.IsCancelRequested(ctx, options)) {
-                    POOL.Release(this);
-                    return;
-                }
-                source = this.source;
-                executor = this.executor;
-
-                // 如果是同步模式，需要claim=
-                if (mode <= 0 && !ExecutorUtil.IsInlinable(executor, options)) {
-                    this.options |= MASK_ASYNC_FIRING;
-                    this.executor = null;
-                    fire = false;
-                } else {
-                    // 数据已拷贝到临时变量
-                    POOL.Release(this);
-                    fire = true;
-                }
-            }
-            if (fire) {
-                FireNow(source, options, action, ctx);
-                return;
-            }
-            try {
-                executor.Execute(this);
-            }
-            catch (Exception ex) {
-                TaskLogger.Info(ex, "claim caught exception");
-            }
-        }
-
-        internal static void FireNow(CancelToken source,
-                                     int options, object rawAction, object? ctx) {
-            int taskType = (options & MASK_TASK_TYPE);
-            try {
-                switch (taskType) {
-                    case TYPE_ACCEPT: {
-                        Action<ICancelToken> action = (Action<ICancelToken>)rawAction;
-                        action(source);
-                        break;
-                    }
-                    case TYPE_ACCEPT_CTX: {
-                        Action<ICancelToken, object?> action = (Action<ICancelToken, object?>)rawAction;
-                        action(source, ctx);
-                        break;
-                    }
-                    case TYPE_RUN: {
-                        Action action = (Action)rawAction;
-                        action();
-                        break;
-                    }
-                    case TYPE_RUN_CTX: {
-                        Action<object?> action = (Action<object?>)rawAction;
-                        action(ctx);
-                        break;
-                    }
-                    case TYPE_NOTIFY: {
-                        ICancelTokenListener action = (ICancelTokenListener)rawAction;
-                        action.OnCancelRequested(source, ctx);
-                        break;
-                    }
-                    default: {
-                        throw new IllegalStateException();
-                    }
-                }
-            }
-            catch (Exception ex) {
-                TaskLogger.Info(ex, "Action caught an exception");
-            }
-        }
-
-        public bool IsDisposed(long reentryId) {
-            return reentryId != _rid || this.action == null;
-        }
-
-        public void Dispose(long reentryId) {
-            if (reentryId != _rid || this.action == null) {
-                return;
-            }
-            action = null;
-            ctx = null;
-            // 如果当前未进入异步执行，尝试立即回收
-            if ((options & MASK_ASYNC_FIRING) == 0 && source.RemListener(this)) {
-                POOL.Release(this);
-            }
+        public CallbackInfo(object action, object state) {
+            this.action = action;
+            this.state = state;
         }
     }
 

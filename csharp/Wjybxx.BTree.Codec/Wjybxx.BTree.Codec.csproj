@@ -53,7 +53,6 @@
         
         <ProjectReference Include="..\Wjybxx.BTree.Core\Wjybxx.BTree.Core.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true"/>
         <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true"/>
-        <ProjectReference Include="..\Wjybxx.Commons.Concurrent\Wjybxx.Commons.Concurrent.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true"/>
         
         <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

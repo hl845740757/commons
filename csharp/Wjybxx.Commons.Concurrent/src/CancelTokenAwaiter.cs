@@ -43,7 +43,7 @@ public readonly struct CancelTokenAwaiter : ICriticalNotifyCompletion
     // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
     public bool IsCompleted {
         get {
-            if (!_cts.IsCancelRequested) return false;
+            if (!_cts.IsRequested) return false;
             return ExecutorUtil.IsInlinable(_executor, _options);
         }
     }

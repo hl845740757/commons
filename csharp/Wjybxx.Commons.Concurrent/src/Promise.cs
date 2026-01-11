@@ -916,7 +916,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -970,7 +970,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1024,7 +1024,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1079,7 +1079,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1134,7 +1134,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1184,7 +1184,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1235,7 +1235,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1285,7 +1285,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1336,7 +1336,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1387,7 +1387,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }
@@ -1434,7 +1434,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
-                if (cancelToken.IsCancelRequested) {
+                if (cancelToken.IsRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
                 }

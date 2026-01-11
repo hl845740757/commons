@@ -63,14 +63,6 @@ public class BetterCancellationException : OperationCanceledException
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OperationCanceledException Capture(OperationCanceledException ex) {
         return ex;
-        // if (ex == null) throw new ArgumentNullException(nameof(ex));
-        // BetterCancellationException r;
-        // if (ex is BetterCancellationException ex2) {
-        //     r = new BetterCancellationException(ex2.Code, ex2.Message, ex);
-        // } else {
-        //     r = new BetterCancellationException(CancelCodes.REASON_DEFAULT, null, ex);
-        // }
-        // return r;
     }
 }
 }

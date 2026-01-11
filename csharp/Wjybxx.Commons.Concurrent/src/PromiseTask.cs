@@ -202,7 +202,7 @@ public class PromiseTask<T> : IFutureTask
         // 超类可以直接调用Internal方法，因为不会有其它地方更新Promise
         ValuePromise<T> promise = this.promise;
         ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken.IsCancelRequested) {
+        if (cancelToken.IsRequested) {
             promise.Internal_TrySetCancelled(cancelToken.CancelCode);
             return;
         }

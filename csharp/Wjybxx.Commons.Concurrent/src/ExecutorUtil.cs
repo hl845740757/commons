@@ -468,10 +468,10 @@ public static class ExecutorUtil
             return false;
         }
         if (ctx is ICancelToken cts) {
-            return cts.IsCancelRequested;
+            return cts.IsRequested;
         }
         if (ctx is IContext ctx2) {
-            return ctx2.CancelToken.IsCancelRequested;
+            return ctx2.CancelToken.IsRequested;
         }
         return false;
     }
@@ -573,7 +573,7 @@ public static class ExecutorUtil
         public int Options => options;
 
         public void Run() {
-            if (cancelToken != null && cancelToken.IsCancelRequested) {
+            if (cancelToken != null && cancelToken.IsRequested) {
                 return;
             }
             action();
