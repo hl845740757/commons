@@ -161,17 +161,13 @@ class DefaultDsonConverter implements DsonConverter {
     }
 
     private DsonObjectReader wrapReader(DsonReader reader) {
-        if (options.randomRead) {
-            return new BufferedDsonObjectReader(this, toDsonCollectionReader(reader));
-        } else {
-            return new DefaultDsonObjectReader(this, reader);
-        }
+        return new DefaultDsonObjectReader(this, toDsonCollectionReader(reader));
     }
 
     private DsonCollectionReader toDsonCollectionReader(DsonReader dsonReader) {
         assert !(dsonReader instanceof DsonCollectionReader);
         DsonValue dsonValue = Dsons.readTopDsonValue(dsonReader);
-        return DsonCollectionReader.unsafeCreate(options.binReaderSettings, dsonValue);
+        return DsonCollectionReader.unsafeCreate(options.binReaderSettings, dsonValue, true);
     }
     // endregion
 
@@ -233,8 +229,8 @@ class DefaultDsonConverter implements DsonConverter {
         if (!source.getDsonType().isContainer()) {
             throw new IllegalArgumentException("value must be container");
         }
-        try (DsonObjectReader wrapper = new BufferedDsonObjectReader(this,
-                DsonCollectionReader.unsafeCreate(options.binReaderSettings, source))) {
+        try (DsonObjectReader wrapper = new DefaultDsonObjectReader(this,
+                DsonCollectionReader.unsafeCreate(options.binReaderSettings, source, true))) {
             return wrapper.readObject(null, declaredType, factory);
         }
     }

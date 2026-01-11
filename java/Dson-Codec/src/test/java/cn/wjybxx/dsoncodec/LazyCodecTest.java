@@ -35,7 +35,7 @@ import java.util.function.Supplier;
  */
 public class LazyCodecTest {
 
-    @Test
+//    @Test // 不再支持
     void testLazyCodec() {
         TypeMetaConfig typeMetaConfig = TypeMetaConfig.fromTypeMetas(
                 TypeMeta.of(MyStruct.class, ObjectStyle.INDENT, "MyStruct")

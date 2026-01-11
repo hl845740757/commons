@@ -5,6 +5,8 @@ Wjybxx的公共模块，抽取以方便我的其它开源项目依赖这里的�
 1. Java 相关模块在Maven仓库中搜索`cn.wjybxx.commons`即可看见。
 2. Csharp 相关模块在Nuget仓库中搜索`wjybxx`即可看见。
 
+注意：限于个人经历，部分Java库已无法同步维护（如Dson-Codec），最新代码请阅读C#代码。
+
 ## 重要组件一览
 
 1. Dson文本格式 -- [Dson文本格式](docs/Dson.md).

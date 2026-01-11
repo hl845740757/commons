@@ -117,6 +117,11 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         return context.container;
     }
 
+    /** 获取当前要读取的值 */
+    public DsonValue getCurrentValue() {
+        return nextValue;
+    }
+
     /** 是否是单值集合（顶层上下文） */
     public boolean isSingleValueCollection() {
         return singleValue;

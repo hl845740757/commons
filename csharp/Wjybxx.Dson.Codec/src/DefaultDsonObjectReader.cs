@@ -465,6 +465,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public SerializeHeader ReadStartObject(TypeMeta? typeMeta, DeserializeFeatures features) {
+        DsonCollectionReader<string> reader = this.reader;
         reader.ReadStartObject();
         if (reader.PeekDsonType() == DsonType.Header) {
             reader.ReadDsonType();
@@ -504,6 +505,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public SerializeHeader ReadStartArray(TypeMeta? typeMeta, DeserializeFeatures features) {
+        DsonCollectionReader<string> reader = this.reader;
         reader.ReadStartArray();
         if (reader.PeekDsonType() == DsonType.Header) {
             reader.ReadDsonType();
