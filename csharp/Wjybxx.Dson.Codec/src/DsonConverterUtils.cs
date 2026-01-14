@@ -176,7 +176,7 @@ public static class DsonConverterUtils
     public static Type GetEncoderType(Type codecType) {
         Type type = codecType.GetInterface(typeof(IDsonCodec<>).Name);
         if (type == null) {
-            throw new ArgumentException($"Type {codecType} is not a DsonCodec");
+            throw new ArgumentException($"Type {codecType} is not DsonCodec");
         }
         return type.GetGenericArguments()[0];
     }

@@ -66,8 +66,8 @@ public class DsonTextReaderTest {
      */
     @Test
     void test_equivalenceOfAllReaders() {
-        DsonArray<String> collection1 = Dsons.fromCollectionDson(dsonString);
-        String dsonString1 = Dsons.toCollectionDson(collection1);
+        DsonArray<String> collection1 = Dsons.fromFlatDson(dsonString);
+        String dsonString1 = Dsons.ToFlatDson(collection1);
 //        System.out.println(dsonString1);
 //        Assertions.assertEquals(dsonString, dsonString1); // 注意：可能受到平台换行符的影响
 
@@ -83,7 +83,7 @@ public class DsonTextReaderTest {
                 DsonArray<String> collection2 = Dsons.readCollection(reader);
                 Assertions.assertEquals(collection1, collection2, "BinaryReader/BinaryWriter");
 
-                String dsonString2 = Dsons.toCollectionDson(collection2);
+                String dsonString2 = Dsons.ToFlatDson(collection2);
                 Assertions.assertEquals(dsonString1, dsonString2, "BinaryReader/BinaryWriter");
             }
         }
@@ -97,7 +97,7 @@ public class DsonTextReaderTest {
                 DsonArray<String> collection3 = Dsons.readCollection(reader);
                 Assertions.assertEquals(collection1, collection3, "ObjectReader/ObjectWriter");
 
-                String dsonString3 = Dsons.toCollectionDson(collection3);
+                String dsonString3 = Dsons.ToFlatDson(collection3);
                 Assertions.assertEquals(dsonString1, dsonString3, "ObjectReader/ObjectWriter");
             }
         }
@@ -111,7 +111,7 @@ public class DsonTextReaderTest {
                 DsonArray<String> collection4 = Dsons.readCollection(reader);
                 Assertions.assertEquals(collection1, collection4, "TextReader/TextWriter");
 
-                String dsonString4 = Dsons.toCollectionDson(collection4);
+                String dsonString4 = Dsons.ToFlatDson(collection4);
                 Assertions.assertEquals(dsonString1, dsonString4, "TextReader/TextWriter");
             }
         }

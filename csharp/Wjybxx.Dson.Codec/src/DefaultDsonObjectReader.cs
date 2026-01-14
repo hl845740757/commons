@@ -112,8 +112,14 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         }
         _stack = itemContext.pointer;
         reader = itemContext.reader;
-        // 注意：read的过程中，Current可能变更，由ReadEnd发布到目标上下文
-        return ReadObject(declaredType, features, factory);
+        // 用户的Codec可能没有立即发布引用，这里进行修正；值类型统一在这里发布引用
+        object inst = ReadObject(declaredType, features, factory);
+        itemContext = referenceTable[ptr];
+        if (itemContext.objectValue == null) {
+            itemContext.objectValue = inst;
+            referenceTable[ptr] = itemContext;
+        }
+        return inst;
     }
 
     private void BackToPrevContext() {
@@ -408,7 +414,6 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => converter.CodecRegistry;
     }
-    public DsonContextType ContextType => reader.ContextType;
 
     public DsonType ReadDsonType() {
         return reader.IsAtType ? reader.ReadDsonType() : reader.CurrentDsonType;

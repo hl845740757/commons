@@ -69,7 +69,7 @@ public class DsonTextReaderTest
         using (IDsonReader<string> reader = new DsonTextReader(DsonTextReaderSettings.Default, DsonString)) {
             collection1 = Dsons.ReadCollection(reader);
         }
-        string dsonString1 = collection1.ToCollectionDson();
+        string dsonString1 = collection1.ToFlatDson();
         // Console.WriteLine(dsonString1);
         // Assert.That(dsonString1, Is.EqualTo(DsonString)); // 注意：可能受到平台换行符的影响
 
@@ -85,7 +85,7 @@ public class DsonTextReaderTest
                 DsonArray<string> collection2 = Dsons.ReadCollection(reader);
                 Assert.That(collection2, Is.EqualTo(collection1));
 
-                string dsonString2 = collection2.ToCollectionDson();
+                string dsonString2 = collection2.ToFlatDson();
                 Assert.IsTrue(dsonString1 == dsonString2, "BinaryReader/BinaryWriter");
             }
         }
@@ -100,7 +100,7 @@ public class DsonTextReaderTest
                 DsonArray<string> collection3 = Dsons.ReadCollection(reader);
                 Assert.That(collection3, Is.EqualTo(collection1));
 
-                string dsonString3 = collection3.ToCollectionDson();
+                string dsonString3 = collection3.ToFlatDson();
                 Assert.IsTrue(dsonString1 == dsonString3, "ObjectReader/ObjectWriter");
             }
         }
@@ -113,7 +113,7 @@ public class DsonTextReaderTest
             using (IDsonReader<string> reader = new DsonTextReader(DsonTextReaderSettings.Default, stringWriter.ToString())) {
                 DsonArray<string> collection4 = Dsons.ReadCollection(reader);
 
-                string dsonString4 = collection4.ToCollectionDson();
+                string dsonString4 = collection4.ToFlatDson();
                 Assert.IsTrue(dsonString1 == dsonString4, "TextReader/TextWriter");
             }
         }

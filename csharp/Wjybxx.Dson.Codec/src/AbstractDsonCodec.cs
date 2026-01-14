@@ -148,7 +148,7 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
         } else {
             reader.ReadStartArray(GetEncoderType());
         }
-        // cast失败则抛出异常，不能测试类型导致隐藏错误
+        // cast失败则抛出异常，不能测试类型，可能隐藏错误
         T inst = factory != null ? (T)factory() : NewInstance(reader);
         if (!typeof(T).IsValueType) {
             reader.PublishReference(in inst);
@@ -175,10 +175,10 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
         } else {
             reader.ReadEndArray();
         }
-        // 值类型需要在完全解码之后才可发布引用
-        if (typeof(T).IsValueType) {
-            reader.PublishReference(in inst);
-        }
+        // 值类型需要在完全解码之后才可发布引用 - 由外部发布引用的开销更低
+        // if (typeof(T).IsValueType) {
+        //     reader.PublishReference(in inst);
+        // }
         return inst;
     }
 

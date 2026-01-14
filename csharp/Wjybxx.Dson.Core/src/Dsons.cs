@@ -601,10 +601,19 @@ public static class Dsons
 
     #region 快捷方法
 
-    /** 该接口用于写顶层数组容器，所有元素将被展开 */
+    [Obsolete("Use ToFlatDson Instead")]
     public static string ToCollectionDson(this DsonArray<string> collection, DsonTextWriterSettings? settings = null) {
-        if (settings == null) settings = DsonTextWriterSettings.Default;
+        return ToFlatDson(collection, settings);
+    }
 
+    [Obsolete("Use FromFlatDson Instead")]
+    public static DsonArray<string> FromCollectionDson(string dsonString) {
+        return FromFlatDson(dsonString);
+    }
+
+    /** 该接口用于写顶层数组容器，所有元素将被展开 */
+    public static string ToFlatDson(this DsonArray<string> collection, DsonTextWriterSettings? settings = null) {
+        if (settings == null) settings = DsonTextWriterSettings.Default;
         StringBuilder sb = ConcurrentObjectPool.SharedStringBuilderPool.Acquire();
         try {
             using (DsonTextWriter writer = new DsonTextWriter(settings, new StringWriter(sb))) {
@@ -618,7 +627,7 @@ public static class Dsons
     }
 
     /** 该接口用于读取多顶层对象dson文本 */
-    public static DsonArray<string> FromCollectionDson(string dsonString) {
+    public static DsonArray<string> FromFlatDson(string dsonString) {
         using (DsonTextReader reader = new DsonTextReader(DsonTextReaderSettings.Default, dsonString)) {
             return ReadCollection(reader);
         }
@@ -629,9 +638,6 @@ public static class Dsons
     }
 
     public static string ToDson(this DsonValue dsonValue, ObjectStyle style, DsonTextWriterSettings settings) {
-        if (!dsonValue.DsonType.IsContainerOrHeader()) {
-            throw new InvalidOperationException("invalid dsonType " + dsonValue.DsonType);
-        }
         StringBuilder sb = ConcurrentObjectPool.SharedStringBuilderPool.Acquire();
         try {
             using (DsonTextWriter writer = new DsonTextWriter(settings, new StringWriter(sb))) {

@@ -79,6 +79,6 @@ public class ProjectionTest2 {
     @Test
     void test() {
         DsonArray<String> value = Dsons.project(dsonString, projectInfo).asArray();
-        System.out.println(Dsons.toCollectionDson(value));
+        System.out.println(Dsons.ToFlatDson(value));
     }
 }

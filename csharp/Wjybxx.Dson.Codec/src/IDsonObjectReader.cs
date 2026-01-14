@@ -147,8 +147,6 @@ public interface IDsonObjectReader : IDisposable
     ITypeMetaRegistry TypeMetaRegistry { get; }
     IDsonCodecRegistry CodecRegistry { get; }
 
-    DsonContextType ContextType { get; }
-
     /// <summary>
     /// 读取下一个数据的类型
     /// </summary>

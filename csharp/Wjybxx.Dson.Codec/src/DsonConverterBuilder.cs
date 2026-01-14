@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
@@ -46,6 +47,16 @@ public class DsonConverterBuilder
 
     #region type-meta
 
+    public DsonConverterBuilder AddTypeMeta(TypeMeta typeMeta) {
+        typeMetaConfig.Add(typeMeta);
+        return this;
+    }
+
+    public DsonConverterBuilder AddTypeMetas(IEnumerable<TypeMeta> typeMetas) {
+        typeMetaConfig.AddAll(typeMetas);
+        return this;
+    }
+
     public DsonConverterBuilder AddTypeMetaConfig(TypeMetaConfig typeMetaConfig) {
         this.typeMetaConfig.MergeFrom(typeMetaConfig);
         return this;
@@ -55,16 +66,6 @@ public class DsonConverterBuilder
         foreach (TypeMetaConfig typeMetaConfig in typeMetaConfigs) {
             this.typeMetaConfig.MergeFrom(typeMetaConfig);
         }
-        return this;
-    }
-
-    public DsonConverterBuilder AddTypeMetas(IEnumerable<TypeMeta> typeMetas) {
-        typeMetaConfig.AddAll(typeMetas);
-        return this;
-    }
-
-    public DsonConverterBuilder AddTypeMeta(TypeMeta typeMeta) {
-        typeMetaConfig.Add(typeMeta);
         return this;
     }
 
@@ -118,16 +119,6 @@ public class DsonConverterBuilder
         return this;
     }
 
-    public DsonConverterBuilder AddGenericCodec(Type genericType, Type codecType, string factoryFieldName) {
-        codecConfig.AddGenericCodec(genericType, codecType, factoryFieldName);
-        return this;
-    }
-
-    public DsonConverterBuilder AddGenericCodec(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
-        codecConfig.AddGenericCodec(genericType, codecType, factoryDeclaringType, factoryFieldName);
-        return this;
-    }
-
     public DsonConverterBuilder AddGenericCodec(GenericCodecInfo genericCodecInfo) {
         codecConfig.AddGenericCodec(genericCodecInfo);
         return this;
@@ -135,16 +126,6 @@ public class DsonConverterBuilder
 
     public DsonConverterBuilder AddGenericEncoder(Type genericType, Type codecType) {
         codecConfig.AddGenericEncoder(genericType, codecType);
-        return this;
-    }
-
-    public DsonConverterBuilder AddGenericEncoder(Type genericType, Type codecType, string factoryFieldName) {
-        codecConfig.AddGenericEncoder(genericType, codecType, factoryFieldName);
-        return this;
-    }
-
-    public DsonConverterBuilder AddGenericEncoder(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
-        codecConfig.AddGenericEncoder(genericType, codecType, factoryDeclaringType, factoryFieldName);
         return this;
     }
 
@@ -158,22 +139,14 @@ public class DsonConverterBuilder
         return this;
     }
 
-    public DsonConverterBuilder AddGenericDecoder(Type genericType, Type codecType, string factoryFieldName) {
-        codecConfig.AddGenericDecoder(genericType, codecType, factoryFieldName);
-        return this;
-    }
-
-    public DsonConverterBuilder AddGenericDecoder(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
-        codecConfig.AddGenericDecoder(genericType, codecType, factoryDeclaringType, factoryFieldName);
-        return this;
-    }
-
     public DsonConverterBuilder AddGenericDecoder(GenericCodecInfo genericCodecInfo) {
         codecConfig.AddGenericDecoder(genericCodecInfo);
         return this;
     }
 
     #endregion
+
+    #region other
 
     public DsonConverterBuilder AddCaster(IDsonCodecCaster caster) {
         codecConfig.AddCaster(caster);
@@ -198,5 +171,29 @@ public class DsonConverterBuilder
         this.options = options;
         return this;
     }
+
+    #endregion
+
+    #region util
+
+    /// <summary>
+    /// 通过CodecType添加<see cref="TypeMeta"/>和<see cref="IDsonCodec"/>
+    /// </summary>
+    /// <param name="codecType">Codec类型</param>
+    /// <returns></returns>
+    public DsonConverterBuilder AddByCodecType(Type codecType) {
+        Type encoderType = DsonConverterUtils.GetEncoderType(codecType);
+        if (codecType.IsGenericType) { 
+            encoderType = encoderType.GetGenericTypeDefinition();
+            AddGenericCodec(encoderType, codecType);
+            AddTypeMeta(TypeMeta.Of(encoderType, ObjectUtil.GetSimpleName(encoderType)));
+        } else {
+            AddTypeMeta(TypeMeta.Of(encoderType, encoderType.Name));
+            AddCodec((IDsonCodec)Activator.CreateInstance(codecType)!);
+        }
+        return this;
+    }
+
+    #endregion
 }
 }

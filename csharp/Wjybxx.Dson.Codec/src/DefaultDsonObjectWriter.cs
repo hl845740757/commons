@@ -315,7 +315,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
             WriteNull(name!, features);
             return;
         }
-        Type runtimeType = value.GetType();
+        Type runtimeType = value.GetType(); // 值类型调用GetType会装箱
         {
             DsonCodecImpl? encoder = converter.CodecRegistry.GetEncoder(runtimeType);
             if (encoder != null) {

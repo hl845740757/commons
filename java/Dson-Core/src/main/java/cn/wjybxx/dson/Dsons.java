@@ -418,12 +418,12 @@ public final class Dsons {
 
     // region 快捷方法
 
-    public static String toCollectionDson(DsonArray<String> collection) {
-        return toCollectionDson(collection, null);
+    public static String ToFlatDson(DsonArray<String> collection) {
+        return ToFlatDson(collection, null);
     }
 
     /** 该接口用于写顶层数组容器，所有元素将被展开 */
-    public static String toCollectionDson(DsonArray<String> collection, DsonTextWriterSettings settings) {
+    public static String ToFlatDson(DsonArray<String> collection, DsonTextWriterSettings settings) {
         if (settings == null) settings = DsonTextWriterSettings.DEFAULT;
         StringBuilder sb = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.acquire();
         try {
@@ -437,7 +437,7 @@ public final class Dsons {
     }
 
     /** 该接口用于读取多顶层对象dson文本 */
-    public static DsonArray<String> fromCollectionDson(String dsonString) {
+    public static DsonArray<String> fromFlatDson(String dsonString) {
         try (DsonTextReader reader = new DsonTextReader(DsonTextReaderSettings.DEFAULT, dsonString)) {
             return readCollection(reader);
         }
@@ -453,9 +453,6 @@ public final class Dsons {
 
     /** 简单转写为Dson，数组不会被展开 */
     public static String toDson(DsonValue dsonValue, ObjectStyle style, DsonTextWriterSettings settings) {
-        if (!dsonValue.getDsonType().isContainerOrHeader()) {
-            throw new IllegalArgumentException("invalid dsonType " + dsonValue.getDsonType());
-        }
         StringBuilder sb = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.acquire();
         try {
             try (DsonTextWriter writer = new DsonTextWriter(settings, new StringBuilderWriter(sb))) {
