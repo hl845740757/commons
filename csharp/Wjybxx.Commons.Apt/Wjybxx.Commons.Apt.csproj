@@ -6,7 +6,7 @@
         <LangVersion>9</LangVersion>
         <RootNamespace>Wjybxx.Commons.Apt</RootNamespace>
         <PackageId>Wjybxx.Commons.Apt</PackageId>
-        <PackageVersion>1.5.0</PackageVersion>
+        <PackageVersion>1.5.1</PackageVersion>
 
         <Title>Wjybxx.Commons.Apt</Title>
         <Description>注解处理器工具</Description>

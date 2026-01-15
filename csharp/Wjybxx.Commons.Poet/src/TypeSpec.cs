@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -72,6 +73,10 @@ public class TypeSpec : ISpecification
     /// 类型是否类似方法
     /// </summary>
     public bool IsMethodLike => kind == Kind.Delegator || kind == Kind.RecordClass || kind == Kind.RecordStruct;
+    /// <summary>
+    /// 是否是Flags枚举
+    /// </summary>
+    public bool IsFlagsEnum => attributes.Any(e => e.Equals(ClassName.FLAGS));
 
     /// <summary>
     /// 获取类型关联的关键字

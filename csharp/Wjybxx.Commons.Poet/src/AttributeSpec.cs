@@ -92,7 +92,7 @@ public class AttributeSpec : ISpecification
             this.constructor = codeBlock;
             return this;
         }
-        
+
         public Builder Constructor(string format, params object?[] args) {
             Constructor(CodeBlock.Of(format, args));
             return this;

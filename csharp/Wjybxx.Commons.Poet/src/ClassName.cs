@@ -46,6 +46,7 @@ public class ClassName : TypeName
     public static readonly ClassName SERIALIZABLE = InternalGet(typeof(SerializableAttribute));
     public static readonly ClassName NON_SERIALIZED = InternalGet(typeof(NonSerializedAttribute));
     public static readonly ClassName OPTIONAL = InternalGet(typeof(OptionalAttribute));
+    public static readonly ClassName FLAGS = InternalGet(typeof(FlagsAttribute));
 
     /// <summary>
     /// 外部类类名<see cref="Type.DeclaringType"/>

@@ -99,7 +99,7 @@ public class EnumValueSpec : ISpecification
             document.Add(codeBlock);
             return this;
         }
-        
+
         public Builder AddAttribute(AttributeSpec attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
             this.attributes.Add(attributeSpec);

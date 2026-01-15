@@ -254,7 +254,7 @@ public sealed class CodeWriter
         namespaceStack.Push(namespaceSpec);
 
         Emit("namespace $L", namespaceSpec.name); // {}
-        Emit("\n{");
+        Emit("\n{\n");
         if (indentInsideNamespace) {
             Indent();
         }
@@ -443,7 +443,7 @@ public sealed class CodeWriter
                     return;
                 }
                 // 打印其它内部元素 -- 需要缩进
-                Emit("\n{");
+                Emit("\n{\n");
                 {
                     Indent();
                     for (int index = 1; index < typeSpec.nestedSpecs.Count; index++) {
@@ -465,7 +465,7 @@ public sealed class CodeWriter
                 Emit(" ");
             }
             // 打印内部元素 -- 需要缩进
-            Emit("\n{");
+            Emit("\n{\n");
             {
                 Indent();
                 foreach (ISpecification nestedSpec in typeSpec.nestedSpecs) {
@@ -759,7 +759,12 @@ public sealed class CodeWriter
         if (!enumValueSpec.number.HasValue) {
             Emit("$L,", enumValueSpec.name);
         } else {
-            Emit("$L = $L,", enumValueSpec.name, enumValueSpec.number.Value);
+            int number = enumValueSpec.number.Value;
+            if (typeSpecStack.TryPeek(out TypeSpec typeSpec) && typeSpec.IsFlagsEnum) {
+                Emit("$L = $L,", enumValueSpec.name, number.ToString("X")); // Flags输出为16进制
+            } else {
+                Emit("$L = $L,", enumValueSpec.name, number);
+            }
         }
         Emit("\n"); // 每个元素末尾都默认换行
     }
@@ -1212,7 +1217,8 @@ public sealed class CodeWriter
                 typeNameStack.Push(".");
                 typeNameStack.Push(alias);
             } else if (current.Keyword == null
-                       && namespaceStack.TryPeek(out NamespaceSpec? namespaceSpec)
+                       && namespaceStack.TryPeek(out NamespaceSpec namespaceSpec)
+                       && namespaceSpec.name != "System"
                        && namespaceSpec.name != current.ns) {
                 // 基于关键字时不引入system，同命名空间下时也不引入
                 importableNamespaces.TryAdd(current.ns, null);
