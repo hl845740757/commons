@@ -16,13 +16,11 @@
 
 package cn.wjybxx.dson;
 
+import cn.wjybxx.dson.text.Double4Style;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 /**
  * 1.Object/Header先写入name再写入value，数组直接写入value。
@@ -85,6 +83,8 @@ public interface DsonWriter extends AutoCloseable {
 
     void writeTimestamp(String name, Timestamp timestamp);
 
+    void writeDouble4(String name, Double4 double4, Double4Style style);
+
     // endregion
 
     // region 简单值(无name版)
@@ -112,6 +112,8 @@ public interface DsonWriter extends AutoCloseable {
     void writeDateTime(ExtDateTime dateTime);
 
     void writeTimestamp(Timestamp timestamp);
+
+    void writeDouble4(Double4 double4, Double4Style style);
 
     // endregion
 
@@ -214,6 +216,10 @@ public interface DsonWriter extends AutoCloseable {
         writeBinary(name, bytes, 0, bytes.length);
     }
 
+    default void writeDouble4(String name, Double4 double4) {
+        writeDouble4(name, double4, Double4Style.ARRAY4);
+    }
+
     default void writeInt32(int value) {
         writeInt32(value, NumberStyle.TYPED);
     }
@@ -236,6 +242,10 @@ public interface DsonWriter extends AutoCloseable {
 
     default void writeBinary(byte[] bytes) {
         writeBinary(bytes, 0, bytes.length);
+    }
+
+    default void writeDouble4(Double4 double4) {
+        writeDouble4(double4, Double4Style.ARRAY4);
     }
     // endregion
 }

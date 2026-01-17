@@ -16,14 +16,10 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonInput;
 import cn.wjybxx.dson.io.DsonOutput;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import java.util.List;
 
@@ -102,9 +98,9 @@ public class DsonReaderUtils {
 
     public static ObjectPtr readPtr(DsonInput input, int wireTypeBits) {
         long localId = input.readUInt64();
-        String colletion = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_COLLECTION) ? input.readString() : null;
-        String localPath = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_LOCAL_PATH) ? input.readString() : null;
-        int type = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE) ? input.readUInt32() : 0;
+        String colletion = (wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0 ? input.readString() : null;
+        String localPath = (wireTypeBits & ObjectPtr.MASK_LOCAL_PATH) != 0 ? input.readString() : null;
+        int type = (wireTypeBits & ObjectPtr.MASK_TYPE) != 0 ? input.readUInt32() : 0;
         return new ObjectPtr(colletion, localPath, localId, type);
     }
 
@@ -132,6 +128,36 @@ public class DsonReaderUtils {
         return new Timestamp(
                 input.readUInt64(),
                 input.readUInt32());
+    }
+
+    public static int wireTypeOfDouble4(Double4 double4) {
+        int v = 0;
+        if (double4.v1 != 0) v |= 0x01;
+        if (double4.v2 != 0) v |= 0x02;
+        if (double4.v3 != 0) v |= 0x04;
+        return v;
+    }
+
+    public static void writeDouble4(DsonOutput output, Double4 double4) {
+        // V0固定写入，其它三个非0时写入
+        output.writeDouble(double4.v0);
+        if (double4.v1 != 0) {
+            output.writeDouble(double4.v1);
+        }
+        if (double4.v2 != 0) {
+            output.writeDouble(double4.v2);
+        }
+        if (double4.v3 != 0) {
+            output.writeDouble(double4.v3);
+        }
+    }
+
+    public static Double4 readDouble4(DsonInput input, int wireTypeBits) {
+        double v0 = input.readDouble();
+        double v1 = (wireTypeBits & 0x01) != 0 ? input.readDouble() : 0;
+        double v2 = (wireTypeBits & 0x02) != 0 ? input.readDouble() : 0;
+        double v3 = (wireTypeBits & 0x04) != 0 ? input.readDouble() : 0;
+        return new Double4(v0, v1, v2, v3);
     }
 
     // endregion
@@ -207,15 +233,15 @@ public class DsonReaderUtils {
             }
             case POINTER -> {
                 input.readUInt64(); // localId
-                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_COLLECTION)) {
+                if ((wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0) {
                     skip = input.readUInt32(); // collection长度
                     input.skipRawBytes(skip);
                 }
-                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_LOCAL_PATH)) {
+                if ((wireTypeBits & ObjectPtr.MASK_LOCAL_PATH) != 0) {
                     skip = input.readUInt32(); // localPath长度
                     input.skipRawBytes(skip);
                 }
-                if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE)) {
+                if ((wireTypeBits & ObjectPtr.MASK_TYPE) != 0) {
                     input.readUInt32();
                 }
                 return;
@@ -230,6 +256,13 @@ public class DsonReaderUtils {
             case TIMESTAMP -> {
                 input.readUInt64();
                 input.readUInt32();
+                return;
+            }
+            case DOUBLE4 -> {
+                input.readDouble();
+                if ((wireTypeBits & 0x01) != 0) input.readDouble();
+                if ((wireTypeBits & 0x02) != 0) input.readDouble();
+                if ((wireTypeBits & 0x04) != 0) input.readDouble();
                 return;
             }
             case HEADER -> {

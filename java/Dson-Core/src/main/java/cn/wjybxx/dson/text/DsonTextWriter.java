@@ -22,10 +22,7 @@ import cn.wjybxx.dson.DsonContextType;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.DsonWriterState;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import java.io.Writer;
 import java.util.Objects;
@@ -552,12 +549,18 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer.fastPrint(Long.toString(timestamp.getSeconds()));
             printer.fastPrint(", ");
 
-            printer.printlnIfExceed(softLineLength);
             printer.fastPrint(Timestamp.NAMES_NANOS);
             printer.fastPrint(": ");
             printer.fastPrint(Integer.toString(timestamp.getNanos()));
             printer.print('}');
         }
+    }
+
+    @Override
+    protected void doWriteDouble4(Double4 double4, Double4Style style) {
+        DsonPrinter printer = this.printer;
+        writeCurrentName(printer, DsonType.DOUBLE4);
+        Double4Style.print(printer, double4, style);
     }
 
     // endregion

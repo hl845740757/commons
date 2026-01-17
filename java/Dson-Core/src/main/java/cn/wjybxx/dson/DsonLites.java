@@ -242,6 +242,7 @@ public class DsonLites {
             case POINTER -> writer.writePtr(dsonValue.asPointer());
             case DATETIME -> writer.writeDateTime(dsonValue.asDateTime());
             case TIMESTAMP -> writer.writeTimestamp(dsonValue.asTimestamp());
+            case DOUBLE4 -> writer.writeDouble4(dsonValue.asDouble4());
             case HEADER -> writeHeader(writer, dsonValue.asHeaderLite());
             case ARRAY -> writeArray(writer, dsonValue.asArrayLite());
             case OBJECT -> writeObject(writer, dsonValue.asObjectLite());
@@ -267,6 +268,7 @@ public class DsonLites {
             case POINTER -> new DsonPointer(reader.readPtr());
             case DATETIME -> new DsonDateTime(reader.readDateTime());
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp());
+            case DOUBLE4 -> new DsonDouble4(reader.readDouble4());
             case HEADER -> {
                 DsonHeader<Integer> header = new DsonHeader<>();
                 readHeader(reader, header);

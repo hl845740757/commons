@@ -2,7 +2,6 @@ package cn.wjybxx.dson.types;
 
 import cn.wjybxx.base.time.TimeUtils;
 import cn.wjybxx.dson.DsonLites;
-import cn.wjybxx.dson.internal.DsonInternals;
 
 import javax.annotation.concurrent.Immutable;
 import java.time.*;
@@ -17,13 +16,13 @@ import java.time.format.DateTimeFormatter;
 @Immutable
 public final class ExtDateTime {
 
-    public static final byte MASK_DATE = 1;
-    public static final byte MASK_TIME = 1 << 1;
-    public static final byte MASK_OFFSET = 1 << 2;
+    public static final int MASK_DATE = 1;
+    public static final int MASK_TIME = 1 << 1;
+    public static final int MASK_OFFSET = 1 << 2;
 
-    public static final byte MASK_DATETIME = MASK_DATE | MASK_TIME;
-    public static final byte MASK_DATETIME_OFFSET = MASK_DATE | MASK_TIME | MASK_OFFSET;
-    public static final byte MASK_ALL = MASK_DATETIME_OFFSET;
+    public static final int MASK_DATETIME = MASK_DATE | MASK_TIME;
+    public static final int MASK_DATETIME_OFFSET = MASK_DATE | MASK_TIME | MASK_OFFSET;
+    public static final int MASK_ALL = MASK_DATETIME_OFFSET;
 
     /** 纪元时间-秒 */
     private final long seconds;
@@ -32,7 +31,7 @@ public final class ExtDateTime {
     /** 时区偏移-秒 */
     private final int offset;
     /** 哪些字段有效 */
-    private final byte enables;
+    private final int enables;
 
     /**
      * 该接口慎用，通常我们需要精确到毫秒
@@ -51,7 +50,7 @@ public final class ExtDateTime {
         this(seconds, nanos, 0, MASK_DATETIME);
     }
 
-    public ExtDateTime(long seconds, int nanos, int offset, byte enables) {
+    public ExtDateTime(long seconds, int nanos, int offset, int enables) {
         if ((enables & MASK_ALL) != enables) {
             throw new IllegalArgumentException("invalid enables: " + enables);
         }
@@ -92,11 +91,11 @@ public final class ExtDateTime {
     }
 
     public ExtDateTime withOffset(int offset) {
-        return new ExtDateTime(seconds, nanos, offset, (byte) (enables | MASK_OFFSET));
+        return new ExtDateTime(seconds, nanos, offset, enables | MASK_OFFSET);
     }
 
     public ExtDateTime withoutOffset() {
-        return new ExtDateTime(seconds, nanos, 0, (byte) (enables & MASK_DATETIME));
+        return new ExtDateTime(seconds, nanos, 0, enables & MASK_DATETIME);
     }
 
     // region
@@ -113,24 +112,24 @@ public final class ExtDateTime {
         return offset;
     }
 
-    public byte getEnables() {
+    public int getEnables() {
         return enables;
     }
 
     public boolean hasDate() {
-        return DsonInternals.isSet(enables, MASK_DATE);
+        return (enables & MASK_DATE) != 0;
     }
 
     public boolean hasTime() {
-        return DsonInternals.isSet(enables, MASK_TIME);
+        return (enables & MASK_TIME) != 0;
     }
 
     public boolean hasOffset() {
-        return DsonInternals.isSet(enables, MASK_OFFSET);
+        return (enables & MASK_OFFSET) != 0;
     }
 
-    public boolean hasFields(byte mask) {
-        return DsonInternals.isSet(enables, mask);
+    public boolean hasFields(int mask) {
+        return (enables & mask) != 0;
     }
 
     public boolean canBeAbbreviated() {

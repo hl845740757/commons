@@ -48,6 +48,10 @@ public enum DsonType {
      * 时间戳
      */
     TIMESTAMP(14),
+    /**
+     * Double4
+     */
+    DOUBLE4(15),
 
     /**
      * 对象头信息，与Object类型编码格式类似

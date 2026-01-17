@@ -20,10 +20,7 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonOutput;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import java.util.Objects;
 
@@ -184,6 +181,12 @@ public class DsonLiteBinaryWriter extends AbstractDsonLiteWriter {
         DsonReaderUtils.writeTimestamp(output, timestamp);
     }
 
+    @Override
+    protected void doWriteDouble4(Double4 double4) {
+        DsonOutput output = this.output;
+        writeFullTypeAndCurrentName(output, DsonType.DOUBLE4, DsonReaderUtils.wireTypeOfDouble4(double4));
+        DsonReaderUtils.writeDouble4(output, double4);
+    }
     // endregion
 
     // region 容器

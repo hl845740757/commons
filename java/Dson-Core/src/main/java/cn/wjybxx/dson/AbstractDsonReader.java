@@ -17,10 +17,7 @@
 package cn.wjybxx.dson;
 
 import cn.wjybxx.dson.io.DsonIOException;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -310,6 +307,14 @@ public abstract class AbstractDsonReader implements DsonReader {
         return value;
     }
 
+    @Override
+    public Double4 readDouble4(String name) {
+        advanceToValueState(name, DsonType.DOUBLE4);
+        Double4 value = doReadDouble4();
+        setNextState();
+        return value;
+    }
+
     // region 无name版
 
     @Override
@@ -399,6 +404,13 @@ public abstract class AbstractDsonReader implements DsonReader {
         return value;
     }
 
+    @Override
+    public Double4 readDouble4() {
+        ensureValueState(context, DsonType.DOUBLE4);
+        Double4 value = doReadDouble4();
+        setNextState();
+        return value;
+    }
     // endregion
 
     protected abstract int doReadInt32();
@@ -423,6 +435,7 @@ public abstract class AbstractDsonReader implements DsonReader {
 
     protected abstract Timestamp doReadTimestamp();
 
+    protected abstract Double4 doReadDouble4();
     // endregion
 
     // region 容器

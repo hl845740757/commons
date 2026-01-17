@@ -16,10 +16,7 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import javax.annotation.Nonnull;
 
@@ -121,6 +118,8 @@ public interface DsonLiteReader extends AutoCloseable {
 
     Timestamp readTimestamp(int name);
 
+    Double4 readDouble4(int name);
+
     // endregion
 
     // region 简单值(无name版)
@@ -146,6 +145,9 @@ public interface DsonLiteReader extends AutoCloseable {
     ExtDateTime readDateTime();
 
     Timestamp readTimestamp();
+
+    Double4 readDouble4();
+    // endregion
 
     // region 容器
 

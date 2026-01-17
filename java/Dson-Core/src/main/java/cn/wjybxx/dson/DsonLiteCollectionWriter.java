@@ -2,10 +2,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import java.util.Objects;
 
@@ -113,6 +110,11 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
     @Override
     protected void doWriteTimestamp(Timestamp timestamp) {
         getContext().add(new DsonTimestamp(timestamp));
+    }
+
+    @Override
+    protected void doWriteDouble4(Double4 double4) {
+        getContext().add(new DsonDouble4(double4));
     }
     //endregion
 

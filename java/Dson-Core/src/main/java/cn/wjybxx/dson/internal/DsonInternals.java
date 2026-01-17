@@ -32,11 +32,6 @@ public class DsonInternals {
     /** 垂直制表符号 - java不支持... */
     public static final char CHAR_VERTICAL_TAB = '\u000b';
 
-    /** 是否设置了mask关联的所有bit */
-    public static boolean isSet(int value, int mask) {
-        return (value & mask) == mask;
-    }
-
     // region commons-lang3
 
     public static boolean isParsable(String str) {

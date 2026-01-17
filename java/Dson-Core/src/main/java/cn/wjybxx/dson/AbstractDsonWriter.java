@@ -18,13 +18,11 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.dson.io.DsonIOException;
+import cn.wjybxx.dson.text.Double4Style;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -226,6 +224,14 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
+    @Override
+    public void writeDouble4(String name, Double4 double4, Double4Style style) {
+        Objects.requireNonNull(double4);
+        advanceToValueState(name);
+        doWriteDouble4(double4, style);
+        setNextState();
+    }
+
     // region 无name版
     @Override
     public void writeInt32(int value, NumberStyle style) {
@@ -317,6 +323,14 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
+    @Override
+    public void writeDouble4(Double4 double4, Double4Style style) {
+        Objects.requireNonNull(double4);
+        ensureValueState(context);
+        doWriteDouble4(double4, style);
+        setNextState();
+    }
+
     // endregion
 
     protected abstract void doWriteInt32(int value, NumberStyle style);
@@ -342,6 +356,8 @@ public abstract class AbstractDsonWriter implements DsonWriter {
     protected abstract void doWriteDateTime(ExtDateTime dateTime);
 
     protected abstract void doWriteTimestamp(Timestamp timestamp);
+
+    protected abstract void doWriteDouble4(Double4 double4, Double4Style style);
     // endregion
 
     // region 容器

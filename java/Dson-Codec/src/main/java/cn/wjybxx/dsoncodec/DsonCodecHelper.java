@@ -18,10 +18,7 @@ package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.dson.DsonReader;
 import cn.wjybxx.dson.DsonType;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 /**
  * 1.int扩展之间可以相互转换，当int的扩展不可以直接转换为其它数值类型
@@ -199,6 +196,18 @@ final class DsonCodecHelper {
         };
     }
 
+    static Double4 readDouble4(DsonReader reader, String name) {
+        DsonType dsonType = readOrGetDsonType(reader);
+        return switch (dsonType) {
+            case DOUBLE4 -> reader.readDouble4(name);
+            case NULL -> {
+                reader.readNull(name);
+                yield null;
+            }
+            default -> throw DsonCodecException.incompatible(Timestamp.class, dsonType);
+        };
+    }
+
     //
     static Object readPrimitive(DsonReader reader, String name, Class<?> declared) {
         if (declared == int.class) {
@@ -241,6 +250,7 @@ final class DsonCodecHelper {
             case POINTER -> reader.readPtr(name);
             case DATETIME -> reader.readDateTime(name);
             case TIMESTAMP -> reader.readTimestamp(name);
+            case DOUBLE4 -> reader.readDouble4(name);
             case NULL -> {
                 reader.readNull(name);
                 yield null;

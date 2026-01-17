@@ -216,7 +216,7 @@ public class ExecutorUtils {
     }
 
     /** 由{@link IEventLoop}通知返回的{@link IPromise} */
-    public static <V> IPromise<V> bindEventLoop(ICompletionStage<V> future, IEventLoop eventLoop) {
+    public static <V> IPromise<V> toEventLoopPromise(IEventLoop eventLoop, ICompletionStage<V> future) {
         IPromise<V> result = eventLoop.newPromise();
         setPromiseAsync(eventLoop, result, future, TaskOptions.STAGE_TRY_INLINE);
         return result;

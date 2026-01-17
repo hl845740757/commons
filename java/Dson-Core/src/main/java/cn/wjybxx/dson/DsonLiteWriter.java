@@ -16,10 +16,7 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 /**
  * 由于java的泛型是擦除实现，我们为避免拆装箱开销，提供了几乎重复的实现。
@@ -80,6 +77,7 @@ public interface DsonLiteWriter extends AutoCloseable {
 
     void writeTimestamp(int name, Timestamp timestamp);
 
+    void writeDouble4(int name, Double4 double4);
     // endregion
 
     // region 简单值(无name版)
@@ -108,6 +106,7 @@ public interface DsonLiteWriter extends AutoCloseable {
 
     void writeTimestamp(Timestamp timestamp);
 
+    void writeDouble4(Double4 double4);
     // endregion
 
     // region 容器

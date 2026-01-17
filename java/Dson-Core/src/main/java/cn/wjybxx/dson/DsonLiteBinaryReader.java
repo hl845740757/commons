@@ -20,10 +20,7 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonInput;
-import cn.wjybxx.dson.types.Binary;
-import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
-import cn.wjybxx.dson.types.Timestamp;
+import cn.wjybxx.dson.types.*;
 
 import java.util.Objects;
 
@@ -165,6 +162,10 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
         return DsonReaderUtils.readTimestamp(input);
     }
 
+    @Override
+    protected Double4 doReadDouble4() {
+        return DsonReaderUtils.readDouble4(input, currentWireTypeBits);
+    }
     // endregion
 
     // region 容器

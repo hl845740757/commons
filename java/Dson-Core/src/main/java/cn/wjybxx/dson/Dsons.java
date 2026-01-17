@@ -320,6 +320,7 @@ public final class Dsons {
             case POINTER -> writer.writePtr(dsonValue.asPointer());
             case DATETIME -> writer.writeDateTime(dsonValue.asDateTime());
             case TIMESTAMP -> writer.writeTimestamp(dsonValue.asTimestamp());
+            case DOUBLE4 -> writer.writeDouble4(dsonValue.asDouble4());
             case HEADER -> writeHeader(writer, dsonValue.asHeader());
             case ARRAY -> writeArray(writer, dsonValue.asArray(), ObjectStyle.INDENT);
             case OBJECT -> writeObject(writer, dsonValue.asObject(), ObjectStyle.INDENT);
@@ -345,6 +346,7 @@ public final class Dsons {
             case POINTER -> new DsonPointer(reader.readPtr());
             case DATETIME -> new DsonDateTime(reader.readDateTime());
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp());
+            case DOUBLE4 -> new DsonDouble4(reader.readDouble4());
             case HEADER -> {
                 DsonHeader<String> header = new DsonHeader<>();
                 readHeader(reader, header);
