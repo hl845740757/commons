@@ -139,6 +139,8 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     Timestamp ReadTimestamp(TName name);
 
+    Double4 ReadDouble4(TName name);
+
     #endregion
 
     #region 简单值(无name版)
@@ -164,6 +166,8 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     ExtDateTime ReadDateTime();
 
     Timestamp ReadTimestamp();
+
+    Double4 ReadDouble4();
 
     #endregion
 

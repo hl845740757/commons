@@ -490,6 +490,10 @@ public static class Dsons
                 writer.WriteTimestamp(dsonValue.AsTimestamp());
                 break;
             }
+            case DsonType.Double4: {
+                writer.WriteDouble4(dsonValue.AsDouble4());
+                break;
+            }
             case DsonType.Header:
                 WriteHeader(writer, dsonValue.AsHeader<TName>());
                 break;
@@ -523,6 +527,7 @@ public static class Dsons
             case DsonType.Pointer: return new DsonPointer(reader.ReadPtr());
             case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
             case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());
+            case DsonType.Double4: return new DsonDouble4(reader.ReadDouble4());
             case DsonType.Header: {
                 DsonHeader<TName> header = new DsonHeader<TName>();
                 ReadHeader(reader, header);

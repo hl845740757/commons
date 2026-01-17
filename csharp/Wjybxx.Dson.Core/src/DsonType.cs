@@ -51,6 +51,10 @@ public enum DsonType : sbyte
     /// 时间戳
     /// </summary>
     Timestamp = 14,
+    /// <summary>
+    /// Double4
+    /// </summary>
+    Double4 = 15,
 
     /// <summary>
     /// 对象头

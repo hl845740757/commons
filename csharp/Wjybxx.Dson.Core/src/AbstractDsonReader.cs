@@ -286,6 +286,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public Double4 ReadDouble4(TName name) {
+        AdvanceToValueState(name, DsonType.Double4);
+        Double4 value = DoReadDouble4();
+        SetNextState();
+        return value;
+    }
+
     #region 无name版
 
     public int ReadInt32() {
@@ -364,6 +371,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public Double4 ReadDouble4() {
+        EnsureValueState(context, DsonType.Double4);
+        Double4 value = DoReadDouble4();
+        SetNextState();
+        return value;
+    }
+
     #endregion
 
     protected abstract int DoReadInt32();
@@ -387,6 +401,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected abstract ExtDateTime DoReadDateTime();
 
     protected abstract Timestamp DoReadTimestamp();
+
+    protected abstract Double4 DoReadDouble4();
 
     #endregion
 

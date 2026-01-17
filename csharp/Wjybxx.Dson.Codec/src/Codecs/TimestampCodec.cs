@@ -25,7 +25,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class TimestampCodec : IDsonCodec<Timestamp>
 {
     public void WriteObject(IDsonObjectWriter writer, Timestamp inst, Type declaredType, SerializeFeatures features) {
-        writer.WriteTimestamp(in inst);
+        writer.WriteTimestamp(inst);
     }
 
     public Timestamp ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {

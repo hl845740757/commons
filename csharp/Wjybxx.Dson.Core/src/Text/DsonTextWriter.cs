@@ -419,7 +419,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         PrintBinary(bytes, offset, len);
     }
 
-    protected override void DoWritePtr(in ObjectPtr objectPtr) {
+    protected override void DoWritePtr(ObjectPtr objectPtr) {
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;
         WriteCurrentName(printer, DsonType.Pointer);
@@ -461,7 +461,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.Print('}');
     }
 
-    protected override void DoWriteDateTime(in ExtDateTime dateTime) {
+    protected override void DoWriteDateTime(ExtDateTime dateTime) {
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;
         WriteCurrentName(printer, DsonType.DateTime);
@@ -512,7 +512,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.Print('}');
     }
 
-    protected override void DoWriteTimestamp(in Timestamp timestamp) {
+    protected override void DoWriteTimestamp(Timestamp timestamp) {
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;
         WriteCurrentName(printer, DsonType.Timestamp);
@@ -530,12 +530,17 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             printer.FastPrint(timestamp.Seconds.ToString());
             printer.FastPrint(", ");
 
-            printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(Timestamp.NamesNanos);
             printer.FastPrint(": ");
             printer.FastPrint(timestamp.Nanos.ToString());
             printer.Print('}');
         }
+    }
+
+    protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Double4);
+        Double4Styles.Print(printer, double4, style);
     }
 
     #endregion

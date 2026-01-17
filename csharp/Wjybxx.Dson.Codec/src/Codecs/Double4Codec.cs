@@ -1,6 +1,6 @@
 #region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,17 +17,18 @@
 #endregion
 
 using System;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
-public class DateTimeCodec : IDsonCodec<DateTime>
+public class Double4Codec : IDsonCodec<Double4>
 {
-    public void WriteObject(IDsonObjectWriter writer, DateTime inst, Type declaredType, SerializeFeatures features) {
-        writer.WriteDateTime(inst);
+    public void WriteObject(IDsonObjectWriter writer, Double4 inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteDouble4(inst);
     }
 
-    public DateTime ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return reader.ReadDateTime();
+    public Double4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        return reader.ReadDouble4();
     }
 }
 }

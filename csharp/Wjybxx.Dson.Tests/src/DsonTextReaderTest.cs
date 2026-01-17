@@ -46,7 +46,9 @@ public class DsonTextReaderTest
               intro: "hello world",
               ptr1: @ptr 10001,
               ptr2: {@ptr coll: 16148b3b4e7b8923d398, localId: 10001},
-              ptr: @ptr 0
+              ptr: @ptr 0,
+              dq1: [@D4 1, 1, 1, 0],
+              dq2: {@D4 x: 1, y: 1, z: 1, w: 1}
             },
             [@{localId: 10001}
               @bin "FFFE",

@@ -511,6 +511,7 @@ public sealed class DsonCodecConfig
         // 日期时间
         config.AddCodec(new DateTimeCodec());
         config.AddCodec(new DateTimeOffsetCodec());
+        config.AddCodec(new Double4Codec());
 
         // TODO 特殊Codec绑定
         config.AddCodec(new ObjectCodec());

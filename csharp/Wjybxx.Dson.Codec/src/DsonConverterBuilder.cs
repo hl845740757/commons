@@ -183,7 +183,7 @@ public class DsonConverterBuilder
     /// <returns></returns>
     public DsonConverterBuilder AddByCodecType(Type codecType) {
         Type encoderType = DsonConverterUtils.GetEncoderType(codecType);
-        if (codecType.IsGenericType) { 
+        if (codecType.IsGenericType) {
             encoderType = encoderType.GetGenericTypeDefinition();
             AddGenericCodec(encoderType, codecType);
             AddTypeMeta(TypeMeta.Of(encoderType, ObjectUtil.GetSimpleName(encoderType)));

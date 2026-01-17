@@ -158,22 +158,28 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         DsonReaderUtils.WriteBinary(output, bytes, offset, len);
     }
 
-    protected override void DoWritePtr(in ObjectPtr objectPtr) {
+    protected override void DoWritePtr(ObjectPtr objectPtr) {
         IDsonOutput output = this._output;
-        WriteFullTypeAndCurrentName(output, DsonType.Pointer, DsonReaderUtils.WireTypeOfPtr(in objectPtr));
-        DsonReaderUtils.WritePtr(output, in objectPtr);
+        WriteFullTypeAndCurrentName(output, DsonType.Pointer, DsonReaderUtils.WireTypeOfPtr(objectPtr));
+        DsonReaderUtils.WritePtr(output, objectPtr);
     }
 
-    protected override void DoWriteDateTime(in ExtDateTime dateTime) {
+    protected override void DoWriteDateTime(ExtDateTime dateTime) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.DateTime, dateTime.Enables);
         DsonReaderUtils.WriteDateTime(output, dateTime);
     }
 
-    protected override void DoWriteTimestamp(in Timestamp timestamp) {
+    protected override void DoWriteTimestamp(Timestamp timestamp) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Timestamp, 0);
         DsonReaderUtils.WriteTimestamp(output, timestamp);
+    }
+
+    protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
+        IDsonOutput output = this._output;
+        WriteFullTypeAndCurrentName(output, DsonType.Double4, DsonReaderUtils.WireTypeOfDouble4(double4));
+        DsonReaderUtils.WriteDouble4(output, double4);
     }
 
     #endregion

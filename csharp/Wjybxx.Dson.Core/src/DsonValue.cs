@@ -60,6 +60,9 @@ public abstract class DsonValue
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Timestamp AsTimestamp() => ((DsonTimestamp)this).Value;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Double4 AsDouble4() => ((DsonDouble4)this).Value;
+
     #endregion
 
     #region number

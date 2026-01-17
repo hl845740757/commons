@@ -24,7 +24,7 @@ using System.Text;
 namespace Wjybxx.Dson.Text
 {
 /// <summary>
-/// 这里提供默认数字格式化方式
+/// 数字格式化实现
 /// </summary>
 public static class NumberStyles
 {

@@ -492,6 +492,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 PushNextValue(UnionValue.OfTimestamp(ScanTimestamp(context)));
                 return DsonType.Timestamp;
             }
+            case DsonTexts.LabelDouble4: {
+                PushNextValue(UnionValue.OfDouble4(ScanDouble4FromObject(context)));
+                return DsonType.Double4;
+            }
             default: {
                 PushToken(headerToken); // 非Object形式内置结构体
                 return DsonType.Object;
@@ -513,9 +517,18 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             // PushNextValue(new UnionValue(DsonType.Object, beginToken));
             return DsonType.Array;
         }
-        // 内置元组 -- 已尽皆删除
-        PushToken(headerToken);
-        return DsonType.Array;
+        // 内置元组
+        string clsName = headerToken.StringValue();
+        switch (clsName) {
+            case DsonTexts.LabelDouble4: {
+                PushNextValue(UnionValue.OfDouble4(ScanDouble4FromArray(context)));
+                return DsonType.Double4;
+            }
+            default: {
+                PushToken(headerToken);
+                return DsonType.Array;
+            }
+        }
     }
 
     private void EscapeHeaderAndPush(DsonToken headerToken) {
@@ -676,6 +689,58 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         return new ExtDateTime(seconds, nanos, offset, enables);
     }
 
+    private Double4 ScanDouble4FromArray(Context context) {
+        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
+        int index = 0;
+        DsonToken valueToken;
+        while ((valueToken = PopToken()).type != DsonTokenType.EndArray) {
+            if (valueToken.type == DsonTokenType.Comma) {
+                index++;
+                continue;
+            }
+            EnsureStringsToken(context, valueToken);
+            double value = DsonTexts.ParseDouble(valueToken.StringValue());
+            switch (index) {
+                case 0: v0 = value; break;
+                case 1: v1 = value; break;
+                case 2: v2 = value; break;
+                case 3: v3 = value; break;
+                default: throw new DsonIOException("IndexOutOfRange");
+            }
+        }
+        return new Double4(v0, v1, v2, v3);
+    }
+
+    private Double4 ScanDouble4FromObject(Context context) {
+        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
+        int index = 0;
+        DsonToken keyToken;
+        while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
+            if (keyToken.type == DsonTokenType.Comma) {
+                index++;
+                continue;
+            }
+            // key必须是字符串 - 必须顺序输入
+            EnsureStringsToken(context, keyToken);
+            // 下一个应该是冒号
+            DsonToken colonToken = PopToken();
+            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
+            // 下一个是无引号字符串(double)
+            DsonToken valueToken = PopToken();
+            EnsureStringsToken(context, valueToken);
+            //
+            double value = DsonTexts.ParseDouble(valueToken.StringValue());
+            switch (index) {
+                case 0: v0 = value; break;
+                case 1: v1 = value; break;
+                case 2: v2 = value; break;
+                case 3: v3 = value; break;
+                default: throw new DsonIOException("IndexOutOfRange");
+            }
+        }
+        return new Double4(v0, v1, v2, v3);
+    }
+
     /** 扫描string，直到遇见逗号或结束符 */
     private string ScanStringUtilComma() {
         if (_sb == null) {
@@ -823,7 +888,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (unionValue.type != DsonType.Bool) {
             throw new InvalidOperationException();
         }
-        return unionValue.bValue;
+        return unionValue.iValue != 0;
     }
 
     protected override string DoReadString() {
@@ -831,7 +896,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (unionValue.type != DsonType.String) {
             throw new InvalidOperationException();
         }
-        return (string)unionValue.objValue;
+        return (string)unionValue.objValue1;
     }
 
     protected override void DoReadNull() {
@@ -843,7 +908,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (value.type != DsonType.Binary) {
             throw new InvalidOperationException();
         }
-        return (Binary)value.objValue;
+        return (Binary)value.objValue1;
     }
 
     protected override ObjectPtr DoReadPtr() {
@@ -868,6 +933,14 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             throw new InvalidOperationException();
         }
         return value.Timestamp;
+    }
+
+    protected override Double4 DoReadDouble4() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.Double4) {
+            throw new InvalidOperationException();
+        }
+        return value.Double4;
     }
 
     #endregion

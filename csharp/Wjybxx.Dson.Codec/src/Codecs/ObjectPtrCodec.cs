@@ -25,7 +25,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class ObjectPtrCodec : IDsonCodec<ObjectPtr>
 {
     public void WriteObject(IDsonObjectWriter writer, ObjectPtr inst, Type declaredType, SerializeFeatures features) {
-        writer.WritePtr(in inst);
+        writer.WritePtr(inst);
     }
 
     public ObjectPtr ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {

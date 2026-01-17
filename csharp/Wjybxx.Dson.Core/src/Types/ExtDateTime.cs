@@ -18,6 +18,7 @@
 
 using System;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using Wjybxx.Commons;
 using Wjybxx.Dson.Internal;
 
@@ -27,24 +28,25 @@ namespace Wjybxx.Dson.Types
 /// 日期时间
 /// 为提高辨识度，我们命名为'ExtDateTime'
 /// </summary>
+[StructLayout(LayoutKind.Explicit)]
 public readonly struct ExtDateTime : IEquatable<ExtDateTime>
 {
-    public const byte MaskDate = 1;
-    public const byte MaskTime = 1 << 1;
-    public const byte MaskOffset = 1 << 2;
+    public const int MaskDate = 1;
+    public const int MaskTime = 1 << 1;
+    public const int MaskOffset = 1 << 2;
 
-    public const byte MaskDatetime = MaskDate | MaskTime;
-    public const byte MaskDatetimeOffset = MaskDate | MaskTime | MaskOffset;
-    public const byte MaskAll = MaskDatetimeOffset;
+    public const int MaskDatetime = MaskDate | MaskTime;
+    public const int MaskDatetimeOffset = MaskDate | MaskTime | MaskOffset;
+    public const int MaskAll = MaskDatetimeOffset;
 
     /** 纪元时间-秒 */
-    public long Seconds { get; }
+    [field: FieldOffset(0)] public long Seconds { get; }
     /** 纪元时间的纳秒部分 */
-    public int Nanos { get; }
+    [field: FieldOffset(8)] public int Nanos { get; }
     /** 时区偏移-秒 */
-    public int Offset { get; }
+    [field: FieldOffset(12)] public int Offset { get; }
     /** 哪些字段有效 */
-    public byte Enables { get; }
+    [field: FieldOffset(16)] public int Enables { get; }
 
     /// <summary>
     /// 
@@ -62,7 +64,7 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
     /// <param name="nanos">时间戳的纳秒部分</param>
     /// <param name="offset">时区偏移量--秒</param>
     /// <param name="enables">启用的字段信息；只有有效的字段才会被保存(序列化)</param>
-    public ExtDateTime(long seconds, int nanos, int offset, byte enables) {
+    public ExtDateTime(long seconds, int nanos, int offset, int enables) {
         if ((enables & MaskAll) != enables) {
             throw new ArgumentException("invalid enables: " + enables);
         }
@@ -113,14 +115,14 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
 
     #region props
 
-    public bool HasDate => DsonInternals.IsSet(Enables, MaskDate);
+    public bool HasDate => (Enables & MaskDate) != 0;
 
-    public bool HasTime => DsonInternals.IsSet(Enables, MaskTime);
+    public bool HasTime => (Enables & MaskTime) != 0;
 
-    public bool HasOffset => DsonInternals.IsSet(Enables, MaskOffset);
+    public bool HasOffset => (Enables & MaskOffset) != 0;
 
     public bool HasFields(byte mask) {
-        return DsonInternals.IsSet(Enables, mask);
+        return (Enables & mask) != 0;
     }
 
     /** 是否可以缩写 */

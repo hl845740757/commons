@@ -201,6 +201,19 @@ internal static class DsonCodecHelper
         }
     }
 
+    public static Double4 ReadDouble4(IDsonReader<string> reader, string? name) {
+        DsonType dsonType = ReadOrGetDsonType(reader);
+        switch (dsonType) {
+            case DsonType.Double4: return reader.ReadDouble4(name);
+            case DsonType.Null: {
+                reader.ReadNull(name);
+                return default;
+            }
+            default:
+                throw DsonCodecException.Incompatible(typeof(Double4), dsonType);
+        }
+    }
+
     public static object? ReadDsonValueValue(IDsonReader<string> reader, string? name) {
         DsonType dsonType = reader.CurrentDsonType;
         switch (dsonType) {
@@ -214,6 +227,7 @@ internal static class DsonCodecHelper
             case DsonType.Pointer: return reader.ReadPtr(name);
             case DsonType.DateTime: return reader.ReadDateTime(name);
             case DsonType.Timestamp: return reader.ReadTimestamp(name);
+            case DsonType.Double4: return reader.ReadDouble4(name);
             case DsonType.Null: {
                 reader.ReadNull(name);
                 return null;

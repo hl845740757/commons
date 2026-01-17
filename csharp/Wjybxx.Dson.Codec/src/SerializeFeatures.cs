@@ -102,49 +102,51 @@ public enum SerializeFeatures : uint
     PairAsDocument = 0x80,
 
     /// <summary>
-    /// 将枚举值序列化为数字（默认）
-    ///
-    /// 1.作用于List/Map时表示将其Value序列化为int值。
-    /// 2.该特征值的重要作用在于建立缓存，避免每次写入都查询三级上下文。
-    /// </summary>
-    EnumAsNumber = 0x01 << 8,
-    /// <summary>
-    /// 将枚举值序列化为字符串
-    ///
-    /// 1.作用于List/Map时表示将其Value序列化为字符串。
-    /// 2.由于枚举名的稳定性较差，通常不建议开启，因此建议尽量使用字段作用域。
-    /// </summary>
-    EnumAsString = 0x02 << 8,
-    /// <summary>
-    /// 枚举键序列化为数字（默认）
-    /// </summary>
-    EnumKeyAsNumber = 0x04 << 8,
-    /// <summary>
-    /// 枚举键序列化为字符串（默认int）
-    /// </summary>
-    EnumKeyAsString = 0x08 << 8,
-
-    /// <summary>
     /// 序列化Null字段
     ///
     /// 注：支持字段、类型、全局作用域。
     /// </summary>
-    WriteNullValue = 0x10 << 8,
+    WriteNullValue = 0x01 << 8,
     /// <summary>
     /// 跳过Null值
     /// </summary>
-    SkipNullValue = 0x20 << 8,
+    SkipNullValue = 0x02 << 8,
     /// <summary>
     /// 序列化零值字段
     /// 
     /// 1.零值：数值类型0，bool类型false
     /// 2.支持字段、类型、全局作用域。
     /// </summary>
-    WriteZeroValue = 0x40 << 8,
+    WriteZeroValue = 0x04 << 8,
     /// <summary>
     /// 跳过零值
     /// </summary>
-    SkipZeroValue = 0x80 << 8,
+    SkipZeroValue = 0x08 << 8,
+
+    //--注意：原子值的特征值可以重叠，如String和Enum，但原子值不能和容器类型重叠
+#pragma warning disable CA1069
+    /// <summary>
+    /// 将枚举值序列化为数字（默认）
+    ///
+    /// 1.作用于List/Map时表示将其Value序列化为int值。
+    /// 2.该特征值的重要作用在于建立缓存，避免每次写入都查询三级上下文。
+    /// </summary>
+    EnumAsNumber = 0x10 << 8,
+    /// <summary>
+    /// 将枚举值序列化为字符串
+    ///
+    /// 1.作用于List/Map时表示将其Value序列化为字符串。
+    /// 2.由于枚举名的稳定性较差，通常不建议开启，因此建议尽量使用字段作用域。
+    /// </summary>
+    EnumAsString = 0x20 << 8,
+    /// <summary>
+    /// 枚举键序列化为数字（默认）
+    /// </summary>
+    EnumKeyAsNumber = 0x40 << 8,
+    /// <summary>
+    /// 枚举键序列化为字符串（默认int）
+    /// </summary>
+    EnumKeyAsString = 0x80 << 8,
 
     /// <summary>
     /// 将Null值保持为Null值，禁用转换
@@ -152,13 +154,12 @@ public enum SerializeFeatures : uint
     /// Q：为什么序列化需要支持Null值转为非Null值(默认值)，而反序列化不需要？
     /// A：因为程序可以主动处理null和默认值以实现安全性，而序列化得到的数据可能需要更严格的规范以保证安全性。
     /// </summary>
-    NullStringAsNull = 0x01 << 16,
+    NullStringAsNull = 0x10 << 8,
     /// <summary>
     /// 将Null字符串值写为空字符串。
     /// </summary>
-    NullStringAsEmpty = 0x02 << 16,
+    NullStringAsEmpty = 0x20 << 8,
 
-    // Style的部分枚举值是重叠的，这通常不影响正确性
 #pragma warning disable CA1069
     /// <summary>
     /// 缩进模式 - 默认模式
@@ -199,18 +200,43 @@ public enum SerializeFeatures : uint
     StringLine = 0x80 << 20,
 
     /// <summary>
-    /// 数字编码时带上类型符号，可与其它格式共存（字段级别）
+    /// 数字编码为16进制（不支持浮点数）
     /// </summary>
-    NumberTyped = 0x10 << 20,
+    NumberHex = 0x10 << 20,
     /// <summary>
     /// int32/int64编码为无符号整数（可与其它格式共存）
     /// </summary>
     NumberUnsigned = 0x20 << 20,
     /// <summary>
-    /// 数字编码为16进制（不支持浮点数）
+    /// 数字编码时带上类型符号，可与其它格式共存（字段级别）
     /// </summary>
-    NumberHex = 0x40 << 20,
-#pragma warning restore CA1069
+    NumberTyped = 0x40 << 20,
+
+    /// <summary>
+    /// 将Double4编码为向量(1)
+    /// </summary>
+    Double4AsVector = 0x10 << 20,
+    /// <summary>
+    /// 将Double4编码为RGBA(2)
+    /// </summary>
+    Double4AsRgba = 0x20 << 20,
+    /// <summary>
+    /// 将Double4编码为Rect(3)
+    /// </summary>
+    Double4AsRect = Double4AsVector | Double4AsRgba,
+    /// <summary>
+    /// 限定Double4的元素为整数类型（可与Vector/Rgba/Rect共存）
+    /// </summary>
+    Double4AsInt = 0x80 << 20,
+
+    /// <summary>
+    /// 限定Double4长度为2
+    /// </summary>
+    Double4Len2 = 0x01 << 28,
+    /// <summary>
+    /// 限定Double4长度为3
+    /// </summary>
+    Double4Len3 = 0x02 << 28,
 
     /// <summary>
     /// Map编码样式的掩码
@@ -225,11 +251,17 @@ public enum SerializeFeatures : uint
     /// </summary>
     MaskNumberStyles = NumberTyped | NumberUnsigned | NumberHex,
     /// <summary>
+    /// Double4编码样式的掩码
+    /// </summary>
+    MaskDouble4Styles = Double4AsVector | Double4AsRgba | Double4AsRect
+                        | Double4AsInt
+                        | Double4Len2 | Double4Len3,
+    /// <summary>
     /// List/Map元素的序列化特征值掩码（还有部分需要手动转换）
     /// </summary>
     MaskElementFeatures = SerializeReference | SerializeInline | WriteTypeName
                           | EnumAsNumber | EnumAsString
                           | NullStringAsNull | NullStringAsEmpty
-                          | MaskStringStyles | MaskNumberStyles
+                          | MaskStringStyles | MaskNumberStyles | MaskDouble4Styles
 }
 }

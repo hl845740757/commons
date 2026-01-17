@@ -34,9 +34,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     private DefaultDsonConverter converter;
     private IDsonWriter<string> writer;
 
-    private long _nextLocalId;
     private readonly LinkedDictionary<object, ObjectPtr> referenceTable = new(ReferenceComparer.Inst);
     private ObjectPtr _stack;
+    private long _nextLocalId;
+    private bool _isTextWriter;
 #nullable restore
     private DefaultDsonObjectWriter() {
     }
@@ -55,6 +56,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     public void Init(DefaultDsonConverter converter, IDsonWriter<string> writer) {
         this.converter = converter;
         this.writer = writer;
+        this._isTextWriter = writer is DsonTextWriter;
     }
 
     public void AddReference(object reference, ObjectPtr ptr) {
@@ -104,25 +106,25 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteInt(string name, int value, SerializeFeatures features) {
         if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteInt32(name, value, features.ToNumberStyle());
+            writer.WriteInt32(name, value, _isTextWriter ? features.ToNumberStyle() : default);
         }
     }
 
     public void WriteLong(string name, long value, SerializeFeatures features) {
         if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteInt64(name, value, features.ToNumberStyle());
+            writer.WriteInt64(name, value, _isTextWriter ? features.ToNumberStyle() : default);
         }
     }
 
     public void WriteFloat(string name, float value, SerializeFeatures features) {
         if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteFloat(name, value, features.ToNumberStyle());
+            writer.WriteFloat(name, value, _isTextWriter ? features.ToNumberStyle() : default);
         }
     }
 
     public void WriteDouble(string name, double value, SerializeFeatures features) {
         if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteDouble(name, value, features.ToNumberStyle());
+            writer.WriteDouble(name, value, _isTextWriter ? features.ToNumberStyle() : default);
         }
     }
 
@@ -140,7 +142,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
                 WriteNull(name, features);
             }
         } else {
-            writer.WriteString(name, value, features.ToStringStyle());
+            writer.WriteString(name, value, _isTextWriter ? features.ToStringStyle() : default);
         }
     }
 
@@ -172,20 +174,24 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
-    public void WritePtr(string name, in ObjectPtr objectPtr) {
-        writer.WritePtr(name, in objectPtr);
+    public void WritePtr(string name, ObjectPtr objectPtr) {
+        writer.WritePtr(name, objectPtr);
     }
 
-    public void WriteDateTime(string name, in DateTime dateTime) {
+    public void WriteDateTime(string name, DateTime dateTime) {
         writer.WriteDateTime(name, ExtDateTime.OfDateTime(in dateTime));
     }
 
-    public void WriteExtDateTime(string name, in ExtDateTime dateTime) {
-        writer.WriteDateTime(name, in dateTime);
+    public void WriteExtDateTime(string name, ExtDateTime dateTime) {
+        writer.WriteDateTime(name, dateTime);
     }
 
-    public void WriteTimestamp(string name, in Timestamp timestamp) {
-        writer.WriteTimestamp(name, in timestamp);
+    public void WriteTimestamp(string name, Timestamp timestamp) {
+        writer.WriteTimestamp(name, timestamp);
+    }
+
+    public void WriteDouble4(string name, Double4 double4, SerializeFeatures features = default) {
+        writer.WriteDouble4(name, double4, _isTextWriter ? features.ToDouble4Style() : default);
     }
 
     #endregion
@@ -193,19 +199,19 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     #region 简单值-无name版
 
     public void WriteInt(int value, SerializeFeatures features) {
-        writer.WriteInt32(value, features.ToNumberStyle());
+        writer.WriteInt32(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
     public void WriteLong(long value, SerializeFeatures features) {
-        writer.WriteInt64(value, features.ToNumberStyle());
+        writer.WriteInt64(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
     public void WriteFloat(float value, SerializeFeatures features) {
-        writer.WriteFloat(value, features.ToNumberStyle());
+        writer.WriteFloat(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
     public void WriteDouble(double value, SerializeFeatures features) {
-        writer.WriteDouble(value, features.ToNumberStyle());
+        writer.WriteDouble(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
     public void WriteBool(bool value, SerializeFeatures features) {
@@ -220,7 +226,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
                 WriteNull();
             }
         } else {
-            writer.WriteString(value, features.ToStringStyle());
+            writer.WriteString(value, _isTextWriter ? features.ToStringStyle() : default);
         }
     }
 
@@ -250,20 +256,24 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
-    public void WritePtr(in ObjectPtr objectPtr) {
-        writer.WritePtr(in objectPtr);
+    public void WritePtr(ObjectPtr objectPtr) {
+        writer.WritePtr(objectPtr);
     }
 
-    public void WriteDateTime(in DateTime dateTime) {
+    public void WriteDateTime(DateTime dateTime) {
         writer.WriteDateTime(ExtDateTime.OfDateTime(in dateTime));
     }
 
-    public void WriteExtDateTime(in ExtDateTime dateTime) {
-        writer.WriteDateTime(in dateTime);
+    public void WriteExtDateTime(ExtDateTime dateTime) {
+        writer.WriteDateTime(dateTime);
     }
 
-    public void WriteTimestamp(in Timestamp timestamp) {
-        writer.WriteTimestamp(in timestamp);
+    public void WriteTimestamp(Timestamp timestamp) {
+        writer.WriteTimestamp(timestamp);
+    }
+
+    public void WriteDouble4(Double4 double4, SerializeFeatures features = default) {
+        writer.WriteDouble4(double4, _isTextWriter ? features.ToDouble4Style() : default);
     }
 
     #endregion
@@ -379,7 +389,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     public void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features) {
-        ObjectStyle style = GetObjectStyle(features, typeMeta);
+        ObjectStyle style = _isTextWriter ? GetObjectStyle(features, typeMeta) : default;
         writer.WriteStartObject(style);
         writer.Attach(typeMeta);
     }
@@ -394,7 +404,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     public void WriteStartArray(TypeMeta? typeMeta, SerializeFeatures features) {
-        ObjectStyle style = GetObjectStyle(features, typeMeta);
+        ObjectStyle style = _isTextWriter ? GetObjectStyle(features, typeMeta) : default;
         writer.WriteStartArray(style);
         writer.Attach(typeMeta);
     }
@@ -474,6 +484,9 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     public void Dispose() {
         writer.Dispose();
         referenceTable?.Clear();
+        _stack = default;
+        _nextLocalId = 0;
+        _isTextWriter = false;
     }
 
     #endregion

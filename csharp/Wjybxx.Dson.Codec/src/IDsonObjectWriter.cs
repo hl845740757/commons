@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -55,14 +56,16 @@ public interface IDsonObjectWriter : IDisposable
     void WriteBinary(string name, Binary? binary, SerializeFeatures features = default);
 
     // 内建结构体
-    void WritePtr(string name, in ObjectPtr objectPtr);
+    void WritePtr(string name, ObjectPtr objectPtr);
 
-    void WriteDateTime(string name, in DateTime dateTime);
+    void WriteDateTime(string name, DateTime dateTime);
 
     // ExtDateTime并不常见
-    void WriteExtDateTime(string name, in ExtDateTime dateTime);
+    void WriteExtDateTime(string name, ExtDateTime dateTime);
 
-    void WriteTimestamp(string name, in Timestamp timestamp);
+    void WriteTimestamp(string name, Timestamp timestamp);
+
+    void WriteDouble4(string name, Double4 double4, SerializeFeatures features = default);
 
     #endregion
 
@@ -92,14 +95,16 @@ public interface IDsonObjectWriter : IDisposable
     void WriteBinary(Binary? binary, SerializeFeatures features = default);
 
     // 内建结构体
-    void WritePtr(in ObjectPtr objectPtr);
+    void WritePtr(ObjectPtr objectPtr);
 
-    void WriteDateTime(in DateTime dateTime);
+    void WriteDateTime(DateTime dateTime);
 
     // ExtDateTime并不常见
-    void WriteExtDateTime(in ExtDateTime dateTime);
+    void WriteExtDateTime(ExtDateTime dateTime);
 
-    void WriteTimestamp(in Timestamp timestamp);
+    void WriteTimestamp(Timestamp timestamp);
+
+    void WriteDouble4(Double4 double4, SerializeFeatures features = default);
 
     #endregion
 

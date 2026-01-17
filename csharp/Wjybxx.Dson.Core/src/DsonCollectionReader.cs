@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Ext;
@@ -300,6 +299,10 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     protected override Timestamp DoReadTimestamp() {
         return PopNextValue().AsTimestamp();
+    }
+
+    protected override Double4 DoReadDouble4() {
+        return PopNextValue().AsDouble4();
     }
 
     #endregion

@@ -56,6 +56,8 @@ public interface IDsonObjectReader : IDisposable
 
     Timestamp ReadTimestamp(string name);
 
+    Double4 ReadDouble4(string name);
+
     #endregion
 
     #region 基础值-无name版
@@ -89,6 +91,8 @@ public interface IDsonObjectReader : IDisposable
     ExtDateTime ReadExtDateTime();
 
     Timestamp ReadTimestamp();
+
+    Double4 ReadDouble4();
 
     #endregion
 

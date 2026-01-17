@@ -32,12 +32,6 @@ internal static class DsonInternals
     /** 上下文缓存池大小 */
     public const int CONTEXT_POOL_SIZE = 256;
 
-    /** 是否设置了mask关联的所有bit */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsSet(int value, int mask) {
-        return (value & mask) == mask;
-    }
-
     /** Name是否是字符串类型 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsStringKey<TName>() {

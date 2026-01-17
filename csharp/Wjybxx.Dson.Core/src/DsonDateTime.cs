@@ -28,7 +28,7 @@ public class DsonDateTime : DsonValue, IEquatable<DsonDateTime>
 {
     private readonly ExtDateTime _value;
 
-    public DsonDateTime(in ExtDateTime value) {
+    public DsonDateTime(ExtDateTime value) {
         _value = value;
     }
 

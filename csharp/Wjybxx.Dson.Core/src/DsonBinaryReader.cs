@@ -162,6 +162,10 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         return DsonReaderUtils.ReadTimestamp(_input);
     }
 
+    protected override Double4 DoReadDouble4() {
+        return DsonReaderUtils.ReadDouble4(_input, currentWireTypeBits);
+    }
+
     #endregion
 
     #region 容器

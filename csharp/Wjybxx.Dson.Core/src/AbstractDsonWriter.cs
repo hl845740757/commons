@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.IO;
 using Wjybxx.Dson.IO;
@@ -199,21 +198,27 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WritePtr(TName name, in ObjectPtr objectPtr) {
+    public void WritePtr(TName name, ObjectPtr objectPtr) {
         AdvanceToValueState(name);
-        DoWritePtr(in objectPtr);
+        DoWritePtr(objectPtr);
         SetNextState();
     }
 
-    public void WriteDateTime(TName name, in ExtDateTime dateTime) {
+    public void WriteDateTime(TName name, ExtDateTime dateTime) {
         AdvanceToValueState(name);
-        DoWriteDateTime(in dateTime);
+        DoWriteDateTime(dateTime);
         SetNextState();
     }
 
-    public void WriteTimestamp(TName name, in Timestamp timestamp) {
+    public void WriteTimestamp(TName name, Timestamp timestamp) {
         AdvanceToValueState(name);
-        DoWriteTimestamp(in timestamp);
+        DoWriteTimestamp(timestamp);
+        SetNextState();
+    }
+
+    public void WriteDouble4(TName name, Double4 double4, Double4Style style = default) {
+        AdvanceToValueState(name);
+        DoWriteDouble4(double4, style);
         SetNextState();
     }
 
@@ -278,21 +283,27 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WritePtr(in ObjectPtr objectPtr) {
+    public void WritePtr(ObjectPtr objectPtr) {
         EnsureValueState(context);
-        DoWritePtr(in objectPtr);
+        DoWritePtr(objectPtr);
         SetNextState();
     }
 
-    public void WriteDateTime(in ExtDateTime dateTime) {
+    public void WriteDateTime(ExtDateTime dateTime) {
         EnsureValueState(context);
-        DoWriteDateTime(in dateTime);
+        DoWriteDateTime(dateTime);
         SetNextState();
     }
 
-    public void WriteTimestamp(in Timestamp timestamp) {
+    public void WriteTimestamp(Timestamp timestamp) {
         EnsureValueState(context);
-        DoWriteTimestamp(in timestamp);
+        DoWriteTimestamp(timestamp);
+        SetNextState();
+    }
+
+    public void WriteDouble4(Double4 double4, Double4Style style = default) {
+        EnsureValueState(context);
+        DoWriteDouble4(double4, style);
         SetNextState();
     }
 
@@ -316,11 +327,13 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     protected abstract void DoWriteBinary(byte[] bytes, int offset, int len);
 
-    protected abstract void DoWritePtr(in ObjectPtr objectPtr);
+    protected abstract void DoWritePtr(ObjectPtr objectPtr);
 
-    protected abstract void DoWriteDateTime(in ExtDateTime dateTime);
+    protected abstract void DoWriteDateTime(ExtDateTime dateTime);
 
-    protected abstract void DoWriteTimestamp(in Timestamp timestamp);
+    protected abstract void DoWriteTimestamp(Timestamp timestamp);
+
+    protected abstract void DoWriteDouble4(Double4 double4, Double4Style style);
 
     #endregion
 

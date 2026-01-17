@@ -17,6 +17,7 @@
 #endregion
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Wjybxx.Dson.Text
@@ -24,6 +25,7 @@ namespace Wjybxx.Dson.Text
 /// <summary>
 /// Dson文本行扫描信息
 /// </summary>
+[StructLayout(LayoutKind.Explicit)]
 public struct LineInfo
 {
     /** 扫描中 */
@@ -36,9 +38,9 @@ public struct LineInfo
     public const int StateEof = 3;
 
     /** 行号，1-based */
-    public readonly int ln;
+    [FieldOffset(0)] public readonly int ln;
     /** 行全局起始位置， 0-based */
-    public readonly int startPos;
+    [FieldOffset(4)] public readonly int startPos;
     /**
      * 行结束位置（全局），0-based
      * 1.如果换行符是\r\n，则是\n的位置；
@@ -46,12 +48,12 @@ public struct LineInfo
      * 3.eof的情况下，是最后一个字符的位置 --换行结束的情况下，eof出现在读取下一行的时候
      * 4.start和end相等时表示空行；start大于end时表示无效行。
      */
-    public int endPos;
+    [FieldOffset(8)] public int endPos;
     /** 行在字符流中的状态 -- endPos是否到达行尾 */
-    public int state;
+    [FieldOffset(12)] public int state;
 #nullable disable
     /** 原始行数据(外部缓存) -- 不包含换行符 */
-    public readonly string rawLine;
+    [FieldOffset(16)] public readonly string rawLine;
 #nullable restore
 
     public LineInfo(int ln, int startPos, int endPos) {

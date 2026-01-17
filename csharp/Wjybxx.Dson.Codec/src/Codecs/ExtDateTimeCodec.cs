@@ -25,7 +25,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class ExtDateTimeCodec : IDsonCodec<ExtDateTime>
 {
     public void WriteObject(IDsonObjectWriter writer, ExtDateTime inst, Type declaredType, SerializeFeatures features) {
-        writer.WriteExtDateTime(in inst);
+        writer.WriteExtDateTime(inst);
     }
 
     public ExtDateTime ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {

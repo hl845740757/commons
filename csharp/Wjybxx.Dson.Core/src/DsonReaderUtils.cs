@@ -19,9 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.IO;
-using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson
@@ -81,7 +79,7 @@ public static class DsonReaderUtils
     #region 内置结构体
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WireTypeOfPtr(in ObjectPtr objectPtr) {
+    public static int WireTypeOfPtr(ObjectPtr objectPtr) {
         int v = 0;
         if (objectPtr.HashLocalPath) {
             v |= ObjectPtr.MaskLocalPath;
@@ -96,7 +94,7 @@ public static class DsonReaderUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WritePtr(IDsonOutput output, in ObjectPtr objectPtr) {
+    public static void WritePtr(IDsonOutput output, ObjectPtr objectPtr) {
         output.WriteUInt64(objectPtr.LocalId);
         if (objectPtr.HasCollection) {
             output.WriteString(objectPtr.Collection);
@@ -112,14 +110,14 @@ public static class DsonReaderUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ObjectPtr ReadPtr(IDsonInput input, int wireTypeBits) {
         long localId = input.ReadUInt64();
-        string collection = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskCollection) ? input.ReadString() : null;
-        string localPath = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskLocalPath) ? input.ReadString() : null;
-        int type = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType) ? input.ReadUInt32() : 0;
+        string collection = (wireTypeBits & ObjectPtr.MaskCollection) != 0 ? input.ReadString() : null;
+        string localPath = (wireTypeBits & ObjectPtr.MaskLocalPath) != 0 ? input.ReadString() : null;
+        int type = (wireTypeBits & ObjectPtr.MaskType) != 0 ? input.ReadUInt32() : 0;
         return new ObjectPtr(collection, localPath, localId, type);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteDateTime(IDsonOutput output, in ExtDateTime dateTime) {
+    public static void WriteDateTime(IDsonOutput output, ExtDateTime dateTime) {
         output.WriteUInt64(dateTime.Seconds);
         output.WriteUInt32(dateTime.Nanos);
         output.WriteSInt32(dateTime.Offset);
@@ -136,7 +134,7 @@ public static class DsonReaderUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteTimestamp(IDsonOutput output, in Timestamp timestamp) {
+    public static void WriteTimestamp(IDsonOutput output, Timestamp timestamp) {
         output.WriteUInt64(timestamp.Seconds);
         output.WriteUInt32(timestamp.Nanos);
     }
@@ -146,6 +144,39 @@ public static class DsonReaderUtils
         return new Timestamp(
             input.ReadUInt64(),
             input.ReadUInt32());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WireTypeOfDouble4(Double4 double4) {
+        int v = 0;
+        if (double4.v1 != 0) v |= 0x01;
+        if (double4.v2 != 0) v |= 0x02;
+        if (double4.v3 != 0) v |= 0x04;
+        return v;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteDouble4(IDsonOutput output, Double4 double4) {
+        // V0固定写入，其它三个非0时写入
+        output.WriteDouble(double4.v0);
+        if (double4.v1 != 0) {
+            output.WriteDouble(double4.v1);
+        }
+        if (double4.v2 != 0) {
+            output.WriteDouble(double4.v2);
+        }
+        if (double4.v3 != 0) {
+            output.WriteDouble(double4.v3);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Double4 ReadDouble4(IDsonInput input, int wireTypeBits) {
+        double v0 = input.ReadDouble();
+        double v1 = (wireTypeBits & 0x01) != 0 ? input.ReadDouble() : 0;
+        double v2 = (wireTypeBits & 0x02) != 0 ? input.ReadDouble() : 0;
+        double v3 = (wireTypeBits & 0x04) != 0 ? input.ReadDouble() : 0;
+        return new Double4(v0, v1, v2, v3);
     }
 
     #endregion
@@ -231,15 +262,15 @@ public static class DsonReaderUtils
             }
             case DsonType.Pointer: {
                 input.ReadUInt64(); // localId;
-                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskCollection)) {
+                if ((wireTypeBits & ObjectPtr.MaskCollection) != 0) {
                     skip = input.ReadUInt32(); // collection长度
                     input.SkipRawBytes(skip);
                 }
-                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskLocalPath)) {
+                if ((wireTypeBits & ObjectPtr.MaskLocalPath) != 0) {
                     skip = input.ReadUInt32(); // localPath长度
                     input.SkipRawBytes(skip);
                 }
-                if (DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskType)) {
+                if ((wireTypeBits & ObjectPtr.MaskType) != 0) {
                     input.ReadUInt32();
                 }
                 return;
@@ -254,6 +285,13 @@ public static class DsonReaderUtils
             case DsonType.Timestamp: {
                 input.ReadUInt64();
                 input.ReadUInt32();
+                return;
+            }
+            case DsonType.Double4: {
+                input.ReadDouble();
+                if ((wireTypeBits & 0x01) != 0) input.ReadDouble();
+                if ((wireTypeBits & 0x02) != 0) input.ReadDouble();
+                if ((wireTypeBits & 0x04) != 0) input.ReadDouble();
                 return;
             }
             case DsonType.Header: {
@@ -312,19 +350,5 @@ public static class DsonReaderUtils
                 throw new InvalidOperationException("invalid state " + state);
         }
     }
-
-    #region 扩展方法
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteBinary<TName>(IDsonWriter<TName> writer, TName name, byte[] bytes) where TName : IEquatable<TName> {
-        writer.WriteBinary(name, bytes, 0, bytes.Length);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteBinary<TName>(IDsonWriter<TName> writer, byte[] bytes) where TName : IEquatable<TName> {
-        writer.WriteBinary(bytes, 0, bytes.Length);
-    }
-
-    #endregion
 }
 }

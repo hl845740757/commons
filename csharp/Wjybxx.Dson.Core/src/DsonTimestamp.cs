@@ -28,7 +28,7 @@ public class DsonTimestamp : DsonValue, IEquatable<DsonTimestamp>
 {
     private readonly Timestamp _value;
 
-    public DsonTimestamp(in Timestamp value) {
+    public DsonTimestamp(Timestamp value) {
         _value = value;
     }
 

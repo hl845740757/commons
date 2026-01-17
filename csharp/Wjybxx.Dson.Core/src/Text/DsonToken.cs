@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Commons;
 
 namespace Wjybxx.Dson.Text
 {
@@ -34,7 +33,7 @@ public readonly struct DsonToken : IEquatable<DsonToken>
     public readonly UnionValue value;
     /** token所在的位置，-1表示动态生成的token */
     public readonly int pos;
-#nullable restore
+
     public DsonToken(DsonTokenType type, in UnionValue value, int pos) {
         this.type = type;
         this.value = value;
@@ -50,16 +49,7 @@ public readonly struct DsonToken : IEquatable<DsonToken>
 
     /** 将value转换为字符串值 */
     public string StringValue() {
-        return (string)value.objValue!;
-    }
-
-    /** 将value转换为字符串值；如果字符串是无引号字符串null，则返回null */
-    public string? NullableStringValue() {
-        string str = (string)this.value.objValue;
-        if (type == DsonTokenType.UnquoteString && "null" == str) {
-            return null;
-        }
-        return str;
+        return (string)value.objValue1;
     }
 
     #region equals

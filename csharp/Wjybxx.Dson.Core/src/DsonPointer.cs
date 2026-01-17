@@ -30,7 +30,7 @@ public class DsonPointer : DsonValue, IEquatable<DsonPointer>
 
     private readonly ObjectPtr _value;
 
-    public DsonPointer(in ObjectPtr value) {
+    public DsonPointer(ObjectPtr value) {
         _value = value;
     }
 

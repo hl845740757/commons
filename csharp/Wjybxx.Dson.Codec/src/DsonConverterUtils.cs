@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
@@ -583,6 +584,12 @@ public static class DsonConverterUtils
         return style;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Double4Style ToDouble4Style(this SerializeFeatures features) {
+        ToDouble4Style(features, out Double4Style style);
+        return style;
+    }
+
     public static bool ToNumberStyle(this SerializeFeatures features, out NumberStyle style) {
         if ((features & SerializeFeatures.MaskNumberStyles) == 0) { // 大概率
             style = NumberStyle.Simple;
@@ -592,14 +599,16 @@ public static class DsonConverterUtils
             style = (features & SerializeFeatures.NumberUnsigned) != 0
                 ? NumberStyle.UnsignedHex
                 : NumberStyle.SignedHex;
-        } else if ((features & SerializeFeatures.NumberUnsigned) != 0) {
-            style = (features & SerializeFeatures.NumberTyped) != 0
-                ? NumberStyle.TypedUnsigned
-                : NumberStyle.Unsigned;
         } else {
-            style = (features & SerializeFeatures.NumberTyped) != 0
-                ? NumberStyle.Typed
-                : NumberStyle.Simple;
+            if ((features & SerializeFeatures.NumberUnsigned) != 0) {
+                style = (features & SerializeFeatures.NumberTyped) != 0
+                    ? NumberStyle.TypedUnsigned
+                    : NumberStyle.Unsigned;
+            } else {
+                style = (features & SerializeFeatures.NumberTyped) != 0
+                    ? NumberStyle.Typed
+                    : NumberStyle.Simple;
+            }
         }
         return true;
     }
@@ -617,6 +626,47 @@ public static class DsonConverterUtils
             style = StringStyle.SingleLine;
         } else {
             style = StringStyle.AutoQuote;
+        }
+        return true;
+    }
+
+    public static bool ToDouble4Style(this SerializeFeatures features, out Double4Style style) {
+        if ((features & SerializeFeatures.MaskDouble4Styles) == 0) { // 大概率
+            style = Double4Style.Array4;
+            return false;
+        }
+        SerializeFeatures quadAsRect = features & SerializeFeatures.Double4AsRect;
+        bool quadAsInt = (features & SerializeFeatures.Double4AsInt) != 0;
+        // Vector
+        if (quadAsRect == SerializeFeatures.Double4AsVector) {
+            if ((features & SerializeFeatures.Double4Len3) != 0) {
+                style = quadAsInt ? Double4Style.Vector3Int : Double4Style.Vector3;
+            } else if ((features & SerializeFeatures.Double4Len2) != 0) {
+                style = quadAsInt ? Double4Style.Vector2Int : Double4Style.Vector2;
+            } else {
+                style = quadAsInt ? Double4Style.Vector4Int : Double4Style.Vector4;
+            }
+            return true;
+        }
+        // rgba
+        if (quadAsRect == SerializeFeatures.Double4AsRgba) {
+            style = (features & SerializeFeatures.Double4Len3) != 0
+                ? Double4Style.Rgb
+                : Double4Style.Rgba;
+            return true;
+        }
+        // Rect
+        if (quadAsRect == SerializeFeatures.Double4AsRect) {
+            style = quadAsInt ? Double4Style.RectInt : Double4Style.Rect;
+            return true;
+        }
+        // Array
+        if ((features & SerializeFeatures.Double4Len3) != 0) {
+            style = Double4Style.Array3;
+        } else if ((features & SerializeFeatures.Double4Len2) != 0) {
+            style = Double4Style.Array2;
+        } else {
+            style = Double4Style.Array4;
         }
         return true;
     }

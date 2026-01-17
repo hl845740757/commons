@@ -231,6 +231,10 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return ReadName(name) ? DsonCodecHelper.ReadTimestamp(reader, name) : default;
     }
 
+    public Double4 ReadDouble4(string name) {
+        return ReadName(name) ? DsonCodecHelper.ReadDouble4(reader, name) : default;
+    }
+
     #endregion
 
     #region 简单值-无name版
@@ -286,6 +290,10 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
     public Timestamp ReadTimestamp() {
         return DsonCodecHelper.ReadTimestamp(reader, null);
+    }
+
+    public Double4 ReadDouble4() {
+        return DsonCodecHelper.ReadDouble4(reader, null);
     }
 
     #endregion
