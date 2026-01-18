@@ -1,449 +1,337 @@
 package cn.wjybxx.dson.text;
 
-import cn.wjybxx.base.EnumLite;
-import cn.wjybxx.base.EnumLiteMap;
-import cn.wjybxx.base.EnumUtils;
-
-import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * 数字的打印格式
+ * 考虑到扩展性，改为普通类。
  *
  * @author wjybxx
  * date - 2023/6/19
  */
-public enum NumberStyle implements EnumLite {
+public final class NumberStyle {
 
-    /**
-     * 简单格式，能省略类型标签的情况下就省略标签
-     */
-    SIMPLE(0) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setValue(Integer.toString(value));
-        }
+    public final int features;
 
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setValue(Long.toString(value));
-            // 数字的默认解析类型是double，如果值超过了double的表示范围，将无法正确解析
-            if (Math.abs(value) >= DOUBLE_MAX_LONG) {
-                styleOut.setTyped(true);
-            }
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            if (Float.isNaN(value) || Float.isInfinite(value)) {
-                String string = Float.toString(value);
-                styleOut.setValue(string)
-                        .setTyped(true);
-            } else {
-                int iv = (int) value;
-                if (iv == value) {
-                    styleOut.setValue(Integer.toString(iv));
-                } else {
-                    String string = Float.toString(value);
-                    styleOut.setValue(string)
-                            .setTyped(string.lastIndexOf('E') >= 0);
-                }
-            }
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            if (Double.isNaN(value) || Double.isInfinite(value)) {
-                styleOut.setValue(Double.toString(value))
-                        .setTyped(true);
-            } else {
-                long lv = (long) value;
-                if (lv == value) {
-                    styleOut.setValue(Long.toString(lv));
-                } else {
-                    String string = Double.toString(value);
-                    styleOut.setValue(string)
-                            .setTyped(string.lastIndexOf('E') >= 0);
-                }
-            }
-        }
-    },
-
-    /** 有类型标签的 */
-    TYPED(1) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            SIMPLE.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            SIMPLE.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            SIMPLE.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            SIMPLE.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-    },
-
-    /** 打印为无符号数 */
-    UNSIGNED(2) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setValue(Integer.toUnsignedString(value));
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setValue(Long.toUnsignedString(value));
-            // 数字的默认解析类型是double，如果值超过了double的表示范围，将无法正确解析
-            if (Math.abs(value) >= DOUBLE_MAX_LONG) {
-                styleOut.setTyped(true);
-            }
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-    },
-
-    /** 打印为无符号数，带类型 */
-    TYPED_UNSIGNED(3) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setValue(Integer.toUnsignedString(value))
-                    .setTyped(true);
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setValue(Long.toUnsignedString(value))
-                    .setTyped(true);
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-    },
-
-    /** 16进制，打印正负号，只打印绝对值部分 -- 一定有标签，对于浮点数要小心使用 */
-    SIGNED_HEX(4) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setTyped(true);
-            if (value < 0 && value != Integer.MIN_VALUE) {
-                styleOut.setValue("-0x" + Integer.toHexString(-value));
-            } else {
-                styleOut.setValue("0x" + Integer.toHexString(value));
-            }
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setTyped(true);
-            if (value < 0 && value != Long.MIN_VALUE) {
-                styleOut.setValue("-0x" + Long.toHexString(-value));
-            } else {
-                styleOut.setValue("0x" + Long.toHexString(value));
-            }
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue(Float.toHexString(value));
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue(Double.toHexString(value));
-        }
-    },
-
-    /** 无符号16进制，按有效位打印 -- 对于整数来说，无符号的16进制输出不带负号 */
-    UNSIGNED_HEX(5) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue("0x" + Integer.toHexString(value));
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue("0x" + Long.toHexString(value));
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue(Float.toHexString(value));
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue(Double.toHexString(value));
-        }
-    },
-
-    /** 二进制，打印正负号 -- 一定有标签，不支持浮点数 */
-    SIGNED_BINARY(6) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setTyped(true);
-            if (value < 0 && value != Integer.MIN_VALUE) {
-                styleOut.setValue("-0b" + Integer.toBinaryString(-value));
-            } else {
-                styleOut.setValue("0b" + Integer.toBinaryString(value));
-            }
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setTyped(true);
-            if (value < 0 && value != Long.MIN_VALUE) {
-                styleOut.setValue("-0b" + Long.toBinaryString(-value));
-            } else {
-                styleOut.setValue("0b" + Long.toBinaryString(value));
-            }
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-    },
-
-    /** 无符号2进制，按有效位打印;对于整数来说，无符号的2进制输出不带负号 */
-    UNSIGNED_BINARY(7) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue("0b" + Integer.toBinaryString(value));
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setTyped(true)
-                    .setValue("0b" + Long.toBinaryString(value));
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-    },
-
-    /** 对于整数来说，固定输出为32位或64位 */
-    FIXED_BINARY(8) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            String binaryString = Integer.toBinaryString(value);
-            StringBuilder sb = new StringBuilder(34);
-            sb.append("0b");
-            if (binaryString.length() < 32) {
-                pending(sb, 32 - binaryString.length());
-            }
-            sb.append(binaryString);
-
-            styleOut.setTyped(true);
-            styleOut.setValue(sb.toString());
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            String binaryString = Long.toBinaryString(value);
-            StringBuilder sb = new StringBuilder(66);
-            sb.append("0b");
-            if (binaryString.length() < 64) {
-                pending(sb, 64 - binaryString.length());
-            }
-            sb.append(binaryString);
-
-            styleOut.setTyped(true);
-            styleOut.setValue(sb.toString());
-        }
-
-        private void pending(StringBuilder sb, int count) {
-            if (count <= 0) {
-                return;
-            }
-            sb.append("0".repeat(count));
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            throw new UnsupportedOperationException();
-        }
-    },
-
-    /** 简单模式，但禁用科学计数法 */
-    SIMPLE_NO_SCI(9) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            styleOut.setValue(Integer.toString(value));
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            styleOut.setValue(Long.toString(value));
-            // 数字的默认解析类型是double，如果值超过了double的表示范围，将无法正确解析
-            if (Math.abs(value) >= DOUBLE_MAX_LONG) {
-                styleOut.setTyped(true);
-            }
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            if (Float.isNaN(value) || Float.isInfinite(value)) {
-                String string = Float.toString(value);
-                styleOut.setValue(string)
-                        .setTyped(true);
-            } else {
-                int iv = (int) value;
-                if (iv == value) {
-                    styleOut.setValue(Integer.toString(iv));
-                } else {
-                    styleOut.setValue(NumberStyle.toStringNoSci(value));
-                }
-            }
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            if (Double.isNaN(value) || Double.isInfinite(value)) {
-                styleOut.setValue(Double.toString(value))
-                        .setTyped(true);
-            } else {
-                long lv = (long) value;
-                if (lv == value) {
-                    styleOut.setValue(Long.toString(lv));
-                } else {
-                    styleOut.setValue(NumberStyle.toStringNoSci(value));
-                }
-            }
-        }
-    },
-
-    /** 有类型标签，且禁用科学计数法 */
-    TYPED_NO_SCI(10) {
-        @Override
-        public void toString(int value, StyleOut styleOut) {
-            SIMPLE_NO_SCI.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-
-        @Override
-        public void toString(long value, StyleOut styleOut) {
-            SIMPLE_NO_SCI.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-
-        @Override
-        public void toString(float value, StyleOut styleOut) {
-            SIMPLE_NO_SCI.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-
-        @Override
-        public void toString(double value, StyleOut styleOut) {
-            SIMPLE_NO_SCI.toString(value, styleOut);
-            styleOut.setTyped(true);
-        }
-    },
-    ;
-
-    public final int number;
-
-    NumberStyle(int number) {
-        this.number = number;
+    public NumberStyle(int features) {
+        this.features = features;
     }
 
-    @Override
-    public int getNumber() {
-        return number;
+    // region factory
+
+    public static final int MASK_SIMPLE = 0;
+    public static final int MASK_HEX = 0x01;
+    public static final int MASK_BINARY = 0x02;
+
+    public static final int MASK_TYPED = 0x10;
+    public static final int MASK_UNSIGNED = 0x20;
+    public static final int MASK_FIXED = 0x40;
+
+    public static final int MASK_NO_EXPONENT3 = 0x01 << 8;
+    public static final int MASK_NO_EXPONENT7 = 0x02 << 8;
+    public static final int MASK_RADIXES = 0x0F;
+
+    /** 普通模式 */
+    public static final NumberStyle SIMPLE = new NumberStyle(MASK_SIMPLE);
+    /** 固定打印类型 */
+    public static final NumberStyle TYPED = new NumberStyle(MASK_TYPED);
+    /** 输出为无符号整数 -- 超出范围时自动追加类型 */
+    public static final NumberStyle UNSIGNED = new NumberStyle(MASK_UNSIGNED);
+
+    /** 16进制 */
+    public static final NumberStyle HEX = new NumberStyle(MASK_HEX);
+    /** 输出为无符号16进制 */
+    public static final NumberStyle UNSIGNED_HEX = new NumberStyle(MASK_UNSIGNED | MASK_HEX);
+    /** 固定长度的16进制 */
+    public static final NumberStyle FIXED_HEX = new NumberStyle(MASK_FIXED | MASK_HEX);
+
+    /** 2进制 */
+    public static final NumberStyle BINARY = new NumberStyle(MASK_BINARY);
+    /** 输出为无符号2进制 */
+    public static final NumberStyle UNSIGNED_BINARY = new NumberStyle(MASK_UNSIGNED | MASK_BINARY);
+    /** 固定长度的2进制 */
+    public static final NumberStyle FIXED_BINARY = new NumberStyle(MASK_FIXED | MASK_BINARY);
+
+    /** 浮点数禁用科学计数法，并最多保留小数点后3位(向最近的偶数舍入) -- 可能导致反序列化结果不相等 */
+    public static final NumberStyle NO_EXPONENT3 = new NumberStyle(MASK_NO_EXPONENT3);
+    /** 浮点数禁用科学计数法，并最多保留小数点后7位(向最近的偶数舍入) -- 可能导致反序列化结果不相等 */
+    public static final NumberStyle NO_EXPONENT7 = new NumberStyle(MASK_NO_EXPONENT7);
+
+    public static final NumberStyle TYPED_NO_EXPONENT3 = new NumberStyle(MASK_TYPED | MASK_NO_EXPONENT3);
+    public static final NumberStyle TYPED_NO_EXPONENT7 = new NumberStyle(MASK_TYPED | MASK_NO_EXPONENT7);
+
+    /** 打印为16进制，必定追加类型 */
+    public NumberStyle withHex() {
+        return new NumberStyle(features | MASK_HEX);
     }
 
-    public abstract void toString(int value, StyleOut styleOut);
+    /** 打印为二进制，必定追加类型 */
+    public NumberStyle withBinary() {
+        return new NumberStyle(features | MASK_BINARY);
+    }
 
-    public abstract void toString(long value, StyleOut styleOut);
+    /** 固定打印类型 */
+    public NumberStyle withTyped() {
+        return new NumberStyle(features | MASK_TYPED);
+    }
 
-    public abstract void toString(float value, StyleOut styleOut);
+    /** 打印为无符号数，超出范围时追加类型 */
+    public NumberStyle withUnsigned() {
+        return new NumberStyle(features | MASK_UNSIGNED);
+    }
 
-    public abstract void toString(double value, StyleOut styleOut);
+    /** 固定长度编码（全Bit编码），适用十六进制和二进制 */
+    public NumberStyle withFixed() {
+        return new NumberStyle(features | MASK_FIXED);
+    }
 
-    /** 是否支持浮点数 */
-    public boolean supportFloat() {
-        switch (this) {
-            case SIMPLE:
-            case TYPED:
-            case SIMPLE_NO_SCI:
-            case TYPED_NO_SCI:
-            case SIGNED_HEX:
-            case UNSIGNED_HEX:
-                return true;
-            default:
-                return false;
+    /** 浮点数禁用科学计数法，并最多保留小数点后3位 -- 可能导致反序列化结果不相等 */
+    public NumberStyle withNoExponent3() {
+        return new NumberStyle(features | MASK_NO_EXPONENT3);
+    }
+
+    /** 浮点数禁用科学计数法，并最多保留小数点后7位 -- 可能导致反序列化结果不相等 */
+    public NumberStyle withNoExponent7() {
+        return new NumberStyle(features | MASK_NO_EXPONENT7);
+    }
+
+    // endrgion
+
+    // region toString
+
+    public StyleOut toString(int value, StyleOut styleOut) {
+        int radix = features & NumberStyle.MASK_RADIXES;
+        switch (radix) {
+            case MASK_HEX: {
+                // 16进制
+                if ((features & NumberStyle.MASK_FIXED) != 0) {
+                    return styleOut.setValue(String.format("0x%08X", value), true);
+                }
+                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
+                    return styleOut.setValue("0x" + Integer.toHexString(value), true);
+                }
+                if (value < 0 && value != Integer.MIN_VALUE) {
+                    return styleOut.setValue("-0x" + Integer.toHexString((-1 * value)), true);
+                } else {
+                    return styleOut.setValue("0x" + Integer.toHexString(value), true);
+                }
+            }
+            case MASK_BINARY: {
+                // 2进制
+                if ((features & NumberStyle.MASK_FIXED) != 0) {
+                    return styleOut.setValue("0b" + ToFixedBinaryString(value), true);
+                }
+                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
+                    return styleOut.setValue("0b" + ToBinaryString(value), true);
+                }
+                if (value < 0 && value != Integer.MIN_VALUE) {
+                    return styleOut.setValue("-0b" + ToBinaryString(-1 * value), true);
+                } else {
+                    return styleOut.setValue("0b" + ToBinaryString(value), true);
+                }
+            }
+            default: {
+                // 10进制
+                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
+                    return styleOut.setValue(Integer.toUnsignedString(value), true);
+                }
+                boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0 || Math.abs(value) >= DOUBLE_MAX_LONG;
+                return styleOut.setValue(Integer.toString(value), isTyped);
+            }
         }
     }
 
-    private static final EnumLiteMap<NumberStyle> MAP = EnumUtils.mapping(values());
-
-    public static NumberStyle forNumber(int number) {
-        return MAP.checkedForNumber(number);
+    public StyleOut toString(long value, StyleOut styleOut) {
+        int radix = features & NumberStyle.MASK_RADIXES;
+        switch (radix) {
+            case MASK_HEX: {
+                // 16进制
+                if ((features & NumberStyle.MASK_FIXED) != 0) {
+                    return styleOut.setValue(String.format("0x%016X", value), true);
+                }
+                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
+                    return styleOut.setValue("0x" + Long.toHexString(value), true);
+                }
+                if (value < 0 && value != Long.MIN_VALUE) {
+                    return styleOut.setValue("-0x" + Long.toHexString((-1 * value)), true);
+                } else {
+                    return styleOut.setValue("0x" + Long.toHexString(value), true);
+                }
+            }
+            case MASK_BINARY: {
+                // 2进制
+                if ((features & NumberStyle.MASK_FIXED) != 0) {
+                    return styleOut.setValue("0b" + ToFixedBinaryString(value), true);
+                }
+                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
+                    return styleOut.setValue("0b" + ToBinaryString(value), true);
+                }
+                if (value < 0 && value != Long.MIN_VALUE) {
+                    return styleOut.setValue("-0b" + ToBinaryString(-1 * value), true);
+                } else {
+                    return styleOut.setValue("0b" + ToBinaryString(value), true);
+                }
+            }
+            default: {
+                // 10进制
+                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
+                    return styleOut.setValue(Long.toUnsignedString(value), true);
+                }
+                boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0 || Math.abs(value) >= DOUBLE_MAX_LONG;
+                return styleOut.setValue(Long.toString(value), isTyped);
+            }
+        }
     }
+
+    public StyleOut toString(float value, StyleOut styleOut) {
+        if (Float.isNaN(value) || Float.isInfinite(value)) {
+            return styleOut.setValue(Float.toString(value), true);
+        }
+        boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0;
+        int lv = (int) value;
+        if (lv == value) {
+            return styleOut.setValue(Integer.toString(lv), isTyped);
+        } else {
+            String str;
+            if ((features & NumberStyle.MASK_NO_EXPONENT3) != 0) {
+                str = NO_EXPONENT_3.format(value);
+            } else if ((features & NumberStyle.MASK_NO_EXPONENT7) != 0) {
+                str = NO_EXPONENT_7.format(value);
+            } else {
+                str = Float.toString(value);
+                isTyped |= isTyped || str.indexOf('E') >= 0;
+            }
+            // 数字截断问题
+            if (str.equals("-0")) str = "0";
+            return styleOut.setValue(str, isTyped);
+        }
+    }
+
+    public StyleOut toString(double value, StyleOut styleOut) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return styleOut.setValue(Double.toString(value), true);
+        }
+        boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0;
+        long lv = (long) value;
+        if (lv == value) {
+            return styleOut.setValue(Long.toString(lv), isTyped);
+        } else {
+            String str;
+            if ((features & NumberStyle.MASK_NO_EXPONENT3) != 0) {
+                str = NO_EXPONENT_3.format(value);
+            } else if ((features & NumberStyle.MASK_NO_EXPONENT7) != 0) {
+                str = NO_EXPONENT_7.format(value);
+            } else {
+                str = Double.toString(value);
+                isTyped |= isTyped || str.indexOf('E') >= 0;
+            }
+            // 数字截断问题
+            if (str.equals("-0")) str = "0";
+            return styleOut.setValue(str, isTyped);
+        }
+    }
+
+    // endregion
+
+
+    // region internal
 
     /** double能精确表示的最大整数 */
     private static final long DOUBLE_MAX_LONG = (1L << 53) - 1;
 
-    private static String toStringNoSci(float value) {
-        return new BigDecimal(Float.toString(value)) // 需先转换为String
-                .stripTrailingZeros()
-                .toPlainString();
+    /// <summary>
+    /// 转2进制，长度补全为8的倍数
+    /// </summary>
+    private static String ToBinaryString(int value) {
+        String binaryString = Integer.toBinaryString(value);
+        int mod = binaryString.length() % 8;
+        if (mod != 0) {
+            binaryString = "0".repeat(8 - mod) + binaryString;
+        }
+        return binaryString;
     }
 
-    private static String toStringNoSci(double value) {
-        return new BigDecimal(Double.toString(value)) // 需先转换为String
-                .stripTrailingZeros()
-                .toPlainString();
+    private static String ToBinaryString(long value) {
+        String binaryString = Long.toBinaryString(value);
+        int mod = binaryString.length() % 8;
+        if (mod != 0) {
+            binaryString = "0".repeat(8 - mod) + binaryString;
+        }
+        return binaryString;
     }
 
+    /// <summary>
+    /// 转2进制，固定32位
+    /// </summary>
+    private static String ToFixedBinaryString(int value) {
+        String binaryString = Integer.toBinaryString(value);
+        int pad = 32 - binaryString.length();
+        if (pad > 0) {
+            binaryString = "0".repeat(pad) + binaryString;
+        }
+        return binaryString;
+    }
+
+    private static String ToFixedBinaryString(long value) {
+        String binaryString = Long.toBinaryString(value);
+        int pad = 64 - binaryString.length();
+        if (pad > 0) {
+            binaryString = "0".repeat(pad) + binaryString;
+        }
+        return binaryString;
+    }
+
+    @Override
+    public String toString() {
+        ArrayList<String> values = new ArrayList<>(4);
+        if ((features & MASK_HEX) != 0) {
+            values.add("hex");
+        }
+        if ((features & MASK_BINARY) != 0) {
+            values.add("binary");
+        }
+        if ((features & MASK_TYPED) != 0) {
+            values.add("typed");
+        }
+        if ((features & MASK_UNSIGNED) != 0) {
+            values.add("unsigned");
+        }
+        if ((features & MASK_FIXED) != 0) {
+            values.add("fixed");
+        }
+        if ((features & MASK_NO_EXPONENT3) != 0) {
+            values.add("noExponent3");
+        }
+        if ((features & MASK_NO_EXPONENT7) != 0) {
+            values.add("noExponent7");
+        }
+        return String.join("|", values);
+    }
+
+    private static final DecimalFormat NO_EXPONENT_3;
+    private static final DecimalFormat NO_EXPONENT_7;
+    private static final DecimalFormat NO_EXPONENT_17;
+
+    static {
+        DecimalFormatSymbols symbols =
+                DecimalFormatSymbols.getInstance(Locale.ROOT);
+
+        NO_EXPONENT_3 = new DecimalFormat("0.###", symbols);
+        NO_EXPONENT_7 = new DecimalFormat("0.#######", symbols);
+        NO_EXPONENT_17 = new DecimalFormat("0.#################", symbols);
+
+        // 禁用科学计数法
+        NO_EXPONENT_3.setMaximumFractionDigits(3);
+        NO_EXPONENT_7.setMaximumFractionDigits(7);
+        NO_EXPONENT_17.setMaximumFractionDigits(17);
+
+        // 向最近的偶数舍入 - 与 C#/.NET 行为对齐
+        NO_EXPONENT_3.setRoundingMode(java.math.RoundingMode.HALF_EVEN);
+        NO_EXPONENT_7.setRoundingMode(java.math.RoundingMode.HALF_EVEN);
+        NO_EXPONENT_17.setRoundingMode(java.math.RoundingMode.HALF_EVEN);
+    }
+    // endregion
 }

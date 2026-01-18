@@ -18,8 +18,6 @@
 
 using System;
 using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace Wjybxx.Dson.Text
 {
@@ -28,321 +26,197 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public static class NumberStyles
 {
-    private interface INumberStyle
-    {
-        StyleOut ToString(int value);
-
-        StyleOut ToString(long value);
-
-        StyleOut ToString(float value);
-
-        StyleOut ToString(double value);
+    /// <summary>
+    /// 注：支持16进制和2进制
+    /// </summary>
+    public static StyleOut ToString(this NumberStyle style, int value) {
+        NumberStyle radix = style & NumberStyle.MaskRadixes;
+        switch (radix) {
+            case NumberStyle.Hex: {
+                // 16进制
+                if ((style & NumberStyle.Fixed) != 0) {
+                    return new StyleOut("0x" + value.ToString("X8"), true);
+                }
+                if ((style & NumberStyle.Unsigned) != 0) {
+                    return new StyleOut("0x" + value.ToString("X"), true);
+                }
+                if (value < 0 && value != int.MinValue) {
+                    return new StyleOut("-0x" + (-1 * value).ToString("X"), true);
+                } else {
+                    return new StyleOut("0x" + value.ToString("X"), true);
+                }
+            }
+            case NumberStyle.Binary: {
+                // 2进制
+                if ((style & NumberStyle.Fixed) != 0) {
+                    return new StyleOut("0b" + ToFixedBinaryString(value), true);
+                }
+                if ((style & NumberStyle.Unsigned) != 0) {
+                    return new StyleOut("0b" + ToBinaryString(value), true);
+                }
+                if (value < 0 && value != int.MinValue) {
+                    return new StyleOut("-0b" + ToBinaryString(-1 * value), true);
+                } else {
+                    return new StyleOut("0b" + ToBinaryString(value), true);
+                }
+            }
+            default: {
+                // 10进制
+                if ((style & NumberStyle.Unsigned) != 0) {
+                    uint castV = (uint)value;
+                    return new StyleOut(castV.ToString(), true);
+                }
+                bool isTyped = (style & NumberStyle.Typed) != 0;
+                return new StyleOut(value.ToString(), isTyped);
+            }
+        }
     }
 
-    /** 普通打印 -- 超过表示范围时会添加类型标签 */
-    private static INumberStyle Simple { get; } = new SimpleStyle();
-    /** 总是打印类型 */
-    private static INumberStyle Typed { get; } = new TypedStyle();
+    /// <summary>
+    /// 注：支持16进制和2进制
+    /// </summary>
+    public static StyleOut ToString(this NumberStyle style, long value) {
+        NumberStyle radix = style & NumberStyle.MaskRadixes;
+        switch (radix) {
+            case NumberStyle.Hex: {
+                // 16进制
+                if ((style & NumberStyle.Fixed) != 0) {
+                    return new StyleOut("0x" + value.ToString("X16"), true);
+                }
+                if ((style & NumberStyle.Unsigned) != 0) {
+                    return new StyleOut("0x" + value.ToString("X"), true);
+                }
+                if (value < 0 && value != long.MinValue) {
+                    return new StyleOut("-0x" + (-1 * value).ToString("X"), true);
+                } else {
+                    return new StyleOut("0x" + value.ToString("X"), true);
+                }
+            }
+            case NumberStyle.Binary: {
+                // 2进制
+                if ((style & NumberStyle.Fixed) != 0) {
+                    return new StyleOut("0b" + ToFixedBinaryString(value), true);
+                }
+                if ((style & NumberStyle.Unsigned) != 0) {
+                    return new StyleOut("0b" + ToBinaryString(value), true);
+                }
+                if (value < 0 && value != long.MinValue) {
+                    return new StyleOut("-0b" + ToBinaryString(-1 * value), true);
+                } else {
+                    return new StyleOut("0b" + ToBinaryString(value), true);
+                }
+            }
+            default: {
+                // 10进制
+                if ((style & NumberStyle.Unsigned) != 0) {
+                    ulong castV = (ulong)value;
+                    return new StyleOut(castV.ToString(), true);
+                }
+                bool isTyped = (style & NumberStyle.Typed) != 0 || Math.Abs(value) >= DoubleMaxLong;
+                return new StyleOut(value.ToString(), isTyped);
+            }
+        }
+    }
 
-    /** 打印为无符号数 -- 超过表示范围时会添加类型标签；通常用于打印Flags类型 */
-    private static INumberStyle Unsigned { get; } = new UnsignedStyle();
-    /** 打印为带类型无符号数；通常用于打印Flags类型 */
-    private static INumberStyle TypedUnsigned { get; } = new TypedUnsignedStyle();
+    /// <summary>
+    /// C#并不内置支持IEEE-754语义的十六进制浮点字面量（例如 0x1.921fb54442d18p+1），因此只支持简单模式
+    /// </summary>
+    public static StyleOut ToString(this NumberStyle style, float value) {
+        if (float.IsInfinity(value) || float.IsNaN(value)) {
+            return new StyleOut(value.ToString(CultureInfo.InvariantCulture), true);
+        }
+        bool isTyped = (style & NumberStyle.Typed) != 0;
+        int iv = (int)value;
+        if (iv == value) {
+            return new StyleOut(iv.ToString(), isTyped);
+        } else {
+            string str;
+            if ((style & NumberStyle.NoExponent3) != 0) {
+                str = value.ToString("0.###");
+            } else if ((style & NumberStyle.NoExponent7) != 0) {
+                str = value.ToString("0.#######");
+            } else {
+                str = value.ToString(CultureInfo.InvariantCulture);
+                isTyped |= str.Contains('E');
+            }
+            // 数字截断问题
+            if (str == "-0") str = "0";
+            return new StyleOut(str, isTyped);
+        }
+    }
 
-    /** 16进制，打印正负号 -- 不支持浮点数 */
-    private static INumberStyle SignedHex { get; } = new SignedHexStyle();
-    /** 无符号16进制，按位打印 -- 不支持浮点数 */
-    private static INumberStyle UnsignedHex { get; } = new UnsignedHexStyle();
+    /// <summary>
+    /// C#并不内置支持IEEE-754语义的十六进制浮点字面量（例如 0x1.921fb54442d18p+1），因此只支持简单模式
+    /// </summary>
+    public static StyleOut ToString(this NumberStyle style, double value) {
+        if (double.IsInfinity(value) || double.IsNaN(value)) {
+            return new StyleOut(value.ToString(CultureInfo.InvariantCulture), true);
+        }
+        bool isTyped = (style & NumberStyle.Typed) != 0;
+        long lv = (long)value;
+        if (lv == value) {
+            return new StyleOut(lv.ToString(), isTyped);
+        } else {
+            string str;
+            if ((style & NumberStyle.NoExponent3) != 0) {
+                str = value.ToString("0.###");
+            } else if ((style & NumberStyle.NoExponent7) != 0) {
+                str = value.ToString("0.#######");
+            } else {
+                str = value.ToString(CultureInfo.InvariantCulture);
+                isTyped |= str.Contains('E');
+            }
+            // 数字截断问题
+            if (str == "-0") str = "0";
+            return new StyleOut(str, isTyped);
+        }
+    }
 
-    /** 2进制，打印正负号 -- 不支持浮点数 */
-    private static INumberStyle SignedBinary { get; } = new SignedBinaryStyle();
-    /** 无符号2进制，按位打印 -- 不支持浮点数 */
-    private static INumberStyle UnsignedBinary { get; } = new UnsignedBinaryStyle();
-    /** 固定位数2进制，按位打印 -- 不支持浮点数 */
-    private static INumberStyle FixedBinary { get; } = new FixedBinaryStyle();
-
-    /** double能精确表示的最大整数 */
+    /// <summary>
+    /// double能精确表示的最大整数
+    /// </summary>
     private const long DoubleMaxLong = (1L << 53) - 1;
 
-    #region simple
-
-    private class SimpleStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            return new StyleOut(value.ToString(), false);
-        }
-
-        public StyleOut ToString(long value) {
-            return new StyleOut(value.ToString(), Math.Abs(value) >= DoubleMaxLong);
-        }
-
-        public StyleOut ToString(float value) {
-            if (float.IsInfinity(value) || float.IsNaN(value)) {
-                return new StyleOut(value.ToString(CultureInfo.InvariantCulture), true);
-            }
-            int iv = (int)value;
-            if (iv == value) {
-                return new StyleOut(iv.ToString(), false);
-            } else {
-                string str = value.ToString(CultureInfo.InvariantCulture);
-                return new StyleOut(str, str.IndexOf('E') >= 0);
-            }
-        }
-
-        public StyleOut ToString(double value) {
-            if (double.IsInfinity(value) || double.IsNaN(value)) {
-                return new StyleOut(value.ToString(CultureInfo.InvariantCulture), true);
-            }
-            long lv = (long)value;
-            if (lv == value) {
-                return new StyleOut(lv.ToString(), false);
-            } else {
-                string str = value.ToString(CultureInfo.InvariantCulture);
-                return new StyleOut(str, str.IndexOf('E') >= 0);
-            }
-        }
-    }
-
-    private class TypedStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            return new StyleOut(value.ToString(), true);
-        }
-
-        public StyleOut ToString(long value) {
-            return new StyleOut(value.ToString(), true);
-        }
-
-        public StyleOut ToString(float value) {
-            return new StyleOut(Simple.ToString(value).Value, true);
-        }
-
-        public StyleOut ToString(double value) {
-            return new StyleOut(Simple.ToString(value).Value, true);
-        }
-    }
-
-    private class UnsignedStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            uint castV = (uint)value;
-            return new StyleOut(castV.ToString(), false);
-        }
-
-        public StyleOut ToString(long value) {
-            ulong castV = (ulong)value;
-            return new StyleOut(castV.ToString(), Math.Abs(value) >= DoubleMaxLong);
-        }
-
-        public StyleOut ToString(float value) {
-            throw new NotImplementedException();
-        }
-
-        public StyleOut ToString(double value) {
-            throw new NotImplementedException();
-        }
-    }
-
-    private class TypedUnsignedStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            uint castV = (uint)value;
-            return new StyleOut(castV.ToString(), true);
-        }
-
-        public StyleOut ToString(long value) {
-            ulong castV = (ulong)value;
-            return new StyleOut(castV.ToString(), true);
-        }
-
-        public StyleOut ToString(float value) {
-            throw new NotImplementedException();
-        }
-
-        public StyleOut ToString(double value) {
-            throw new NotImplementedException();
-        }
-    }
-
-    #endregion
-
-    #region 16进制
-
-    private class SignedHexStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            if (value < 0 && value != int.MinValue) {
-                return new StyleOut("-0x" + (-1 * value).ToString("X"), true);
-            } else {
-                return new StyleOut("0x" + value.ToString("X"), true);
-            }
-        }
-
-        public StyleOut ToString(long value) {
-            if (value < 0 && value != long.MinValue) {
-                return new StyleOut("-0x" + (-1 * value).ToString("X"), true);
-            } else {
-                return new StyleOut("0x" + value.ToString("X"), true);
-            }
-        }
-
-        public StyleOut ToString(float value) {
-            throw new NotImplementedException();
-        }
-
-        public StyleOut ToString(double value) {
-            throw new NotImplementedException();
-        }
-    }
-
-    private class UnsignedHexStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            return new StyleOut("0x" + value.ToString("X"), true);
-        }
-
-        public StyleOut ToString(long value) {
-            return new StyleOut("0x" + value.ToString("X"), true);
-        }
-
-        public StyleOut ToString(float value) {
-            throw new NotImplementedException();
-        }
-
-        public StyleOut ToString(double value) {
-            throw new NotImplementedException();
-        }
-    }
-
-    #endregion
-
-    #region 二进制
-
+    /// <summary>
+    /// 转2进制，长度补全为8的倍数
+    /// </summary>
     private static string ToBinaryString(int value) {
-        return Convert.ToString(value, 2);
+        string binaryString = Convert.ToString(value, 2);
+        int mod = binaryString.Length % 8;
+        if (mod != 0) {
+            binaryString = binaryString.PadLeft(8 - mod, '0');
+        }
+        return binaryString;
     }
 
     private static string ToBinaryString(long value) {
-        return Convert.ToString(value, 2);
+        string binaryString = Convert.ToString(value, 2);
+        int mod = binaryString.Length % 8;
+        if (mod != 0) {
+            binaryString = binaryString.PadLeft(8 - mod, '0');
+        }
+        return binaryString;
     }
 
-    private class SignedBinaryStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            if (value < 0 && value != int.MinValue) {
-                return new StyleOut("-0b" + ToBinaryString(-1 * value), true);
-            } else {
-                return new StyleOut("0b" + ToBinaryString(value), true);
-            }
+    /// <summary>
+    /// 转2进制，固定32位
+    /// </summary>
+    private static string ToFixedBinaryString(int value) {
+        string binaryString = Convert.ToString(value, 2);
+        int pad = 32 - binaryString.Length;
+        if (pad > 0) {
+            binaryString = binaryString.PadLeft(pad, '0');
         }
-
-        public StyleOut ToString(long value) {
-            if (value < 0 && value != long.MinValue) {
-                return new StyleOut("-0b" + ToBinaryString(-1 * value), true);
-            } else {
-                return new StyleOut("0b" + ToBinaryString(value), true);
-            }
-        }
-
-        public StyleOut ToString(float value) {
-            throw new NotImplementedException();
-        }
-
-        public StyleOut ToString(double value) {
-            throw new NotImplementedException();
-        }
+        return binaryString;
     }
 
-    private class UnsignedBinaryStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            return new StyleOut("0b" + ToBinaryString(value), true);
+    private static string ToFixedBinaryString(long value) {
+        string binaryString = Convert.ToString(value, 2);
+        int pad = 64 - binaryString.Length;
+        if (pad > 0) {
+            binaryString = binaryString.PadLeft(pad, '0');
         }
-
-        public StyleOut ToString(long value) {
-            return new StyleOut("0b" + ToBinaryString(value), true);
-        }
-
-        public StyleOut ToString(float value) {
-            throw new NotImplementedException();
-        }
-
-        public StyleOut ToString(double value) {
-            throw new NotImplementedException();
-        }
+        return binaryString;
     }
-
-    private class FixedBinaryStyle : INumberStyle
-    {
-        public StyleOut ToString(int value) {
-            string binaryString = ToBinaryString(value);
-            StringBuilder sb = new StringBuilder(34)
-                .Append("0b");
-            if (binaryString.Length < 32) {
-                sb.Insert(2, "0", 32 - binaryString.Length);
-            }
-            sb.Append(binaryString);
-            return new StyleOut(sb.ToString(), true);
-        }
-
-        public StyleOut ToString(long value) {
-            string binaryString = ToBinaryString(value);
-            StringBuilder sb = new StringBuilder(34)
-                .Append("0b");
-            if (binaryString.Length < 64) {
-                sb.Insert(2, "0", 64 - binaryString.Length);
-            }
-            sb.Append(binaryString);
-            return new StyleOut(sb.ToString(), true);
-        }
-
-        public StyleOut ToString(float value) {
-            throw new NotImplementedException();
-        }
-
-        public StyleOut ToString(double value) {
-            throw new NotImplementedException();
-        }
-    }
-
-    #endregion
-
-    #region 对外接口
-
-    public static StyleOut ToString(this NumberStyle style, int value) {
-        return GetInstance(style).ToString(value);
-    }
-
-    public static StyleOut ToString(this NumberStyle style, long value) {
-        return GetInstance(style).ToString(value);
-    }
-
-    public static StyleOut ToString(this NumberStyle style, float value) {
-        return GetInstance(style).ToString(value);
-    }
-
-    public static StyleOut ToString(this NumberStyle style, double value) {
-        return GetInstance(style).ToString(value);
-    }
-
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static INumberStyle GetInstance(NumberStyle style) {
-        return style switch
-        {
-            NumberStyle.Simple => Simple,
-            NumberStyle.Typed => Typed,
-            NumberStyle.Unsigned => Unsigned,
-            NumberStyle.TypedUnsigned => TypedUnsigned,
-            NumberStyle.SignedHex => SignedHex,
-            NumberStyle.UnsignedHex => UnsignedHex,
-            NumberStyle.SignedBinary => SignedBinary,
-            NumberStyle.UnsignedBinary => UnsignedBinary,
-            NumberStyle.FixedBinary => FixedBinary,
-            _ => throw new ArgumentException(style.ToString())
-        };
-    }
-
-    #endregion
 }
 }

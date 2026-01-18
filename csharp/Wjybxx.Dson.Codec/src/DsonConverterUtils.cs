@@ -591,24 +591,26 @@ public static class DsonConverterUtils
     }
 
     public static bool ToNumberStyle(this SerializeFeatures features, out NumberStyle style) {
+        style = NumberStyle.Simple;
         if ((features & SerializeFeatures.MaskNumberStyles) == 0) { // 大概率
-            style = NumberStyle.Simple;
             return false;
         }
         if ((features & SerializeFeatures.NumberHex) != 0) {
-            style = (features & SerializeFeatures.NumberUnsigned) != 0
-                ? NumberStyle.UnsignedHex
-                : NumberStyle.SignedHex;
-        } else {
-            if ((features & SerializeFeatures.NumberUnsigned) != 0) {
-                style = (features & SerializeFeatures.NumberTyped) != 0
-                    ? NumberStyle.TypedUnsigned
-                    : NumberStyle.Unsigned;
-            } else {
-                style = (features & SerializeFeatures.NumberTyped) != 0
-                    ? NumberStyle.Typed
-                    : NumberStyle.Simple;
-            }
+            style |= NumberStyle.Hex;
+        }
+        if ((features & SerializeFeatures.NumberTyped) != 0) {
+            style |= NumberStyle.Typed;
+        }
+        if ((features & SerializeFeatures.NumberUnsigned) != 0) {
+            style |= NumberStyle.Unsigned;
+        }
+        // 长度控制
+        if ((features & SerializeFeatures.NumberFixed) != 0) {
+            style |= NumberStyle.Fixed;
+        } else if ((features & SerializeFeatures.NumberNoExponent3) != 0) {
+            style |= NumberStyle.NoExponent3;
+        } else if ((features & SerializeFeatures.NumberNoExponent7) != 0) {
+            style |= NumberStyle.NoExponent7;
         }
         return true;
     }

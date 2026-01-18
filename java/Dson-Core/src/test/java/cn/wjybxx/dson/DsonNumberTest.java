@@ -28,7 +28,8 @@ public class DsonNumberTest {
               value8: @d NaN,
               value9: @i -0xFF,
               value10: @i -0b10010001,
-              value11: @d -1.05E-15
+              value11: @d -1.05E-15,
+              value12: @d -1.123456789
             }
             """;
 
@@ -36,13 +37,14 @@ public class DsonNumberTest {
     void testNumber() {
         DsonObject<String> dsonObject = Dsons.fromDson(numberString).asObject();
         // 必须带类型，否则无法精确反序列化，断言会失败
-        List<NumberStyle> styleList = List.of(NumberStyle.TYPED, NumberStyle.TYPED_NO_SCI,
-                NumberStyle.SIGNED_HEX, NumberStyle.UNSIGNED_HEX,
-                NumberStyle.SIGNED_BINARY, NumberStyle.UNSIGNED_BINARY, NumberStyle.FIXED_BINARY,
-                NumberStyle.TYPED_UNSIGNED);
+        List<NumberStyle> styleList = List.of(
+                NumberStyle.TYPED, NumberStyle.UNSIGNED,
+                NumberStyle.HEX, NumberStyle.UNSIGNED_HEX, NumberStyle.FIXED_HEX,
+                NumberStyle.BINARY, NumberStyle.UNSIGNED_BINARY, NumberStyle.FIXED_BINARY,
+                NumberStyle.NO_EXPONENT3, NumberStyle.NO_EXPONENT7);
 
         for (NumberStyle style : styleList) {
-            final boolean supportFloat = style.supportFloat();
+            final boolean supportFloat = supportFloat(style);
             final StringWriter stringWriter = new StringWriter(120);
             try (DsonTextWriter writer = new DsonTextWriter(DsonTextWriterSettings.DEFAULT, stringWriter)) {
                 writer.writeStartObject(ObjectStyle.INDENT);
@@ -67,8 +69,18 @@ public class DsonNumberTest {
             String dsonString2 = stringWriter.toString();
             System.out.println(style);
             System.out.println(dsonString2);
+            // 截断后无法保证相等性
+            if (style == NumberStyle.NO_EXPONENT3 || style == NumberStyle.NO_EXPONENT7) {
+                continue;
+            }
             Assertions.assertEquals(dsonObject, Dsons.fromDson(dsonString2));
         }
     }
 
+    private static boolean supportFloat(NumberStyle style) {
+        return style == NumberStyle.SIMPLE
+                || style == NumberStyle.TYPED
+                || style == NumberStyle.NO_EXPONENT3
+                || style == NumberStyle.NO_EXPONENT7;
+    }
 }

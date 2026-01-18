@@ -29,20 +29,21 @@ namespace Wjybxx.Dson.Tests;
 public class DsonNumberTest
 {
     private static readonly string NumberString = """
-            {
-              value1: 10001,
-              value2: 1.05,
-              value3: @i 0xFF,
-              value4: @i 0b10010001,
-              value5: @i 100_000_000,
-              value6: @d 1.05E-15,
-              value7: @d Infinity,
-              value8: @d NaN,
-              value9: @i -0xFF,
-              value10: @i -0b10010001,
-              value11: @d -1.05E-15
-            }
-            """;
+                                                  {
+                                                    value1: 10001,
+                                                    value2: 1.05,
+                                                    value3: @i 0xFF,
+                                                    value4: @i 0b10010001,
+                                                    value5: @i 100_000_000,
+                                                    value6: @d 1.05E-15,
+                                                    value7: @d Infinity,
+                                                    value8: @d NaN,
+                                                    value9: @i -0xFF,
+                                                    value10: @i -0b10010001,
+                                                    value11: @d -1.05E-15,
+                                                    value12: @d -1.123456789
+                                                  }
+                                                  """;
 
     [Test]
     public void TestNumber() {
@@ -50,10 +51,10 @@ public class DsonNumberTest
         // 必须带类型，否则无法精确反序列化，断言会失败
         List<NumberStyle> styleList = new List<NumberStyle>
         {
-            NumberStyle.Typed, NumberStyle.TypedUnsigned,
-            NumberStyle.SignedHex, NumberStyle.UnsignedHex,
-            NumberStyle.SignedBinary, NumberStyle.UnsignedBinary,
-            NumberStyle.FixedBinary
+            NumberStyle.Typed, NumberStyle.Unsigned,
+            NumberStyle.Hex, NumberStyle.Hex | NumberStyle.Unsigned, NumberStyle.Hex | NumberStyle.Fixed,
+            NumberStyle.Binary, NumberStyle.Binary | NumberStyle.Unsigned, NumberStyle.Binary | NumberStyle.Fixed,
+            NumberStyle.NoExponent3, NumberStyle.NoExponent7 // 浮点数
         };
         foreach (NumberStyle style in styleList) {
             bool supportFloat = IsSupportFloat(style);
@@ -89,9 +90,13 @@ public class DsonNumberTest
             writer.Flush();
 
             string dsonString2 = stringWriter.ToString();
-            Console.WriteLine(style.GetType().Name);
+            Console.WriteLine(style.ToString());
             Console.WriteLine(dsonString2);
-
+            // 数据截断以后无法保证相等性
+            if ((style & NumberStyle.NoExponent3) != 0 
+                || (style & NumberStyle.NoExponent7) != 0) {
+                continue;
+            }
             DsonObject<string> dsonObject2 = Dsons.FromDson(dsonString2).AsObject();
             Assert.That(dsonObject, Is.EqualTo(dsonObject2));
         }
@@ -99,12 +104,9 @@ public class DsonNumberTest
 
     /** 是否支持浮点数 -- float和double */
     private static bool IsSupportFloat(NumberStyle style) {
-        try {
-            style.ToString(0f);
-        }
-        catch (Exception) {
-            return false;
-        }
-        return true;
+        return style == NumberStyle.Simple
+               || style == NumberStyle.Typed
+               || style == NumberStyle.NoExponent3
+               || style == NumberStyle.NoExponent7;
     }
 }

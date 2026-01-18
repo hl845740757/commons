@@ -63,6 +63,12 @@ public class StyleOut {
         return this;
     }
 
+    public StyleOut setValue(String value, boolean typed) {
+        this.value = value;
+        this.typed = typed;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "StyleOut{" +

@@ -180,6 +180,7 @@ public enum SerializeFeatures : uint
     /// </summary>
     ElementFlow = 0x08 << 20,
 
+    // 字符串样式其实可以使用加法
     /// <summary>
     /// 字符串编码为自动引号格式（字段级别）
     ///
@@ -204,13 +205,26 @@ public enum SerializeFeatures : uint
     /// </summary>
     NumberHex = 0x10 << 20,
     /// <summary>
-    /// int32/int64编码为无符号整数（可与其它格式共存）
-    /// </summary>
-    NumberUnsigned = 0x20 << 20,
-    /// <summary>
     /// 数字编码时带上类型符号，可与其它格式共存（字段级别）
     /// </summary>
-    NumberTyped = 0x40 << 20,
+    NumberTyped = 0x20 << 20,
+    /// <summary>
+    /// int32/int64编码为无符号整数（可与其它格式共存）
+    /// </summary>
+    NumberUnsigned = 0x40 << 20,
+    /// <summary>
+    /// int32/int64编码为固定长度16进制
+    /// </summary>
+    NumberFixed = 0x80 << 20,
+
+    /// <summary>
+    /// 限定Double4长度为2
+    /// </summary>
+    NumberNoExponent3 = 0x01 << 28,
+    /// <summary>
+    /// 限定Double4长度为3
+    /// </summary>
+    NumberNoExponent7 = 0x02 << 28,
 
     /// <summary>
     /// 将Double4编码为向量(1)
@@ -223,7 +237,7 @@ public enum SerializeFeatures : uint
     /// <summary>
     /// 将Double4编码为Rect(3)
     /// </summary>
-    Double4AsRect = Double4AsVector | Double4AsRgba,
+    Double4AsRect = 0x30 << 20,
     /// <summary>
     /// 限定Double4的元素为整数类型（可与Vector/Rgba/Rect共存）
     /// </summary>
@@ -249,7 +263,9 @@ public enum SerializeFeatures : uint
     /// <summary>
     /// Number编码样式的掩码
     /// </summary>
-    MaskNumberStyles = NumberTyped | NumberUnsigned | NumberHex,
+    MaskNumberStyles = NumberHex | NumberTyped | NumberUnsigned
+                       | NumberFixed
+                       | NumberNoExponent3 | NumberNoExponent7,
     /// <summary>
     /// Double4编码样式的掩码
     /// </summary>
