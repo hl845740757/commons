@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Wjybxx.Commons;
+using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
@@ -185,13 +187,30 @@ public class DsonConverterBuilder
         Type encoderType = DsonConverterUtils.GetEncoderType(codecType);
         if (codecType.IsGenericType) {
             encoderType = encoderType.GetGenericTypeDefinition();
+            GetFeatures(encoderType, out SerializeFeatures features1, out DeserializeFeatures features2);
+            //
             AddGenericCodec(encoderType, codecType);
-            AddTypeMeta(TypeMeta.Of(encoderType, ObjectUtil.GetSimpleName(encoderType)));
+            AddTypeMeta(TypeMeta.Of(encoderType, features1, features2, ObjectUtil.GetSimpleName(encoderType)));
         } else {
-            AddTypeMeta(TypeMeta.Of(encoderType, encoderType.Name));
+            GetFeatures(encoderType, out SerializeFeatures features1, out DeserializeFeatures features2);
+            //
             AddCodec((IDsonCodec)Activator.CreateInstance(codecType)!);
+            AddTypeMeta(TypeMeta.Of(encoderType, features1, features2, encoderType.Name));
         }
         return this;
+    }
+
+    private static void GetFeatures(Type encoderType,
+                                    out SerializeFeatures serializeFeatures,
+                                    out DeserializeFeatures deserializeFeatures) {
+        DsonSerializableAttribute attribute = encoderType.GetCustomAttribute<DsonSerializableAttribute>();
+        if (attribute != null) {
+            serializeFeatures = attribute.EncodeFeatures;
+            deserializeFeatures = attribute.DecodeFeatures;
+        } else {
+            serializeFeatures = default;
+            deserializeFeatures = default;
+        }
     }
 
     #endregion

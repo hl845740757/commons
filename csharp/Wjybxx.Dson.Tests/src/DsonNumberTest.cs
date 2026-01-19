@@ -41,7 +41,8 @@ public class DsonNumberTest
                                                     value9: @i -0xFF,
                                                     value10: @i -0b10010001,
                                                     value11: @d -1.05E-15,
-                                                    value12: @d -1.123456789
+                                                    value12: @d -1.123456789,
+                                                    value13: @i "0x01 | 0x02 | 0x10 | 0x20"
                                                   }
                                                   """;
 

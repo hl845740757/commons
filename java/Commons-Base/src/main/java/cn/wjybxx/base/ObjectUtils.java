@@ -223,6 +223,53 @@ public class ObjectUtils {
         return -1;
     }
 
+    /** 索引首个非空白字符 */
+    public static int indexOfNonWhitespace(String cs) {
+        return indexOfNonWhitespace(cs, 0);
+    }
+
+    /** 索引首个非空白字符 */
+    public static int indexOfNonWhitespace(String cs, int startIndex) {
+        if (startIndex < 0) {
+            throw new IllegalArgumentException("startIndex " + startIndex);
+        }
+        int length = length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        for (int i = startIndex; i < length; i++) {
+            if (!Character.isWhitespace(cs.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 反向索引首个非空白字符 */
+    public static int lastIndexOfNonWhitespace(String cs) {
+        return lastIndexOfNonWhitespace(cs, -1);
+    }
+
+    /** 反向索引首个非空白字符 */
+    public static int lastIndexOfNonWhitespace(String cs, int startIndex) {
+        if (startIndex < -1) {
+            throw new IllegalArgumentException("startIndex " + startIndex);
+        }
+        int length = length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        if (startIndex == -1 || startIndex >= length) {
+            startIndex = length - 1;
+        }
+        for (int i = startIndex; i >= 0; i--) {
+            if (!Character.isWhitespace(cs.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /** 获取跨语言统一的HashCode */
     public static int getUnifiedHashCode(String s) {
         final int strLen = length(s);
@@ -232,7 +279,6 @@ public class ObjectUtils {
         }
         return r;
     }
-
     // endregion
 
     // region exception

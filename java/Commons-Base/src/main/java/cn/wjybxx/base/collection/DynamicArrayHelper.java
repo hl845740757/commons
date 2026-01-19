@@ -111,10 +111,10 @@ final class DynamicArrayHelper {
         }
         // word所在位置单独调整
         long word = elementsMask[wordIndex];
-        int index = bitIndex & 63;
-        long high = (word << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-        long lower = (word) & ((1L << index) - 1); // [0, index -1] 全1
-        elementsMask[wordIndex] = high | lower;
+        long lowMask = 1L << (bitIndex & 63) - 1;
+        long low = (word & lowMask);
+        long high = (word & ~lowMask) << 1;
+        elementsMask[wordIndex] = high | low;
     }
 
     public static void setBit(long[] elementsMask, int fromIndex, int toIndex) {

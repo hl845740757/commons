@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -28,6 +27,8 @@ using Wjybxx.Dson.Internal;
 
 namespace Wjybxx.Dson.Text
 {
+using GNumberStyles = System.Globalization.NumberStyles;
+
 /// <summary>
 /// Dson文本解析工具类
 /// </summary>
@@ -361,16 +362,15 @@ public static class DsonTexts
         if (lookOffset + 2 < str.Length && str[lookOffset] == '0') {
             char baseChar = str[lookOffset + 1];
             if (baseChar == 'x' || baseChar == 'X') {
-                str = str.Substring(lookOffset); // 解析16进制时可带有0x
-                return sign * (int)Convert.ToUInt32(str, 16);
+                return sign * (int)uint.Parse(str.AsSpan(lookOffset + 2), GNumberStyles.HexNumber);
             }
             if (baseChar == 'b' || baseChar == 'B') {
-                str = str.Substring(lookOffset + 2); // c#解析二进制时不能带有0b...
+                str = str.Substring(lookOffset + 2);
                 return sign * (int)Convert.ToUInt32(str, 2);
             }
         }
         if (lookOffset > 0) {
-            return sign * (int)uint.Parse(str.AsSpan(lookOffset)); // 避免切割字符串
+            return sign * (int)uint.Parse(str.AsSpan(lookOffset));
         } else {
             return sign * (int)uint.Parse(str);
         }
@@ -400,16 +400,15 @@ public static class DsonTexts
         if (lookOffset + 2 < str.Length && str[lookOffset] == '0') {
             char baseChar = str[lookOffset + 1];
             if (baseChar == 'x' || baseChar == 'X') {
-                str = str.Substring(lookOffset); // 解析16进制时可带有0x
-                return sign * (long)Convert.ToUInt64(str, 16);
+                return sign * (long)ulong.Parse(str.AsSpan(lookOffset + 2), GNumberStyles.HexNumber);
             }
             if (baseChar == 'b' || baseChar == 'B') {
-                str = str.Substring(lookOffset + 2); // c#解析二进制时不能带有0b...
+                str = str.Substring(lookOffset + 2);
                 return sign * (long)Convert.ToUInt64(str, 2);
             }
         }
         if (lookOffset > 0) {
-            return sign * (long)ulong.Parse(str.AsSpan(lookOffset)); // 避免切割字符串
+            return sign * (long)ulong.Parse(str.AsSpan(lookOffset));
         } else {
             return sign * (long)ulong.Parse(str);
         }
@@ -417,26 +416,32 @@ public static class DsonTexts
 
     private static int ParseInt32Flags(string str) {
         int value = 0;
-#if NET6_0_OR_GREATER
-        foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
-            value |= int.Parse(e);
-#else
         foreach (string e in str.Split('|')) {
-            value |= int.Parse(e.Trim());
-#endif
+            int start = ObjectUtil.IndexOfNonWhitespace(e);
+            int end = ObjectUtil.LastIndexOfNonWhitespace(e);
+            uint v;
+            if (start + 2 < end && e[start] == '0' && e[start + 1] == 'x') {
+                v = uint.Parse(e.AsSpan(start + 2, end - start - 1), GNumberStyles.HexNumber);
+            } else {
+                v = uint.Parse(e.AsSpan(start, end - start + 1));
+            }
+            value |= (int)v;
         }
         return value;
     }
 
     private static long ParseInt64Flags(string str) {
         long value = 0;
-#if NET6_0_OR_GREATER
-        foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
-            value |= long.Parse(e);
-#else
         foreach (string e in str.Split('|')) {
-            value |= long.Parse(e.Trim());
-#endif
+            int start = ObjectUtil.IndexOfNonWhitespace(e);
+            int end = ObjectUtil.LastIndexOfNonWhitespace(e);
+            ulong v;
+            if (start + 2 < end && e[start] == '0' && e[start + 1] == 'x') {
+                v = ulong.Parse(e.AsSpan(start + 2, end - start - 1), GNumberStyles.HexNumber);
+            } else {
+                v = ulong.Parse(e.AsSpan(start, end - start + 1));
+            }
+            value |= (long)v;
         }
         return value;
     }

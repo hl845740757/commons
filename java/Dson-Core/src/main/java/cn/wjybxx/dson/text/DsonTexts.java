@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dson.text;
 
+import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.internal.Utf8Util;
@@ -386,7 +387,15 @@ public class DsonTexts {
     private static int parseInt32Flags(String rawStr) {
         int value = 0;
         for (String e : SPLIT_PATTERN.split(rawStr)) {
-            value |= Integer.parseInt(e.trim());
+            int start = ObjectUtils.indexOfNonWhitespace(e);
+            int end = ObjectUtils.lastIndexOfNonWhitespace(e);
+            int v;
+            if (start + 2 < end && e.charAt(start) == '0' && e.charAt(start + 1) == 'x') {
+                v = Integer.parseUnsignedInt(e, start + 2, end + 1, 16);
+            } else {
+                v = Integer.parseUnsignedInt(e, start, end + 1, 10);
+            }
+            value |= v;
         }
         return value;
     }
@@ -394,7 +403,15 @@ public class DsonTexts {
     private static long parseInt64Flags(String rawStr) {
         long value = 0;
         for (String e : SPLIT_PATTERN.split(rawStr)) {
-            value |= Long.parseLong(e.trim());
+            int start = ObjectUtils.indexOfNonWhitespace(e);
+            int end = ObjectUtils.lastIndexOfNonWhitespace(e);
+            long v;
+            if (start + 2 < end && e.charAt(start) == '0' && e.charAt(start + 1) == 'x') {
+                v = Long.parseUnsignedLong(e, start + 2, end + 1, 16);
+            } else {
+                v = Long.parseUnsignedLong(e, start, end + 1, 10);
+            }
+            value |= v;
         }
         return value;
     }
