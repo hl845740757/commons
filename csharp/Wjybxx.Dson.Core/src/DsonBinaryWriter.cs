@@ -177,9 +177,10 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
     }
 
     protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
+        int wireType = DsonReaderUtils.WireTypeOfDouble4(double4);
         IDsonOutput output = this._output;
-        WriteFullTypeAndCurrentName(output, DsonType.Double4, DsonReaderUtils.WireTypeOfDouble4(double4));
-        DsonReaderUtils.WriteDouble4(output, double4);
+        WriteFullTypeAndCurrentName(output, DsonType.Double4, wireType);
+        DsonReaderUtils.WriteDouble4(output, double4, wireType);
     }
 
     #endregion

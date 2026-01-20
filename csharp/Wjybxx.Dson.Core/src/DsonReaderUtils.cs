@@ -149,33 +149,38 @@ public static class DsonReaderUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WireTypeOfDouble4(Double4 double4) {
         int v = 0;
-        if (double4.v1 != 0) v |= 0x01;
-        if (double4.v2 != 0) v |= 0x02;
-        if (double4.v3 != 0) v |= 0x04;
+        if (WireTypes.BestOfDouble(double4.v0) == WireType.Uint) v |= 0x01;
+        if (WireTypes.BestOfDouble(double4.v1) == WireType.Uint) v |= 0x02;
+        if (WireTypes.BestOfDouble(double4.v2) == WireType.Uint) v |= 0x04;
         return v;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteDouble4(IDsonOutput output, Double4 double4) {
-        // V0固定写入，其它三个非0时写入
-        output.WriteDouble(double4.v0);
-        if (double4.v1 != 0) {
+    public static void WriteDouble4(IDsonOutput output, Double4 double4, int wireTypeBits) {
+        if ((wireTypeBits & 0x01) != 0) {
+            output.WriteVarDouble(double4.v0);
+        } else {
+            output.WriteDouble(double4.v0);
+        }
+        if ((wireTypeBits & 0x02) != 0) {
+            output.WriteVarDouble(double4.v1);
+        } else {
             output.WriteDouble(double4.v1);
         }
-        if (double4.v2 != 0) {
+        if ((wireTypeBits & 0x04) != 0) {
+            output.WriteVarDouble(double4.v2);
+        } else {
             output.WriteDouble(double4.v2);
         }
-        if (double4.v3 != 0) {
-            output.WriteDouble(double4.v3);
-        }
+        output.WriteVarDouble(double4.v3);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Double4 ReadDouble4(IDsonInput input, int wireTypeBits) {
-        double v0 = input.ReadDouble();
-        double v1 = (wireTypeBits & 0x01) != 0 ? input.ReadDouble() : 0;
-        double v2 = (wireTypeBits & 0x02) != 0 ? input.ReadDouble() : 0;
-        double v3 = (wireTypeBits & 0x04) != 0 ? input.ReadDouble() : 0;
+        double v0 = (wireTypeBits & 0x01) != 0 ? input.ReadVarDouble() : input.ReadDouble();
+        double v1 = (wireTypeBits & 0x02) != 0 ? input.ReadVarDouble() : input.ReadDouble();
+        double v2 = (wireTypeBits & 0x04) != 0 ? input.ReadVarDouble() : input.ReadDouble();
+        double v3 = input.ReadVarDouble();
         return new Double4(v0, v1, v2, v3);
     }
 
@@ -288,10 +293,22 @@ public static class DsonReaderUtils
                 return;
             }
             case DsonType.Double4: {
-                input.ReadDouble();
-                if ((wireTypeBits & 0x01) != 0) input.ReadDouble();
-                if ((wireTypeBits & 0x02) != 0) input.ReadDouble();
-                if ((wireTypeBits & 0x04) != 0) input.ReadDouble();
+                if ((wireTypeBits & 0x01) != 0) {
+                    input.ReadVarDouble();
+                } else {
+                    input.ReadDouble();
+                }
+                if ((wireTypeBits & 0x02) != 0) {
+                    input.ReadVarDouble();
+                } else {
+                    input.ReadDouble();
+                }
+                if ((wireTypeBits & 0x04) != 0) {
+                    input.ReadVarDouble();
+                } else {
+                    input.ReadDouble();
+                }
+                input.ReadVarDouble();
                 return;
             }
             case DsonType.Header: {

@@ -132,31 +132,36 @@ public class DsonReaderUtils {
 
     public static int wireTypeOfDouble4(Double4 double4) {
         int v = 0;
-        if (double4.v1 != 0) v |= 0x01;
-        if (double4.v2 != 0) v |= 0x02;
-        if (double4.v3 != 0) v |= 0x04;
+        if (WireType.bestOfDouble(double4.v0) == WireType.UINT) v |= 0x01;
+        if (WireType.bestOfDouble(double4.v1) == WireType.UINT) v |= 0x02;
+        if (WireType.bestOfDouble(double4.v2) == WireType.UINT) v |= 0x04;
         return v;
     }
 
-    public static void writeDouble4(DsonOutput output, Double4 double4) {
-        // V0固定写入，其它三个非0时写入
-        output.writeDouble(double4.v0);
-        if (double4.v1 != 0) {
+    public static void writeDouble4(DsonOutput output, Double4 double4, int wireTypeBits) {
+        if ((wireTypeBits & 0x01) != 0) {
+            output.writeVarDouble(double4.v0);
+        } else {
+            output.writeDouble(double4.v0);
+        }
+        if ((wireTypeBits & 0x02) != 0) {
+            output.writeVarDouble(double4.v1);
+        } else {
             output.writeDouble(double4.v1);
         }
-        if (double4.v2 != 0) {
+        if ((wireTypeBits & 0x04) != 0) {
+            output.writeVarDouble(double4.v2);
+        } else {
             output.writeDouble(double4.v2);
         }
-        if (double4.v3 != 0) {
-            output.writeDouble(double4.v3);
-        }
+        output.writeVarDouble(double4.v3);
     }
 
     public static Double4 readDouble4(DsonInput input, int wireTypeBits) {
-        double v0 = input.readDouble();
-        double v1 = (wireTypeBits & 0x01) != 0 ? input.readDouble() : 0;
-        double v2 = (wireTypeBits & 0x02) != 0 ? input.readDouble() : 0;
-        double v3 = (wireTypeBits & 0x04) != 0 ? input.readDouble() : 0;
+        double v0 = (wireTypeBits & 0x01) != 0 ? input.readVarDouble() : input.readDouble();
+        double v1 = (wireTypeBits & 0x02) != 0 ? input.readVarDouble() : input.readDouble();
+        double v2 = (wireTypeBits & 0x04) != 0 ? input.readVarDouble() : input.readDouble();
+        double v3 = input.readVarDouble();
         return new Double4(v0, v1, v2, v3);
     }
 
@@ -259,10 +264,22 @@ public class DsonReaderUtils {
                 return;
             }
             case DOUBLE4 -> {
-                input.readDouble();
-                if ((wireTypeBits & 0x01) != 0) input.readDouble();
-                if ((wireTypeBits & 0x02) != 0) input.readDouble();
-                if ((wireTypeBits & 0x04) != 0) input.readDouble();
+                if ((wireTypeBits & 0x01) != 0) {
+                    input.readVarDouble();
+                } else {
+                    input.readDouble();
+                }
+                if ((wireTypeBits & 0x02) != 0) {
+                    input.readVarDouble();
+                } else {
+                    input.readDouble();
+                }
+                if ((wireTypeBits & 0x04) != 0) {
+                    input.readVarDouble();
+                } else {
+                    input.readDouble();
+                }
+                input.readVarDouble();
                 return;
             }
             case HEADER -> {
