@@ -29,6 +29,7 @@ public static class MorePrimitiveCodecs
     public class UInt32Codec : IDsonCodec<uint>, IKeyCodec<uint>
     {
         public string EncodeKey(uint value, SerializeFeatures features) {
+            if ((int)value < 0) features |= SerializeFeatures.NumberHex;
             return features.ToNumberStyle().ToString((int)value).Value;
         }
 
@@ -37,10 +38,11 @@ public static class MorePrimitiveCodecs
         }
 
         public void WriteObject(IDsonObjectWriter writer, uint inst, Type declaredType, SerializeFeatures features) {
+            if ((int)inst < 0) features |= SerializeFeatures.NumberHex;
             if (declaredType != typeof(uint)) {
                 features |= SerializeFeatures.NumberTyped;
             }
-            writer.WriteInt((int)inst, features | SerializeFeatures.NumberUnsigned);
+            writer.WriteInt((int)inst, features);
         }
 
         public uint ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
@@ -51,6 +53,7 @@ public static class MorePrimitiveCodecs
     public class UInt64Codec : IDsonCodec<ulong>, IKeyCodec<ulong>
     {
         public string EncodeKey(ulong value, SerializeFeatures features) {
+            if ((long)value < 0) features |= SerializeFeatures.NumberHex;
             return features.ToNumberStyle().ToString((long)value).Value;
         }
 
@@ -59,10 +62,11 @@ public static class MorePrimitiveCodecs
         }
 
         public void WriteObject(IDsonObjectWriter writer, ulong inst, Type declaredType, SerializeFeatures features) {
+            if ((long)inst < 0) features |= SerializeFeatures.NumberHex;
             if (declaredType != typeof(ulong)) {
                 features |= SerializeFeatures.NumberTyped;
             }
-            writer.WriteLong((long)inst, features | SerializeFeatures.NumberUnsigned);
+            writer.WriteLong((long)inst, features);
         }
 
         public ulong ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
@@ -106,7 +110,7 @@ public static class MorePrimitiveCodecs
             if (declaredType != typeof(ushort)) {
                 features |= SerializeFeatures.NumberTyped;
             }
-            writer.WriteInt(inst, features | SerializeFeatures.NumberUnsigned);
+            writer.WriteInt(inst, features);
         }
 
         public ushort ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {

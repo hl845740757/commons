@@ -560,7 +560,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     protected void doWriteDouble4(Double4 double4, Double4Style style) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.DOUBLE4);
-        Double4Style.print(printer, double4, style);
+        style.print(printer, double4, styleOut);
     }
 
     // endregion

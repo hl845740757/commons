@@ -30,105 +30,86 @@ internal static class Double4Styles
     private const int MASK_VECTOR4 = 'x' | 'y' << 8 | 'z' << 16 | 'w' << 24;
     private const int MASK_VECTOR3 = 'x' | 'y' << 8 | 'z' << 16;
     private const int MASK_VECTOR2 = 'x' | 'y' << 8;
-    //
-    private const int MASK_RGBA = 'r' | 'g' << 8 | 'b' << 16 | 'a' << 24;
-    private const int MASK_RGB = 'r' | 'g' << 8 | 'b' << 16;
-    //
-    private const int MASK_RECT = 'x' | 'y' << 8 | 'w' << 16 | 'h' << 24;
 
     public static void Print(DsonPrinter printer, Double4 double4, Double4Style style) {
-        // Array
-        if (style <= Double4Style.Array2) {
-            printer.FastPrint("[@D4 ");
-            printer.FastPrint(double4.v0.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", ");
-            printer.FastPrint(double4.v1.ToString(CultureInfo.InvariantCulture));
-            if (style <= Double4Style.Array3) {
+        Double4Style basicStyle = style & Double4Style.Rect;
+        switch (basicStyle) {
+            case Double4Style.Array: {
+                printer.FastPrint("[@D4 ");
+                PrintDouble(printer, double4.v0, style);
                 printer.FastPrint(", ");
-                printer.FastPrint(double4.v2.ToString(CultureInfo.InvariantCulture));
+                PrintDouble(printer, double4.v1, style);
+                if ((style & Double4Style.Len2) == 0) {
+                    printer.FastPrint(", ");
+                    PrintDouble(printer, double4.v2, style);
+                }
+                if ((style & Double4Style.Len3) == 0) {
+                    printer.FastPrint(", ");
+                    PrintDouble(printer, double4.v3, style);
+                }
+                printer.FastPrint("]");
+                break;
             }
-            if (style <= Double4Style.Array4) {
-                printer.FastPrint(", ");
-                printer.FastPrint(double4.v3.ToString(CultureInfo.InvariantCulture));
+            case Double4Style.Vector: {
+                printer.FastPrint("{@D4 x: ");
+                PrintDouble(printer, double4.v0, style);
+                printer.FastPrint(", y: ");
+                PrintDouble(printer, double4.v1, style);
+                if ((style & Double4Style.Len2) == 0) {
+                    printer.FastPrint(", z: ");
+                    PrintDouble(printer, double4.v2, style);
+                }
+                if ((style & Double4Style.Len3) == 0) {
+                    printer.FastPrint(", w: ");
+                    PrintDouble(printer, double4.v3, style);
+                }
+                printer.FastPrint("}");
+                break;
             }
-            printer.FastPrint("]");
-            return;
-        }
-        // 向量
-        if (style <= Double4Style.Vector2) {
-            printer.FastPrint("{@D4 x: ");
-            printer.FastPrint(double4.v0.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", y: ");
-            printer.FastPrint(double4.v1.ToString(CultureInfo.InvariantCulture));
-            if (style <= Double4Style.Vector3) {
-                printer.FastPrint(", z: ");
-                printer.FastPrint(double4.v2.ToString(CultureInfo.InvariantCulture));
+            case Double4Style.Rgba: {
+                printer.FastPrint("{@D4 r: ");
+                PrintDouble(printer, double4.v0, style);
+                printer.FastPrint(", g: ");
+                PrintDouble(printer, double4.v1, style);
+                printer.FastPrint(", b: ");
+                PrintDouble(printer, double4.v2, style);
+                if ((style & Double4Style.Len3) == 0) {
+                    printer.FastPrint(", a: ");
+                    PrintDouble(printer, double4.v3, style);
+                }
+                printer.FastPrint("}");
+                break;
             }
-            if (style <= Double4Style.Vector4) {
+            case Double4Style.Rect: {
+                printer.FastPrint("{@D4 x: ");
+                PrintDouble(printer, double4.v0, style);
+                printer.FastPrint(", y: ");
+                PrintDouble(printer, double4.v1, style);
                 printer.FastPrint(", w: ");
-                printer.FastPrint(double4.v3.ToString(CultureInfo.InvariantCulture));
+                PrintDouble(printer, double4.v2, style);
+                printer.FastPrint(", h: ");
+                PrintDouble(printer, double4.v3, style);
+                printer.FastPrint("}");
+                break;
             }
-            printer.FastPrint("}");
-            return;
+            default: throw new ArgumentOutOfRangeException(nameof(style), style, null);
         }
-        // 整数向量
-        if (style <= Double4Style.Vector2Int) {
-            printer.FastPrint("{@D4 x: ");
-            printer.FastPrint(((long)double4.v0).ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", y: ");
-            printer.FastPrint(((long)double4.v1).ToString(CultureInfo.InvariantCulture));
-            if (style <= Double4Style.Vector3Int) {
-                printer.FastPrint(", z: ");
-                printer.FastPrint(((long)double4.v2).ToString(CultureInfo.InvariantCulture));
-            }
-            if (style <= Double4Style.Vector4Int) {
-                printer.FastPrint(", w: ");
-                printer.FastPrint(((long)double4.v3).ToString(CultureInfo.InvariantCulture));
-            }
-            printer.FastPrint("}");
-            return;
+    }
+
+    private static void PrintDouble(DsonPrinter printer, double value, Double4Style style) {
+        if ((style & Double4Style.Integer) != 0) {
+            string str = NumberStyle.Simple.ToString((long)value).Value;
+            printer.FastPrint(str);
+        } else {
+            NumberStyle numberStyle = style switch
+            {
+                Double4Style.NoExponent3 => NumberStyle.NoExponent3,
+                Double4Style.NoExponent7 => NumberStyle.NoExponent7,
+                _ => NumberStyle.Simple
+            };
+            string str = numberStyle.ToString(value).Value;
+            printer.FastPrint(str);
         }
-        // 颜色值
-        if (style == Double4Style.Rgba || style == Double4Style.Rgb) {
-            printer.FastPrint("{@D4 r: ");
-            printer.FastPrint(double4.v0.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", g: ");
-            printer.FastPrint(double4.v1.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", b: ");
-            printer.FastPrint(double4.v2.ToString(CultureInfo.InvariantCulture));
-            if (style == Double4Style.Rgba) {
-                printer.FastPrint(", a: ");
-                printer.FastPrint(double4.v3.ToString(CultureInfo.InvariantCulture));
-            }
-            printer.FastPrint("}");
-            return;
-        }
-        // 矩形
-        if (style == Double4Style.Rect) {
-            printer.FastPrint("{@D4 x: ");
-            printer.FastPrint(double4.v0.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", y: ");
-            printer.FastPrint(double4.v1.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", w: ");
-            printer.FastPrint(double4.v2.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", h: ");
-            printer.FastPrint(double4.v3.ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint("}");
-            return;
-        }
-        if (style == Double4Style.RectInt) {
-            printer.FastPrint("{@D4 x: ");
-            printer.FastPrint(((long)double4.v0).ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", y: ");
-            printer.FastPrint(((long)double4.v1).ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", w: ");
-            printer.FastPrint(((long)double4.v2).ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint(", h: ");
-            printer.FastPrint(((long)double4.v3).ToString(CultureInfo.InvariantCulture));
-            printer.FastPrint("}");
-            return;
-        }
-        throw new IndexOutOfRangeException(nameof(style));
     }
 }
 }

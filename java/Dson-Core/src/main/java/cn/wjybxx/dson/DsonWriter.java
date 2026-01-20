@@ -217,7 +217,7 @@ public interface DsonWriter extends AutoCloseable {
     }
 
     default void writeDouble4(String name, Double4 double4) {
-        writeDouble4(name, double4, Double4Style.ARRAY4);
+        writeDouble4(name, double4, Double4Style.ARRAY);
     }
 
     default void writeInt32(int value) {
@@ -245,7 +245,7 @@ public interface DsonWriter extends AutoCloseable {
     }
 
     default void writeDouble4(Double4 double4) {
-        writeDouble4(double4, Double4Style.ARRAY4);
+        writeDouble4(double4, Double4Style.ARRAY);
     }
     // endregion
 }

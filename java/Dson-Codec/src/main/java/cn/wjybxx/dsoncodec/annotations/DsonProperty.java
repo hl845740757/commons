@@ -17,7 +17,6 @@
 package cn.wjybxx.dsoncodec.annotations;
 
 import cn.wjybxx.base.annotation.StableName;
-import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
@@ -74,8 +73,8 @@ public @interface DsonProperty {
 
     // region style
 
-    /** 数字类型字段的文本格式 */
-    NumberStyle numberStyle() default NumberStyle.SIMPLE;
+//    /** 数字类型字段的文本格式 */ TODO 得想个办法兼容...
+//    NumberStyle numberStyle() default NumberStyle.SIMPLE;
 
     /** 字符串类型字段的文本格式 */
     StringStyle stringStyle() default StringStyle.AUTO_QUOTE;

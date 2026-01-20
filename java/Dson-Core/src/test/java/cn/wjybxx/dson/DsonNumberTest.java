@@ -39,9 +39,9 @@ public class DsonNumberTest {
         DsonObject<String> dsonObject = Dsons.fromDson(numberString).asObject();
         // 必须带类型，否则无法精确反序列化，断言会失败
         List<NumberStyle> styleList = List.of(
-                NumberStyle.TYPED, NumberStyle.UNSIGNED,
-                NumberStyle.HEX, NumberStyle.UNSIGNED_HEX, NumberStyle.FIXED_HEX,
-                NumberStyle.BINARY, NumberStyle.UNSIGNED_BINARY, NumberStyle.FIXED_BINARY,
+                NumberStyle.TYPED,
+                NumberStyle.HEX, NumberStyle.SIGNED_HEX, NumberStyle.FIXED_HEX,
+                NumberStyle.BINARY, NumberStyle.SIGNED_BINARY, NumberStyle.FIXED_BINARY,
                 NumberStyle.NO_EXPONENT3, NumberStyle.NO_EXPONENT7);
 
         for (NumberStyle style : styleList) {

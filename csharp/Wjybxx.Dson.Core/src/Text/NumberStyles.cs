@@ -37,10 +37,7 @@ public static class NumberStyles
                 if ((style & NumberStyle.Fixed) != 0) {
                     return new StyleOut("0x" + value.ToString("X8"), true);
                 }
-                if ((style & NumberStyle.Unsigned) != 0) {
-                    return new StyleOut("0x" + value.ToString("X"), true);
-                }
-                if (value < 0 && value != int.MinValue) {
+                if (value < 0 && value != int.MinValue && (style & NumberStyle.Signed) != 0) {
                     return new StyleOut("-0x" + (-1 * value).ToString("X"), true);
                 } else {
                     return new StyleOut("0x" + value.ToString("X"), true);
@@ -51,10 +48,7 @@ public static class NumberStyles
                 if ((style & NumberStyle.Fixed) != 0) {
                     return new StyleOut("0b" + ToFixedBinaryString(value), true);
                 }
-                if ((style & NumberStyle.Unsigned) != 0) {
-                    return new StyleOut("0b" + ToBinaryString(value), true);
-                }
-                if (value < 0 && value != int.MinValue) {
+                if (value < 0 && value != int.MinValue && (style & NumberStyle.Signed) != 0) {
                     return new StyleOut("-0b" + ToBinaryString(-1 * value), true);
                 } else {
                     return new StyleOut("0b" + ToBinaryString(value), true);
@@ -62,10 +56,6 @@ public static class NumberStyles
             }
             default: {
                 // 10进制
-                if ((style & NumberStyle.Unsigned) != 0) {
-                    uint castV = (uint)value;
-                    return new StyleOut(castV.ToString(), true);
-                }
                 bool isTyped = (style & NumberStyle.Typed) != 0;
                 return new StyleOut(value.ToString(), isTyped);
             }
@@ -83,10 +73,7 @@ public static class NumberStyles
                 if ((style & NumberStyle.Fixed) != 0) {
                     return new StyleOut("0x" + value.ToString("X16"), true);
                 }
-                if ((style & NumberStyle.Unsigned) != 0) {
-                    return new StyleOut("0x" + value.ToString("X"), true);
-                }
-                if (value < 0 && value != long.MinValue) {
+                if (value < 0 && value != int.MinValue && (style & NumberStyle.Signed) != 0) {
                     return new StyleOut("-0x" + (-1 * value).ToString("X"), true);
                 } else {
                     return new StyleOut("0x" + value.ToString("X"), true);
@@ -97,10 +84,7 @@ public static class NumberStyles
                 if ((style & NumberStyle.Fixed) != 0) {
                     return new StyleOut("0b" + ToFixedBinaryString(value), true);
                 }
-                if ((style & NumberStyle.Unsigned) != 0) {
-                    return new StyleOut("0b" + ToBinaryString(value), true);
-                }
-                if (value < 0 && value != long.MinValue) {
+                if (value < 0 && value != int.MinValue && (style & NumberStyle.Signed) != 0) {
                     return new StyleOut("-0b" + ToBinaryString(-1 * value), true);
                 } else {
                     return new StyleOut("0b" + ToBinaryString(value), true);
@@ -108,10 +92,6 @@ public static class NumberStyles
             }
             default: {
                 // 10进制
-                if ((style & NumberStyle.Unsigned) != 0) {
-                    ulong castV = (ulong)value;
-                    return new StyleOut(castV.ToString(), true);
-                }
                 bool isTyped = (style & NumberStyle.Typed) != 0 || Math.Abs(value) >= DoubleMaxLong;
                 return new StyleOut(value.ToString(), isTyped);
             }

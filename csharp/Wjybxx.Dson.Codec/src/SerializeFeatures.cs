@@ -209,22 +209,26 @@ public enum SerializeFeatures : uint
     /// </summary>
     NumberTyped = 0x20 << 20,
     /// <summary>
-    /// int32/int64编码为无符号整数（可与其它格式共存）
+    /// int32/int64编码为有符号16进制
     /// </summary>
-    NumberUnsigned = 0x40 << 20,
+    NumberSigned = 0x40 << 20,
     /// <summary>
     /// int32/int64编码为固定长度16进制
     /// </summary>
     NumberFixed = 0x80 << 20,
 
     /// <summary>
-    /// 限定Double4长度为2
+    /// 限定浮点数保留小数点后3位，适用普通浮点数和Double4
     /// </summary>
     NumberNoExponent3 = 0x01 << 28,
     /// <summary>
-    /// 限定Double4长度为3
+    /// 限定浮点数保留小数点后7位，适用普通浮点数和Double4
     /// </summary>
     NumberNoExponent7 = 0x02 << 28,
+    /// <summary>
+    /// 限定Double4的值为整数类型
+    /// </summary>
+    Double4AsInt = 0x04 << 28,
 
     /// <summary>
     /// 将Double4编码为向量(1)
@@ -239,18 +243,13 @@ public enum SerializeFeatures : uint
     /// </summary>
     Double4AsRect = 0x30 << 20,
     /// <summary>
-    /// 限定Double4的元素为整数类型（可与Vector/Rgba/Rect共存）
-    /// </summary>
-    Double4AsInt = 0x80 << 20,
-
-    /// <summary>
     /// 限定Double4长度为2
     /// </summary>
-    Double4Len2 = 0x01 << 28,
+    Double4Len2 = 0x40 << 20,
     /// <summary>
     /// 限定Double4长度为3
     /// </summary>
-    Double4Len3 = 0x02 << 28,
+    Double4Len3 = 0x80 << 20,
 
     /// <summary>
     /// Map编码样式的掩码
@@ -263,15 +262,15 @@ public enum SerializeFeatures : uint
     /// <summary>
     /// Number编码样式的掩码
     /// </summary>
-    MaskNumberStyles = NumberHex | NumberTyped | NumberUnsigned
-                       | NumberFixed
+    MaskNumberStyles = NumberHex | NumberTyped | NumberSigned | NumberFixed
                        | NumberNoExponent3 | NumberNoExponent7,
     /// <summary>
     /// Double4编码样式的掩码
     /// </summary>
     MaskDouble4Styles = Double4AsVector | Double4AsRgba | Double4AsRect
-                        | Double4AsInt
-                        | Double4Len2 | Double4Len3,
+                        | Double4Len2 | Double4Len3
+                        | NumberNoExponent3 | NumberNoExponent7
+                        | Double4AsInt,
     /// <summary>
     /// List/Map元素的序列化特征值掩码（还有部分需要手动转换）
     /// </summary>

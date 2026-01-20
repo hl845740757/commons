@@ -388,17 +388,19 @@ public static class DsonConverterUtils
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteUInt(this IDsonObjectWriter writer, string name, uint value, SerializeFeatures features = default) {
-        writer.WriteInt(name, (int)value, features | SerializeFeatures.NumberUnsigned);
+        if ((int)value < 0) features |= SerializeFeatures.NumberHex;
+        writer.WriteInt(name, (int)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteULong(this IDsonObjectWriter writer, string name, ulong value, SerializeFeatures features = default) {
-        writer.WriteLong(name, (long)value, features | SerializeFeatures.NumberUnsigned);
+        if ((long)value < 0) features |= SerializeFeatures.NumberHex;
+        writer.WriteLong(name, (long)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteUShort(this IDsonObjectWriter writer, string name, ushort value, SerializeFeatures features = default) {
-        writer.WriteInt(name, value, features | SerializeFeatures.NumberUnsigned);
+        writer.WriteInt(name, value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -424,17 +426,19 @@ public static class DsonConverterUtils
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteUInt(this IDsonObjectWriter writer, uint value, SerializeFeatures features = default) {
-        writer.WriteInt((int)value, features | SerializeFeatures.NumberUnsigned);
+        if ((int)value < 0) features |= SerializeFeatures.NumberHex;
+        writer.WriteInt((int)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteULong(this IDsonObjectWriter writer, ulong value, SerializeFeatures features = default) {
-        writer.WriteLong((long)value, features | SerializeFeatures.NumberUnsigned);
+        if ((long)value < 0) features |= SerializeFeatures.NumberHex;
+        writer.WriteLong((long)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteUShort(this IDsonObjectWriter writer, ushort value, SerializeFeatures features = default) {
-        writer.WriteInt(value, features | SerializeFeatures.NumberUnsigned);
+        writer.WriteInt(value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -595,14 +599,14 @@ public static class DsonConverterUtils
         if ((features & SerializeFeatures.MaskNumberStyles) == 0) { // 大概率
             return false;
         }
-        if ((features & SerializeFeatures.NumberHex) != 0) {
-            style |= NumberStyle.Hex;
-        }
         if ((features & SerializeFeatures.NumberTyped) != 0) {
             style |= NumberStyle.Typed;
         }
-        if ((features & SerializeFeatures.NumberUnsigned) != 0) {
-            style |= NumberStyle.Unsigned;
+        if ((features & SerializeFeatures.NumberHex) != 0) {
+            style |= NumberStyle.Hex;
+        }
+        if ((features & SerializeFeatures.NumberSigned) != 0) {
+            style |= NumberStyle.Signed;
         }
         // 长度控制
         if ((features & SerializeFeatures.NumberFixed) != 0) {
@@ -634,41 +638,29 @@ public static class DsonConverterUtils
 
     public static bool ToDouble4Style(this SerializeFeatures features, out Double4Style style) {
         if ((features & SerializeFeatures.MaskDouble4Styles) == 0) { // 大概率
-            style = Double4Style.Array4;
+            style = Double4Style.Array;
             return false;
         }
-        SerializeFeatures quadAsRect = features & SerializeFeatures.Double4AsRect;
-        bool quadAsInt = (features & SerializeFeatures.Double4AsInt) != 0;
-        // Vector
-        if (quadAsRect == SerializeFeatures.Double4AsVector) {
-            if ((features & SerializeFeatures.Double4Len3) != 0) {
-                style = quadAsInt ? Double4Style.Vector3Int : Double4Style.Vector3;
-            } else if ((features & SerializeFeatures.Double4Len2) != 0) {
-                style = quadAsInt ? Double4Style.Vector2Int : Double4Style.Vector2;
-            } else {
-                style = quadAsInt ? Double4Style.Vector4Int : Double4Style.Vector4;
-            }
-            return true;
+        SerializeFeatures basicStyle = features & SerializeFeatures.Double4AsRect;
+        style = basicStyle switch
+        {
+            SerializeFeatures.Double4AsVector => Double4Style.Vector,
+            SerializeFeatures.Double4AsRgba => Double4Style.Rgba,
+            SerializeFeatures.Double4AsRect => Double4Style.Rect,
+            _ => Double4Style.Array
+        };
+        if ((features & SerializeFeatures.Double4Len2) != 0) {
+            style |= Double4Style.Len2;
+        } else if (features.HasFlag(SerializeFeatures.Double4Len3)) {
+            style |= Double4Style.Len3;
         }
-        // rgba
-        if (quadAsRect == SerializeFeatures.Double4AsRgba) {
-            style = (features & SerializeFeatures.Double4Len3) != 0
-                ? Double4Style.Rgb
-                : Double4Style.Rgba;
-            return true;
+        if ((features & SerializeFeatures.Double4AsInt) != 0) {
+            style |= Double4Style.Integer;
         }
-        // Rect
-        if (quadAsRect == SerializeFeatures.Double4AsRect) {
-            style = quadAsInt ? Double4Style.RectInt : Double4Style.Rect;
-            return true;
-        }
-        // Array
-        if ((features & SerializeFeatures.Double4Len3) != 0) {
-            style = Double4Style.Array3;
-        } else if ((features & SerializeFeatures.Double4Len2) != 0) {
-            style = Double4Style.Array2;
-        } else {
-            style = Double4Style.Array4;
+        if ((features & SerializeFeatures.NumberNoExponent3) != 0) {
+            style |= Double4Style.NoExponent3;
+        } else if ((features & SerializeFeatures.NumberNoExponent7) != 0) {
+            style |= Double4Style.NoExponent7;
         }
         return true;
     }

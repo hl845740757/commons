@@ -22,81 +22,42 @@ public final class NumberStyle {
 
     // region factory
 
+    /** 打印为普通10进制 */
     public static final int MASK_SIMPLE = 0;
+    /** 打印为16进制，必定追加类型 */
     public static final int MASK_HEX = 0x01;
+    /** 打印为二进制，必定追加类型 */
     public static final int MASK_BINARY = 0x02;
 
+    /** 固定打印类型 */
     public static final int MASK_TYPED = 0x10;
-    public static final int MASK_UNSIGNED = 0x20;
+    /** 打印为符号数，适用十六进制和二进制 */
+    public static final int MASK_SIGNED = 0x20;
+    /** 固定长度编码（全Bit编码），适用十六进制和二进制 */
     public static final int MASK_FIXED = 0x40;
 
+    /** 浮点数禁用科学计数法，并最多保留小数点后3位(向最近的偶数舍入) -- 可能导致反序列化结果不相等 */
     public static final int MASK_NO_EXPONENT3 = 0x01 << 8;
+    /** 浮点数禁用科学计数法，并最多保留小数点后7位(向最近的偶数舍入) -- 可能导致反序列化结果不相等 */
     public static final int MASK_NO_EXPONENT7 = 0x02 << 8;
-    public static final int MASK_RADIXES = 0x0F;
+    private static final int MASK_RADIXES = 0x0F;
 
-    /** 普通模式 */
     public static final NumberStyle SIMPLE = new NumberStyle(MASK_SIMPLE);
-    /** 固定打印类型 */
     public static final NumberStyle TYPED = new NumberStyle(MASK_TYPED);
-    /** 输出为无符号整数 -- 超出范围时自动追加类型 */
-    public static final NumberStyle UNSIGNED = new NumberStyle(MASK_UNSIGNED);
 
-    /** 16进制 */
     public static final NumberStyle HEX = new NumberStyle(MASK_HEX);
-    /** 输出为无符号16进制 */
-    public static final NumberStyle UNSIGNED_HEX = new NumberStyle(MASK_UNSIGNED | MASK_HEX);
-    /** 固定长度的16进制 */
+    public static final NumberStyle SIGNED_HEX = new NumberStyle(MASK_SIGNED | MASK_HEX);
     public static final NumberStyle FIXED_HEX = new NumberStyle(MASK_FIXED | MASK_HEX);
 
-    /** 2进制 */
     public static final NumberStyle BINARY = new NumberStyle(MASK_BINARY);
-    /** 输出为无符号2进制 */
-    public static final NumberStyle UNSIGNED_BINARY = new NumberStyle(MASK_UNSIGNED | MASK_BINARY);
-    /** 固定长度的2进制 */
+    public static final NumberStyle SIGNED_BINARY = new NumberStyle(MASK_SIGNED | MASK_BINARY);
     public static final NumberStyle FIXED_BINARY = new NumberStyle(MASK_FIXED | MASK_BINARY);
 
-    /** 浮点数禁用科学计数法，并最多保留小数点后3位(向最近的偶数舍入) -- 可能导致反序列化结果不相等 */
     public static final NumberStyle NO_EXPONENT3 = new NumberStyle(MASK_NO_EXPONENT3);
-    /** 浮点数禁用科学计数法，并最多保留小数点后7位(向最近的偶数舍入) -- 可能导致反序列化结果不相等 */
     public static final NumberStyle NO_EXPONENT7 = new NumberStyle(MASK_NO_EXPONENT7);
 
     public static final NumberStyle TYPED_NO_EXPONENT3 = new NumberStyle(MASK_TYPED | MASK_NO_EXPONENT3);
     public static final NumberStyle TYPED_NO_EXPONENT7 = new NumberStyle(MASK_TYPED | MASK_NO_EXPONENT7);
-
-    /** 打印为16进制，必定追加类型 */
-    public NumberStyle withHex() {
-        return new NumberStyle(features | MASK_HEX);
-    }
-
-    /** 打印为二进制，必定追加类型 */
-    public NumberStyle withBinary() {
-        return new NumberStyle(features | MASK_BINARY);
-    }
-
-    /** 固定打印类型 */
-    public NumberStyle withTyped() {
-        return new NumberStyle(features | MASK_TYPED);
-    }
-
-    /** 打印为无符号数，超出范围时追加类型 */
-    public NumberStyle withUnsigned() {
-        return new NumberStyle(features | MASK_UNSIGNED);
-    }
-
-    /** 固定长度编码（全Bit编码），适用十六进制和二进制 */
-    public NumberStyle withFixed() {
-        return new NumberStyle(features | MASK_FIXED);
-    }
-
-    /** 浮点数禁用科学计数法，并最多保留小数点后3位 -- 可能导致反序列化结果不相等 */
-    public NumberStyle withNoExponent3() {
-        return new NumberStyle(features | MASK_NO_EXPONENT3);
-    }
-
-    /** 浮点数禁用科学计数法，并最多保留小数点后7位 -- 可能导致反序列化结果不相等 */
-    public NumberStyle withNoExponent7() {
-        return new NumberStyle(features | MASK_NO_EXPONENT7);
-    }
 
     // endrgion
 
@@ -110,10 +71,7 @@ public final class NumberStyle {
                 if ((features & NumberStyle.MASK_FIXED) != 0) {
                     return styleOut.setValue(String.format("0x%08X", value), true);
                 }
-                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
-                    return styleOut.setValue("0x" + Integer.toHexString(value), true);
-                }
-                if (value < 0 && value != Integer.MIN_VALUE) {
+                if (value < 0 && value != Integer.MIN_VALUE && (features & NumberStyle.MASK_SIGNED) != 0) {
                     return styleOut.setValue("-0x" + Integer.toHexString((-1 * value)), true);
                 } else {
                     return styleOut.setValue("0x" + Integer.toHexString(value), true);
@@ -124,10 +82,7 @@ public final class NumberStyle {
                 if ((features & NumberStyle.MASK_FIXED) != 0) {
                     return styleOut.setValue("0b" + ToFixedBinaryString(value), true);
                 }
-                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
-                    return styleOut.setValue("0b" + ToBinaryString(value), true);
-                }
-                if (value < 0 && value != Integer.MIN_VALUE) {
+                if (value < 0 && value != Integer.MIN_VALUE && (features & NumberStyle.MASK_SIGNED) != 0) {
                     return styleOut.setValue("-0b" + ToBinaryString(-1 * value), true);
                 } else {
                     return styleOut.setValue("0b" + ToBinaryString(value), true);
@@ -135,10 +90,7 @@ public final class NumberStyle {
             }
             default: {
                 // 10进制
-                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
-                    return styleOut.setValue(Integer.toUnsignedString(value), true);
-                }
-                boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0 || Math.abs(value) >= DOUBLE_MAX_LONG;
+                boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0;
                 return styleOut.setValue(Integer.toString(value), isTyped);
             }
         }
@@ -152,10 +104,7 @@ public final class NumberStyle {
                 if ((features & NumberStyle.MASK_FIXED) != 0) {
                     return styleOut.setValue(String.format("0x%016X", value), true);
                 }
-                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
-                    return styleOut.setValue("0x" + Long.toHexString(value), true);
-                }
-                if (value < 0 && value != Long.MIN_VALUE) {
+                if (value < 0 && value != Long.MIN_VALUE && (features & NumberStyle.MASK_SIGNED) != 0) {
                     return styleOut.setValue("-0x" + Long.toHexString((-1 * value)), true);
                 } else {
                     return styleOut.setValue("0x" + Long.toHexString(value), true);
@@ -166,10 +115,7 @@ public final class NumberStyle {
                 if ((features & NumberStyle.MASK_FIXED) != 0) {
                     return styleOut.setValue("0b" + ToFixedBinaryString(value), true);
                 }
-                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
-                    return styleOut.setValue("0b" + ToBinaryString(value), true);
-                }
-                if (value < 0 && value != Long.MIN_VALUE) {
+                if (value < 0 && value != Long.MIN_VALUE && (features & NumberStyle.MASK_SIGNED) != 0) {
                     return styleOut.setValue("-0b" + ToBinaryString(-1 * value), true);
                 } else {
                     return styleOut.setValue("0b" + ToBinaryString(value), true);
@@ -177,9 +123,6 @@ public final class NumberStyle {
             }
             default: {
                 // 10进制
-                if ((features & NumberStyle.MASK_UNSIGNED) != 0) {
-                    return styleOut.setValue(Long.toUnsignedString(value), true);
-                }
                 boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0 || Math.abs(value) >= DOUBLE_MAX_LONG;
                 return styleOut.setValue(Long.toString(value), isTyped);
             }
@@ -296,8 +239,8 @@ public final class NumberStyle {
         if ((features & MASK_TYPED) != 0) {
             values.add("typed");
         }
-        if ((features & MASK_UNSIGNED) != 0) {
-            values.add("unsigned");
+        if ((features & MASK_SIGNED) != 0) {
+            values.add("signed");
         }
         if ((features & MASK_FIXED) != 0) {
             values.add("fixed");

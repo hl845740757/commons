@@ -25,18 +25,18 @@ namespace Wjybxx.Dson.Text
 /// (需要保持枚举名和<see cref="NumberStyles"/>中的属性相同)
 /// </summary>
 [Flags]
-public enum NumberStyle : int
+public enum NumberStyle
 {
     /// <summary>
     /// 普通打印 -- 超过表示范围时会添加类型标签
     /// </summary>
     Simple = 0,
     /// <summary>
-    /// 十六进制，必定追加类型
+    /// 十六进制，必定追加类型，默认无符号
     /// </summary>
     Hex = 0x01,
     /// <summary>
-    /// 二进制，必定追加类型
+    /// 二进制，必定追加类型，默认无符号
     /// </summary>
     Binary = 0x02,
 
@@ -45,9 +45,9 @@ public enum NumberStyle : int
     /// </summary>
     Typed = 0x10,
     /// <summary>
-    /// 打印为无符号数，超出范围时追加类型
+    /// 打印为有符号数，适用十六进制和二进制
     /// </summary>
-    Unsigned = 0X20,
+    Signed = 0x20,
     /// <summary>
     /// 固定长度编码（全Bit编码），适用十六进制和二进制
     /// </summary>
@@ -65,13 +65,13 @@ public enum NumberStyle : int
     #region 常用组合
 
     /// <summary>
+    /// 输出为无符号16进制
+    /// </summary>
+    SignedHex = Signed | Hex,
+    /// <summary>
     /// 固定全长度的16进制
     /// </summary>
     FixedHex = Fixed | Hex,
-    /// <summary>
-    /// 输出为无符号16进制
-    /// </summary>
-    UnsignedHex = Unsigned | Hex,
     /// <summary>
     /// 固定全长度的二进制
     /// </summary>

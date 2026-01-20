@@ -16,6 +16,7 @@
 
 #endregion
 
+using System;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Text
@@ -27,25 +28,67 @@ namespace Wjybxx.Dson.Text
 /// 1.解码时固定顺序读取，忽略字段名。
 /// 2.慎重选择编码样式，选择错误可能导致数据丢失。
 /// </summary>
-public enum Double4Style : byte
+[Flags]
+public enum Double4Style
 {
-    // 数组格式
-    Array4 = 0, // [@D4 v0, v1, v2, v3] 
-    Array3 = 1, // [@D4 v0, v1, v2] 
-    Array2 = 2, // [@D4 v0, v1]
-    // 向量格式
-    Vector4 = 3, // {@D4 X: 1, Y: 1, z: 1, w: 1}
-    Vector3 = 4, // {@D4 X: 1, Y: 1, z: 1}
-    Vector2 = 5, // {@D4 X: 1, Y: 1}
-    // 整数向量
-    Vector4Int = 6, // {@D4 X: 1, Y: 1, z: 1, w: 1}
-    Vector3Int = 7, // {@D4 X: 1, Y: 1, z: 1}
-    Vector2Int = 8, // {@D4 X: 1, Y: 1}
-    // 颜色值
-    Rgba = 9, // {@D4 r: 1, g: 1, b: 1, a: 1}
-    Rgb = 10, // {@D4 r: 1, g: 1, b: 1}
-    // 矩形
-    Rect = 11, // {@D4 x: 1, y: 1, w: 50, h: 50}
-    RectInt = 12, // {@D4 x: 1, y: 1, w: 50, h: 50}
+    /// <summary>
+    /// 打印为数组格式(0)
+    ///
+    /// <![CDATA[
+    /// [@D4 v0, v1, v2, v3]
+    /// [@D4 v0, v1, v2]
+    /// [@D4 v0, v1]
+    /// ]]>
+    /// </summary>
+    Array = 0x00,
+    /// <summary>
+    /// 打印为向量格式(1)
+    ///
+    /// <![CDATA[
+    /// {@D4 X: 1, Y: 1, z: 1, w: 1}
+    /// {@D4 X: 1, Y: 1, z: 1}
+    /// {@D4 X: 1, Y: 1}
+    /// ]]>
+    /// </summary>
+    Vector = 0x01,
+    /// <summary>
+    /// 打印为颜色值格式(2)
+    ///
+    /// <![CDATA[
+    /// {@D4 r: 1, g: 1, b: 1, a: 1}
+    /// {@D4 r: 1, g: 1, b: 1}
+    /// ]]>
+    /// </summary>
+    Rgba = 0x02,
+    /// <summary>
+    /// 打印为矩形值格式(3)
+    ///
+    /// <![CDATA[
+    /// {@D4 x: 1, y: 1, w: 50, h: 50}
+    /// ]]>
+    /// 注：最大基础样式，不再扩展。
+    /// </summary>
+    Rect = 0x03,
+    /// <summary>
+    /// 限定Double4的长度为2，即只打印前两个数
+    /// </summary>
+    Len2 = 0x04,
+    /// <summary>
+    /// 限定Double4的长度为3，即只打印前三个数
+    /// </summary>
+    Len3 = 0x08,
+
+    /// <summary>
+    /// 浮点数禁用科学计数法，并最多保留小数点后3位(向最近的偶数舍入) -- 可能导致反序列化结果不相等
+    /// </summary>
+    NoExponent3 = 0x10,
+    /// <summary>
+    /// 浮点数禁用科学计数法，并最多保留小数点后7位(向最近的偶数舍入) -- 可能导致反序列化结果不相等
+    /// </summary>
+    NoExponent7 = 0x20,
+    /// <summary>
+    /// Value截断为整数 -- 可能导致反序列化结果不相等
+    /// </summary>
+    Integer = 0x40,
 }
 }

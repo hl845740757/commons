@@ -52,9 +52,9 @@ public class DsonNumberTest
         // 必须带类型，否则无法精确反序列化，断言会失败
         List<NumberStyle> styleList = new List<NumberStyle>
         {
-            NumberStyle.Typed, NumberStyle.Unsigned,
-            NumberStyle.Hex, NumberStyle.Hex | NumberStyle.Unsigned, NumberStyle.Hex | NumberStyle.Fixed,
-            NumberStyle.Binary, NumberStyle.Binary | NumberStyle.Unsigned, NumberStyle.Binary | NumberStyle.Fixed,
+            NumberStyle.Typed,
+            NumberStyle.Hex, NumberStyle.Hex | NumberStyle.Signed, NumberStyle.Hex | NumberStyle.Fixed,
+            NumberStyle.Binary, NumberStyle.Binary | NumberStyle.Signed, NumberStyle.Binary | NumberStyle.Fixed,
             NumberStyle.NoExponent3, NumberStyle.NoExponent7 // 浮点数
         };
         foreach (NumberStyle style in styleList) {
@@ -94,7 +94,7 @@ public class DsonNumberTest
             Console.WriteLine(style.ToString());
             Console.WriteLine(dsonString2);
             // 数据截断以后无法保证相等性
-            if ((style & NumberStyle.NoExponent3) != 0 
+            if ((style & NumberStyle.NoExponent3) != 0
                 || (style & NumberStyle.NoExponent7) != 0) {
                 continue;
             }
@@ -110,4 +110,13 @@ public class DsonNumberTest
                || style == NumberStyle.NoExponent3
                || style == NumberStyle.NoExponent7;
     }
+
+    private const string Double4String = """
+                                         {
+                                           value1: {@D4 x: 0.1, y: 0.2, z: 0.3},
+                                           value2: {@D4 x: 0.1, y: 0.2, z: 0.3, w: 0.4},
+                                           value3: {@D4 r: 0.1, g: 0.2, b: 0.3, a: 0.4},
+                                           value4: {@D4 r: 0.1, g: 0.2, b: 0.3},
+                                         }
+                                         """;
 }
