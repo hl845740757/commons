@@ -63,7 +63,7 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
     public EnumCodec(List<EnumValueInfo<T>> valueInfos, bool? isFlags = null) {
         _value2EnumDic = new Dictionary<T, EnumValueInfo<T>>(valueInfos.Count);
         _number2EnumDic = new Dictionary<int, EnumValueInfo<T>>(valueInfos.Count);
-        _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(valueInfos.Count);
+        _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(valueInfos.Count, StringComparer.OrdinalIgnoreCase);
         _isFlags = isFlags ?? typeof(T).IsDefined(typeof(FlagsAttribute));
 
         foreach (EnumValueInfo<T> valueInfo in valueInfos) {

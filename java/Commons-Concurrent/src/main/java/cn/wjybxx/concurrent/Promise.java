@@ -1220,7 +1220,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         FutureLogger.logCause(x);
         // 统一封装为CompletionException
         Throwable cause = (x instanceof CompletionException) ? x : new CompletionException(x);
-        return internalComplete(cause);
+        return internalComplete(new AltResult(cause));
     }
 
     /**
