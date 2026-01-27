@@ -63,7 +63,7 @@ public struct Double4 : IEquatable<Double4>
         }
     }
 
-    #region quals
+    #region equals
 
     public bool Equals(Double4 other) {
         return v0.Equals(other.v0) && v1.Equals(other.v1) && v2.Equals(other.v2) && v3.Equals(other.v3);

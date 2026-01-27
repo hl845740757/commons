@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,29 +16,26 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Time
-{
-/// <summary>
-/// 时间提供者
-/// </summary>
-public interface ITimeProvider
-{
-    /// <summary>
-    /// 获取当前时间
-    /// </summary>
-    /// <returns></returns>
-    long Time { get; }
-}
+using System.Collections.Generic;
+using Wjybxx.Commons.Collections;
 
-/// <summary>
-/// 该接口表示实现类是基于缓存时间戳的，需要外部定时去更新
-/// 线程安全性取决于实现类
-/// </summary>
-public interface ICachedTimeProvider : ITimeProvider
+namespace Wjybxx.Commons.Inject
 {
-    /// <summary>
-    /// 设置当前时间戳
-    /// </summary>
-    new long Time { get; set; }
+/// <summary>
+/// 最基础的Inject模块
+/// </summary>
+internal class InjectModule : IInjectModule
+{
+    private readonly ImmutableList<InjectBeanConfig> _beanConfigs;
+
+    public InjectModule(IEnumerable<InjectBeanConfig> beanConfigs) {
+        _beanConfigs = beanConfigs.ToImmutableList2();
+    }
+
+    public void Configure(IInjectBinder binder) {
+        foreach (InjectBeanConfig beanConfig in _beanConfigs) {
+            binder.Bind(beanConfig);
+        }
+    }
 }
 }

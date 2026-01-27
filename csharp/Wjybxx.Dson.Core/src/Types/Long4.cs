@@ -21,27 +21,27 @@ using System;
 namespace Wjybxx.Dson.Types
 {
 /// <summary>
-/// Float4
+/// Long4
 ///
 /// 注：
 /// 1.该数据结构用于特定场景下的性能优化，用于减少内存中的<see cref="DsonObject{TK}"/>数量。
 /// 2.使用Object格式输入时，必须顺序输入，name会被忽略。
 /// </summary>
-public struct Float4 : IEquatable<Float4>
+public struct Long4 : IEquatable<Long4>
 {
-    public float v0;
-    public float v1;
-    public float v2;
-    public float v3;
+    public long v0;
+    public long v1;
+    public long v2;
+    public long v3;
 
-    public Float4(float v0, float v1, float v2, float v3 = 0) {
+    public Long4(long v0, long v1, long v2, long v3 = 0) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
         this.v3 = v3;
     }
 
-    public float this[int index] {
+    public long this[int index] {
         get {
             return index switch
             {
@@ -65,12 +65,12 @@ public struct Float4 : IEquatable<Float4>
 
     #region equals
 
-    public bool Equals(Float4 other) {
+    public bool Equals(Long4 other) {
         return v0.Equals(other.v0) && v1.Equals(other.v1) && v2.Equals(other.v2) && v3.Equals(other.v3);
     }
 
     public override bool Equals(object? obj) {
-        return obj is Float4 other && Equals(other);
+        return obj is Long4 other && Equals(other);
     }
 
     public override int GetHashCode() {
@@ -81,11 +81,11 @@ public struct Float4 : IEquatable<Float4>
         return hashCode;
     }
 
-    public static bool operator ==(Float4 left, Float4 right) {
+    public static bool operator ==(Long4 left, Long4 right) {
         return left.Equals(right);
     }
 
-    public static bool operator !=(Float4 left, Float4 right) {
+    public static bool operator !=(Long4 left, Long4 right) {
         return !left.Equals(right);
     }
 

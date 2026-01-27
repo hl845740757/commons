@@ -33,7 +33,7 @@ public struct InjectBeanConfigBuilder
     /// 2.如果实现类是泛型定义类（原型类），且泛型参数不能直接从服务类中继承，则必须配置<see cref="implTypeMaker"/>
     /// 3.如果实现类是泛型定义类（原型类），则单例是隔离的
     /// </summary>
-    public readonly Type implType;
+    public Type implType;
     /// <summary>
     /// 绑定范围 -- 单例或多例
     /// </summary>

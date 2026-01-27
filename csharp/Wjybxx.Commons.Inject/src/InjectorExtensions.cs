@@ -51,6 +51,10 @@ public static class InjectorExtensions
         return binder.Build();
     }
 
+    public static IInjectModule ToInjectModule(this IList<InjectBeanConfig> beanConfigs) {
+        return new InjectModule(beanConfigs);
+    }
+
     #endregion
 
 #nullable disable
@@ -152,7 +156,9 @@ public static class InjectorExtensions
     /// <param name="scope">实例范围</param>
     /// <param name="serviceTypes">实现的服务类型</param>
     public static void Bind(this IInjectBinder binder, Type implType, InjectScope scope, params Type[] serviceTypes) {
-        if (serviceTypes.Length == 0) throw new ArgumentException("unexpected invoke");
+        if (serviceTypes.Length == 0) {
+            serviceTypes = new[] { implType };
+        }
         List<ServiceKey> serviceKeys = new(serviceTypes.Length);
         foreach (var serviceType in serviceTypes) {
             serviceKeys.Add(new ServiceKey(serviceType, null));
@@ -161,6 +167,30 @@ public static class InjectorExtensions
         {
             scope = scope,
             serviceKeys = serviceKeys,
+        }.Build());
+    }
+
+    /// <summary>
+    /// 绑定服务到实例
+    /// </summary>
+    /// <param name="binder">绑定器</param>
+    /// <param name="inst">实现类实例</param>
+    /// <param name="scope">作用域</param>
+    /// <param name="serviceTypes">服务类型</param>
+    /// <typeparam name="T">实现类型</typeparam>
+    public static void Bind<T>(this IInjectBinder binder, T inst, InjectScope scope, params Type[] serviceTypes) {
+        if (serviceTypes.Length == 0) {
+            serviceTypes = new[] { typeof(T) };
+        }
+        List<ServiceKey> serviceKeys = new(serviceTypes.Length);
+        foreach (var serviceType in serviceTypes) {
+            serviceKeys.Add(new ServiceKey(serviceType, null));
+        }
+        binder.Bind(new InjectBeanConfigBuilder(typeof(T))
+        {
+            scope = scope,
+            serviceKeys = serviceKeys,
+            instance = inst
         }.Build());
     }
 
@@ -204,12 +234,35 @@ public static class InjectorExtensions
     /// <param name="scope">实例范围</param>
     /// <param name="serviceKeys">实现的服务信息</param>
     public static void Bind(this IInjectBinder binder, Type implType, InjectScope scope, params ServiceKey[] serviceKeys) {
-        if (serviceKeys.Length == 0) throw new ArgumentException("unexpected invoke");
+        if (serviceKeys.Length == 0) {
+            serviceKeys = new[] { new ServiceKey(implType, null) };
+        }
         // 转换为服务键
         binder.Bind(new InjectBeanConfigBuilder(implType)
         {
             scope = scope,
             serviceKeys = new List<ServiceKey>(serviceKeys),
+        }.Build());
+    }
+
+    /// <summary>
+    /// 绑定服务到实例
+    /// </summary>
+    /// <param name="binder">绑定器</param>
+    /// <param name="inst">实现类实例</param>
+    /// <param name="scope">作用域</param>
+    /// <param name="serviceKeys">实现的服务信息</param>
+    /// <typeparam name="T">实现类型</typeparam>
+    public static void Bind<T>(this IInjectBinder binder, T inst, InjectScope scope, params ServiceKey[] serviceKeys) {
+        if (serviceKeys.Length == 0) {
+            serviceKeys = new[] { new ServiceKey(typeof(T), null) };
+        }
+        // 转换为服务键
+        binder.Bind(new InjectBeanConfigBuilder(typeof(T))
+        {
+            scope = scope,
+            serviceKeys = new List<ServiceKey>(serviceKeys),
+            instance = inst
         }.Build());
     }
 

@@ -1,6 +1,6 @@
 ﻿#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,29 +16,23 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Time
-{
-/// <summary>
-/// 时间提供者
-/// </summary>
-public interface ITimeProvider
-{
-    /// <summary>
-    /// 获取当前时间
-    /// </summary>
-    /// <returns></returns>
-    long Time { get; }
-}
+using System;
 
+namespace Wjybxx.Commons
+{
 /// <summary>
-/// 该接口表示实现类是基于缓存时间戳的，需要外部定时去更新
-/// 线程安全性取决于实现类
+/// 该注解用于标注类型的序列化版本信息
 /// </summary>
-public interface ICachedTimeProvider : ITimeProvider
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
+public class SerializeVersion : Attribute
 {
     /// <summary>
-    /// 设置当前时间戳
+    /// 序列化版本号
     /// </summary>
-    new long Time { get; set; }
+    public readonly int version;
+
+    public SerializeVersion(int version) {
+        this.version = version;
+    }
 }
 }
