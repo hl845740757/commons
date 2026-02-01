@@ -139,22 +139,19 @@ internal class PojoCodecGenerator
     private bool GenReadObjectMethod(AptClassProps aptClassProps) {
         const string methodName = CodecProcessor.MNAME_READ_OBJECT;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(methodName)) {
-                string format = typeSymbol.IsValueType
-                    ? "$T.$L(ref inst, reader)"
-                    : "$T.$L(inst, reader)";
-                // CodecProxy.ReadObject(inst, reader);
-                readObjectMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, methodName);
-                return true;
-            }
-        } else {
-            if (processor.ContainsReadObjectMethod(allMembers)) {
-                // inst.ReadObject(reader);
-                readObjectMethodBuilder.codeBuilder.AddStatement("inst.$L(reader)", methodName);
-                return true;
-            }
+        if (linkerContext != null && linkerContext.ContainsHookMethod(methodName)) {
+            string format = typeSymbol.IsValueType
+                ? "$T.$L(ref inst, reader)"
+                : "$T.$L(inst, reader)";
+            // CodecProxy.ReadObject(inst, reader);
+            readObjectMethodBuilder.codeBuilder.AddStatement(format,
+                linkerContext.rawTypeName, methodName);
+            return true;
+        }
+        if (processor.ContainsReadObjectMethod(allMembers)) {
+            // inst.ReadObject(reader);
+            readObjectMethodBuilder.codeBuilder.AddStatement("inst.$L(reader)", methodName);
+            return true;
         }
         return false;
     }
@@ -163,22 +160,20 @@ internal class PojoCodecGenerator
     private bool GenWriteObjectMethod(AptClassProps aptClassProps) {
         const string methodName = CodecProcessor.MNAME_WRITE_OBJECT;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(methodName)) {
-                string format = typeSymbol.IsValueType
-                    ? "$T.$L(ref inst, writer)"
-                    : "$T.$L(inst, writer)";
-                // CodecProxy.WriteObject(inst, writer);
-                writeObjectMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, methodName);
-                return true;
-            }
-        } else {
-            if (processor.ContainsWriteObjectMethod(allMembers)) {
-                // inst.WriteObject(writer);
-                writeObjectMethodBuilder.codeBuilder.AddStatement("inst.$L(writer)", methodName);
-                return true;
-            }
+        if (linkerContext != null && linkerContext.ContainsHookMethod(methodName)) {
+            // 允许CodecProxy不存在的情况下回滚到类型定义的代理
+            string format = typeSymbol.IsValueType
+                ? "$T.$L(ref inst, writer)"
+                : "$T.$L(inst, writer)";
+            // CodecProxy.WriteObject(inst, writer);
+            writeObjectMethodBuilder.codeBuilder.AddStatement(format,
+                linkerContext.rawTypeName, methodName);
+            return true;
+        }
+        if (processor.ContainsWriteObjectMethod(allMembers)) {
+            // inst.WriteObject(writer);
+            writeObjectMethodBuilder.codeBuilder.AddStatement("inst.$L(writer)", methodName);
+            return true;
         }
         return false;
     }
@@ -187,17 +182,14 @@ internal class PojoCodecGenerator
     private bool GenBeforeEncodeMethod(AptClassProps aptClassProps) {
         const string methodName = CodecProcessor.MNAME_BEFORE_ENCODE;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(methodName)) {
-                string format = typeSymbol.IsValueType
-                    ? "$T.$L(ref inst, writer.Options)"
-                    : "$T.$L(inst, writer.Options)";
-                // CodecProxy.BeforeEncode(inst, writer.Options);
-                beforeEncodeMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, methodName);
-                return true;
-            }
-            return false;
+        if (linkerContext != null && linkerContext.ContainsHookMethod(methodName)) {
+            string format = typeSymbol.IsValueType
+                ? "$T.$L(ref inst, writer.Options)"
+                : "$T.$L(inst, writer.Options)";
+            // CodecProxy.BeforeEncode(inst, writer.Options);
+            beforeEncodeMethodBuilder.codeBuilder.AddStatement(format,
+                linkerContext.rawTypeName, methodName);
+            return true;
         }
         (bool contains, int argCount) tuple = processor.ContainsBeforeEncodeMethod(allMembers);
         if (tuple.contains) {
@@ -217,17 +209,14 @@ internal class PojoCodecGenerator
     private bool GenAfterDecodeMethod(AptClassProps aptClassProps) {
         const string methodName = CodecProcessor.MNAME_AFTER_DECODE;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.ContainsHookMethod(methodName)) {
-                string format = typeSymbol.IsValueType
-                    ? "$T.$L(ref inst, reader.Options)"
-                    : "$T.$L(inst, reader.Options)";
-                // CodecProxy.AfterDecode(inst, reader.Options);
-                afterDecodeMethodBuilder.codeBuilder.AddStatement(format,
-                    linkerContext.rawTypeName, methodName);
-                return true;
-            }
-            return false;
+        if (linkerContext != null && linkerContext.ContainsHookMethod(methodName)) {
+            string format = typeSymbol.IsValueType
+                ? "$T.$L(ref inst, reader.Options)"
+                : "$T.$L(inst, reader.Options)";
+            // CodecProxy.AfterDecode(inst, reader.Options);
+            afterDecodeMethodBuilder.codeBuilder.AddStatement(format,
+                linkerContext.rawTypeName, methodName);
+            return true;
         }
         (bool contains, int argCount) tuple = processor.ContainsAfterDecodeMethod(allMembers);
         if (tuple.contains) {

@@ -44,8 +44,10 @@ build/
 
 # 临时文件
 ~$*
-temp-*
+**/temp-*
 **/temp/*
+**/*.log
+**/*.log.*
 
 
 # Java项目临时文件

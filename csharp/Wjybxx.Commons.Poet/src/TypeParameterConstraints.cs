@@ -36,7 +36,7 @@ public enum TypeParameterConstraints
     /// 1.NRT并不是真正的类型，而是注解(属性)，在运行时无效；但使用注解来标记类型实在不方便，因此我们存储在TypeName上。
     /// 2.netstandard2.x无法使用<code>NullableAttribute</code>类型，因此反射时无法解析。
     /// </summary>
-    NullableReferenceType = 0x0001,
+    NullableReferenceType = 0x01,
     /// <summary>
     /// 非空引用类型 -- 对引用类型追加'notnull'
     /// 
@@ -44,32 +44,32 @@ public enum TypeParameterConstraints
     /// 1.非空引用类型也不是真正的类型,，而是注解(属性)，在运行时无效。
     /// 2.反射时无法获取到notnull属性
     /// </summary>
-    NotNullableReferenceType = 0x002,
+    NotNullableReferenceType = 0x02,
 
 
     /// <summary>
     /// 引用类型约束
     /// <see cref="GenericParameterAttributes.ReferenceTypeConstraint"/>
     /// </summary>
-    ReferenceTypeConstraint = 0x0004,
+    ReferenceTypeConstraint = 0x04,
     /// <summary>
     /// 值类型约束
     /// <see cref="GenericParameterAttributes.NotNullableValueTypeConstraint"/>
     /// </summary>
-    ValueTypeConstraint = 0x0008,
+    ValueTypeConstraint = 0x08,
     /// <summary>
     /// 默认构造器约束
     /// <see cref="GenericParameterAttributes.DefaultConstructorConstraint"/>
     /// </summary>
-    DefaultConstructorConstraint = 0x0010,
+    DefaultConstructorConstraint = 0x10,
 
     /// <summary>
     /// 泛型变量包含in修饰符
     /// </summary>
-    VarianceIn = 0x0020,
+    VarianceIn = 0x20,
     /// <summary>
     /// 泛型变量包含out修饰符
     /// </summary>
-    VarianceOut = 0x0040,
+    VarianceOut = 0x40,
 }
 }

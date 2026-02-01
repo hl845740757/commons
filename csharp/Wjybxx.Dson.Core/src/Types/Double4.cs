@@ -63,6 +63,42 @@ public struct Double4 : IEquatable<Double4>
         }
     }
 
+    #region 运算符
+
+    public static Double4 operator +(Double4 lhs, Double4 rhs) {
+        return new Double4(
+            lhs.v0 + rhs.v0,
+            lhs.v1 + rhs.v1,
+            lhs.v2 + rhs.v2,
+            lhs.v3 + rhs.v3);
+    }
+
+    public static Double4 operator -(Double4 lhs, Double4 rhs) {
+        return new Double4(
+            lhs.v0 - rhs.v0,
+            lhs.v1 - rhs.v1,
+            lhs.v2 - rhs.v2,
+            lhs.v3 - rhs.v3);
+    }
+
+    public static Double4 operator *(Double4 lhs, Double4 rhs) {
+        return new Double4(
+            lhs.v0 * rhs.v0,
+            lhs.v1 * rhs.v1,
+            lhs.v2 * rhs.v2,
+            lhs.v3 * rhs.v3);
+    }
+
+    public static Double4 operator /(Double4 lhs, Double4 rhs) {
+        return new Double4(
+            lhs.v0 / rhs.v0,
+            lhs.v1 / rhs.v1,
+            lhs.v2 / rhs.v2,
+            lhs.v3 / rhs.v3);
+    }
+
+    #endregion
+
     #region equals
 
     public bool Equals(Double4 other) {

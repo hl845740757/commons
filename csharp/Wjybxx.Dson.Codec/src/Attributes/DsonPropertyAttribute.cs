@@ -27,8 +27,6 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 1.由于属性较多，因此属性都是get/set，但只应该初始化一次
 /// 2.由于要支持属性，因此不能关闭继承属性
 /// 3.如果是非自动属性，注解必须添加到字段上
-///
-/// TODO 合并Style枚举，增加ElementStyle
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 [Serializable]

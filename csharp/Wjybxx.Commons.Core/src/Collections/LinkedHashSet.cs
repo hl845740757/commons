@@ -531,8 +531,13 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
-        if (!typeof(TKey).IsValueType && key == null) { // 否则会装箱....不支持nullable
-            return 0;
+        if (typeof(TKey).IsValueType) {
+            // 高版本C#会内联值内联的GetHashCode方法路径
+            if (keyComparer == EqualityComparer<TKey>.Default) {
+                return HashCommon.Mix(key.GetHashCode());
+            }
+        } else {
+            if (key == null) return 0;
         }
         return HashCommon.Mix(keyComparer.GetHashCode(key));
     }

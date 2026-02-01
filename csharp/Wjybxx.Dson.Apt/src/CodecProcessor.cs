@@ -49,11 +49,6 @@ public class CodecProcessor : ISourceGenerator
 {
     #region consts
 
-    private const string CNAME_WireType = "Wjybxx.Dson.WireType";
-    private const string CNAME_NumberStyle = "Wjybxx.Dson.Text.NumberStyle";
-    private const string CNAME_StringStyle = "Wjybxx.Dson.Text.StringStyle";
-    private const string CNAME_ObjectStyle = "Wjybxx.Dson.Text.ObjectStyle";
-
     private const string CNAME_Binary = "Wjybxx.Dson.Types.Binary";
     private const string CNAME_ObjectPtr = "Wjybxx.Dson.Types.ObjectPtr";
     private const string CNAME_Timestamp = "Wjybxx.Dson.Types.Timestamp";
@@ -470,31 +465,9 @@ public class CodecProcessor : ISourceGenerator
         if (_loadedAssembly.TryGetValue(assemblySymbol.Name, out Assembly? assembly)) {
             return assembly?.GetType(typeFullName, false);
         }
-        _loadedAssembly[assemblySymbol.Name] = null; // 避免总是尝试加载
-        //
-        foreach (Assembly assembly2 in AppDomain.CurrentDomain.GetAssemblies()) {
-            if (assembly2.GetName().Name == assemblySymbol.Name) {
-                _loadedAssembly[assemblySymbol.Name] = assembly2;
-                return assembly2.GetType(typeFullName, true); // 抛出异常暴露依赖问题
-            }
-        }
-        //
-        MetadataReference reference = compilation.GetMetadataReference(assemblySymbol);
-        if (reference is PortableExecutableReference executableReference && executableReference.FilePath != null) {
-            string filePath = executableReference.FilePath.Replace(".ref.dll", ".dll");
-            if (!File.Exists(filePath)) {
-                return null;
-            }
-            try {
-                assembly = Assembly.LoadFrom(filePath);
-                _loadedAssembly[assemblySymbol.Name] = assembly;
-                return assembly.GetType(typeFullName, false);
-            }
-            catch (Exception) {
-                // ignored
-            }
-        }
-        return null;
+        assembly = AptUtils.TryLoadAssembly(compilation, assemblySymbol);
+        _loadedAssembly[assemblySymbol.Name] = assembly; // 避免总是尝试加载
+        return assembly?.GetType(typeFullName, false);
     }
 
     /** 返回Null表示没有依赖的第三方程序集 */

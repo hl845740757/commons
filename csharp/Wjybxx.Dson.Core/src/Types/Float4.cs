@@ -63,6 +63,42 @@ public struct Float4 : IEquatable<Float4>
         }
     }
 
+    #region 运算符
+
+    public static Float4 operator +(Float4 lhs, Float4 rhs) {
+        return new Float4(
+            lhs.v0 + rhs.v0,
+            lhs.v1 + rhs.v1,
+            lhs.v2 + rhs.v2,
+            lhs.v3 + rhs.v3);
+    }
+
+    public static Float4 operator -(Float4 lhs, Float4 rhs) {
+        return new Float4(
+            lhs.v0 - rhs.v0,
+            lhs.v1 - rhs.v1,
+            lhs.v2 - rhs.v2,
+            lhs.v3 - rhs.v3);
+    }
+
+    public static Float4 operator *(Float4 lhs, Float4 rhs) {
+        return new Float4(
+            lhs.v0 * rhs.v0,
+            lhs.v1 * rhs.v1,
+            lhs.v2 * rhs.v2,
+            lhs.v3 * rhs.v3);
+    }
+
+    public static Float4 operator /(Float4 lhs, Float4 rhs) {
+        return new Float4(
+            lhs.v0 / rhs.v0,
+            lhs.v1 / rhs.v1,
+            lhs.v2 / rhs.v2,
+            lhs.v3 / rhs.v3);
+    }
+
+    #endregion
+
     #region equals
 
     public bool Equals(Float4 other) {

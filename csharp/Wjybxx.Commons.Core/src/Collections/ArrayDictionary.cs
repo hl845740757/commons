@@ -452,6 +452,15 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         value = node.value;
     }
 
+    /// <summary>
+    /// 添加可重复元素(当做List用)
+    /// </summary>
+    public void AddMulti(TKey key, TValue value) {
+        EnsureCapacity(_count + 1);
+        _table[_count++] = new Node(key, value);
+        _version++;
+    }
+
     public void EnsureCapacity(int expectedCount) {
         if (_table == null) {
             _table = new Node[expectedCount < 4 ? 4 : expectedCount];

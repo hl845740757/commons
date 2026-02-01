@@ -130,19 +130,16 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genReadObjectMethod(AptClassProps aptClassProps) {
         String methodName = CodecProcessor.MNAME_READ_OBJECT;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(methodName)) {
-                // CodecProxy.readObject(inst, reader);
-                readFieldsMethodBuilder.addStatement("$T.$L(inst, reader)",
-                        linkerContext.rawTypeName, methodName);
-                return true;
-            }
-        } else {
-            if (processor.containsReadObjectMethod(allMembers)) {
-                // inst.readObject(reader);
-                readFieldsMethodBuilder.addStatement("inst.$L(reader)", methodName);
-                return true;
-            }
+        if (linkerContext != null && linkerContext.containsHookMethod(methodName)) {
+            // CodecProxy.readObject(inst, reader);
+            readFieldsMethodBuilder.addStatement("$T.$L(inst, reader)",
+                    linkerContext.rawTypeName, methodName);
+            return true;
+        }
+        if (processor.containsReadObjectMethod(allMembers)) {
+            // inst.readObject(reader);
+            readFieldsMethodBuilder.addStatement("inst.$L(reader)", methodName);
+            return true;
         }
         return false;
     }
@@ -151,19 +148,17 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genWriteObjectMethod(AptClassProps aptClassProps) {
         String methodName = CodecProcessor.MNAME_WRITE_OBJECT;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(methodName)) {
-                // CodecProxy.writeObject(inst, writer);
-                writeFieldsMethodBuilder.addStatement("$T.$L(inst, writer)",
-                        linkerContext.rawTypeName, methodName);
-                return true;
-            }
-        } else {
-            if (processor.containsWriteObjectMethod(allMembers)) {
-                // inst.writeObject(writer);
-                writeFieldsMethodBuilder.addStatement("inst.$L(writer)", methodName);
-                return true;
-            }
+        if (linkerContext != null && linkerContext.containsHookMethod(methodName)) {
+            // CodecProxy.writeObject(inst, writer);
+            writeFieldsMethodBuilder.addStatement("$T.$L(inst, writer)",
+                    linkerContext.rawTypeName, methodName);
+            return true;
+        }
+
+        if (processor.containsWriteObjectMethod(allMembers)) {
+            // inst.writeObject(writer);
+            writeFieldsMethodBuilder.addStatement("inst.$L(writer)", methodName);
+            return true;
         }
         return false;
     }
@@ -172,14 +167,11 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genBeforeEncodeMethod(AptClassProps aptClassProps) {
         String methodName = CodecProcessor.MNAME_BEFORE_ENCODE;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(methodName)) {
-                // CodecProxy.beforeEncode(inst, writer.options());
-                beforeEncodeMethodBuilder.addStatement("$T.$L(inst, writer.options())",
-                        linkerContext.rawTypeName, methodName);
-                return true;
-            }
-            return false;
+        if (linkerContext != null && linkerContext.containsHookMethod(methodName)) {
+            // CodecProxy.beforeEncode(inst, writer.options());
+            beforeEncodeMethodBuilder.addStatement("$T.$L(inst, writer.options())",
+                    linkerContext.rawTypeName, methodName);
+            return true;
         }
         Map.Entry<Boolean, Integer> tuple = processor.containsBeforeEncodeMethod(allMembers);
         if (tuple.getKey()) {
@@ -199,14 +191,11 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genAfterDecodeMethod(AptClassProps aptClassProps) {
         String methodName = CodecProcessor.MNAME_AFTER_DECODE;
         Context linkerContext = context.linkerContext;
-        if (linkerContext != null) {
-            if (linkerContext.containsHookMethod(methodName)) {
-                // CodecProxy.afterDecode(inst, reader.options());
-                afterDecodeMethodBuilder.addStatement("$T.$L(inst, reader.options())",
-                        linkerContext.rawTypeName, methodName);
-                return true;
-            }
-            return false;
+        if (linkerContext != null && linkerContext.containsHookMethod(methodName)) {
+            // CodecProxy.afterDecode(inst, reader.options());
+            afterDecodeMethodBuilder.addStatement("$T.$L(inst, reader.options())",
+                    linkerContext.rawTypeName, methodName);
+            return true;
         }
         Map.Entry<Boolean, Integer> tuple = processor.containsAfterDecodeMethod(allMembers);
         if (tuple.getKey()) {
@@ -227,12 +216,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         Context linkerContext = context.linkerContext;
         if (aptClassProps.isSingleton()) {
             // 有CodecProxy的情况下，单例也交由CodecProxy实现 -- 方法名是CodecProxy指定的，因此应当存在，不做校验
-            TypeName holder;
-            if (linkerContext != null) {
-                holder = linkerContext.rawTypeName;
-            } else {
-                holder = rawTypeName;
-            }
+            TypeName holder = linkerContext != null ? linkerContext.rawTypeName : rawTypeName;
             newInstanceMethodBuilder.addStatement("return $T.$L()", holder, aptClassProps.singleton);
             return;
         }

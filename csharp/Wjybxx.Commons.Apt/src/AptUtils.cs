@@ -20,7 +20,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -44,7 +45,7 @@ public static class AptUtils
 {
     private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get("Wjybxx.Commons.Attributes", "GeneratedAttribute");
     private static readonly ClassName clsName_SourceFileRef = ClassName.Get("Wjybxx.Commons.Attributes", "SourceFileRefAttribute");
-    public const string CNAME_UsedForReflectionAttribute = "Wjybxx.Commons.Attributes.UsedForReflectionBasedGeneratorAttribute";
+    private const string CNAME_UsedForReflectionAttribute = "Wjybxx.Commons.Attributes.UsedForReflectionBasedGeneratorAttribute";
 
     /// <summary>
     /// 为生成代码的注解处理器创建一个通用注解
@@ -127,7 +128,6 @@ public static class AptUtils
     /// <returns></returns>
     public static string GetProxyClassName(INamedTypeSymbol type, string? suffix = null) {
         if (suffix == null) suffix = "";
-
         string proxyName;
         if (type.ContainingType == null) {
             proxyName = type.Name + suffix; // TopLevel
@@ -145,6 +145,25 @@ public static class AptUtils
         }
         // TypeSymbol.Name 不包含反引号(MetadataName会包含反引号)
         return proxyName;
+    }
+
+    public static Assembly? TryLoadAssembly(Compilation compilation, IAssemblySymbol assemblySymbol) {
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+            if (assembly.GetName().Name == assemblySymbol.Name) {
+                return assembly;
+            }
+        }
+        MetadataReference reference = compilation.GetMetadataReference(assemblySymbol);
+        if (reference is PortableExecutableReference executableReference && executableReference.FilePath != null) {
+            string filePath = executableReference.FilePath.Replace(".ref.", ".");
+            try {
+                return !File.Exists(filePath) ? null : Assembly.LoadFrom(filePath);
+            }
+            catch (Exception) {
+                // ignored
+            }
+        }
+        return null;
     }
 
     #region flat
@@ -816,7 +835,7 @@ public static class AptUtils
         List<TypeName> bounds = new List<TypeName>(constraintTypes.Length);
         for (int index = 0; index < constraintTypes.Length; index++) {
             ITypeSymbol constraintType = constraintTypes[index];
-            // 需要剔除object和ValueType
+            // 需要剔除object和ValueType TODO Enum信息莫名丢失
             if (constraintType.SpecialType == SpecialType.System_Object
                 || constraintType.SpecialType == SpecialType.System_ValueType) {
                 continue;
