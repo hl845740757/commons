@@ -87,7 +87,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// <h3>辅助类类名</h3>
 /// 生成的辅助类为{@code XXXCodec}
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum, Inherited = false)]
 [Serializable]
 public class DsonSerializableAttribute : Attribute
 {

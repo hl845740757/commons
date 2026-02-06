@@ -157,7 +157,7 @@ public static class AptUtils
         if (reference is PortableExecutableReference executableReference && executableReference.FilePath != null) {
             string filePath = executableReference.FilePath.Replace(".ref.", ".");
             try {
-                return !File.Exists(filePath) ? null : Assembly.LoadFrom(filePath);
+                return File.Exists(filePath) ? Assembly.LoadFrom(filePath) : null;
             }
             catch (Exception) {
                 // ignored
