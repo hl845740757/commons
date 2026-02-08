@@ -194,6 +194,17 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteDouble4(name, double4, _isTextWriter ? features.ToDouble4Style() : default);
     }
 
+    public void WriteEnum<T>(string name, T value, SerializeFeatures features = default) {
+        if (writer.IsAtName) {
+            writer.WriteName(name);
+        }
+        if (CodecRegistry.GetEncoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
+            codecImpl.WriteObject(this, value, typeof(T), features);
+        } else {
+            throw new DsonCodecException($"Invalid EnumType: {typeof(T)}");
+        }
+    }
+
     #endregion
 
     #region 简单值-无name版
@@ -274,6 +285,14 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteDouble4(Double4 double4, SerializeFeatures features = default) {
         writer.WriteDouble4(double4, _isTextWriter ? features.ToDouble4Style() : default);
+    }
+
+    public void WriteEnum<T>(T value, SerializeFeatures features = default) {
+        if (CodecRegistry.GetEncoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
+            codecImpl.WriteObject(this, value, typeof(T), features);
+        } else {
+            throw new DsonCodecException($"Invalid EnumType: {typeof(T)}");
+        }
     }
 
     #endregion

@@ -27,7 +27,7 @@ namespace Wjybxx.BTree
 public interface ITaskEntryHandler<T> where T : class
 {
     /// <summary>
-    /// 任务启动时调用 -- 同于将任务发布到其它地方，不可执行其它逻辑
+    /// 任务启动时调用 -- 用于将任务发布到其它地方，不可执行其它逻辑
     /// </summary>
     /// <param name="taskEntry"></param>
     void OnEnter(TaskEntry<T> taskEntry);
@@ -43,16 +43,6 @@ public interface ITaskEntryHandler<T> where T : class
     /// </summary>
     /// <param name="taskEntry"></param>
     void OnCompleted(TaskEntry<T> taskEntry);
-
-    /// <summary>
-    /// 用于C#端支持await语法
-    /// (实现时小心时序问题)
-    /// </summary>
-    /// <param name="taskEntry"></param>
-    /// <param name="action"></param>
-    void AwaitOnCompleted(TaskEntry<T> taskEntry, Action action) {
-        throw new NotImplementedException();
-    }
 
     /// <summary>
     /// 任务的激活状态发生改变

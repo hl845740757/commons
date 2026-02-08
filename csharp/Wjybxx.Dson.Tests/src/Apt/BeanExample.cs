@@ -86,6 +86,9 @@ public class BeanExample : BaseTypeExample
     [DsonProperty]
     private int age;
 
+    [DsonProperty]
+    private DsonType dsonType;
+
     public string? Name {
         get => name;
         set => name = value;
@@ -101,6 +104,14 @@ public class BeanExample : BaseTypeExample
     /// </summary>
     [DsonProperty(WriteProxy = "WriteType", ReadProxy = "ReadType")]
     public int Type { get; set; }
+
+    /// <summary>
+    /// 测试枚举是否直接调用WriteEnum/ReadEnum
+    /// </summary>
+    public DsonType DsonType {
+        get => dsonType;
+        set => dsonType = value;
+    }
 
     /// <summary>
     /// 测试泛型集合

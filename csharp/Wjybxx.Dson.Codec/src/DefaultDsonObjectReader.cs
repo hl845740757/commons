@@ -235,6 +235,16 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return ReadName(name) ? DsonCodecHelper.ReadDouble4(reader, name) : default;
     }
 
+    public T ReadEnum<T>(string name, DeserializeFeatures features = default) {
+        if (!ReadName(name)) {
+            return default;
+        }
+        if (CodecRegistry.GetDecoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
+            return codecImpl.ReadObject(this, typeof(T), features);
+        }
+        throw new DsonCodecException($"Invalid EnumType: {typeof(T)}");
+    }
+
     #endregion
 
     #region 简单值-无name版
@@ -294,6 +304,13 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
     public Double4 ReadDouble4() {
         return DsonCodecHelper.ReadDouble4(reader, null);
+    }
+
+    public T ReadEnum<T>(DeserializeFeatures features = default) {
+        if (CodecRegistry.GetDecoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
+            return codecImpl.ReadObject(this, typeof(T), features);
+        }
+        throw new DsonCodecException($"Invalid EnumType: {typeof(T)}");
     }
 
     #endregion

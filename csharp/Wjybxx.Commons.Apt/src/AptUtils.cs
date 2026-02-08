@@ -835,9 +835,13 @@ public static class AptUtils
         List<TypeName> bounds = new List<TypeName>(constraintTypes.Length);
         for (int index = 0; index < constraintTypes.Length; index++) {
             ITypeSymbol constraintType = constraintTypes[index];
-            // 需要剔除object和ValueType TODO Enum信息莫名丢失
+            // 需要剔除object和ValueType
             if (constraintType.SpecialType == SpecialType.System_Object
                 || constraintType.SpecialType == SpecialType.System_ValueType) {
+                continue;
+            }
+            if (constraintType.SpecialType == SpecialType.System_Enum) {
+                bounds.Add(ClassName.ENUM);
                 continue;
             }
             TypeName bound = ParseType(constraintType).AddAttributes(nullableAnnotations[index].ToTypeNameAttributes());

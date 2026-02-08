@@ -58,6 +58,8 @@ public interface IDsonObjectReader : IDisposable
 
     Double4 ReadDouble4(string name);
 
+    T ReadEnum<T>(string name, DeserializeFeatures features = default);
+
     #endregion
 
     #region 基础值-无name版
@@ -93,6 +95,8 @@ public interface IDsonObjectReader : IDisposable
     Timestamp ReadTimestamp();
 
     Double4 ReadDouble4();
+
+    T ReadEnum<T>(DeserializeFeatures features = default);
 
     #endregion
 

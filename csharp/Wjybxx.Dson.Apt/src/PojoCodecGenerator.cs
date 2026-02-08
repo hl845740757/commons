@@ -405,6 +405,14 @@ internal class PojoCodecGenerator
             }
             return;
         }
+        // 枚举需要传入类型信息
+        if (readMethodName == MNAME_READ_ENUM) {
+            TypeName fieldTypeName = fieldInfo.typeName!;
+            codeBuilder.Add("inst.$L = reader.$L<$T>(($T)$L)",
+                fieldAccess, readMethodName, fieldTypeName,
+                CodecProcessor.typeName_DecodeFeatures, fieldProps.decodeFeatures);
+            return;
+        }
         if (fieldProps.decodeFeatures != 0 && (fieldInfo.FieldType!.IsPrimitiveNumber()
                                                || readMethodName == MNAME_READ_BOOL
                                                || readMethodName == MNAME_READ_STRING
@@ -480,6 +488,7 @@ internal class PojoCodecGenerator
         if (fieldProps.encodeFeatures != 0 && (fieldInfo.FieldType!.IsPrimitiveNumber()
                                                || writeMethodName == MNAME_WRITE_BOOL
                                                || writeMethodName == MNAME_WRITE_STRING
+                                               || writeMethodName == MNAME_WRITE_ENUM
                                                || writeMethodName == MNAME_WRITE_BYTES
                                                || writeMethodName == MNAME_WRITE_OBJECT)) {
             // int,long,float,double,uint,ulong,short,ushort,byte,sbyte...
@@ -511,6 +520,7 @@ internal class PojoCodecGenerator
         if (primitiveWriteMethodNameMap.TryGetValue(fieldType.SpecialType, out string r)) {
             return r;
         }
+        if (fieldType.TypeKind == TypeKind.Enum) return MNAME_WRITE_ENUM;
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_WRITE_STRING;
         if (fieldType.IsByteArray()) return MNAME_WRITE_BYTES;
         if (fieldType.IsSameType(processor.type_Binary)) return MNAME_WRITE_BINARY;
@@ -526,6 +536,7 @@ internal class PojoCodecGenerator
         if (primitiveReadMethodNameMap.TryGetValue(fieldType.SpecialType, out string r)) {
             return r;
         }
+        if (fieldType.TypeKind == TypeKind.Enum) return MNAME_READ_ENUM;
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_READ_STRING;
         if (fieldType.IsByteArray()) return MNAME_READ_BYTES;
         if (fieldType.IsSameType(processor.type_Binary)) return MNAME_READ_BINARY;
@@ -544,6 +555,7 @@ internal class PojoCodecGenerator
     private const string MNAME_READ_PTR = "ReadPtr";
     private const string MNAME_READ_DATETIME = "ReadDateTime";
     private const string MNAME_READ_TIMESTAMP = "ReadTimestamp";
+    private const string MNAME_READ_ENUM = "ReadEnum";
 
     private const string MNAME_WRITE_BOOL = "WriteBool";
     private const string MNAME_WRITE_STRING = "WriteString";
@@ -554,6 +566,7 @@ internal class PojoCodecGenerator
     private const string MNAME_WRITE_PTR = "WritePtr";
     private const string MNAME_WRITE_DATETIME = "WriteDateTime";
     private const string MNAME_WRITE_TIMESTAMP = "WriteTimestamp";
+    private const string MNAME_WRITE_ENUM = "WriteEnum";
 
     private static readonly Dictionary<SpecialType, string> primitiveReadMethodNameMap = new(12);
     private static readonly Dictionary<SpecialType, string> primitiveWriteMethodNameMap = new(12);

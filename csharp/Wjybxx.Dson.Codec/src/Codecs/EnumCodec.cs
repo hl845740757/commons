@@ -52,8 +52,9 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
 {
     private readonly Dictionary<T, EnumValueInfo<T>> _value2EnumDic;
     private readonly Dictionary<int, EnumValueInfo<T>> _number2EnumDic;
-    private readonly Dictionary<string, EnumValueInfo<T>> _name2EnumDic;
+    private readonly Dictionary<string, EnumValueInfo<T>> _name2EnumDic; // 忽略大小写
     private readonly bool _isFlags;
+    private readonly bool _isWriteAsString;
 
     /// <summary>
     /// 
@@ -80,7 +81,11 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
         _number2EnumDic = new Dictionary<int, EnumValueInfo<T>>(values.Length);
         _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(values.Length);
         _isFlags = typeof(T).IsDefined(typeof(FlagsAttribute));
-
+        // 编码为字符串
+        DsonSerializableAttribute serializableAttribute = typeof(T).GetCustomAttribute<DsonSerializableAttribute>();
+        if (serializableAttribute != null) {
+            _isWriteAsString = (serializableAttribute.EncodeFeatures & SerializeFeatures.EnumAsString) != 0;
+        }
         FieldInfo[] enumFields = typeof(T).GetFields();
         for (int idx = 0; idx < values.Length; idx++) {
             T value = values[idx];
@@ -137,7 +142,7 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
             }
             throw new DsonCodecException($"invalid enum value: {inst}, type: {typeof(T)}");
         }
-        bool isWriteAsString = IsWriteAsString(features, writer);
+        bool isWriteAsString = _isWriteAsString || IsWriteAsString(features, writer);
         if (isWriteAsString) {
             writer.WriteString(valueInfo.name, SerializeFeatures.StringUnquote);
         } else {

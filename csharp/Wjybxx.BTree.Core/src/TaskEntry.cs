@@ -99,12 +99,6 @@ public class TaskEntry<T> : Task<T> where T : class
     #region logic
 
     /// <summary>
-    /// C# await语法支持
-    /// </summary>
-    /// <returns></returns>
-    public TaskAwaiter<T> GetAwaiter() => new TaskAwaiter<T>(this);
-
-    /// <summary>
     /// 获取根状态机
     /// 状态机太重要了，值得我们为其提供各种快捷方法
     /// </summary>

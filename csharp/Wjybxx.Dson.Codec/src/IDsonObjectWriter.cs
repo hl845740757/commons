@@ -67,6 +67,8 @@ public interface IDsonObjectWriter : IDisposable
 
     void WriteDouble4(string name, Double4 double4, SerializeFeatures features = default);
 
+    void WriteEnum<T>(string name, T value, SerializeFeatures features = default);
+
     #endregion
 
     #region 基础值-无name版
@@ -105,6 +107,8 @@ public interface IDsonObjectWriter : IDisposable
     void WriteTimestamp(Timestamp timestamp);
 
     void WriteDouble4(Double4 double4, SerializeFeatures features = default);
+
+    void WriteEnum<T>(T value, SerializeFeatures features = default);
 
     #endregion
 
