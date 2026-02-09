@@ -357,8 +357,8 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         if (!declaredType.IsValueType && typeof(DsonValue).IsAssignableFrom(declaredType)) {
             return (T)(object)Dsons.ReadDsonValue(reader);
         }
-        // 容器类型只能通过codec解码
-        if (dsonType.IsContainer()) {
+        // 容器类型只能通过codec解码 - 枚举除外，枚举支持数组
+        if (dsonType.IsContainer() && !declaredType.IsEnum) {
             string? clsName = GetClassName(reader.CurrentValue);
             DsonCodecImpl decoder = FindObjectDecoder(declaredType, factory, clsName);
             if (decoder == null) {

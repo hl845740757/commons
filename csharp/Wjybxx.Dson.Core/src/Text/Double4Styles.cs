@@ -32,6 +32,14 @@ internal static class Double4Styles
     private const int MASK_VECTOR2 = 'x' | 'y' << 8;
 
     public static void Print(DsonPrinter printer, Double4 double4, Double4Style style) {
+        int len;
+        if ((style & Double4Style.Len3) != 0) {
+            len = 3;
+        } else if ((style & Double4Style.Len2) != 0) {
+            len = 2;
+        } else {
+            len = 4;
+        }
         Double4Style basicStyle = style & Double4Style.Rect;
         switch (basicStyle) {
             case Double4Style.Array: {
@@ -39,11 +47,11 @@ internal static class Double4Styles
                 PrintDouble(printer, double4.v0, style);
                 printer.FastPrint(", ");
                 PrintDouble(printer, double4.v1, style);
-                if ((style & Double4Style.Len2) == 0) {
+                if (len > 2) {
                     printer.FastPrint(", ");
                     PrintDouble(printer, double4.v2, style);
                 }
-                if ((style & Double4Style.Len3) == 0) {
+                if (len > 3) {
                     printer.FastPrint(", ");
                     PrintDouble(printer, double4.v3, style);
                 }
@@ -55,11 +63,11 @@ internal static class Double4Styles
                 PrintDouble(printer, double4.v0, style);
                 printer.FastPrint(", y: ");
                 PrintDouble(printer, double4.v1, style);
-                if ((style & Double4Style.Len2) == 0) {
+                if (len > 2) {
                     printer.FastPrint(", z: ");
                     PrintDouble(printer, double4.v2, style);
                 }
-                if ((style & Double4Style.Len3) == 0) {
+                if (len > 3) {
                     printer.FastPrint(", w: ");
                     PrintDouble(printer, double4.v3, style);
                 }
@@ -73,7 +81,7 @@ internal static class Double4Styles
                 PrintDouble(printer, double4.v1, style);
                 printer.FastPrint(", b: ");
                 PrintDouble(printer, double4.v2, style);
-                if ((style & Double4Style.Len3) == 0) {
+                if (len > 3) {
                     printer.FastPrint(", a: ");
                     PrintDouble(printer, double4.v3, style);
                 }

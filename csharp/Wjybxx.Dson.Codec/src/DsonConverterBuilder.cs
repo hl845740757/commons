@@ -47,6 +47,13 @@ public class DsonConverterBuilder
             options);
     }
 
+    public TypeMetaConfig TypeMetaConfig => typeMetaConfig;
+    public DsonCodecConfig CodecConfig => codecConfig;
+    public ConverterOptions Options {
+        get => options;
+        set => options = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
     #region type-meta
 
     public DsonConverterBuilder AddTypeMeta(TypeMeta typeMeta) {
@@ -185,7 +192,7 @@ public class DsonConverterBuilder
     /// <returns></returns>
     public DsonConverterBuilder AddByCodecType(Type codecType) {
         Type encoderType = DsonConverterUtils.GetEncoderType(codecType);
-        if (codecType.IsGenericType) {
+        if (encoderType.IsGenericType) {
             encoderType = encoderType.GetGenericTypeDefinition();
             GetFeatures(encoderType, out SerializeFeatures features1, out DeserializeFeatures features2);
             //
