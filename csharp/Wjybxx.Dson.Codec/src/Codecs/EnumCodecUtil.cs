@@ -22,7 +22,7 @@ using Wjybxx.Dson.Codec.Attributes;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
-public class EnumCodecUtil
+internal class EnumCodecUtil
 {
     private const int CACHE_SIZE = 64;
     private static readonly string[] numberStringArray;
@@ -41,13 +41,14 @@ public class EnumCodecUtil
         return number.ToString();
     }
 
-    public static bool IsFlags<T>() {
-        return typeof(T).IsDefined(typeof(FlagsAttribute), false);
-    }
-
     public static SerializeFeatures GetEncodeFeatures<T>() {
         DsonSerializableAttribute serializableAttribute = typeof(T).GetCustomAttribute<DsonSerializableAttribute>();
         return serializableAttribute == null ? default : serializableAttribute.EncodeFeatures;
+    }
+
+    public static DeserializeFeatures GetDecodeFeatures<T>() {
+        DsonSerializableAttribute serializableAttribute = typeof(T).GetCustomAttribute<DsonSerializableAttribute>();
+        return serializableAttribute == null ? default : serializableAttribute.DecodeFeatures;
     }
 }
 }

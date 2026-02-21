@@ -43,15 +43,21 @@ public enum DeserializeFeatures
     /// <summary>
     /// 数字类型尝试从字符串中解析（字段级别）
     /// </summary>
-    TryParseString = 0x04,
+    NumberParseString = 0x04,
+    /// <summary>
+    /// 字典的Key禁止重复，使用Add解码(未实现)
+    /// </summary>
+    MapUniqueKey = 0x08,
+    /// <summary>
+    /// 被动读模式
+    /// 主动读：由用户指定下一个要读取的数据，需要buffer缓冲输入。
+    /// 被动读：由输入流决定下一个要读取的数据。无需buffer缓冲。
+    /// </summary>
+    PassiveReading = 0x10,
     /// <summary>
     /// 拷贝引用指向的对象(未实现)
     /// </summary>
-    CopyReferenceTarget = 0x08,
-    /// <summary>
-    /// 被动随机读(可减少缓冲区分配)
-    /// </summary>
-    PassiveRandomRead = 0x10,
+    CopyReferenceTarget = 0x20,
 
     // null和零值暂未生效
     /// <summary>
@@ -83,12 +89,12 @@ public enum DeserializeFeatures
     /// <summary>
     /// 字符串放入常量池
     /// </summary>
-    InternedString = 0x40 << 8,
+    StringAsInterned = 0x40 << 8,
 
     /// <summary>
     /// 集合元素的特征值
     /// </summary>
-    MaskElementFeatures = EnumIgnoreCase | TryParseString
-                                         | EmptyStringAsEmpty | EmptyStringAsNull | InternedString
+    MaskElementFeatures = EnumIgnoreCase | NumberParseString
+                                         | EmptyStringAsEmpty | EmptyStringAsNull | StringAsInterned
 }
 }

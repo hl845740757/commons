@@ -409,7 +409,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Binary);
         printer.FastPrint("@bin ");
-        PrintBinary(binary.UnsafeBuffer, 0, binary.UnsafeBuffer.Length);
+        PrintBinary(binary.Unwrap(), 0, binary.Length);
     }
 
     protected override void DoWriteBinary(byte[] bytes, int offset, int len) {

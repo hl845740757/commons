@@ -80,7 +80,7 @@ public interface IDsonObjectReader : IDisposable
 
     byte[]? ReadBytes(DeserializeFeatures features = default) {
         Binary binary = ReadBinary();
-        return binary.UnsafeBuffer;
+        return binary.Unwrap();
     }
 
     Binary ReadBinary(DeserializeFeatures features = default);

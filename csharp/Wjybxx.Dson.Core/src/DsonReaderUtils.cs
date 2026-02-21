@@ -53,7 +53,7 @@ public static class DsonReaderUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteBinary(IDsonOutput output, Binary binary) {
         output.WriteUInt32(binary.Length);
-        output.WriteRawBytes(binary.UnsafeBuffer);
+        output.WriteRawBytes(binary.Unwrap());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

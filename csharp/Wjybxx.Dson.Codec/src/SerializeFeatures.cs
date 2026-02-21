@@ -239,7 +239,7 @@ public enum SerializeFeatures : uint
     /// </summary>
     Double4AsRgba = 0x20 << 20,
     /// <summary>
-    /// 将Double4编码为Rect(3)
+    /// 将Double4编码为Rect(3) - 不推荐使用
     /// </summary>
     Double4AsRect = 0x30 << 20,
     /// <summary>
@@ -250,6 +250,15 @@ public enum SerializeFeatures : uint
     /// 限定Double4长度为3
     /// </summary>
     Double4Len3 = 0x80 << 20,
+
+    /// <summary>
+    /// Double4序列化为Vector2
+    /// </summary>
+    Double4AsVector2 = Double4AsVector | Double4Len2,
+    /// <summary>
+    /// Double4序列化为Vector3
+    /// </summary>
+    Double4AsVector3 = Double4AsVector | Double4Len3,
 
     /// <summary>
     /// Map编码样式的掩码

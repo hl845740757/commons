@@ -25,13 +25,18 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// </summary>
 public class ObjectCodec : IDsonCodec<object>
 {
+    private static readonly object empty = new object();
+
     public void WriteObject(IDsonObjectWriter writer, object inst, Type declaredType, SerializeFeatures features) {
         writer.WriteStartObject(typeof(object), features);
         writer.WriteEndObject();
     }
 
     public object ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return reader.ReadObject<DsonValue>(features);
+        reader.ReadStartObject(typeof(object), features);
+        reader.ReadEndObject();
+        return empty;
+        // return reader.ReadObject<DsonValue>(features);
     }
 }
 }

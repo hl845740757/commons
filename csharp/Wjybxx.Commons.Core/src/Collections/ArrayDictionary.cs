@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Collections
 /// <summary>
 /// 非Hash结构的字典，适用于小数据量场景
 ///
-/// 注：可通过<see cref="GetPair(int)"/>以数组方式迭代。
+/// 注：可通过<see cref="GetPair(int)"/>以数组方式迭代，且有更好的迭代效率。
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
 /// <typeparam name="TValue"></typeparam>
@@ -431,7 +431,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         if (index < 0 || index >= _count) {
             throw new ArgumentOutOfRangeException();
         }
-        ref Node node = ref _table[index];
+        Node node = _table[index];
         return node.key;
     }
 
@@ -439,7 +439,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         if (index < 0 || index >= _count) {
             throw new ArgumentOutOfRangeException();
         }
-        ref Node node = ref _table[index];
+        Node node = _table[index];
         return node.AsPair();
     }
 
@@ -447,7 +447,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         if (index < 0 || index >= _count) {
             throw new ArgumentOutOfRangeException();
         }
-        ref Node node = ref _table[index];
+        Node node = _table[index];
         key = node.key;
         value = node.value;
     }

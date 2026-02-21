@@ -208,7 +208,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
     public byte[]? ReadBytes(string name, DeserializeFeatures features) {
         Binary binary = ReadBinary(name, features);
-        return binary == null ? null : binary.UnsafeBuffer;
+        return binary == null ? null : binary.Unwrap();
     }
 
     public Binary? ReadBinary(string name, DeserializeFeatures features) {
@@ -279,7 +279,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
     public byte[]? ReadBytes(DeserializeFeatures features) {
         Binary binary = ReadBinary(features);
-        return binary == null ? null : binary.UnsafeBuffer;
+        return binary == null ? null : binary.Unwrap();
     }
 
     public Binary? ReadBinary(DeserializeFeatures features) {
@@ -502,7 +502,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             reader.SkipValue();
         }
         //
-        if ((features & DeserializeFeatures.PassiveRandomRead) == 0) {
+        if ((features & DeserializeFeatures.PassiveReading) == 0) {
             Context context = contextPool.Acquire();
             context.typeMeta = typeMeta;
             context.SetKeySet(reader.Keys());

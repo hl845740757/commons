@@ -275,16 +275,20 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         return typeMetaRegistry.OfType(typeof(KeyValuePair<K, V>))!;
     }
 
-    private MapStyle GetMapStyle(SerializeFeatures features, IDsonObjectWriter writer, MapStyle def) {
-        if (features.ToMapStyle(out MapStyle style)) {
-            return style;
+    private static MapStyle GetMapStyle(SerializeFeatures features, IDsonObjectWriter writer, MapStyle def) {
+        if ((features & SerializeFeatures.MaskMapStyles) != 0) {
+            return features.ToMapStyle();
         }
         TypeMeta typeMeta = writer.ContainerTypeMeta;
-        if (typeMeta != null && typeMeta.encodeFeatures.ToMapStyle(out style)) {
-            return style;
+        if (typeMeta != null) {
+            features = typeMeta.encodeFeatures;
+            if ((features & SerializeFeatures.MaskMapStyles) != 0) {
+                return features.ToMapStyle();
+            }
         }
-        if (writer.Options.encodeFeatures.ToMapStyle(out style)) {
-            return style;
+        features = writer.Options.encodeFeatures;
+        if ((features & SerializeFeatures.MaskMapStyles) != 0) {
+            return features.ToMapStyle();
         }
         return def;
     }

@@ -107,7 +107,13 @@ public sealed class Binary
     /// <summary>
     /// 获取底层的字节数组，一般业务不应该访问，否则可能破坏不可变约束
     /// </summary>
+    [Obsolete("Use Unwrap() instead.")]
     public byte[] UnsafeBuffer => _data;
+
+    /// <summary>
+    /// 获取底层的字节数组，一般业务不应该访问，否则可能破坏不可变约束
+    /// </summary>
+    public byte[] Unwrap() => _data;
 
     public static Binary UnsafeWrap(byte[] value) {
         return new Binary(value);

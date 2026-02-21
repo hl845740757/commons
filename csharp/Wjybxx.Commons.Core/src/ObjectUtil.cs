@@ -88,7 +88,7 @@ public static class ObjectUtil
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long SystemTicks() => (long)(Stopwatch.GetTimestamp() * s_tickFrequency);
+    public static long SystemTicks() => (long)(Stopwatch.GetTimestamp() * _tickFrequency);
 
     /// <summary>
     /// 系统tick对应的毫秒时间戳
@@ -96,12 +96,12 @@ public static class ObjectUtil
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long SystemTickMillis() => (long)(Stopwatch.GetTimestamp() * s_tickFrequency / 10000d);
+    public static long SystemTickMillis() => (long)(Stopwatch.GetTimestamp() * _tickFrequency / 10000d);
 
     /// <summary>
     /// 'Frequency'存储的是在当前平台上，1秒对应多少个原始tick -- 依赖平台。
     /// </summary>
-    private static readonly double s_tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
+    private static readonly double _tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
 
     #region type
 
@@ -226,7 +226,7 @@ public static class ObjectUtil
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Length(string? value) {
-        return value?.Length ?? 0;
+        return value == null ? 0 : value.Length;
     }
 #nullable disable
     /// <summary>
@@ -311,9 +311,7 @@ public static class ObjectUtil
     /// 索引首个空白字符
     /// </summary>
     public static int IndexOfWhitespace(string cs, int startIndex = 0) {
-        if (startIndex < 0) {
-            throw new ArgumentException("startIndex " + startIndex);
-        }
+        if (startIndex < 0) throw new ArgumentException("startIndex " + startIndex);
         int length = Length(cs);
         if (length == 0) {
             return -1;
@@ -330,9 +328,7 @@ public static class ObjectUtil
     /// 反向索引首个空白字符
     /// </summary>
     public static int LastIndexOfWhitespace(string cs, int startIndex = -1) {
-        if (startIndex < -1) {
-            throw new ArgumentException("startIndex " + startIndex);
-        }
+        if (startIndex < -1) throw new ArgumentException("startIndex " + startIndex);
         int length = Length(cs);
         if (length == 0) {
             return -1;
@@ -352,9 +348,7 @@ public static class ObjectUtil
     /// 索引首个非空白字符
     /// </summary>
     public static int IndexOfNonWhitespace(string cs, int startIndex = 0) {
-        if (startIndex < 0) {
-            throw new ArgumentException("startIndex " + startIndex);
-        }
+        if (startIndex < 0) throw new ArgumentException("startIndex " + startIndex);
         int length = ObjectUtil.Length(cs);
         if (length == 0) {
             return -1;
@@ -371,9 +365,7 @@ public static class ObjectUtil
     /// 反向索引首个非空白字符
     /// </summary>
     public static int LastIndexOfNonWhitespace(string cs, int startIndex = -1) {
-        if (startIndex < -1) {
-            throw new ArgumentException("startIndex " + startIndex);
-        }
+        if (startIndex < -1) throw new ArgumentException("startIndex " + startIndex);
         int length = ObjectUtil.Length(cs);
         if (length == 0) {
             return -1;
@@ -429,22 +421,6 @@ public static class ObjectUtil
     }
 
     /// <summary>
-    /// 将字符串转为给定模式
-    /// </summary>
-    /// <param name="caseMode">大小写模式</param>
-    /// <param name="value">要转换的字符串</param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string ToCase(this CaseMode caseMode, string value) {
-        return caseMode switch
-        {
-            CaseMode.UpperCase => value.ToUpper(),
-            CaseMode.LowerCase => value.ToLower(),
-            _ => throw new AssertionError()
-        };
-    }
-
-    /// <summary>
     /// 获取字符串的UTF-8编码结果
     /// (经常找不到地方...)
     /// </summary>
@@ -492,9 +468,25 @@ public static class ObjectUtil
 #if NET6_0_OR_GREATER
         return str.Split(c, StringSplitOptions.TrimEntries);
 #else
-        string[] result = str.Split(c);
-        for (int i = 0; i < result.Length; i++) {
-            result[i] = result[i].Trim();
+        int count = 1;
+        for (int i = 0; i < str.Length; i++) {
+            if (str[i] == c) count++;
+        }
+        string[] result = new string[count];
+        //
+        int start = 0;
+        int idx = 0;
+        for (int i = 0; i <= str.Length; i++) {
+            if (i == str.Length || str[i] == c) {
+                int s = start;
+                int e = i - 1;
+                // Trim
+                while (s <= e && char.IsWhiteSpace(str[s])) s++;
+                while (e >= s && char.IsWhiteSpace(str[e])) e--;
+                //
+                result[idx++] = (s <= e) ? str.Substring(s, e - s + 1) : string.Empty;
+                start = i + 1;
+            }
         }
         return result;
 #endif

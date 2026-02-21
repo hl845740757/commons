@@ -84,5 +84,14 @@ public static class EnumUtil
         // 奇技淫巧：int32/uint32/short/ushort/byte/sybte的hashcode是自身，可避免装箱。
         return value.GetHashCode();
     }
+
+    /// <summary>
+    /// 是否是Flags枚举
+    /// </summary>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFlags<T>() {
+        return typeof(T).IsDefined(typeof(FlagsAttribute), false);
+    }
 }
 }

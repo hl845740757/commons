@@ -32,13 +32,11 @@ internal static class Double4Styles
     private const int MASK_VECTOR2 = 'x' | 'y' << 8;
 
     public static void Print(DsonPrinter printer, Double4 double4, Double4Style style) {
-        int len;
+        int len = 4;
         if ((style & Double4Style.Len3) != 0) {
             len = 3;
         } else if ((style & Double4Style.Len2) != 0) {
             len = 2;
-        } else {
-            len = 4;
         }
         Double4Style basicStyle = style & Double4Style.Rect;
         switch (basicStyle) {

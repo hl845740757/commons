@@ -38,22 +38,6 @@ public static class DsonConverterUtils
 {
     #region util
 
-    /** 注意：默认情况下字典应该是一个数组对象，而不是普通的对象 */
-    public static bool IsEncodeAsArray(Type encoderClass) {
-        // c#不能直接测试是否是某个泛型原型的子类，好在字典也实现了IEnumerable，字典默认也需要编码为数组
-        return encoderClass.IsArray || IsCollection(encoderClass, true);
-    }
-
-    /// <summary>
-    /// 是否是可空值类型
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsNullableValueType(Type type) {
-        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
-    }
-
     /// <summary>
     /// 判断一个类型是否是<see cref="ICollection{T}"/>类型
     /// </summary>
@@ -65,7 +49,6 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfCollection) {
             return true;
         }
-
         Type target = type.GetInterface(typeOfCollection.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -84,7 +67,6 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfList) {
             return true;
         }
-
         Type target = type.GetInterface(typeOfList.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -103,7 +85,6 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfSet) {
             return true;
         }
-
         Type target = type.GetInterface(typeOfSet.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -122,7 +103,6 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfDictionary) {
             return true;
         }
-
         Type target = type.GetInterface(typeOfDictionary.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -141,7 +121,6 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfSet) {
             return true;
         }
-
         Type target = type.GetInterface(typeOfSet.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -160,7 +139,6 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfDictionary) {
             return true;
         }
-
         Type target = type.GetInterface(typeOfDictionary.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -540,8 +518,6 @@ public static class DsonConverterUtils
     /// <summary>
     /// 获取Nullable/List/Map元素的写入特征值
     /// </summary>
-    /// <param name="features"></param>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static SerializeFeatures GetElementFeatures(this SerializeFeatures features) {
         SerializeFeatures elementFeatures = (features & SerializeFeatures.MaskElementFeatures);
@@ -566,11 +542,18 @@ public static class DsonConverterUtils
         return features & ~mask;
     }
 
+    /// <summary>
+    /// 获取Nullable/List/Map元素的解码特征值
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DeserializeFeatures GetElementFeatures(this DeserializeFeatures features) {
         return features & DeserializeFeatures.MaskElementFeatures;
     }
 
+    /// <summary>
+    /// 擦除Nullable/List/Map元素的解码特征值
+    /// (应该只比GetElementFeatures少一处调用 —— Nullable)
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DeserializeFeatures ErasureElementFeatures(this DeserializeFeatures features) {
         return features & ~DeserializeFeatures.MaskElementFeatures;
@@ -578,26 +561,9 @@ public static class DsonConverterUtils
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static NumberStyle ToNumberStyle(this SerializeFeatures features) {
-        ToNumberStyle(features, out NumberStyle style);
-        return style;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static StringStyle ToStringStyle(this SerializeFeatures features) {
-        ToStringStyle(features, out StringStyle style);
-        return style;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Double4Style ToDouble4Style(this SerializeFeatures features) {
-        ToDouble4Style(features, out Double4Style style);
-        return style;
-    }
-
-    public static bool ToNumberStyle(this SerializeFeatures features, out NumberStyle style) {
-        style = NumberStyle.Simple;
+        NumberStyle style = NumberStyle.Simple;
         if ((features & SerializeFeatures.MaskNumberStyles) == 0) { // 大概率
-            return false;
+            return style;
         }
         if ((features & SerializeFeatures.NumberTyped) != 0) {
             style |= NumberStyle.Typed;
@@ -616,30 +582,14 @@ public static class DsonConverterUtils
         } else if ((features & SerializeFeatures.NumberNoExponent7) != 0) {
             style |= NumberStyle.NoExponent7;
         }
-        return true;
+        return style;
     }
 
-    public static bool ToStringStyle(this SerializeFeatures features, out StringStyle style) {
-        if ((features & SerializeFeatures.MaskStringStyles) == 0) { // 大概率
-            style = StringStyle.AutoQuote;
-            return false;
-        }
-        if ((features & SerializeFeatures.StringUnquote) != 0) {
-            style = StringStyle.Unquote;
-        } else if ((features & SerializeFeatures.StringText) != 0) {
-            style = StringStyle.DsonText;
-        } else if ((features & SerializeFeatures.StringLine) != 0) {
-            style = StringStyle.SingleLine;
-        } else {
-            style = StringStyle.AutoQuote;
-        }
-        return true;
-    }
-
-    public static bool ToDouble4Style(this SerializeFeatures features, out Double4Style style) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Double4Style ToDouble4Style(this SerializeFeatures features) {
+        Double4Style style = Double4Style.Array;
         if ((features & SerializeFeatures.MaskDouble4Styles) == 0) { // 大概率
-            style = Double4Style.Array;
-            return false;
+            return style;
         }
         SerializeFeatures basicStyle = features & SerializeFeatures.Double4AsRect;
         style = basicStyle switch
@@ -662,24 +612,31 @@ public static class DsonConverterUtils
         } else if ((features & SerializeFeatures.NumberNoExponent7) != 0) {
             style |= Double4Style.NoExponent7;
         }
-        return true;
+        return style;
     }
 
-    public static bool ToMapStyle(this SerializeFeatures features, out MapStyle style) {
-        if ((features & SerializeFeatures.MaskMapStyles) == 0) { // 大概率
-            style = MapStyle.Array;
-            return false;
-        }
-        if ((features & SerializeFeatures.MapAsDocument) != 0) { // 大概率
-            style = MapStyle.Document;
-        } else if ((features & SerializeFeatures.PairAsArray) != 0) {
-            style = MapStyle.PairAsArray;
-        } else if ((features & SerializeFeatures.PairAsDocument) != 0) {
-            style = MapStyle.PairAsDocument;
-        } else {
-            style = MapStyle.Array;
-        }
-        return true;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static StringStyle ToStringStyle(this SerializeFeatures features) {
+        features &= SerializeFeatures.MaskStringStyles;
+        return features switch
+        {
+            SerializeFeatures.StringUnquote => StringStyle.Unquote,
+            SerializeFeatures.StringText => StringStyle.DsonText,
+            SerializeFeatures.StringLine => StringStyle.SingleLine,
+            _ => StringStyle.AutoQuote
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static MapStyle ToMapStyle(this SerializeFeatures features) {
+        features &= SerializeFeatures.MaskMapStyles;
+        return features switch
+        {
+            SerializeFeatures.MapAsDocument => MapStyle.Document,
+            SerializeFeatures.PairAsArray => MapStyle.PairAsArray,
+            SerializeFeatures.PairAsDocument => MapStyle.PairAsDocument,
+            _ => MapStyle.Array
+        };
     }
 
     #endregion
