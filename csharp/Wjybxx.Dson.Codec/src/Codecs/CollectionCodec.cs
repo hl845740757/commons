@@ -134,7 +134,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
-        int count = reader.ReadStartArray(encoderType).count;
+        int count = reader.ReadStartArray(encoderType, selfFeatures).count;
         ICollection<T> result = NewCollection(factory, count);
         // T就是声明类型
         DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();

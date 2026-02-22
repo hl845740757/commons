@@ -30,34 +30,34 @@ namespace Wjybxx.Dson.Codec
 public enum DeserializeFeatures
 {
     /// <summary>
+    /// 被动读模式
+    /// 主动读：由用户指定下一个要读取的数据，需要buffer缓冲输入。
+    /// 被动读：由输入流决定下一个要读取的数据。无需buffer缓冲。
+    /// </summary>
+    PassiveReading = 0x01,
+    /// <summary>
+    /// 拷贝引用指向的对象(未实现)
+    /// </summary>
+    CopyReferenceTarget = 0x02,
+
+    /// <summary>
+    /// 当Header中不包含Count信息时，赋予1/2/3档初始化空间，可减少扩容次数
+    /// 暂定为：10, 24, 48
+    /// </summary>
+    InitCapacity1 = 0x10,
+    InitCapacity2 = 0x20,
+    InitCapacity3 = 0x30,
+    /// <summary>
     /// 读取为不可变对象，主要用于集合。
     ///
     /// 1.声明类型应当为接口类型，否则不会生效。
     /// 2.字段也可直接声明为不可变集合，但局限于Commons库的不可变集合。
     /// </summary>
-    ReadAsImmutable = 0x01,
-    /// <summary>
-    /// Enum解码时忽略大小写
-    /// </summary>
-    EnumIgnoreCase = 0x02,
-    /// <summary>
-    /// 数字类型尝试从字符串中解析（字段级别）
-    /// </summary>
-    NumberParseString = 0x04,
+    ReadAsImmutable = 0x40,
     /// <summary>
     /// 字典的Key禁止重复，使用Add解码(未实现)
     /// </summary>
-    MapUniqueKey = 0x08,
-    /// <summary>
-    /// 被动读模式
-    /// 主动读：由用户指定下一个要读取的数据，需要buffer缓冲输入。
-    /// 被动读：由输入流决定下一个要读取的数据。无需buffer缓冲。
-    /// </summary>
-    PassiveReading = 0x10,
-    /// <summary>
-    /// 拷贝引用指向的对象(未实现)
-    /// </summary>
-    CopyReferenceTarget = 0x20,
+    MapUniqueKey = 0x80,
 
     // null和零值暂未生效
     /// <summary>
@@ -77,6 +77,7 @@ public enum DeserializeFeatures
     /// </summary>
     SkipZeroValue = 0x04 << 8,
 
+#pragma warning disable CA1069
     // 字符串特征值未生效
     /// <summary>
     /// 保持空字符串为空字符串
@@ -92,9 +93,24 @@ public enum DeserializeFeatures
     StringAsInterned = 0x40 << 8,
 
     /// <summary>
+    /// Enum解码时忽略大小写
+    /// </summary>
+    EnumIgnoreCase = 0x10 << 8,
+    /// <summary>
+    /// Enum解码时允许未定义枚举值(flags无需处理)
+    /// </summary>
+    EnumAllowUndefine = 0x20 << 8,
+
+    /// <summary>
+    /// 数字类型尝试从字符串中解析（字段级别）
+    /// </summary>
+    NumberParseString = 0x10 << 8,
+#pragma warning restore CA1069
+
+    /// <summary>
     /// 集合元素的特征值
     /// </summary>
-    MaskElementFeatures = EnumIgnoreCase | NumberParseString
-                                         | EmptyStringAsEmpty | EmptyStringAsNull | StringAsInterned
+    MaskElementFeatures = EmptyStringAsEmpty | EmptyStringAsNull | StringAsInterned
+                          | EnumIgnoreCase | EnumAllowUndefine | NumberParseString,
 }
 }

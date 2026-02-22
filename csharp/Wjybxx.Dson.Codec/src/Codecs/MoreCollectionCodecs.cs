@@ -80,7 +80,7 @@ public static class MoreCollectionCodecs
             DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             // Queue重复编码，避免不必要的拷贝
-            int count = reader.ReadStartArray(typeof(Queue<T>)).count;
+            int count = reader.ReadStartArray(typeof(Queue<T>), selfFeatures).count;
             Queue<T> result = new Queue<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 T value = reader.ReadObject<T>(elementFeatures);
@@ -116,7 +116,7 @@ public static class MoreCollectionCodecs
             DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             //
-            int count = reader.ReadStartArray(typeof(SmallDynamicArray<T>)).count;
+            int count = reader.ReadStartArray(typeof(SmallDynamicArray<T>), selfFeatures).count;
             SmallDynamicArray<T> result = new SmallDynamicArray<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 T value = reader.ReadObject<T>(elementFeatures);
@@ -152,7 +152,7 @@ public static class MoreCollectionCodecs
             DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             //
-            int count = reader.ReadStartArray(typeof(DynamicArray<T>)).count;
+            int count = reader.ReadStartArray(typeof(DynamicArray<T>), selfFeatures).count;
             DynamicArray<T> result = new DynamicArray<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 T value = reader.ReadObject<T>(elementFeatures);

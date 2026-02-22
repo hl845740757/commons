@@ -639,6 +639,18 @@ public static class DsonConverterUtils
         };
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int ToInitCapacity(this DeserializeFeatures features) {
+        features = (features & DeserializeFeatures.InitCapacity3);
+        return features switch
+        {
+            DeserializeFeatures.InitCapacity1 => 10,
+            DeserializeFeatures.InitCapacity2 => 24,
+            DeserializeFeatures.InitCapacity3 => 48,
+            _ => 0
+        };
+    }
+
     #endregion
 }
 }

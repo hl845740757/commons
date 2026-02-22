@@ -119,7 +119,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             //
-            int count = reader.ReadStartArray(encoderType).count;
+            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
             result = NewDictionary(factory, count);
             reader.PublishReference(result);
             //
@@ -211,7 +211,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         //
         IDictionary<K, V> result;
         if (reader.CurrentDsonType == DsonType.Object) {
-            int count = reader.ReadStartObject(encoderType).count;
+            int count = reader.ReadStartObject(encoderType, selfFeatures).count;
             result = NewDictionary(factory, count);
             reader.PublishReference(result);
             //
@@ -222,7 +222,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndObject();
         } else {
-            int count = reader.ReadStartArray(encoderType).count;
+            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
             result = NewDictionary(factory, count);
             reader.PublishReference(result);
             //

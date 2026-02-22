@@ -19,7 +19,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
-using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec

@@ -472,7 +472,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if (header.localId != 0) {
             writer.WriteInt64(DsonHeader.Names_LocalId, header.localId, NumberStyle.Simple);
         }
-        if (header.count > 0) {
+        if (header.count > 4) { // 大于默认初始化空间才写入
             writer.WriteInt32(DsonHeader.Names_Count, header.count, NumberStyle.Simple);
         }
         if (header.version != 0) {

@@ -517,7 +517,11 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             return itemContext.header;
         }
         DsonValue dsonValue = reader.GetContainer();
-        return ReadHeader(dsonValue);
+        SerializeHeader header = ReadHeader(dsonValue);
+        if (header.count == 0) {
+            header.count = features.ToInitCapacity();
+        }
+        return header;
     }
 
     public void ReadEndObject() {
@@ -548,7 +552,11 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             return itemContext.header;
         }
         DsonValue dsonValue = reader.GetContainer();
-        return ReadHeader(dsonValue);
+        SerializeHeader header = ReadHeader(dsonValue);
+        if (header.count == 0) {
+            header.count = features.ToInitCapacity();
+        }
+        return header;
     }
 
     public void ReadEndArray() {

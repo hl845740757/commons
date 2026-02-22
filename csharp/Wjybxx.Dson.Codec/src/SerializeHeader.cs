@@ -47,7 +47,6 @@ public struct SerializeHeader
     /// 集合大小
     ///
     /// 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
-    /// 在使用Dson文本配置数据的情况下，Count可能未被正确维护；
     /// Count的唯一作用就是更好的初始化<see cref="List{T}"/>和<see cref="Dictionary{TKey,TValue}"/>的空间。
     /// </summary>
     public int count;
