@@ -97,6 +97,14 @@ public struct Long4 : IEquatable<Long4>
             lhs.v3 / rhs.v3);
     }
 
+    public static Long4 operator %(Long4 lhs, Long4 rhs) {
+        return new Long4(
+            lhs.v0 % rhs.v0,
+            lhs.v1 % rhs.v1,
+            lhs.v2 % rhs.v2,
+            lhs.v3 % rhs.v3);
+    }
+
     #endregion
 
     #region equals

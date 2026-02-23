@@ -84,13 +84,12 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public LinkedDictionary(int expectedCount, float loadFactor = 0.75f,
                             IEqualityComparer<TKey>? keyComparer = null) {
         if (expectedCount < 0) throw new ArgumentException("The expected number of elements must be nonnegative");
-        HashCommon.CheckLoadFactor(loadFactor);
-        _loadFactor = loadFactor;
-        _keyComparer = keyComparer ?? EqualityComparer<TKey>.Default;
-
         if (expectedCount == 0) {
             expectedCount = HashCommon.DefaultInitialSize;
         }
+        HashCommon.CheckLoadFactor(loadFactor);
+        _loadFactor = loadFactor;
+        _keyComparer = keyComparer ?? EqualityComparer<TKey>.Default;
         _mask = HashCommon.ArraySize(expectedCount, loadFactor) - 1;
     }
 

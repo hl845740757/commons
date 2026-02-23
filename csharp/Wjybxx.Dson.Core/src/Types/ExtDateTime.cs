@@ -20,7 +20,6 @@ using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Wjybxx.Commons;
-using Wjybxx.Dson.Internal;
 
 namespace Wjybxx.Dson.Types
 {

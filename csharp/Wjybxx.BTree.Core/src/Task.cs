@@ -493,10 +493,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <summary>
     /// 重置任务以便重新启动(清理运行产生的所有临时数据)
     ///
-    /// 1. 和exit一样，清理的是运行时产生的临时数据，而不是所有数据；不过该方法是比exit更彻底的清理。
-    /// 2. 钩子任务也应当被重置。
-    /// 3. 与<see cref="BeforeEnter"/>相同，重写方法时，应先执行父类逻辑，再重置自身属性。
-    /// 4. 有临时数据的Task都应该重写该方法，行为树通常是需要反复执行的。
+    /// 1.和exit一样，清理的是运行时产生的临时数据，而不是所有数据；不过该方法是比exit更彻底的清理。
+    /// 2.钩子任务也应当被重置。
+    /// 3.与<see cref="BeforeEnter"/>相同，重写方法时，应先执行父类逻辑，再重置自身属性。
+    /// 4.有临时数据的Task都应该重写该方法，行为树通常是需要反复执行的。
     /// </summary>
     public virtual void ResetForRestart() {
         if (status == TaskStatus.NEW) {
@@ -565,6 +565,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.该方法不应该产生状态迁移，即不应该使Task进入完成状态。
     /// 3.该方法主要用于暂停关联的外部逻辑，如停止外部计时器。
     /// 4.重写该方法通常应该重写enter方法，在enter方法中处理未激活的情况。
+    /// 5.如果期望子节点先响应事件，可以重写该方法实现
     /// </summary>
     protected virtual void OnActiveInHierarchyChanged() {
     }
@@ -633,8 +634,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 任务是否未启动就失败了。常见原因：
-    /// 1. 前置条件失败
-    /// 2. 任务开始前检测到取消
+    /// 1.前置条件失败
+    /// 2.任务开始前检测到取消
     /// </summary>
     /// <returns>未成功启动则返回true</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1042,6 +1043,11 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     #region child维护
 
 #nullable disable
+    public Task<T> this[int index] {
+        get => GetChild(index);
+        set => SetChild(index, value);
+    }
+
     /// <summary>
     /// 1.尽量不要在运行时增删子节点（危险操作）
     /// 2.不建议将Task从一棵树转移到另一棵树，可能产生内存泄漏（引用未删除干净）
@@ -1153,19 +1159,19 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /** 设置子节点的取消令牌 -- 会自动传播取消信号 */
-    public void SetChildCancelToken(Task<T> child, CancelToken? childCancelToken) {
-        if (childCancelToken != null && childCancelToken != cancelToken) {
-            cancelToken.RegisterCallback(childCancelToken);
+    public void SetChildCancelToken(Task<T> child, CancelToken? cts) {
+        if (cts != null && cts != cancelToken) {
+            cancelToken.RegisterCallback(cts);
         }
-        child.cancelToken = childCancelToken;
+        child.cancelToken = cts;
     }
 
     /** 删除子节点的取消令牌 */
     public void UnsetChildCancelToken(Task<T> child) {
-        CancelToken? childCancelToken = child.cancelToken;
-        if (childCancelToken != null && childCancelToken != cancelToken) {
-            cancelToken.UnregisterCallback(childCancelToken);
-            childCancelToken.Reset();
+        CancelToken? cts = child.cancelToken;
+        if (cts != null && cts != cancelToken) {
+            cancelToken.UnregisterCallback(cts);
+            cts.Reset();
         }
         child.cancelToken = null;
     }
@@ -1173,6 +1179,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 自相而上查找第一个指定类型的祖先节点 */
     public U? GetFirstAncestorOfType<U>() where U : class {
         Task<T> control = Control;
+        if (control == null) return null;
         if (control is U ancestor) {
             return ancestor;
         }

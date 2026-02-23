@@ -44,14 +44,6 @@ public class ConverterOptions
     public readonly DeserializeFeatures decodeFeatures;
 
     /// <summary>
-    /// 是否启用随机读
-    /// 启用随机读会增加较多的开销，需要先读取为中间结构，再解码为对象；但启用随机读的数据兼容性更好。
-    /// 如果不写入默认值和null值的，通常都需要启用该特性。
-    /// 如果需要反复反序列化一个对象(通常是配置文件)，可以先解码为中间对象，将中间对象保存下来。
-    /// 另一种方式是先反序列化，然后完整序列化为字节数组，再通过字节数组反序列化 -- 可关闭随机读。
-    /// </summary>
-    public readonly bool randomRead;
-    /// <summary>
     /// 是否启用BeforeEncode钩子方法。
     /// 默认不启用！因为启用该特性要求同一个Bean不能被多线程同时序列化 -- 只适用单线程序列化场景，
     /// <code>
@@ -97,7 +89,6 @@ public class ConverterOptions
         this.typeWritePolicy = builder.TypeWritePolicy;
         this.encodeFeatures = builder.EncodeFeatures;
         this.decodeFeatures = builder.DecodeFeatures;
-        this.randomRead = builder.RandomRead;
         this.enableBeforeEncode = builder.EnableBeforeEncode;
         this.enableAfterDecode = builder.EnableAfterDecode;
 
@@ -127,7 +118,6 @@ public class ConverterOptions
         builder.TypeWritePolicy = typeWritePolicy;
         builder.EncodeFeatures = encodeFeatures;
         builder.DecodeFeatures = decodeFeatures;
-        builder.RandomRead = randomRead;
         builder.EnableBeforeEncode = enableBeforeEncode;
         builder.EnableAfterDecode = enableAfterDecode;
 
@@ -165,7 +155,6 @@ public class ConverterOptions
         public TypeWritePolicy TypeWritePolicy { get; set; } = TypeWritePolicy.Optimized;
         public SerializeFeatures EncodeFeatures { get; set; }
         public DeserializeFeatures DecodeFeatures { get; set; }
-        public bool RandomRead { get; set; } = true;
         public bool EnableBeforeEncode { get; set; } = false;
         public bool EnableAfterDecode { get; set; } = true;
 
