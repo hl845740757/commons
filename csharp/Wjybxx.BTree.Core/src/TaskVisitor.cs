@@ -42,17 +42,26 @@ public interface TaskVisitor<T> where T : class
     /// 访问钩子节点
     /// </summary>
     /// <param name="name">钩子的名字</param>
-    /// <param name="child">钩子子节点</param>
+    /// <param name="child">钩子节点</param>
     /// <param name="param">用户参数</param>
     void VisitHook(string name, Task<T> child, object? param);
 
     /// <summary>
-    /// 访问List/Map类型钩子节点
+    /// 访问List类型钩子节点
     /// </summary>
     /// <param name="name">钩子的名字</param>
-    /// <param name="child">钩子子节点</param>
+    /// <param name="child">钩子的子节点</param>
     /// <param name="index">钩子子节点索引</param>
     /// <param name="param">用户参数</param>
-    void VisitHook(string name, Task<T> child, int index, object? param);
+    void VisitList(string name, Task<T> child, int index, object? param);
+
+    /// <summary>
+    /// 访问字典类型钩子节点
+    /// </summary>
+    /// <param name="name">钩子的名字</param>
+    /// <param name="child">钩子的子节点</param>
+    /// <param name="key">字典key</param>
+    /// <param name="param">用户参数</param>
+    void VisitMap<TKey>(string name, Task<T> child, TKey key, object? param);
 }
 }

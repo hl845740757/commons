@@ -27,7 +27,9 @@ namespace Wjybxx.Commons.Collections
 /// <summary>
 /// 非Hash结构的字典，适用于小数据量场景
 ///
-/// 注：可通过<see cref="GetPair(int)"/>以数组方式迭代，且有更好的迭代效率。
+/// 注：
+/// 1.可通过<see cref="GetPair(int)"/>以数组方式迭代，且有更好的迭代效率。
+/// 2.可通过<see cref="AddMultiple"/>将字典视作List。
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
 /// <typeparam name="TValue"></typeparam>
@@ -455,7 +457,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
     /// <summary>
     /// 添加可重复元素(当做List用)
     /// </summary>
-    public void AddMulti(TKey key, TValue value) {
+    public void AddMultiple(TKey key, TValue value) {
         EnsureCapacity(_count + 1);
         _table[_count++] = new Node(key, value);
         _version++;

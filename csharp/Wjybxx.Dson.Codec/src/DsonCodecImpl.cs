@@ -136,6 +136,24 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
 
     #endregion
 
+    #region 枚举支持
+
+    public T ToObject(int value) {
+        if (_codec is IEnumCodec<T> enumCodec) {
+            return enumCodec.ToObject(value);
+        }
+        throw new DsonCodecException("unexpected ToObject method call");
+    }
+
+    public int ToNumber(T value) {
+        if (_codec is IEnumCodec<T> enumCodec) {
+            return enumCodec.ToNumber(value);
+        }
+        throw new DsonCodecException("unexpected ToNumber method call");
+    }
+
+    #endregion
+
     #region 字典特殊支持
 
     /// <summary>

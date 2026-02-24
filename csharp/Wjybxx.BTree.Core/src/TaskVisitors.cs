@@ -40,7 +40,11 @@ public static class TaskVisitors
             if (child.IsRunning) child.RefreshActiveInHierarchy();
         }
 
-        public void VisitHook(string name, Task<T> child, int index, object? param) {
+        public void VisitList(string name, Task<T> child, int index, object? param) {
+            if (child.IsRunning) child.RefreshActiveInHierarchy();
+        }
+
+        public void VisitMap<TKey>(string name, Task<T> child, TKey key, object? param) {
             if (child.IsRunning) child.RefreshActiveInHierarchy();
         }
     }
@@ -57,7 +61,11 @@ public static class TaskVisitors
             child.ResetForRestart();
         }
 
-        public void VisitHook(string name, Task<T> child, int index, object? param) {
+        public void VisitList(string name, Task<T> child, int index, object? param) {
+            child.ResetForRestart();
+        }
+
+        public void VisitMap<TKey>(string name, Task<T> child, TKey key, object? param) {
             child.ResetForRestart();
         }
     }

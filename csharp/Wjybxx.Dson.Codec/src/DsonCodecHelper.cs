@@ -110,7 +110,7 @@ internal static class DsonCodecHelper
             case DsonType.Bool: return reader.ReadBool(name);
             case DsonType.String: {
                 string value = reader.ReadString(name);
-                return value == "true" || value == "1";
+                return value == "1" || value == "true";
             }
             case DsonType.Null: {
                 reader.ReadNull(name);

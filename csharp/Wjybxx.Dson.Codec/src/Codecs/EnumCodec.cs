@@ -41,11 +41,22 @@ public readonly struct EnumValueInfo<T>
 }
 
 /// <summary>
+/// 枚举辅助接口(解决泛型约束问题)
+/// </summary>
+/// <typeparam name="T"></typeparam>
+internal interface IEnumCodec<T>
+{
+    T ToObject(int value);
+
+    int ToNumber(T value);
+}
+
+/// <summary>
 /// 默认枚举类的Codec
 /// 注意：默认不支持序列化未在枚举中定义的枚举值 —— 其它特殊情况，建议直接使用int值。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct, Enum
+public sealed class EnumCodec<T> : IDsonCodec<T>, IEnumCodec<T>, IKeyCodec<T> where T : struct, Enum
 {
     private readonly Dictionary<T, EnumValueInfo<T>> _value2EnumDic;
     private readonly Dictionary<int, EnumValueInfo<T>> _number2EnumDic;
@@ -78,6 +89,18 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IKeyCodec<T> where T : struct,
     }
 
     #region 避免装箱
+
+    public T ToObject(int value) {
+        return _number2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)
+            ? valueInfo.value
+            : (T)Enum.ToObject(typeof(T), value);
+    }
+
+    public int ToNumber(T value) {
+        return _value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)
+            ? valueInfo.number
+            : value.GetHashCode();
+    }
 
     public string EncodeKey(T value, SerializeFeatures features) {
         // 枚举Key必须存在对应的名字

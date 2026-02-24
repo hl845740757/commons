@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {

@@ -208,13 +208,12 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         castType = type.GetInterface(typeof(IGenericSet<>).Name);
         if (castType != null) return castType;
 
+        castType = type.GetInterface(typeof(IDictionary<,>).Name);
+        if (castType != null) return castType; // C#字典也是集合类型...
+
         castType = type.GetInterface(typeof(ICollection<>).Name);
         if (castType != null) return castType;
 
-        castType = type.GetInterface(typeof(IDictionary<,>).Name);
-        if (castType != null) return castType;
-
-        // readonly系列集合...
         castType = type.GetInterface(typeof(IEnumerable<>).Name);
         return castType;
     }
@@ -227,23 +226,7 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
             if (subType == type) continue;
             return subType;
         }
-        // readonly系列集合...
-        if (type.IsGenericType) {
-            Type genericTypeDefinition = type.GetGenericTypeDefinition();
-            if (genericTypeDefinition == typeof(IReadOnlyList<>)
-                || genericTypeDefinition == typeof(IReadOnlyCollection<>)
-                || genericTypeDefinition == typeof(IEnumerable<>)) {
-                return typeof(List<>).MakeGenericType(type.GenericTypeArguments);
-            }
-#if NET6_0_OR_GREATER
-            if (genericTypeDefinition == typeof(IReadOnlySet<>)) {
-                return typeof(HashSet<>).MakeGenericType(type.GenericTypeArguments);
-            }
-#endif
-            if (genericTypeDefinition == typeof(IReadOnlyDictionary<,>)) {
-                return typeof(Dictionary<,>).MakeGenericType(type.GenericTypeArguments);
-            }
-        }
+        // 默认回滚策略已在Config中包含
         return null;
     }
 

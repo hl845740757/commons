@@ -65,6 +65,8 @@ public enum SerializeFeatures : uint
     /// </summary>
     WriteAsArray = 0x08,
 
+    // 集合特征值之间可重复
+#pragma warning disable CA1069
     /// <summary>
     /// 将字典编码为普通数组
     /// 0.标准字典KEY类型：int32/int64/uint32/uint64/string/enum。
@@ -100,6 +102,7 @@ public enum SerializeFeatures : uint
     /// </code>
     /// </summary>
     PairAsDocument = 0x80,
+#pragma warning restore CA1069
 
     /// <summary>
     /// 序列化Null字段
@@ -218,19 +221,6 @@ public enum SerializeFeatures : uint
     NumberFixed = 0x80 << 20,
 
     /// <summary>
-    /// 限定浮点数保留小数点后3位，适用普通浮点数和Double4
-    /// </summary>
-    NumberNoExponent3 = 0x01 << 28,
-    /// <summary>
-    /// 限定浮点数保留小数点后7位，适用普通浮点数和Double4
-    /// </summary>
-    NumberNoExponent7 = 0x02 << 28,
-    /// <summary>
-    /// 限定Double4的值为整数类型
-    /// </summary>
-    Double4AsInt = 0x04 << 28,
-
-    /// <summary>
     /// 将Double4编码为向量(1)
     /// </summary>
     Double4AsVector = 0x10 << 20,
@@ -250,6 +240,23 @@ public enum SerializeFeatures : uint
     /// 限定Double4长度为3
     /// </summary>
     Double4Len3 = 0x80 << 20,
+
+    /// <summary>
+    /// 限定浮点数保留小数点后3位，适用普通浮点数和Double4
+    /// </summary>
+    NumberNoExponent3 = 0x01 << 28,
+    /// <summary>
+    /// 限定浮点数保留小数点后7位，适用普通浮点数和Double4
+    /// </summary>
+    NumberNoExponent7 = 0x02 << 28,
+    /// <summary>
+    /// 将浮点数视作整数(兼容Double4)
+    /// </summary>
+    NumberAsInt = 0x04 << 28,
+    /// <summary>
+    /// 限定Double4的值为整数类型
+    /// </summary>
+    Double4AsInt = 0x04 << 28,
 
     /// <summary>
     /// Double4序列化为Vector2

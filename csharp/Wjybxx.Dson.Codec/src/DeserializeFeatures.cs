@@ -39,10 +39,13 @@ public enum DeserializeFeatures
     /// 拷贝引用指向的对象(未实现)
     /// </summary>
     CopyReferenceTarget = 0x02,
+    /// <summary>
+    /// 尝试从字符串中解析
+    /// </summary>
+    TryParseString = 0x40,
 
     /// <summary>
     /// 当Header中不包含Count信息时，赋予1/2/3档初始化空间，可减少扩容次数
-    /// 暂定为：10, 24, 48
     /// </summary>
     InitCapacity1 = 0x10,
     InitCapacity2 = 0x20,
@@ -100,17 +103,12 @@ public enum DeserializeFeatures
     /// Enum解码时允许未定义枚举值(flags无需处理)
     /// </summary>
     EnumAllowUndefine = 0x20 << 8,
-
-    /// <summary>
-    /// 数字类型尝试从字符串中解析（字段级别）
-    /// </summary>
-    NumberParseString = 0x10 << 8,
 #pragma warning restore CA1069
 
     /// <summary>
     /// 集合元素的特征值
     /// </summary>
     MaskElementFeatures = EmptyStringAsEmpty | EmptyStringAsNull | StringAsInterned
-                          | EnumIgnoreCase | EnumAllowUndefine | NumberParseString,
+                          | EnumIgnoreCase | EnumAllowUndefine | TryParseString,
 }
 }

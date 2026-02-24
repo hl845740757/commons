@@ -477,15 +477,20 @@ public sealed class DsonCodecConfig
         config.AddGenericCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericCodec(typeof(Dictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddGenericCodec(typeof(ArrayDictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
         // 特殊组件
         config.AddGenericCodec(typeof(Nullable<>), typeof(NullableCodec<>));
         config.AddGenericCodec(typeof(KeyValuePair<,>), typeof(PairCodec<,>));
 
-        // readonly
-        config.AddGenericCodec(typeof(IReadOnlyCollection<>), typeof(EnumerableCodec<>));
-        config.AddGenericCodec(typeof(IReadOnlyList<>), typeof(EnumerableCodec<>));
-        config.AddGenericCodec(typeof(IEnumerable<>), typeof(EnumerableCodec<>));
+        // 所有集合都能转IEnumerable编码；readonly只能解码为默认类型
+        config.AddGenericEncoder(typeof(IEnumerable<>), typeof(EnumerableCodec<>));
+        config.AddGenericDecoder(typeof(IReadOnlyCollection<>), typeof(CollectionCodec<>));
+        config.AddGenericDecoder(typeof(IReadOnlyList<>), typeof(CollectionCodec<>));
+        config.AddGenericDecoder(typeof(IEnumerable<>), typeof(CollectionCodec<>));
+#if NET6_0_OR_GREATER
+        config.AddGenericDecoder(typeof(IReadOnlySet<>), typeof(CollectionCodec<>));
+#endif
     }
 
     private static void InitDefaultCodecs(DsonCodecConfig config) {
