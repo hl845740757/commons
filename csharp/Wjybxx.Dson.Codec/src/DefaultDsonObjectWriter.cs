@@ -440,31 +440,31 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
             header.collection = _stack.Collection;
             header.localId = _stack.LocalId;
         }
-        TypeWritePolicy typePolicy = converter.Options.typeWritePolicy;
-        bool typed = (features & SerializeFeatures.WriteTypeName) != 0
-                     || converter.TypeWriteHelper.RequireTypeName(typePolicy, encoderType, declaredType);
+        // count大于默认初始化空间才写入
+        if (header.count < 5) {
+            header.count = 0;
+        }
         bool headerIsEmpty = header.IsEmpty;
+        bool typed = (features & SerializeFeatures.WriteTypeName) != 0
+                     || converter.TypeWriteHelper.RequireTypeName(encoderType, declaredType);
+        if (typed) {
+            TypeMeta typeMeta = writer.Attachment() as TypeMeta;
+            if (typeMeta == null) {
+                throw new DsonCodecException("ContextError: WriteHeader must be called after WriteStartXXX");
+            }
+            header.clsName = typeMeta.MainName;
+        }
         if (!typed && headerIsEmpty) {
             return;
         }
-        TypeMeta typeMeta = writer.Attachment() as TypeMeta;
-        if (typeMeta == null) {
-            throw new DsonCodecException("ContextError"); // 必须先调用WriteStart
-        }
-        if (headerIsEmpty) {
-            if (writer is DsonTextWriter textWriter) {
-                textWriter.WriteSimpleHeader(typeMeta.MainClsName);
-            } else {
-                writer.WriteStartHeader();
-                writer.WriteString(DsonHeader.Names_ClassName, typeMeta.MainClsName);
-                writer.WriteEndHeader();
-            }
+        if (headerIsEmpty && writer is DsonTextWriter textWriter) {
+            textWriter.WriteSimpleHeader(header.clsName);
             return;
         }
         // 逐项写入
         writer.WriteStartHeader();
         if (typed) {
-            writer.WriteString(DsonHeader.Names_ClassName, typeMeta.MainClsName);
+            writer.WriteString(DsonHeader.Names_ClassName, header.clsName);
         }
         if (!string.IsNullOrEmpty(header.collection)) {
             writer.WriteString(DsonHeader.Names_Collection, header.collection);
@@ -472,7 +472,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if (header.localId != 0) {
             writer.WriteInt64(DsonHeader.Names_LocalId, header.localId, NumberStyle.Simple);
         }
-        if (header.count > 4) { // 大于默认初始化空间才写入
+        if (header.count > 0) {
             writer.WriteInt32(DsonHeader.Names_Count, header.count, NumberStyle.Simple);
         }
         if (header.version != 0) {

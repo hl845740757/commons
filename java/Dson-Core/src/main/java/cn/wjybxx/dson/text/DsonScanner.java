@@ -182,8 +182,11 @@ public final class DsonScanner implements AutoCloseable {
         if (firstChar < 0) {
             throw invalidClassName("@{", getPosition());
         }
+        if (firstChar == '}') { // 空header
+            return new DsonToken(DsonTokenType.BEGIN_HEADER, "{", beginPos);
+        }
         String className;
-        if (firstChar == '"') {
+        if (firstChar == '"') { // 字符串-clsName
             className = scanString(false);
         } else {
             // 非双引号模式下，只能由安全字符构成

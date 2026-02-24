@@ -23,8 +23,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Commons.Pool;
-using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Text
@@ -178,8 +176,11 @@ public sealed class DsonScanner : IDisposable
         if (firstChar < 0) {
             throw InvalidClassName("@{", Position);
         }
+        if (firstChar == '}') { // 空header
+            return new DsonToken(DsonTokenType.BeginHeader, "{", beginPos);
+        }
         string className;
-        if (firstChar == '"') {
+        if (firstChar == '"') { // 字符串-clsName
             className = ScanString(false)!;
         } else {
             // 非双引号模式下，只能由安全字符构成

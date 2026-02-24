@@ -70,8 +70,8 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
         this.decodeFeatures = decodeFeatures;
     }
 
-    /** 类的主别名 */
-    public string MainClsName => clsNames[0];
+    /** 类型的主别名 */
+    public string MainName => clsNames[0];
 
     /** 替换特征值 */
     public TypeMeta WithFeatures(SerializeFeatures encodeFeatures, DeserializeFeatures decodeFeatures) {

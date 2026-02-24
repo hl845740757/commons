@@ -30,20 +30,25 @@ namespace Wjybxx.Dson.Codec
 public sealed class TypeWriteHelper
 {
     /// <summary>
+    /// 默认的策略
+    /// </summary>
+    private readonly TypeWritePolicy policy;
+    /// <summary>
     /// 这里包含用户配置的非泛型类型之间和泛型原型之间的关系，
     /// 同时包含了运行时类型之间的结果缓存，虽然小数组的equals比较很块，但比较泛型参数会产生临时数组，
     /// 因此我们缓存所有的类型数据。
     /// </summary>
     private readonly ConcurrentDictionary<TypePair, bool> cacheDic = new ConcurrentDictionary<TypePair, bool>();
 
-    public TypeWriteHelper(IDictionary<TypePair, bool> configs) {
+    public TypeWriteHelper(TypeWritePolicy policy, IDictionary<TypePair, bool> configs) {
+        this.policy = policy;
         foreach (KeyValuePair<TypePair, bool> pair in configs) {
             cacheDic[pair.Key] = pair.Value;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool RequireTypeName(TypeWritePolicy policy, Type encoderType, Type declaredType) {
+    public bool RequireTypeName(Type encoderType, Type declaredType) {
         if (policy == TypeWritePolicy.Optimized) {
             return !IsOptimizable(encoderType, declaredType);
         }

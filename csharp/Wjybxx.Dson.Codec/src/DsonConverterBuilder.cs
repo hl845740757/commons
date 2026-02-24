@@ -43,7 +43,7 @@ public class DsonConverterBuilder
         return new DefaultDsonConverter(
             new DynamicTypeMetaRegistry(typeMetaConfig),
             new DynamicCodecRegistry(codecConfig),
-            new TypeWriteHelper(codecConfig.GetOptimizedTypes()),
+            new TypeWriteHelper(options.typeWritePolicy, codecConfig.GetOptimizedTypes()),
             options);
     }
 

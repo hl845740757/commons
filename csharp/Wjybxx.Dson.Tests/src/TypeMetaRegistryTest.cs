@@ -76,7 +76,7 @@ public class TypeMetaRegistryTest
         Assert.NotNull(typeMeta);
 
         string clsName = "List[List[s]][]";
-        Assert.That(typeMeta.MainClsName, Is.EqualTo(clsName));
+        Assert.That(typeMeta.MainName, Is.EqualTo(clsName));
 
         TypeMeta typeMeta2 = registry.OfName(clsName);
         Assert.That(typeMeta2, Is.SameAs(typeMeta));
@@ -88,7 +88,7 @@ public class TypeMetaRegistryTest
         string clsName = "List[List[i]][]";
         TypeMeta typeMeta = registry.OfName(clsName);
         Assert.NotNull(typeMeta);
-        Assert.That(typeMeta.MainClsName, Is.EqualTo(clsName));
+        Assert.That(typeMeta.MainName, Is.EqualTo(clsName));
 
         Type type = typeof(List<List<int>>[]);
         TypeMeta typeMeta2 = registry.OfType(type);

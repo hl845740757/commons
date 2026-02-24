@@ -74,12 +74,12 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             decodeFeatures = rawTypeMeta.decodeFeatures;
         }
         TypeName typeName = NameOfType(type); // 放前方可检测泛型
-        string mainClsName = typeName.ToString();
+        string mainName = typeName.ToString();
 
         // 需要动态生成TypeMeta并缓存下来
-        typeMeta = TypeMeta.Of(type, encodeFeatures, decodeFeatures, mainClsName);
+        typeMeta = TypeMeta.Of(type, encodeFeatures, decodeFeatures, mainName);
         type2MetaDic.TryAdd(type, typeMeta);
-        name2MetaDic.TryAdd(mainClsName, typeMeta);
+        name2MetaDic.TryAdd(mainName, typeMeta);
         return typeMeta;
     }
 
@@ -152,7 +152,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             foreach (Type genericTypeArg in genericTypeArgs) {
                 typeArgClassNames.Add(NameOfType(genericTypeArg));
             }
-            return new TypeName(typeMeta.MainClsName, typeArgClassNames);
+            return new TypeName(typeMeta.MainName, typeArgClassNames);
         }
         // 非泛型非数组，必须存在于用户的注册表中
         {
@@ -160,7 +160,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            return new TypeName(typeMeta.MainClsName);
+            return new TypeName(typeMeta.MainName);
         }
     }
 
