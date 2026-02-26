@@ -445,6 +445,9 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public string ReadName() {
+        if (reader.IsAtType) {
+            reader.ReadDsonType();
+        }
         return reader.ReadName();
     }
 
@@ -469,20 +472,23 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         }
         if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtType) {
-            // 用户尚未调用readDsonType，可指定下一个key的值
-            Context context = (Context)reader.Attachment();
-            if (context.Contains(name)) {
-                context.SetNext(name);
-                reader.ReadDsonType();
-                reader.ReadName();
-                return true;
+            if (reader.Attachment() is Context context) {
+                if (context.Contains(name)) {
+                    context.SetNext(name);
+                    reader.ReadDsonType();
+                    reader.ReadName();
+                    return true;
+                }
+                return false; // 主动读模式下不破坏输入，因此不抛出异常
             }
-            return false;
+            reader.ReadDsonType();
+            reader.ReadName(name); // 被动读不匹配的情况下抛出异常
+            return true;
         } else {
             if (reader.CurrentDsonType == DsonType.EndOfObject) {
                 return false;
             }
-            return name == reader.ReadName(); // 不抛出异常
+            return name == reader.ReadName();
         }
     }
 

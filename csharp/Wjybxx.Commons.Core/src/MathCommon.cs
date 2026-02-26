@@ -321,6 +321,16 @@ public static class MathCommon
     #region min/max
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Min(float x, float y) {
+        return (double)x < y ? x : y;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Max(float x, float y) {
+        return (double)x > y ? x : y;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Min(int a, int b, int c) {
         if (a > b) a = b;
         if (a > c) a = c;

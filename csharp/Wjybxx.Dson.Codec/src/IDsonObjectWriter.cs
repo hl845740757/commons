@@ -199,8 +199,8 @@ public interface IDsonObjectWriter : IDisposable
     /// <param name="declaredType">声明类型，用于判断是否写入类型信息</param>
     /// <param name="features">序列化特征值</param>
     /// </summary>
-    void WriteHeader(Type encoderType, Type declaredType,
-                     SerializeFeatures features, SerializeHeader header = default);
+    void WriteHeader(Type encoderType, Type declaredType, SerializeFeatures features,
+                     SerializeHeader header = default);
 
     /// <summary>
     /// 当前容器的类型元数据

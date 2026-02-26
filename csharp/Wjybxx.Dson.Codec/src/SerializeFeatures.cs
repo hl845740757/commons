@@ -229,9 +229,9 @@ public enum SerializeFeatures : uint
     /// </summary>
     Double4AsRgba = 0x20 << 20,
     /// <summary>
-    /// 将Double4编码为Rect(3) - 不推荐使用
+    /// 将Double4编码为数组(3)
     /// </summary>
-    Double4AsRect = 0x30 << 20,
+    Double4AsArray = 0x30 << 20,
     /// <summary>
     /// 限定Double4长度为2
     /// </summary>
@@ -283,7 +283,7 @@ public enum SerializeFeatures : uint
     /// <summary>
     /// Double4编码样式的掩码
     /// </summary>
-    MaskDouble4Styles = Double4AsVector | Double4AsRgba | Double4AsRect
+    MaskDouble4Styles = Double4AsVector | Double4AsRgba | Double4AsArray
                         | Double4Len2 | Double4Len3
                         | NumberNoExponent3 | NumberNoExponent7
                         | Double4AsInt,

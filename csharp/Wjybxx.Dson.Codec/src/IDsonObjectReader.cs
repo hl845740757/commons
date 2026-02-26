@@ -169,14 +169,16 @@ public interface IDsonObjectReader : IDisposable
     string ReadName();
 
     /// <summary>
-    /// 读取指定名字的值 -- 可实现随机读
+    /// 读取指定名字的值 -- 非被动读模式下可用。
     /// 如果尚未调用<see cref="ReadDsonType"/>，该方法将尝试跳转到该name所在的字段。
     /// 如果已调用<see cref="ReadDsonType"/>，则name必须与下一个name匹配。
     /// 如果已调用<see cref="ReadName()"/>，则name可以为null，否则必须当前name匹配。
     /// 返回false的情况下，可继续调用该方法或<see cref="ReadDsonType"/>读取下一个字段。
+    ///
+    /// 如果是Object上下文，如果字段存在则返回true，否则返回false；
+    /// 如果是Array上下文，如果尚未到达数组尾部，则返回true，否则返回false。
     /// </summary>
-    /// <param name="name"></param>
-    /// <returns>如果是Object上下文，如果字段存在则返回true，否则返回false；如果是Array上下文，如果尚未到达数组尾部，则返回true，否则返回false。</returns>
+    /// <param name="name">期望的字段名</param>
     bool ReadName(string? name);
 
     DsonType CurrentDsonType { get; }

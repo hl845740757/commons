@@ -591,12 +591,11 @@ public static class DsonConverterUtils
         if ((features & SerializeFeatures.MaskDouble4Styles) == 0) { // 大概率
             return style;
         }
-        SerializeFeatures basicStyle = features & SerializeFeatures.Double4AsRect;
+        SerializeFeatures basicStyle = features & SerializeFeatures.Double4AsArray;
         style = basicStyle switch
         {
             SerializeFeatures.Double4AsVector => Double4Style.Vector,
             SerializeFeatures.Double4AsRgba => Double4Style.Rgba,
-            SerializeFeatures.Double4AsRect => Double4Style.Rect,
             _ => Double4Style.Array
         };
         if ((features & SerializeFeatures.Double4Len2) != 0) {
