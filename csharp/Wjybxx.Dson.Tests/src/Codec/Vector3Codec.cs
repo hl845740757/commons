@@ -34,7 +34,7 @@ public class Vector3Codec : IDsonCodec<Vector3>
     }
 
     public Vector3 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        reader.ReadStartObject(typeof(Vector3));
+        reader.ReadStartObject(typeof(Vector3), DeserializeFeatures.PassiveReading);
         Vector3 r = new Vector3(
             reader.ReadFloat("x"),
             reader.ReadFloat("y"),

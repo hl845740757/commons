@@ -206,7 +206,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     private IDictionary<K, V> ReadDictionary(IDsonObjectReader reader, DeserializeFeatures features,
                                              Func<object>? factory,
                                              DsonCodecImpl<K> keyDecoder) {
-        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
+        DeserializeFeatures selfFeatures = features.ErasureElementFeatures() | DeserializeFeatures.PassiveReading;
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
         IDictionary<K, V> result;
@@ -232,7 +232,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 case DsonType.Object: { // Pair为子文档
                     TypeMeta pairTypeMeta = GetPairTypeMeta(reader.TypeMetaRegistry);
                     do {
-                        reader.ReadStartObject(pairTypeMeta);
+                        reader.ReadStartObject(pairTypeMeta, DeserializeFeatures.PassiveReading);
                         {
                             reader.ReadDsonType();
                             K key = keyDecoder.DecodeKey(reader.ReadName());

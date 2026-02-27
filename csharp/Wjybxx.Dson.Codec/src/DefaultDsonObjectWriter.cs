@@ -325,18 +325,18 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
         // 处理Nullable -- 手动传入的Type参数可能是值类型，但泛型参数可能是Object
         if (declaredType.IsValueType && typeof(T).IsValueType) {
-            DsonCodecImpl<T> encoder = converter.CodecRegistry.GetEncoder(declaredType) as DsonCodecImpl<T>;
-            if (encoder == null) {
+            DsonCodecImpl<T> castEncoder = converter.CodecRegistry.GetEncoder(declaredType) as DsonCodecImpl<T>;
+            if (castEncoder == null) {
                 throw DsonCodecException.UnsupportedType(declaredType);
             }
-            if (encoder.IsNullableCodec && !encoder.HasValue(in value)) {
+            if (castEncoder.IsNullableCodec && !castEncoder.HasValue(in value)) {
                 WriteNull(name!, features);
                 return;
             }
             if (writer.IsAtName) {
                 writer.WriteName(name);
             }
-            encoder.WriteObject(this, in value, declaredType, features);
+            castEncoder.WriteObject(this, in value, declaredType, features);
             return;
         }
         // 声明类型不是值类型就是引用类型或装箱类型 - 集合在外层处理了string类型
@@ -344,29 +344,27 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
             WriteNull(name!, features);
             return;
         }
-        Type runtimeType = value.GetType(); // 值类型调用GetType会装箱
-        {
-            DsonCodecImpl? encoder = converter.CodecRegistry.GetEncoder(runtimeType);
-            if (encoder != null) {
-                if (writer.IsAtName) {
-                    writer.WriteName(name);
-                }
-                if (writer.ContextType != DsonContextType.TopLevel
-                    && IsSerializeReference(features, encoder)) {
-                    // 非顶层对象转为引用写入
-                    WritePtr(AddReference(value));
-                } else if (encoder is DsonCodecImpl<T> castEncoder) {
-                    // 避免值类型装箱
-                    castEncoder.WriteObject(this, value, declaredType, features);
-                } else {
-                    encoder.WriteObject2(this, value, declaredType, features);
-                }
-                return;
-            }
-        }
-        // DsonValue
+        // DsonValue - DsonValue不能查询Encoder否则可能查到List/Map的编码器，除非我们显式注册相关编解码器
         if (value is DsonValue dsonValue) {
             Dsons.WriteDsonValue(writer, dsonValue, name);
+            return;
+        }
+        Type runtimeType = value.GetType(); // 值类型调用GetType会装箱
+        DsonCodecImpl? encoder = converter.CodecRegistry.GetEncoder(runtimeType);
+        if (encoder != null) {
+            if (writer.IsAtName) {
+                writer.WriteName(name);
+            }
+            if (writer.ContextType != DsonContextType.TopLevel
+                && IsSerializeReference(features, encoder)) {
+                // 非顶层对象转为引用写入
+                WritePtr(AddReference(value));
+            } else if (encoder is DsonCodecImpl<T> castEncoder) {
+                // 避免值类型装箱
+                castEncoder.WriteObject(this, value, declaredType, features);
+            } else {
+                encoder.WriteObject2(this, value, declaredType, features);
+            }
             return;
         }
         throw DsonCodecException.UnsupportedType(runtimeType);
@@ -448,10 +446,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         bool typed = (features & SerializeFeatures.WriteTypeName) != 0
                      || converter.TypeWriteHelper.RequireTypeName(encoderType, declaredType);
         if (typed) {
-            TypeMeta typeMeta = writer.Attachment() as TypeMeta;
-            if (typeMeta == null) {
-                throw new DsonCodecException("ContextError: WriteHeader must be called after WriteStartXXX");
-            }
+            TypeMeta typeMeta = (TypeMeta)writer.Attachment();
             header.clsName = typeMeta.MainName;
         }
         if (!typed && headerIsEmpty) {
@@ -489,9 +484,9 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     public TypeMeta? ContainerTypeMeta => writer.Attachment() as TypeMeta;
 
     public DsonCodecImpl<T>? GetInlinableCodec<T>() {
-        DsonCodecImpl decoder = converter.CodecRegistry.GetEncoder(typeof(T));
-        if (decoder is DsonCodecImpl<T> castDecoder && castDecoder.IsInlinableCodec) {
-            return castDecoder;
+        DsonCodecImpl encoder = converter.CodecRegistry.GetEncoder(typeof(T));
+        if (encoder is DsonCodecImpl<T> castEncoder && castEncoder.IsInlinableCodec) {
+            return castEncoder;
         }
         return null;
     }

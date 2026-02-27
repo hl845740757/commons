@@ -354,6 +354,9 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             return (T)ReadReference(ptr, declaredType, features, factory);
         }
         // DsonValue接收原始数据
+        if ((features & DeserializeFeatures.ReadAsDsonValue) != 0) {
+            return (T)(object)Dsons.ReadDsonValue(reader);
+        }
         if (!declaredType.IsValueType && typeof(DsonValue).IsAssignableFrom(declaredType)) {
             return (T)(object)Dsons.ReadDsonValue(reader);
         }

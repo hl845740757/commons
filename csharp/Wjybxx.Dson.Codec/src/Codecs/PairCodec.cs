@@ -49,7 +49,7 @@ public class PairCodec<K, V> : IDsonCodec<KeyValuePair<K, V>>
         //
         Type encoderType = typeof(KeyValuePair<K, V>);
         if (reader.CurrentDsonType == DsonType.Object) {
-            reader.ReadStartObject(encoderType);
+            reader.ReadStartObject(encoderType, DeserializeFeatures.PassiveReading);
             K key = reader.ReadObject<K>("key", 0);
             V value = reader.ReadObject<V>("value", elementFeatures);
             reader.ReadEndObject();

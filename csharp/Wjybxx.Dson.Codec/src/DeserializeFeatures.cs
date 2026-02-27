@@ -40,9 +40,14 @@ public enum DeserializeFeatures
     /// </summary>
     CopyReferenceTarget = 0x02,
     /// <summary>
+    /// 读取为DsonValue
+    /// 注：字段应当声明为Object或DsonValue类型。
+    /// </summary>
+	ReadAsDsonValue = 0x40,
+    /// <summary>
     /// 尝试从字符串中解析
     /// </summary>
-    TryParseString = 0x40,
+    TryParseString = 0x80,
 
     /// <summary>
     /// 当Header中不包含Count信息时，赋予1/2/3档初始化空间，可减少扩容次数

@@ -206,6 +206,10 @@ public sealed class TypeMetaConfig
         config.Add(typeof(Nullable<>), "Nullable"); // Nullable
         config.Add(typeof(KeyValuePair<,>), "Pair", "KeyValuePair"); // 字典Pair
         config.Add(typeof(ObjectPath), "ObjectPath");
+        // Dson抽象
+        config.Add(typeof(DsonValue), "DsonValue");
+        config.Add(typeof(DsonArray<>), "DsonArray");
+        config.Add(typeof(DsonObject<>), "DsonObject");
 
         // 基础集合
         if (includeCollections) {

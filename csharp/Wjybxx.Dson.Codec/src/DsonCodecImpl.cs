@@ -30,7 +30,7 @@ public abstract class DsonCodecImpl
 {
     /** 是否禁止序列化引用 */
     internal abstract bool DisableSerializeReference { get; }
-    /** 是否是可内联的Codec -- 用于集合类型性能优化 */
+    /** 是否是可内联的Codec(不会被序列化为引用) -- 用于集合类型性能优化 */
     internal abstract bool IsInlinableCodec { get; }
 
     public abstract Type GetEncoderType();
