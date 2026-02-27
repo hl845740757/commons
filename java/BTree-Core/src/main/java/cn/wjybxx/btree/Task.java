@@ -505,16 +505,16 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 3. 与{@link #beforeEnter()}相同，重写方法时，应先执行父类逻辑，再重置自身属性。
      * 4. 有临时数据的Task都应该重写该方法，行为树通常是需要反复执行的。
      */
-    public void resetForRestart() {
+    public void reset() {
         if (status == TaskStatus.NEW) {
             return;
         }
         if (status == TaskStatus.RUNNING) {
             stop(TaskStatus.CANCELLED);
         }
-        resetChildrenForRestart();
+        resetChildren();
         if (guard != null) {
-            guard.resetForRestart();
+            guard.reset();
         }
         if (this != taskEntry) {
             unsetControl();
@@ -525,9 +525,9 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /** 重置所有的子节点 */
-    public final void resetChildrenForRestart() {
+    public final void resetChildren() {
         // 由于所有的子节点都已停止，因此重置顺序无影响
-        visitChildren(TaskVisitors.resetForRestart(), null);
+        visitChildren(TaskVisitors.reset(), null);
     }
 
     /** 当前节点自身是否为active状态 */
@@ -668,10 +668,10 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /**
-     * 告知模板方法是否在{@link #enter(int)}前自动调用{@link #resetChildrenForRestart()}
+     * 告知模板方法是否在{@link #enter(int)}前自动调用{@link #resetChildren()}
      * 1.默认值由{@link #flags}中的信息指定，默认false
      * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
-     * 3.部分任务可能在调用{@link #resetForRestart()}之前不会再次运行，因此需要该特性
+     * 3.部分任务可能在调用{@link #reset()}之前不会再次运行，因此需要该特性
      */
     public final void setAutoResetChildren(boolean value) {
         setCtlBit(MASK_AUTO_RESET_CHILDREN, value);
@@ -788,7 +788,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
         if ((ctl & MASK_BEFORE_ENTER_OPTIONS) != 0) {
             if (isAutoResetChildren()) {
-                resetChildrenForRestart();
+                resetChildren();
             }
             if (isAutoListenCancel()) {
                 cancelToken.registerCallback(this);
@@ -1195,9 +1195,9 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /** 重置目标任务 */
-    public static void resetForRestart(@Nullable Task<?> task) {
+    public static void reset(@Nullable Task<?> task) {
         if (task != null && task.status != TaskStatus.NEW) {
-            task.resetForRestart();
+            task.reset();
         }
     }
 

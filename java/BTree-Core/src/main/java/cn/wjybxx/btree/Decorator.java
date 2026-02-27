@@ -51,8 +51,8 @@ public abstract class Decorator<T> extends Task<T> {
     // region logic
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         inlineHelper.stopInline();
     }
 

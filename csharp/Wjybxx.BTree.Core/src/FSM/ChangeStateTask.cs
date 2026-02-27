@@ -48,10 +48,10 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
         this.nextState = nextState;
     }
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         if (nextState != null && nextState.Control == null) {
-            nextState.ResetForRestart();
+            nextState.Reset();
         }
     }
 

@@ -24,7 +24,7 @@ public static class TaskVisitors
         return RefreshActiveVisitor<T>.Inst;
     }
 
-    public static TaskVisitor<T> ResetForRestart<T>() where T : class {
+    public static TaskVisitor<T> Reset<T>() where T : class {
         return ResetForRestartVisitor<T>.Inst;
     }
 
@@ -54,19 +54,19 @@ public static class TaskVisitors
         public static readonly ResetForRestartVisitor<T> Inst = new ResetForRestartVisitor<T>();
 
         public void VisitChild(Task<T> child, int index, object? param) {
-            child.ResetForRestart();
+            child.Reset();
         }
 
         public void VisitHook(string name, Task<T> child, object? param) {
-            child.ResetForRestart();
+            child.Reset();
         }
 
         public void VisitList(string name, Task<T> child, int index, object? param) {
-            child.ResetForRestart();
+            child.Reset();
         }
 
         public void VisitMap<TKey>(string name, Task<T> child, TKey key, object? param) {
-            child.ResetForRestart();
+            child.Reset();
         }
     }
 }

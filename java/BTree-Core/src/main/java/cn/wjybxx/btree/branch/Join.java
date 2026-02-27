@@ -39,8 +39,8 @@ public class Join<T> extends ParallelBranch<T> {
     protected transient int succeededCount;
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         completedCount = 0;
         succeededCount = 0;
         policy.resetForRestart();

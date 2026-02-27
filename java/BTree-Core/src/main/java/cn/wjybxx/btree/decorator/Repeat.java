@@ -49,8 +49,8 @@ public class Repeat<T> extends LoopDecorator<T> {
     }
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         count = 0;
     }
 

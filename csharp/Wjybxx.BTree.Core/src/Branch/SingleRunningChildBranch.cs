@@ -71,8 +71,8 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
 
     #region logic
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         runningIndex = -1;
         runningChild = null;
         inlineHelper.StopInline();

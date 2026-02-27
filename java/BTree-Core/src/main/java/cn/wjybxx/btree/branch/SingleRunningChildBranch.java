@@ -77,8 +77,8 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
 
     // region logic
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         runningIndex = -1;
         runningChild = null;
         inlineHelper.stopInline();

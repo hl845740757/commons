@@ -162,12 +162,12 @@ public class StateMachineTask<T> extends Decorator<T> {
     // region logic
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         handler.resetForRestart(this);
         // 所有关联状态都重置
         for (Task<T> task : stateList) {
-            task.resetForRestart();
+            task.reset();
         }
         tempNextState = null;
         if (child != null) {

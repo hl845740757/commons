@@ -39,8 +39,8 @@ public class Join<T> : ParallelBranch<T> where T : class
     public Join(List<Task<T>>? children) : base(children) {
     }
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         completedCount = 0;
         succeededCount = 0;
         policy.ResetForRestart();

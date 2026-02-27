@@ -53,8 +53,8 @@ public abstract class Decorator<T> : Task<T> where T : class
 
     #region logic
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         inlineHelper.StopInline();
     }
 

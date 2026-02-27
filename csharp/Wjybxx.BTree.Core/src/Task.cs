@@ -498,16 +498,16 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 3.与<see cref="BeforeEnter"/>相同，重写方法时，应先执行父类逻辑，再重置自身属性。
     /// 4.有临时数据的Task都应该重写该方法，行为树通常是需要反复执行的。
     /// </summary>
-    public virtual void ResetForRestart() {
+    public virtual void Reset() {
         if (status == TaskStatus.NEW) {
             return;
         }
         if (status == TaskStatus.RUNNING) {
             Stop();
         }
-        ResetChildrenForRestart();
+        ResetChildren();
         if (guard != null) {
-            guard.ResetForRestart();
+            guard.Reset();
         }
         if (this != taskEntry) {
             UnsetControl();
@@ -520,9 +520,9 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <summary>
     /// 重置所有的子节点
     /// </summary>
-    public void ResetChildrenForRestart() {
+    public void ResetChildren() {
         // 由于所有的子节点都已停止，因此重置顺序无影响
-        VisitChildren(TaskVisitors.ResetForRestart<T>(), null);
+        VisitChildren(TaskVisitors.Reset<T>(), null);
     }
 
     /// <summary>
@@ -673,10 +673,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /// <summary>
-    /// 告知模板方法是否在<see cref="Enter"/>前自动调用<see cref="ResetChildrenForRestart"/>
+    /// 告知模板方法是否在<see cref="Enter"/>前自动调用<see cref="ResetChildren"/>
     /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false
     /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
-    /// 3.部分任务可能在调用<see cref="ResetForRestart()"/>之前不会再次运行，因此需要该特性
+    /// 3.部分任务可能在调用<see cref="Reset"/>之前不会再次运行，因此需要该特性
     /// </summary>
     public bool IsAutoResetChildren {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -779,7 +779,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         if ((ctl & MASK_BEFORE_ENTER_OPTIONS) != 0) {
             if (IsAutoResetChildren) {
-                ResetChildrenForRestart();
+                ResetChildren();
             }
             if (IsAutoListenCancel) {
                 cancelToken.RegisterCallback(this);
@@ -1201,9 +1201,9 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /** 重置目标任务 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ResetForRestart(Task<T>? task) {
+    public static void Reset(Task<T>? task) {
         if (task != null && task.status != TaskStatus.NEW) {
-            task.ResetForRestart();
+            task.Reset();
         }
     }
 

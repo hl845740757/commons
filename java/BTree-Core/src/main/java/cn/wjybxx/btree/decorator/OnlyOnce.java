@@ -22,7 +22,7 @@ import cn.wjybxx.btree.TaskInlinable;
 /**
  * 只执行一次。
  * 1.适用那些不论成功与否只执行一次的行为。
- * 2.在调用{@link #resetForRestart()}后可再次运行。
+ * 2.在调用{@link #reset()}后可再次运行。
  *
  * @author wjybxx
  * date - 2023/11/26

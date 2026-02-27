@@ -39,8 +39,8 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
     /** 当前计数 */
     [NonSerialized] private int count;
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         count = 0;
     }
 

@@ -155,12 +155,12 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     #region logic
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         handler.ResetForRestart(this);
         // 所有关联状态都重置
         foreach (Task<T> state in stateList) {
-            state.ResetForRestart();
+            state.Reset();
         }
         if (child != null) {
             RemoveChild(0);

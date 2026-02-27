@@ -244,8 +244,8 @@ public class TaskEntry<T> extends Task<T> {
     }
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         cancelToken.reset();
     }
 

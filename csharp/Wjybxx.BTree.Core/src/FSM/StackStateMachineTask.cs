@@ -138,8 +138,8 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
 
     #region logic
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         undoQueue.Clear();
         redoQueue.Clear();
         // 不重写beforeEnter，是因为考虑保留用户的初始队列设置

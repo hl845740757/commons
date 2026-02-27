@@ -31,10 +31,10 @@ public class UntilCond<T> : LoopDecorator<T> where T : class
     [SerializeReference]
     private Task<T>? cond;
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         if (cond != null) {
-            cond.ResetForRestart();
+            cond.Reset();
         }
     }
 

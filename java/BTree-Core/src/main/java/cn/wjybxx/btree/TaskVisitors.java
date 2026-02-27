@@ -30,7 +30,7 @@ public class TaskVisitors {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> TaskVisitor<T> resetForRestart() {
+    public static <T> TaskVisitor<T> reset() {
         return (TaskVisitor<T>) ResetForRestartVisitor.INST;
     }
 
@@ -54,12 +54,12 @@ public class TaskVisitors {
 
         @Override
         public void visitChild(Task<? extends T> child, int index, Object param) {
-            child.resetForRestart();
+            child.reset();
         }
 
         @Override
         public void visitHook(Task<? extends T> child, Object param) {
-            child.resetForRestart();
+            child.reset();
         }
     }
 }

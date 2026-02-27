@@ -55,8 +55,8 @@ public class SelectorN<T> extends SingleRunningChildBranch<T> {
     }
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         count = 0;
     }
 

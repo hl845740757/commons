@@ -131,8 +131,8 @@ public class StackStateMachineTask<T> extends StateMachineTask<T> {
     // endregion
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         undoQueue.clear();
         redoQueue.clear();
         // 不重写beforeEnter，是因为考虑保留用户的初始队列设置

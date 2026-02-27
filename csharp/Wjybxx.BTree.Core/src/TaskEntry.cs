@@ -216,8 +216,8 @@ public class TaskEntry<T> : Task<T> where T : class
         }
     }
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         cancelToken.Reset();
     }
 

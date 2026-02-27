@@ -38,8 +38,8 @@ public abstract class ParallelBranch<T> : BranchTask<T> where T : class
     protected ParallelBranch(List<Task<T>>? children) : base(children) {
     }
 
-    public override void ResetForRestart() {
-        base.ResetForRestart();
+    public override void Reset() {
+        base.Reset();
         ResetHelpers();
     }
 

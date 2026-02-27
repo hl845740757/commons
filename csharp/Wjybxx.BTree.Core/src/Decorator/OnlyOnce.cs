@@ -21,7 +21,7 @@ namespace Wjybxx.BTree.Decorator
 /// <summary>
 /// 只执行一次。
 /// 1.适用那些不论成功与否只执行一次的行为。
-/// 2.在调用<see cref="Task{T}.ResetForRestart()"/>后可再次运行。
+/// 2.在调用<see cref="Task{T}.Reset"/>后可再次运行。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [TaskInlinable]

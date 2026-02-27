@@ -40,8 +40,8 @@ public abstract class ParallelBranch<T> extends BranchTask<T> {
     }
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         resetHelpers();
     }
 

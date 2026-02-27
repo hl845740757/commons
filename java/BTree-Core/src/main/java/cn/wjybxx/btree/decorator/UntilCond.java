@@ -34,10 +34,10 @@ public class UntilCond<T> extends LoopDecorator<T> {
     private Task<T> cond;
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         if (cond != null) {
-            cond.resetForRestart();
+            cond.reset();
         }
     }
 

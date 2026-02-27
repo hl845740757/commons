@@ -50,10 +50,10 @@ public class ChangeStateTask<T> extends LeafTask<T> {
     }
 
     @Override
-    public void resetForRestart() {
-        super.resetForRestart();
+    public void reset() {
+        super.reset();
         if (nextState != null && nextState.getControl() == null) {
-            nextState.resetForRestart();
+            nextState.reset();
         }
     }
 
