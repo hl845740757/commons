@@ -17,6 +17,7 @@
 #endregion
 
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Wjybxx.Dson.Codec
@@ -24,36 +25,37 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// 序列化对象头
 /// </summary>
+[StructLayout(LayoutKind.Explicit)]
 public struct SerializeHeader
 {
+    /// <summary>
+    /// 集合内id
+    /// </summary>
+    [FieldOffset(0)] public int localId;
     /// <summary>
     /// 集合名
     ///
     /// 通用序列化库仅支持根据[collection + localId]查找对象。
     /// </summary>
-    public string? collection;
-    /// <summary>
-    /// 集合内id
-    /// </summary>
-    public long localId;
+    [FieldOffset(8)] public string? collection;
 
     /// <summary>
     /// 类型名
     ///
     /// 注：<see cref="TypeName"/>的String格式。
     /// </summary>
-    public string? clsName;
+    [FieldOffset(16)] public string? clsName;
     /// <summary>
     /// 集合大小
     ///
     /// 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
     /// Count的唯一作用就是更好的初始化<see cref="List{T}"/>和<see cref="Dictionary{TKey,TValue}"/>的空间。
     /// </summary>
-    public int count;
+    [FieldOffset(24)] public int count;
     /// <summary>
     /// 版本号(自定义序列化用)
     /// </summary>
-    public int version;
+    [FieldOffset(28)] public int version;
 
     /// <summary>
     /// 是否为空

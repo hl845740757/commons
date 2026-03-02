@@ -436,7 +436,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         // 顶层对象需要写入LocalId，不论是否是值类型
         if (writer.ContextDepth == 1) {
             header.collection = _stack.Collection;
-            header.localId = _stack.LocalId;
+            header.localId = (int)_stack.LocalId;
         }
         // count大于默认初始化空间才写入
         if (header.count < 5) {

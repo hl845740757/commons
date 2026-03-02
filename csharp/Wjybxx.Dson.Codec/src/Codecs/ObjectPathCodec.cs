@@ -18,7 +18,6 @@
 
 using System;
 using Wjybxx.Commons;
-using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
@@ -26,12 +25,13 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class ObjectPathCodec : IDsonCodec<ObjectPath>
 {
     public void WriteObject(IDsonObjectWriter writer, ObjectPath inst, Type declaredType, SerializeFeatures features) {
-        ObjectPtr obj = inst;
+        ObjectPtr obj = new ObjectPtr(inst.collection, inst.localPath, inst.localId, inst.type);
         writer.WritePtr(obj);
     }
 
     public ObjectPath ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return reader.ReadPtr();
+        ObjectPtr objectPtr = reader.ReadPtr();
+        return new ObjectPath(objectPtr.Collection, objectPtr.LocalPath, (int)objectPtr.LocalId, objectPtr.Type);
     }
 }
 }

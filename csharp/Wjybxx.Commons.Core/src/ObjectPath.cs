@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace Wjybxx.Commons
 {
@@ -26,6 +27,7 @@ namespace Wjybxx.Commons
 /// 注：该对象是Dson库中的ObjectPtr的替代物，用于避免引入Dson库。
 /// </summary>
 [Serializable]
+[StructLayout(LayoutKind.Explicit)]
 public struct ObjectPath : IEquatable<ObjectPath>
 {
 #nullable disable
@@ -33,33 +35,33 @@ public struct ObjectPath : IEquatable<ObjectPath>
     /// 目标对象所属的集合(文件路径、资产路径、db路径)
     /// (如果为空，表示引用当前集合内的对象)
     /// </summary>
-    public string collection;
+    [FieldOffset(0)] public string collection;
     /// <summary>
     /// 对象在集合内的路径(或name)
     /// 
     /// 如果字段不为空，则优先使用localPath查找对象，即localPath的优先级高于localId；
     /// 因为localPath更具有可读性，更适合手工引用对象。
     /// </summary>
-    public string localPath;
+    [FieldOffset(8)] public string localPath;
     /// <summary>
     /// 对象在集合内的id
     /// (如果目标集合是数组，则可能是下标) 
     /// </summary>
-    public long localId;
+    [FieldOffset(16)] public int localId;
     /// <summary>
     /// 引用类型
     /// (用于引用分析，可以嵌入信息，表示如何解析引用等)
     /// </summary>
-    public int type;
+    [FieldOffset(20)] public int type;
 
-    public ObjectPath(long localId) {
+    public ObjectPath(int localId) {
         this.localId = localId;
         this.collection = null;
         this.localPath = null;
         this.type = 0;
     }
 
-    public ObjectPath(string collection, string localPath, long localId, int type = 0) {
+    public ObjectPath(string collection, string localPath, int localId, int type = 0) {
         // 空字符串转null以兼容default构建的实例
         this.collection = ObjectUtil.EmptyToDef(collection, null);
         this.localPath = ObjectUtil.EmptyToDef(localPath, null);

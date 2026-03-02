@@ -160,7 +160,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             read++;
         }
         if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_LocalId, out dsonValue)) {
-            header.localId = dsonValue.AsNumber().LongValue;
+            header.localId = dsonValue.AsNumber().IntValue;
             read++;
         }
         if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Collection, out dsonValue)) {

@@ -423,35 +423,37 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
     #region sp
 
     public void RemoveAt(int index) {
-        if (index < 0 || index >= _count) {
-            throw new ArgumentOutOfRangeException();
-        }
+        ArrayUtil.CheckIndex(index, _count);
         RemoveNode(index);
     }
 
     public TKey GetKey(int index) {
-        if (index < 0 || index >= _count) {
-            throw new ArgumentOutOfRangeException();
-        }
+        ArrayUtil.CheckIndex(index, _count);
         Node node = _table[index];
         return node.key;
     }
 
     public KeyValuePair<TKey, TValue> GetPair(int index) {
-        if (index < 0 || index >= _count) {
-            throw new ArgumentOutOfRangeException();
-        }
+        ArrayUtil.CheckIndex(index, _count);
         Node node = _table[index];
         return node.AsPair();
     }
 
     public void GetPair(int index, out TKey key, out TValue value) {
-        if (index < 0 || index >= _count) {
-            throw new ArgumentOutOfRangeException();
-        }
+        ArrayUtil.CheckIndex(index, _count);
         Node node = _table[index];
         key = node.key;
         value = node.value;
+    }
+
+    public void SetPair(int index, TKey key, TValue value) {
+        ArrayUtil.CheckIndex(index, _count);
+        _table[index] = new Node(key, value);
+    }
+
+    public void InsertPair(int index, TKey key, TValue value) {
+        ArrayUtil.CheckInsert(index, _count);
+        ArrayUtil.Insert(ref _table, index, new Node(key, value));
     }
 
     /// <summary>
@@ -482,6 +484,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         if (_table == null) {
             return;
         }
+        expectedCount = Math.Max(Count, expectedCount);
         if (expectedCount < _table.Length) {
             Resize(expectedCount);
         }

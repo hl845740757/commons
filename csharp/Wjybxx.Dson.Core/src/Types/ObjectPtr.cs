@@ -134,25 +134,5 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public const string NamesType = "type";
 
     #endregion
-
-    #region 隐式转换
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator ObjectPath(ObjectPtr ptr) {
-        return new ObjectPath()
-        {
-            collection = ptr.collection,
-            localPath = ptr.localPath,
-            localId = ptr.localId,
-            type = ptr.type
-        };
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator ObjectPtr(ObjectPath path) {
-        return new ObjectPtr(path.collection, path.localPath, path.localId, path.type);
-    }
-
-    #endregion
 }
 }

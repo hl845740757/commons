@@ -437,7 +437,6 @@ public static class ArrayUtil
         T[] temp = new T[array.Length + 1];
         Array.Copy(array, temp, index);
         temp[index] = item;
-        // 允许直接插入到末尾
         if (index < array.Length) {
             Array.Copy(array, index, temp, index + 1, array.Length - index);
         }
@@ -572,6 +571,13 @@ public static class ArrayUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void CheckIndex(int index, int length) {
         if (index < 0 || index >= length) {
+            throw new IndexOutOfRangeException($"length: {length}, index {index}");
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static void CheckInsert(int index, int length) {
+        if (index < 0 || index > length) {
             throw new IndexOutOfRangeException($"length: {length}, index {index}");
         }
     }
