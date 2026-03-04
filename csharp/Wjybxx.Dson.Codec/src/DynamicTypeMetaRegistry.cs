@@ -48,17 +48,13 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
 
     public TypeMeta? OfType(Type type) {
         TypeMeta typeMeta = _config.OfType(type);
-        if (typeMeta != null) {
+        if (typeMeta != null || type2MetaDic.TryGetValue(type, out typeMeta)) {
             return typeMeta;
         }
-        if (type2MetaDic.TryGetValue(type, out typeMeta)) {
-            return typeMeta;
-        }
-        // 走到这里，通常意味着clsName是数组或泛型，或在基础注册表中不存在
+        // 走到这里，通常意味着clsName是数组或泛型
         if (!type.IsGenericType && !type.IsArray) {
             return null;
         }
-
         SerializeFeatures encodeFeatures;
         DeserializeFeatures decodeFeatures;
         if (type.IsArray) {
@@ -89,20 +85,15 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
 
     public TypeMeta? OfName(string clsName) {
         TypeMeta typeMeta = _config.OfName(clsName);
-        if (typeMeta != null) {
+        if (typeMeta != null || name2MetaDic.TryGetValue(clsName, out typeMeta)) {
             return typeMeta;
         }
-        if (name2MetaDic.TryGetValue(clsName, out typeMeta)) {
-            return typeMeta;
-        }
-        // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
+        // 走到这里，通常意味着clsName是数组或泛型
         TypeName typeName = TypeName.Parse(clsName);
-        // Debug.Assert(className.IsArray || className.IsGeneric);
         Type type = TypeOfName(typeName);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
-        typeMeta = OfType(type);
-        if (typeMeta == null) {
+        if ((typeMeta = OfType(type)) == null) {
             throw new DsonCodecException("typeMeta absent, type: " + type);
         }
         if (typeMeta.clsNames.Contains(clsName) || ObjectUtil.ContainsWhitespace(clsName)) {

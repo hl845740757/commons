@@ -313,11 +313,9 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         TrySetResult(taskResult);
     }
 
-    private bool CanCaughtException(Exception ex) {
-        if (ScheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
-            return false;
-        }
-        return TaskOptions.IsEnabled(options, TaskOptions.CAUGHT_EXCEPTION);
+    private bool CanCaughtException(Exception _) {
+        return ScheduleType != ScheduledTaskBuilder.SCHEDULE_ONCE
+               && TaskOptions.IsEnabled(options, TaskOptions.CAUGHT_EXCEPTION);
     }
 
     private void SetNextRunTime(long tickTime, int scheduleType) {

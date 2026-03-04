@@ -34,19 +34,6 @@ namespace Wjybxx.Commons
 public static class ExceptionUtil
 {
     /// <summary>
-    /// 用于恢复异常的堆栈数据，比抛出异常再捕获肯定是更高效的
-    /// </summary>
-    private static readonly MethodInfo ref_RestoreDispatchState;
-    private static readonly FieldInfo ref_DispatchState;
-
-    static ExceptionUtil() {
-        ref_RestoreDispatchState = typeof(Exception).GetMethod("RestoreDispatchState", BindingFlags.NonPublic | BindingFlags.Instance)
-                                   ?? throw new Exception("Method 'Exception.RestoreDispatchState' not found");
-        ref_DispatchState = typeof(ExceptionDispatchInfo).GetField("_dispatchState", BindingFlags.NonPublic | BindingFlags.Instance)
-                            ?? throw new Exception("Field 'ExceptionDispatchInfo._dispatchState' not found");
-    }
-
-    /// <summary>
     /// 获取异常的根
     /// </summary>
     /// <param name="ex"></param>
@@ -77,9 +64,13 @@ public static class ExceptionUtil
     /// <returns></returns>
     public static Exception RestoreStackTrace(ExceptionDispatchInfo dispatchInfo) {
         if (dispatchInfo == null) throw new ArgumentNullException(nameof(dispatchInfo));
-        // 这里会产生装箱，但也比抛出异常再捕获强得多
-        object state = ref_DispatchState.GetValue(dispatchInfo);
-        ref_RestoreDispatchState.Invoke(dispatchInfo.SourceException, new[] { state });
+        // 反射版本的实现在低版本不兼容
+        try {
+            dispatchInfo.Throw();
+        }
+        catch (Exception ex) {
+            return ex;
+        }
         return dispatchInfo.SourceException;
     }
 }

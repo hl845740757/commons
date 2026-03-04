@@ -71,7 +71,7 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
     }
 
     /** 类型的主别名 */
-    public string MainName => clsNames[0];
+    public string MainName => clsNames.Count > 0 ? clsNames[0] : type.Name;
 
     /** 替换特征值 */
     public TypeMeta WithFeatures(SerializeFeatures encodeFeatures, DeserializeFeatures decodeFeatures) {
