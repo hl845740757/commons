@@ -106,6 +106,8 @@ public sealed class ComponentIdPool
 
     #endregion
 
+    public delegate void Interceptor(ComponentId.IBuilder builder, ComponentDefineAttribute attribute);
+
     /// <summary>
     /// 获取类型关联的组件Id
     ///
@@ -114,7 +116,7 @@ public sealed class ComponentIdPool
     /// <typeparam name="T">组件类型</typeparam>
     /// <param name="interceptor">拦截器，主要用于解决冲突</param>
     /// <returns></returns>
-    public ComponentId<T> ValueOf<T>(Action<ComponentId.IBuilder>? interceptor = null) {
+    public ComponentId<T> ValueOf<T>(Interceptor? interceptor = null) {
         return (ComponentId<T>)ValueOf(typeof(T), interceptor);
     }
 
@@ -124,7 +126,7 @@ public sealed class ComponentIdPool
     /// <param name="type">组件类型</param>
     /// <param name="interceptor">拦截器，主要用于解决冲突；修正cacheIndex等</param>
     /// <returns>返回的可能是超类的组件id</returns>
-    public ComponentId ValueOf(Type type, Action<ComponentId.IBuilder>? interceptor = null) {
+    public ComponentId ValueOf(Type type, Interceptor? interceptor = null) {
         if (type == null) throw new ArgumentNullException(nameof(type));
         // 先从缓存中查询
         if (class2CidMap.TryGetValue(type, out ComponentId cid)) {
@@ -163,8 +165,7 @@ public sealed class ComponentIdPool
                 builder.Flags = componentDefine.Flags;
                 builder.MountPath = componentDefine.MountPath;
             }
-            //
-            interceptor?.Invoke(builder);
+            interceptor?.Invoke(builder, componentDefine);
         }
         cid = pool.ValueOf(builder);
         class2CidMap.TryAdd(type, cid);
