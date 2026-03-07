@@ -149,6 +149,12 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
 
 ## ReleaseNotes
 
+### 2.6.x
+
+1. 引入`Double4`类型，以减少运行时的`DsonObject/DsonArray`数量
+2. 删除BackToWait方法(与序列化强绑定，局限性太大)
+3. Dsons尝试读取Header中的`count`属性初始化字典和List空间，以减少额外的扩容。
+
 ### 2.5.x
 
 1. Fix Unity下创建`DsonCollectionReader`时会崩溃的问题

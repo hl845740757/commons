@@ -40,6 +40,7 @@ public class ObjectPool<T> : IObjectPool<T>
     private readonly Func<T> _factory;
     private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
+    private readonly Action<T>? _destroyer;
 
     private int _poolSize;
     private readonly Stack<T> _freeObjects;
@@ -51,11 +52,14 @@ public class ObjectPool<T> : IObjectPool<T>
     /// <param name="cleaner">重置方法</param>
     /// <param name="poolSize">池大小；0表示不缓存对象</param>
     /// <param name="filter">回收对象的过滤器</param>
-    public ObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64, Func<T, bool>? filter = null) {
+    /// <param name="destroyer">对象被销毁时用</param>
+    public ObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64,
+                      Func<T, bool>? filter = null, Action<T>? destroyer = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
         this._cleaner = cleaner ?? DO_NOTHING;
         this._poolSize = poolSize;
         this._filter = filter;
+        this._destroyer = destroyer;
         this._freeObjects = new Stack<T>(poolSize / 2);
     }
 
@@ -67,7 +71,8 @@ public class ObjectPool<T> : IObjectPool<T>
         set {
             _poolSize = Math.Max(0, value);
             while (_freeObjects.Count > _poolSize) {
-                _freeObjects.Pop();
+                T obj = _freeObjects.Pop();
+                _destroyer?.Invoke(obj);
             }
         }
     }
@@ -89,11 +94,16 @@ public class ObjectPool<T> : IObjectPool<T>
         _cleaner(obj);
         if (_freeObjects.Count < _poolSize && (_filter == null || _filter.Invoke(obj))) {
             _freeObjects.Push(obj);
+        } else {
+            _destroyer?.Invoke(obj);
         }
     }
 
     public void Clear() {
-        _freeObjects.Clear();
+        while (_freeObjects.Count > 0) {
+            T obj = _freeObjects.Pop();
+            _destroyer?.Invoke(obj);
+        }
     }
 }
 }

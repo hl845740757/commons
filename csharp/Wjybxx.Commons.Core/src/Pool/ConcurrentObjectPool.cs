@@ -55,6 +55,7 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
     private readonly Func<T> _factory;
     private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
+    private readonly Action<T>? _destroyer;
     private readonly MpmcObjectBucket<T> _freeObjects;
 
     /// <summary>
@@ -64,10 +65,14 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
     /// <param name="cleaner">重置方法</param>
     /// <param name="poolSize">池大小；0表示不缓存对象</param>
     /// <param name="filter">回收对象的过滤器</param>
-    public ConcurrentObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64, Func<T, bool>? filter = null) {
+    /// <param name="destroyer">对象销毁器</param>
+    public ConcurrentObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64,
+                                Func<T, bool>? filter = null,
+                                Action<T>? destroyer = null) {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _cleaner = cleaner ?? DO_NOTHING;
         _filter = filter;
+        _destroyer = destroyer;
         _freeObjects = new MpmcObjectBucket<T>(poolSize);
     }
 
@@ -93,13 +98,15 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
     public void Release(T obj) {
         if (obj == null) throw new ArgumentNullException(nameof(obj));
         _cleaner.Invoke(obj);
-        if (_filter == null || _filter.Invoke(obj)) {
-            _freeObjects.Offer(obj);
+        if ((_filter == null || _filter.Invoke(obj)) && _freeObjects.Offer(obj)) {
+            return;
         }
+        _destroyer?.Invoke(obj);
     }
 
     public override void Clear() {
-        while (_freeObjects.Poll(out T _)) {
+        while (_freeObjects.Poll(out T obj)) {
+            _destroyer?.Invoke(obj);
         }
     }
 }
