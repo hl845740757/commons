@@ -145,6 +145,19 @@ public struct TaskBuilder<T>
     }
 
     /// <summary>
+    /// 启用或禁用选项
+    /// </summary>
+    /// <param name="optionMask"></param>
+    /// <param name="enable"></param>
+    public void SetEnable(int optionMask, bool enable) {
+        if (enable) {
+            options |= optionMask;
+        } else {
+            options &= ~optionMask;
+        }
+    }
+
+    /// <summary>
     /// 启用选项
     /// </summary>
     /// <param name="optionMask"></param>

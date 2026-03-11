@@ -110,6 +110,13 @@ public interface IDsonConverter : IConverter
     object ReadFromDsonCollection(DsonArray<string> collection, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
 
     /// <summary>
+    /// 从DsonCollection中读取一个对象
+    /// 
+    /// 注：该方法只读取第指定localId对象以及它引用的对象。
+    /// </summary>
+    object ReadFromDsonCollection(DsonArray<string> collection, long localId, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
+
+    /// <summary>
     /// 序列化集合信息
     ///
     /// 注：与WriteAsDson的区别在于，该方法不写入集合自身的数据 —— 建议通过测试用例观察。

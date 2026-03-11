@@ -260,6 +260,13 @@ public static class DsonConverterUtils
         return (T)converter.ReadFromDsonCollection(source, typeof(T), features, factory);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T ReadFromDsonCollection<T>(this IDsonConverter converter, DsonArray<string> source, long localId,
+                                              DeserializeFeatures features = default,
+                                              Func<object>? factory = null) {
+        return (T)converter.ReadFromDsonCollection(source, localId, typeof(T), features, factory);
+    }
+
     #endregion
 
 #nullable enable

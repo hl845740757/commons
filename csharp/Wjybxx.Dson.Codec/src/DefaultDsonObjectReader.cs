@@ -83,6 +83,11 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return GetReference(ptr, declaredType, features, factory);
     }
 
+    public object ReadFirst(Type declaredType, long localId, DeserializeFeatures features, Func<object>? factory = null) {
+        ObjectPtr ptr = localId != 0 ? new ObjectPtr(localId) : referenceTable.PeekFirstKey();
+        return GetReference(ptr, declaredType, features, factory);
+    }
+
     public List<T> ReadAll<T>(DeserializeFeatures features, Func<object>? factory = null) {
         _listCache.AddRange(referenceTable.Keys); // 用于保持原始顺序
         //
@@ -130,7 +135,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         }
     }
 
-    public void PublishReference<T>(in T reference) {
+    public void PublishReference<T>(T reference) {
         if (reader.ContextDepth == 1) { // 可多次发布覆盖
             ItemContext context = referenceTable[_stack];
             context.objectValue = reference;

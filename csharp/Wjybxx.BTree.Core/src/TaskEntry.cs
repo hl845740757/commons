@@ -185,12 +185,14 @@ public class TaskEntry<T> : Task<T> where T : class
     }
 
     protected override void OnChildRunning(Task<T> child, bool starting) {
+        if (child != rootTask) return;
         inlineHelper.InlineChild(child);
     }
 
     protected override void OnChildCompleted(Task<T> child) {
+        if (child != rootTask) return;
         inlineHelper.StopInline();
-
+        //
         SetCompleted(child.Status, true);
         if (handler != null) {
             handler.OnCompleted(this);

@@ -209,6 +209,19 @@ public class DefaultDsonConverter : IDsonConverter
         }
     }
 
+    public object ReadFromDsonCollection(DsonArray<string> collection, long localId, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null) {
+        if (collection == null) throw new ArgumentNullException(nameof(collection));
+        DefaultDsonObjectReader wrapper = DefaultDsonObjectReader.GetPooled();
+        try {
+            wrapper.Init(this);
+            wrapper.AddReferences(collection);
+            return wrapper.ReadFirst(declaredType, localId, features, factory);
+        }
+        finally {
+            DefaultDsonObjectReader.Release(wrapper);
+        }
+    }
+
     #endregion
 
     #region dson-colletion

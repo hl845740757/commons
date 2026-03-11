@@ -278,11 +278,8 @@ public struct ScheduledTaskBuilder<T>
     public long Timeout {
         get => timeout;
         set {
-            if (value < 0) {
-                throw new ArgumentException("invalid timeout: " + value);
-            }
             timeout = value;
-            _core.Enable(TaskOptions.HAS_TIMEOUT);
+            _core.SetEnable(TaskOptions.HAS_TIMEOUT, value > 0);
         }
     }
 

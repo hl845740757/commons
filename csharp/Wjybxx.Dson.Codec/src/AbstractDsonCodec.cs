@@ -151,7 +151,7 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
         // cast失败则抛出异常，不能测试类型，可能隐藏错误
         T inst = factory != null ? (T)factory() : NewInstance(reader);
         if (!typeof(T).IsValueType) {
-            reader.PublishReference(in inst);
+            reader.PublishReference(inst);
         }
         if ((_overrides & MASK_READ_OBJECT) != 0) {
             ReadObject(reader, ref inst);

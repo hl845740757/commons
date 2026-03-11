@@ -416,15 +416,8 @@ public static class DsonTexts
 
     private static int ParseInt32Flags(string str) {
         int value = 0;
-        foreach (string e in str.Split('|')) {
-            int start = ObjectUtil.IndexOfNonWhitespace(e);
-            int end = ObjectUtil.LastIndexOfNonWhitespace(e);
-            uint v;
-            if (start + 2 < end && e[start] == '0' && e[start + 1] == 'x') {
-                v = uint.Parse(e.AsSpan(start + 2, end - start - 1), GNumberStyles.HexNumber);
-            } else {
-                v = uint.Parse(e.AsSpan(start, end - start + 1));
-            }
+        foreach (string e in ObjectUtil.SplitAndTrim(str, '|')) {
+            uint v = uint.Parse(e);
             value |= (int)v;
         }
         return value;
@@ -432,15 +425,8 @@ public static class DsonTexts
 
     private static long ParseInt64Flags(string str) {
         long value = 0;
-        foreach (string e in str.Split('|')) {
-            int start = ObjectUtil.IndexOfNonWhitespace(e);
-            int end = ObjectUtil.LastIndexOfNonWhitespace(e);
-            ulong v;
-            if (start + 2 < end && e[start] == '0' && e[start + 1] == 'x') {
-                v = ulong.Parse(e.AsSpan(start + 2, end - start - 1), GNumberStyles.HexNumber);
-            } else {
-                v = ulong.Parse(e.AsSpan(start, end - start + 1));
-            }
+        foreach (string e in ObjectUtil.SplitAndTrim(str, '|')) {
+            ulong v = ulong.Parse(e);
             value |= (long)v;
         }
         return value;

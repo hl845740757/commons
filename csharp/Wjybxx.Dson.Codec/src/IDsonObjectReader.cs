@@ -215,7 +215,7 @@ public interface IDsonObjectReader : IDisposable
     /// 
     /// 注：Codec应该在创建实例以后立刻发布，以避免循环依赖时出现错误。
     /// </summary>
-    void PublishReference<T>(in T reference);
+    void PublishReference<T>(T reference);
 
     /// <summary>
     /// 获取当前容器的类型元数据

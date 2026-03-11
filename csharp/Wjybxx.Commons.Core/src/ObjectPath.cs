@@ -45,7 +45,7 @@ public struct ObjectPath : IEquatable<ObjectPath>
     [FieldOffset(8)] public string localPath;
     /// <summary>
     /// 对象在集合内的id
-    /// (如果目标集合是数组，则可能是下标) 
+    /// (如果目标集合是数组，则可能是下标；若有long需求，可用string代替) 
     /// </summary>
     [FieldOffset(16)] public int localId;
     /// <summary>
