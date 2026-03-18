@@ -51,20 +51,16 @@ public class TaskEntry<T> : Task<T> where T : class
     /** 用于内联优化 */
     [NonSerialized] protected TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
 
-    public TaskEntry()
-        : this(null, null, null) {
+    public TaskEntry() {
+        this.taskEntry = this;
+        this.cancelToken = new CancelToken();
+        this.treeLoader = ITreeLoader.NullLoader();
     }
 
-    public TaskEntry(string? name, Task<T>? rootTask, T? blackboard,
-                     object? entity = null, ITreeLoader? treeLoader = null) {
+    public TaskEntry(string? name, Task<T>? rootTask, T? blackboard) : this() {
         this.name = name;
         this.rootTask = rootTask;
         this.blackboard = blackboard;
-        this.entity = entity;
-        this.treeLoader = treeLoader ?? ITreeLoader.NullLoader();
-
-        this.taskEntry = this;
-        this.cancelToken = new CancelToken();
     }
 
     #region getter/setter

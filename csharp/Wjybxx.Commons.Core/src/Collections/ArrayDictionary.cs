@@ -436,7 +436,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
     public KeyValuePair<TKey, TValue> GetPair(int index) {
         ArrayUtil.CheckIndex(index, _count);
         Node node = _table[index];
-        return node.AsPair();
+        return new(node.key, node.value);
     }
 
     public void GetPair(int index, out TKey key, out TValue value) {

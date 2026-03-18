@@ -157,7 +157,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     public override void Reset() {
         base.Reset();
-        handler.ResetForRestart(this);
+        handler.Reset();
         // 所有关联状态都重置
         foreach (Task<T> state in stateList) {
             state.Reset();

@@ -22,7 +22,7 @@ public class DefaultStateMachineHandler<T> : IStateMachineHandler<T> where T : c
 {
     public static readonly DefaultStateMachineHandler<T> Inst = new DefaultStateMachineHandler<T>();
 
-    public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+    public void Reset() {
     }
 
     public void BeforeEnter(StateMachineTask<T> stateMachineTask) {

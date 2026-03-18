@@ -22,7 +22,7 @@ public class RedoStateMachineHandler<T> : IStateMachineHandler<T> where T : clas
 {
     public static readonly RedoStateMachineHandler<T> Inst = new RedoStateMachineHandler<T>();
 
-    public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+    public void Reset() {
     }
 
     public void BeforeEnter(StateMachineTask<T> stateMachineTask) {

@@ -25,7 +25,7 @@ namespace Wjybxx.BTree.Branch
 public interface JoinPolicy<T> where T : class
 {
     /** 重置自身数据 */
-    void ResetForRestart();
+    void Reset();
 
     /** 启动前初始化 */
     void BeforeEnter(Join<T> join);

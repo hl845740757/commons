@@ -29,8 +29,7 @@ public class TimingTaskEntry<T> : TaskEntry<T> where T : class
     public TimingTaskEntry() {
     }
 
-    public TimingTaskEntry(string? name, Task<T>? rootTask, T? blackboard,
-                           object? entity = null, ITreeLoader? treeLoader = null)
-        : base(name, rootTask, blackboard, entity, treeLoader) {
+    public TimingTaskEntry(string? name, Task<T>? rootTask, T? blackboard)
+        : base(name, rootTask, blackboard) {
     }
 }

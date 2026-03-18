@@ -30,7 +30,7 @@ public class JoinMain<T> : JoinPolicy<T> where T : class
 
     public static JoinMain<T> GetInstance() => INST;
 
-    public void ResetForRestart() {
+    public void Reset() {
     }
 
     public void BeforeEnter(Join<T> join) {

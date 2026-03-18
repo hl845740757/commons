@@ -352,12 +352,6 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             reader.ReadNull(name);
             return default;
         }
-        if (dsonType == DsonType.Pointer // 引用解析，值类型也可能是顶层对象
-            && declaredType != typeof(ObjectPath)
-            && declaredType != typeof(ObjectPtr)) {
-            ObjectPtr ptr = reader.ReadPtr();
-            return (T)ReadReference(ptr, declaredType, features, factory);
-        }
         // DsonValue接收原始数据
         if ((features & DeserializeFeatures.ReadAsDsonValue) != 0) {
             return (T)(object)Dsons.ReadDsonValue(reader);
@@ -365,8 +359,15 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         if (!declaredType.IsValueType && typeof(DsonValue).IsAssignableFrom(declaredType)) {
             return (T)(object)Dsons.ReadDsonValue(reader);
         }
-        // 容器类型只能通过codec解码 - 枚举除外，枚举支持数组
-        if (dsonType.IsContainer() && !declaredType.IsEnum) {
+        // 引用解析，值类型也可能是顶层对象
+        if (dsonType == DsonType.Pointer
+            && declaredType != typeof(ObjectPath)
+            && declaredType != typeof(ObjectPtr)) {
+            ObjectPtr ptr = reader.ReadPtr();
+            return (T)ReadReference(ptr, declaredType, features, factory);
+        }
+        // 容器类型只能通过codec解码
+        if (dsonType.IsContainer()) {
             string? clsName = GetClassName(reader.CurrentValue);
             DsonCodecImpl decoder = FindObjectDecoder(declaredType, factory, clsName);
             if (decoder == null) {

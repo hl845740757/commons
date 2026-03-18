@@ -27,10 +27,9 @@ namespace Wjybxx.BTree.FSM
 public interface IStateMachineHandler<T> where T : class
 {
     /// <summary>
-    ///  handler可能也有需要重置的数据
+    /// 重置自身数据
     /// </summary>
-    /// <param name="stateMachineTask"></param>
-    void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+    void Reset() {
     }
 
     /// <summary>

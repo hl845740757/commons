@@ -29,7 +29,7 @@ public class JoinSequence<T> : JoinPolicy<T> where T : class
 
     public static JoinSequence<T> GetInstance() => INST;
 
-    public void ResetForRestart() {
+    public void Reset() {
     }
 
     public void BeforeEnter(Join<T> join) {

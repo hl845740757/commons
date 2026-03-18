@@ -1223,6 +1223,12 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 
+    /** 获取flags的bit  */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool GetFlagsBit(int mask) {
+        return (flags & mask) != 0;
+    }
+
     /** 设置flags的bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetFlagsBit(int mask, bool enable) {

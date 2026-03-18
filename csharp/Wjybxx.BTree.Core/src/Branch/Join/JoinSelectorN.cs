@@ -41,7 +41,7 @@ public class JoinSelectorN<T> : JoinPolicy<T> where T : class
         this.failFast = failFast;
     }
 
-    public void ResetForRestart() {
+    public void Reset() {
     }
 
     public void BeforeEnter(Join<T> join) {

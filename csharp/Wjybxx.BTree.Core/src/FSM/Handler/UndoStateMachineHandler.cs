@@ -22,7 +22,7 @@ public class UndoStateMachineHandler<T> : IStateMachineHandler<T> where T : clas
 {
     public static readonly UndoStateMachineHandler<T> Inst = new UndoStateMachineHandler<T>();
 
-    public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+    public void Reset() {
     }
 
     public void BeforeEnter(StateMachineTask<T> stateMachineTask) {

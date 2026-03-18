@@ -32,7 +32,7 @@ public class ListenerWrapper<T> : IStateMachineHandler<T> where T : class
         _listener = listener ?? throw new ArgumentNullException(nameof(listener));
     }
 
-    public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+    public void Reset() {
     }
 
     public void BeforeEnter(StateMachineTask<T> stateMachineTask) {

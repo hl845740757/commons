@@ -29,7 +29,7 @@ public class JoinSelector<T> : JoinPolicy<T> where T : class
 
     public static JoinSelector<T> GetInstance() => INST;
 
-    public void ResetForRestart() {
+    public void Reset() {
     }
 
     public void BeforeEnter(Join<T> join) {
