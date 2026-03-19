@@ -274,43 +274,43 @@ public static class DsonConverterUtils
     #region reader
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static short ReadShort(this IDsonObjectReader reader, string name, DeserializeFeatures features) {
+    public static short ReadShort(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
         return (short)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte ReadByte(this IDsonObjectReader reader, string name, DeserializeFeatures features) {
+    public static byte ReadByte(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
         return (byte)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static char ReadChar(this IDsonObjectReader reader, string name, DeserializeFeatures features) {
+    public static char ReadChar(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
         return (char)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint ReadUInt(this IDsonObjectReader reader, string name, DeserializeFeatures features) {
+    public static uint ReadUInt(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
         return (uint)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong ReadULong(this IDsonObjectReader reader, string name, DeserializeFeatures features) {
+    public static ulong ReadULong(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
         return (ulong)reader.ReadLong(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort ReadUShort(this IDsonObjectReader reader, string name, DeserializeFeatures features) {
+    public static ushort ReadUShort(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
         return (ushort)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static sbyte ReadSByte(this IDsonObjectReader reader, string name, DeserializeFeatures features) {
+    public static sbyte ReadSByte(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
         return (sbyte)reader.ReadInt(name, features);
     }
 
     // 无name版
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static short ReadShort(this IDsonObjectReader reader, DeserializeFeatures features) {
+    public static short ReadShort(this IDsonObjectReader reader, DeserializeFeatures features = default) {
         return (short)reader.ReadInt(features);
     }
 
