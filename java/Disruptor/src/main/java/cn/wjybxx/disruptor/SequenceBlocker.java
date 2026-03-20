@@ -74,7 +74,12 @@ public final class SequenceBlocker {
      * 3.由于消费者共用一个Blocker，因此还会受到其它消费者的牵连。
      */
     public void signalAll() {
-        condition.signalAll();
+        lock.lock();
+        try {
+            condition.signalAll();
+        } finally {
+            lock.unlock();
+        }
     }
 
 }

@@ -167,7 +167,7 @@ public sealed class FutureCombiner
         internal volatile IPromise<object>? aggregatePromise;
 
         public void Accept(IFuture future) {
-            if (future.IsFailed) {
+            if (future.IsFailedOrCancelled) {
                 Accept(null, future.ExceptionNow(false));
             } else {
                 Accept(future.ResultNow(), null);

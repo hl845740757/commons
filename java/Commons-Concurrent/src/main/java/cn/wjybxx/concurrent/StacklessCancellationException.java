@@ -28,18 +28,13 @@ import cn.wjybxx.base.ex.NoLogRequiredException;
 public final class StacklessCancellationException extends BetterCancellationException implements NoLogRequiredException {
 
     private static final StacklessCancellationException[] INST_CACHE = new StacklessCancellationException[10];
-
     public static final StacklessCancellationException DEFAULT;
-    public static final StacklessCancellationException TIMEOUT;
-    public static final StacklessCancellationException COUNT_LIMIT;
 
     static {
         for (int idx = 0; idx < INST_CACHE.length; idx++) {
             INST_CACHE[idx] = new StacklessCancellationException(idx + 1);
         }
         DEFAULT = INST_CACHE[0];
-        TIMEOUT = INST_CACHE[CancelCodes.REASON_TIMEOUT - 1];
-        COUNT_LIMIT = INST_CACHE[CancelCodes.REASON_COUNT_LIMIT - 1];
     }
 
     public StacklessCancellationException(int code) {

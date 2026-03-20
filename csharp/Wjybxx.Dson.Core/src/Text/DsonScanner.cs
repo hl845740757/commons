@@ -388,8 +388,25 @@ public sealed class DsonScanner : IDisposable
         if (firstChar != '"') {
             throw new DsonParseException("invalid binary format, position: " + Position);
         }
-        ScanString(sb);
+        ScanBinary(sb);
         return skipValue ? null : Binary.FromHexString(sb);
+    }
+
+    private void ScanBinary(StringBuilder sb) {
+        IDsonCharStream buffer = this._charStream;
+        int c;
+        while ((c = buffer.Read()) != -1) {
+            if (c == -2) { // 换行
+                continue;
+            }
+            if (c == '"') { // 结束
+                return;
+            }
+            if (!DsonTexts.IsIndentChar(c)) {
+                sb.Append((char)c);
+            }
+        }
+        throw new DsonParseException("End of file in Dson string.");
     }
 
     /// <summary>
@@ -449,12 +466,13 @@ public sealed class DsonScanner : IDisposable
         IDsonCharStream buffer = this._charStream;
         int c;
         while ((c = buffer.Read()) != -1) {
-            if (c == -2) {
+            if (c == -2) { // 换行
                 continue;
             }
             if (c == '"') { // 结束
                 return;
-            } else if (c == '\\') { // 处理转义字符
+            }
+            if (c == '\\') { // 处理转义字符
                 DoUnescape(buffer, sb);
             } else {
                 sb.Append((char)c);
@@ -462,7 +480,6 @@ public sealed class DsonScanner : IDisposable
         }
         throw new DsonParseException("End of file in Dson string.");
     }
-
 
     /** 扫描单行纯文本 */
     private string? ScanSingleLineText(bool skipValue) {

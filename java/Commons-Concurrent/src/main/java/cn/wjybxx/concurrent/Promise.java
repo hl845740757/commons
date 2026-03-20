@@ -937,6 +937,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     @Override
     public <U> Promise<U> handleAsync(Executor executor, TriFunction<Object, ? super T, Throwable, ? extends U> fn) {
+        Objects.requireNonNull(executor, "executor");
         return uniHandle(executor, fn, null, 0);
     }
 
@@ -971,6 +972,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     @Override
     public Promise<T> whenCompleteAsync(Executor executor, TriConsumer<Object, ? super T, ? super Throwable> action) {
+        Objects.requireNonNull(executor, "executor");
         return uniWhenComplete(executor, action, null, 0);
     }
 

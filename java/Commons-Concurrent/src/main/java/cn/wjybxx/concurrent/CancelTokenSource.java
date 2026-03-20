@@ -116,7 +116,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
      */
     public boolean cancel(boolean mayInterruptIfRunning) {
         return cancel(mayInterruptIfRunning
-                ? (CancelCodes.REASON_DEFAULT & CancelCodes.MASK_INTERRUPT)
+                ? (CancelCodes.REASON_DEFAULT | CancelCodes.MASK_INTERRUPT)
                 : CancelCodes.REASON_DEFAULT);
     }
 
@@ -459,6 +459,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private Registration pushCompletion(Completion newHead) {
         ICancelToken cancelToken = ExecutorUtils.getCancelToken(newHead.ctx, newHead.options);
         if (cancelToken.isRequested()) {
+            POOL.release(newHead);
             return Registration.CLOSED;
         }
         if (isRequested()) {

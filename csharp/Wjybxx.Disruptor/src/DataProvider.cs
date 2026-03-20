@@ -46,7 +46,7 @@ public interface DataProvider<T>
     T ConsumerGet(long sequence);
 
     /// <summary>
-    /// 该接口用于生产者填充数据\
+    /// 该接口用于生产者填充数据
     /// 1. 当拷贝既有数据成本较高时可替换既有对象
     /// 2. set不提供特殊的内存语义，因此只应该生产者调用
     /// </summary>

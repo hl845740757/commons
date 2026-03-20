@@ -58,17 +58,18 @@ public class ForwardFuture<T> : IFuture<T>
     }
 
     // onCompleted不能直接转发，否则会导致封装泄漏
-    private static readonly Action<IFuture<T>, object> invoker = ((f, ctx) => {
-        Action<IFuture<T>> callback = (Action<IFuture<T>>)ctx;
-        callback(f);
-    });
-
     public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
-        future.OnCompleted(invoker, continuation, options);
+        future.OnCompleted((_, ctx) => {
+            Action<IFuture<T>> act = (Action<IFuture<T>>)ctx;
+            act.Invoke(this);
+        }, continuation, options);
     }
 
     public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
-        future.OnCompletedAsync(executor, invoker, continuation, options);
+        future.OnCompletedAsync(executor, (_, ctx) => {
+            Action<IFuture<T>> act = (Action<IFuture<T>>)ctx;
+            act.Invoke(this);
+        }, continuation, options);
     }
 
     public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {

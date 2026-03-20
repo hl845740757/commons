@@ -115,7 +115,7 @@ internal static class DynamicArrayHelper
         }
         // word所在位置单独调整
         long word = elementsMask[wordIndex];
-        long lowMask = 1L << (bitIndex & 63) - 1;
+        long lowMask = (1L << (bitIndex & 63)) - 1;
         long low = (word & lowMask);
         long high = (word & ~lowMask) << 1;
         elementsMask[wordIndex] = high | low;

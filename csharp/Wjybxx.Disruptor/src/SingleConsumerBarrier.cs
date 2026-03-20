@@ -41,6 +41,7 @@ public class SingleConsumerBarrier : ConsumerBarrier
                                  params SequenceBarrier[] dependentBarriers) {
         if (producerBarrier == null) throw new ArgumentNullException(nameof(producerBarrier));
         if (waitStrategy == null) throw new ArgumentNullException(nameof(waitStrategy));
+        if (dependentBarriers == null) throw new ArgumentNullException(nameof(dependentBarriers));
         Util.CheckNullElements(dependentBarriers, "dependentBarriers");
         // 如果未显式指定前置依赖，则添加生产者依赖
         if (dependentBarriers.Length == 0) {

@@ -39,7 +39,7 @@ public class TimeoutYieldingWaitStrategy : WaitStrategy
     public TimeoutYieldingWaitStrategy() {
         this.spinTries = 100;
         this.spinIterations = 1;
-        this.spinTries = 10;
+        this.yieldTries = 10;
     }
 
     public TimeoutYieldingWaitStrategy(int spinTries, int spinIterations,

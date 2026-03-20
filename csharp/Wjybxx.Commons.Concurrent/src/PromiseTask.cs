@@ -129,7 +129,7 @@ public class PromiseTask<T> : IFutureTask
         this.promiseRid = promise.ReentryId;
 
         // this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
-        this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
+        this.ctl = (taskType << PromiseTask.OFFSET_TASK_TYPE);
     }
 
     protected virtual void Reset() {
@@ -204,9 +204,11 @@ public class PromiseTask<T> : IFutureTask
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsRequested) {
             promise.Internal_TrySetCancelled(cancelToken.CancelCode);
+            TryRelease();
             return;
         }
         if (!promise.Internal_TrySetComputing()) {
+            TryRelease();
             return;
         }
         try {
@@ -216,6 +218,10 @@ public class PromiseTask<T> : IFutureTask
         catch (Exception e) {
             promise.Internal_TrySetException(e);
         }
+        TryRelease();
+    }
+
+    private void TryRelease() {
         // 要求外部已不持有该对象引用
         if ((options & TaskOptions.MANUAL_RELEASE) == 0 && GetType() == typeof(PromiseTask<T>)) {
             POOL.Release(this);

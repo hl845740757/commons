@@ -286,6 +286,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
     private Registration PushCompletion(Completion newHead) {
         var cancelToken = ExecutorUtil.GetCancelToken(newHead.ctx, newHead.options);
         if (cancelToken.IsRequested) {
+            POOL.Release(newHead);
             return default;
         }
         if (IsRequested) {

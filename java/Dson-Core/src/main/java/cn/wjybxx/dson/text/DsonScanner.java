@@ -385,8 +385,25 @@ public final class DsonScanner implements AutoCloseable {
         if (firstChar != '"') {
             throw new DsonParseException("invalid binary format, position: " + getPosition());
         }
-        scanString(sb);
+        scanBinary(sb);
         return skipValue ? null : Binary.fromHexString(sb);
+    }
+
+    private void scanBinary(StringBuilder sb) {
+        DsonCharStream buffer = this.charStream;
+        int c;
+        while ((c = buffer.read()) != -1) {
+            if (c == -2) { // 换行
+                continue;
+            }
+            if (c == '"') { // 结束
+                return;
+            }
+            if (!DsonTexts.isIndentChar(c)) {
+                sb.append((char) c);
+            }
+        }
+        throw new DsonParseException("End of file in Dson string.");
     }
 
     /**
@@ -444,12 +461,13 @@ public final class DsonScanner implements AutoCloseable {
         DsonCharStream buffer = this.charStream;
         int c;
         while ((c = buffer.read()) != -1) {
-            if (c == -2) {
+            if (c == -2) { // 换行
                 continue;
             }
             if (c == '"') { // 结束
                 return;
-            } else if (c == '\\') { // 处理转义字符
+            }
+            if (c == '\\') { // 处理转义字符
                 doUnescape(buffer, sb);
             } else {
                 sb.append((char) c);

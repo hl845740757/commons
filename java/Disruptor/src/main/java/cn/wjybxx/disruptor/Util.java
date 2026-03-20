@@ -110,12 +110,11 @@ public final class Util {
             newBarriers = copyOf(oldBarriers, oldBarriers.length + barriersToAdd.length);
             cursorSequence = current.sequence();
 
-            // 这里对新的屏障进行初始化，仅用于避免阻塞当前屏障；
-            // 否则一但更新成功，当前屏障必须等待新的屏障序号更新为最新值
-            for (int index = oldBarriers.length; index < barriersToAdd.length; index++) {
+            // 这里对新的屏障进行初始化，仅用于避免阻塞当前屏障；否则一但更新成功，当前屏障必须等待新的屏障序号更新为最新值
+            for (int index = 0; index < barriersToAdd.length; index++) {
                 SequenceBarrier barrier = barriersToAdd[index];
                 barrier.claim(cursorSequence);
-                newBarriers[index++] = barrier;
+                newBarriers[oldBarriers.length + index] = barrier;
             }
         }
         while (!varHandle.compareAndSet(current, oldBarriers, newBarriers));

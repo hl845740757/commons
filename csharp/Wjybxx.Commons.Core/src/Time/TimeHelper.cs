@@ -28,9 +28,7 @@ namespace Wjybxx.Commons.Time
 public sealed class TimeHelper
 {
     private static readonly TimeHelper CST = new TimeHelper(TimeSpan.FromHours(8));
-    private static readonly TimeHelper SYSTEM = new TimeHelper(TimeZoneInfo.Local.BaseUtcOffset);
     private static readonly TimeHelper UTC = new TimeHelper(TimeSpan.Zero);
-
 
     /// <summary>
     /// 时区偏移，单位秒
@@ -56,9 +54,6 @@ public sealed class TimeHelper
         int seconds = (int)timeSpan.TotalSeconds;
         if (seconds == CST.offset) {
             return CST;
-        }
-        if (seconds == SYSTEM.offset) {
-            return SYSTEM;
         }
         if (seconds == UTC.offset) {
             return UTC;

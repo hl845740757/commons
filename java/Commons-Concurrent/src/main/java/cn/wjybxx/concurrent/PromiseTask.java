@@ -82,7 +82,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.promise = Objects.requireNonNull(promise, "promise");
 
 //        this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
-        this.ctl |= (taskType << OFFSET_TASK_TYPE);
+        this.ctl = (taskType << OFFSET_TASK_TYPE);
     }
 
     /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
@@ -166,9 +166,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.isRequested()) {
             promise.trySetCancelled(cancelToken.cancelCode());
+            tryRelease();
             return;
         }
         if (!promise.trySetComputing()) {
+            tryRelease();
             return;
         }
         try {
@@ -177,6 +179,10 @@ public class PromiseTask<V> implements IFutureTask<V> {
         } catch (Throwable e) {
             promise.trySetException(e);
         }
+        tryRelease();
+    }
+
+    private void tryRelease() {
         // 要求外部已不持有该对象引用
         if ((options & TaskOptions.MANUAL_RELEASE) == 0 && getClass() == PromiseTask.class) {
             POOL.release(this);

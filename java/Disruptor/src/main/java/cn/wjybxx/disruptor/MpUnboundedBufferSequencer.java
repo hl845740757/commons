@@ -73,6 +73,7 @@ public final class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Seq
     public void publish(long sequence) {
         MpUnboundedBufferChunk<T> chunk = buffer.producerChunkForSequence(sequence);
         chunk.publish((int) (sequence - chunk.minSequence()));
+        signalAllWhenBlocking();
     }
 
     @Override
@@ -92,6 +93,7 @@ public final class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Seq
             long minSequence = chunk.minSequence();
             chunk.publish((int) (lo - minSequence), (int) (hi - minSequence));
         }
+        signalAllWhenBlocking();
     }
 
     @Override

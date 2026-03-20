@@ -28,8 +28,6 @@ public sealed class StacklessCancellationException : BetterCancellationException
 {
     // c# 的异常不适合单例，会导致堆栈冲突
     public static StacklessCancellationException Default => new StacklessCancellationException(CancelCodes.REASON_DEFAULT);
-    public static StacklessCancellationException Timeout => new StacklessCancellationException(CancelCodes.REASON_TIMEOUT);
-    public static StacklessCancellationException CountLimit => new StacklessCancellationException(CancelCodes.REASON_COUNT_LIMIT);
 
     public StacklessCancellationException(int code) : base(code) {
     }

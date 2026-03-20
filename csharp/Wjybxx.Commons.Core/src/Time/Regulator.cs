@@ -135,7 +135,7 @@ public sealed class Regulator
         long nextTime = triggerCount == 0
             ? triggerTime + firstDelay
             : triggerTime + period;
-        return Math.Max(0, curTime - nextTime);
+        return Math.Max(0, nextTime - curTime);
     }
 
     /// <summary>

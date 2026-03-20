@@ -104,12 +104,17 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
             return;
         }
         // 和上面update逻辑相同
+        boolean enqueued = false;
         if (futureTask.trigger(tickTime)) {
             if (eventLoop.isShuttingDown()) {
                 futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
             } else {
                 taskQueue.add(futureTask);
+                enqueued= true;
             }
+        }
+        if (!enqueued) {
+            ScheduledPromiseTask.release(futureTask);
         }
     }
 

@@ -19,7 +19,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.PromiseTask;
@@ -287,12 +286,12 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         }
         // 未被取消的情况下检测超时
         if (HasDeadline && deadline <= tickTime) {
-            TrySetException(StacklessCancellationException.Timeout);
+            TrySetCancelled(cancelToken, CancelCodes.REASON_TIMEOUT);
             return false;
         }
         // 检测次数限制
         if (HasCountdown && (--countdown < 1)) {
-            TrySetException(StacklessCancellationException.CountLimit);
+            TrySetCancelled(cancelToken, CancelCodes.REASON_COUNT_LIMIT);
             return false;
         }
         SetNextRunTime(tickTime, scheduleType);

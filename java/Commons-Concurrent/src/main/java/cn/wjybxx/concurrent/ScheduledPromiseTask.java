@@ -281,12 +281,12 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         // 未被取消的情况下检测超时
         if (hasDeadline() && deadline <= tickTime) {
-            promise.trySetException(StacklessCancellationException.TIMEOUT);
+            trySetCancelled(promise, cancelToken, CancelCodes.REASON_TIMEOUT);
             return false;
         }
         // 检测次数限制
         if (hasCountdown() && (--countdown < 1)) {
-            promise.trySetException(StacklessCancellationException.COUNT_LIMIT);
+            trySetCancelled(promise, cancelToken, CancelCodes.REASON_COUNT_LIMIT);
             return false;
         }
         setNextRunTime(tickTime, scheduleType);

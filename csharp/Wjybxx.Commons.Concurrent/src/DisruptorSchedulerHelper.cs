@@ -111,12 +111,17 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             return;
         }
         // 和上面Update逻辑相同
+        bool enqueued = false;
         if (futureTask.Trigger(tickTime)) {
             if (_eventLoop.IsShuttingDown) {
                 futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
             } else {
                 _taskQueue.Enqueue(futureTask);
+                enqueued = true;
             }
+        }
+        if (!enqueued) {
+            futureTask.Release();
         }
     }
 

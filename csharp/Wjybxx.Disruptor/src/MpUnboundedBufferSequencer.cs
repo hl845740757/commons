@@ -73,6 +73,7 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
     public void Publish(long sequence) {
         MpUnboundedBufferChunk<T> chunk = buffer.ProducerChunkForSequence(sequence);
         chunk.Publish((int)(sequence - chunk.MinSequence()));
+        SignalAllWhenBlocking();
     }
 
     public void Publish(long lo, long hi) {
@@ -91,6 +92,7 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
             long minSequence = chunk.MinSequence();
             chunk.Publish((int)(lo - minSequence), (int)(hi - minSequence));
         }
+        SignalAllWhenBlocking();
     }
 
     public bool IsPublished(long sequence) {

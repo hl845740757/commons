@@ -438,6 +438,11 @@ public class ValuePromise<T> : IValuePromise<T>
             throw new InvalidOperationException("Already continuation registered, can not await twice or get result after await.");
         }
         // Future已完成
+        completion.input = this;
+        completion.executor = executor;
+        completion.options = options;
+        completion.action = action;
+        completion.state = state;
         completion.TryFire(SYNC);
     }
 

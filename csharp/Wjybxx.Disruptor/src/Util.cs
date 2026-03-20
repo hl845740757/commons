@@ -127,12 +127,11 @@ internal static class Util
             newBarriers = CopyOf(oldBarriers!, oldBarriers!.Length + barriersToAdd.Length);
             cursorSequence = current.Sequence();
 
-            // 这里对新的屏障进行初始化，仅用于避免阻塞当前屏障；
-            // 否则一但更新成功，当前屏障必须等待新的屏障序号更新为最新值
-            for (int index = oldBarriers.Length; index < barriersToAdd.Length; index++) {
+            // 这里对新的屏障进行初始化，仅用于避免阻塞当前屏障；否则一但更新成功，当前屏障必须等待新的屏障序号更新为最新值
+            for (int index = 0; index < barriersToAdd.Length; index++) {
                 SequenceBarrier barrier = barriersToAdd[index];
                 barrier.Claim(cursorSequence);
-                newBarriers[index++] = barrier;
+                newBarriers[oldBarriers.Length + index] = barrier;
             }
         } while (Interlocked.CompareExchange(ref location, newBarriers, oldBarriers) != oldBarriers);
     }
