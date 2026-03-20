@@ -296,45 +296,6 @@ public class CollectionUtils {
     }
     // endregion
 
-    // region index-custom
-
-    /** @param list 最好为数组列表 */
-    public static <E> boolean containsCustom(List<E> list, Predicate<? super E> indexFunc) {
-        return indexOfCustom(list, indexFunc, 0, list.size()) >= 0;
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
-        return indexOfCustom(list, indexFunc, 0, list.size());
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
-        return lastIndexOfCustom(list, indexFunc, 0, list.size());
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc, int start, int end) {
-        for (int i = start; i < end; i++) {
-            if (indexFunc.test(list.get(i))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc, int start, int end) {
-        for (int i = end - 1; i >= start; i--) {
-            if (indexFunc.test(list.get(i))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    // endregion
-
     // region binary-search
 
     /**
@@ -408,7 +369,7 @@ public class CollectionUtils {
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             T midVal = array.get(mid);
             int cmp = c.compare(key, midVal);
             if (cmp < 0)
@@ -426,7 +387,7 @@ public class CollectionUtils {
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             T midVal = array.get(mid);
             int cmp = c.applyAsInt(midVal);
             if (cmp < 0)

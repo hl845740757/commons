@@ -412,9 +412,9 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
     public void Clear() {
         int count = _count;
         if (count > 0) {
+            Array.Clear(_table, 0, count);
             _count = 0;
             _version++;
-            Array.Clear(_table, 0, _count);
         }
     }
 
@@ -682,9 +682,8 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         if (index < _count) {
             Array.Copy(_table, index + 1, _table, index, _count - index);
         }
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<TValue>()) {
-            _table[_count] = default!;
-        }
+        // 优化需要同时检查TKey/TValue是否包含引用类型
+        _table[_count] = default;
     }
 
     private void MoveToFirst(int index) {
@@ -823,7 +822,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         #region itr
 
         public KeyCollection Reversed() {
-            return _dictionary.CachedKeys(_reversed);
+            return _dictionary.CachedKeys(!_reversed);
         }
 
         public KeyEnumerator GetEnumerator() {
@@ -878,7 +877,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         #region itr
 
         public ValueCollection Reversed() {
-            return _dictionary.CachedValues(_reversed);
+            return _dictionary.CachedValues(!_reversed);
         }
 
         public ValueEnumerator GetEnumerator() {

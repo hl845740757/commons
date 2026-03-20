@@ -107,7 +107,8 @@ final class DynamicArrayHelper {
     public static void insertBit(long[] elementsMask, int len, int bitIndex) {
         int wordIndex = wordIndex(bitIndex);
         for (int idx = wordCount(len) - 1; idx > wordIndex; idx--) {
-            elementsMask[idx] = elementsMask[idx] << 1;
+            long sign = elementsMask[idx - 1] < 0 ? 1 : 0; // 下个word的最高位
+            elementsMask[idx] = (elementsMask[idx] << 1) | sign;
         }
         // word所在位置单独调整
         long word = elementsMask[wordIndex];

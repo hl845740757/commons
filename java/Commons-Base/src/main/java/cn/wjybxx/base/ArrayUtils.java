@@ -19,7 +19,6 @@ package cn.wjybxx.base;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.random.RandomGenerator;
 
@@ -169,52 +168,6 @@ public class ArrayUtils {
 
     // endregion
 
-    // region index-custom
-
-    public static <T> boolean containsCustom(T[] list, Predicate<? super T> indexFunc) {
-        return indexOfCustom(list, indexFunc, 0, list.length) >= 0;
-    }
-
-    public static <T> int indexOfCustom(T[] list, Predicate<? super T> indexFunc) {
-        return indexOfCustom(list, indexFunc, 0, list.length);
-    }
-
-    public static <T> int lastIndexOfCustom(T[] list, Predicate<? super T> indexFunc) {
-        return lastIndexOfCustom(list, indexFunc, 0, list.length);
-    }
-
-    /**
-     * @param list      数组
-     * @param indexFunc 查询函数
-     * @param start     数组的有效区间起始下标(inclusive)
-     * @param end       数组的有效区间结束下标(exclusive)
-     */
-    public static <T> int indexOfCustom(T[] list, Predicate<? super T> indexFunc, int start, int end) {
-        for (int i = start; i < end; i++) {
-            if (indexFunc.test(list[i])) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * @param list      数组
-     * @param indexFunc 查询函数
-     * @param start     数组的有效区间起始下标(inclusive)
-     * @param end       数组的有效区间结束下标(exclusive)
-     */
-    public static <T> int lastIndexOfCustom(T[] list, Predicate<? super T> indexFunc, int start, int end) {
-        for (int i = end - 1; i >= start; i--) {
-            if (indexFunc.test(list[i])) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    // endregion
-
     // region swap
 
     public static void swap(int[] array, int i, int j) {
@@ -330,7 +283,7 @@ public class ArrayUtils {
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             T midVal = array[mid];
             int cmp = c.applyAsInt(midVal);
             if (cmp < 0)

@@ -34,7 +34,7 @@ public abstract class AbstractConstant : IConstant
         _id = builder.GetIdOrThrow();
         _name = builder.Name;
         _poolId = builder.PoolId ?? throw new ArgumentException("PoolId");
-        _hash = HashCode.Combine(_hash, _name, _poolId); // 稳定hash值
+        _hash = HashCode.Combine(_id, _name, _poolId); // 稳定hash值
     }
 
     public int Id => _id;

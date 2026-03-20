@@ -343,7 +343,7 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         if (table.Length == 0) {
             return -1;
         }
-        if (typeof(TKey).IsValueType && key == null) {
+        if (!typeof(TKey).IsValueType && key == null) {
             Node nullNode = table[_mask + 1];
             return nullNode.IsNull() ? -(_mask + 2) : (_mask + 1);
         }

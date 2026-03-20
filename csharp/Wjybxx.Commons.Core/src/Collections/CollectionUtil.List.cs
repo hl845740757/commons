@@ -33,7 +33,7 @@ public static partial class CollectionUtil
     /** 创建一个元素的List */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T> NewList<T>(T first) {
-        return new List<T>(1) { first };
+        return new List<T>(2) { first };
     }
 
     /** 创建2个元素的List */
@@ -52,81 +52,6 @@ public static partial class CollectionUtil
 
 #nullable disable
 
-    #region index
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int IndexOf<T>(IList<T> list, T element, IEqualityComparer<T> comparer = null) {
-        return IndexOf(list, element, 0, list.Count, comparer);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LastIndexOf<T>(IList<T> list, T element, IEqualityComparer<T> comparer = null) {
-        return LastIndexOf(list, element, 0, list.Count, comparer);
-    }
-
-    /// <summary>
-    /// 查对象在数组中的下标
-    /// </summary>
-    /// <param name="list"></param>
-    /// <param name="element">要查找的元素</param>
-    /// <param name="start">包含</param>
-    /// <param name="end">不包含</param>
-    /// <param name="comparer">equals实现</param>
-    /// <typeparam name="T"></typeparam>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static int IndexOf<T>(IList<T> list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
-        if (list == null) throw new ArgumentNullException(nameof(list));
-        if (!typeof(T).IsValueType && element == null) {
-            for (int i = start; i < end; i++) {
-                if (list[i] == null) {
-                    return i;
-                }
-            }
-        } else {
-            if (comparer == null) {
-                comparer = EqualityComparer<T>.Default;
-            }
-            for (int i = start; i < end; i++) {
-                if (comparer.Equals(element, list[i])) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    /// <summary>
-    /// 反向查对象在数组中的下标
-    /// </summary>
-    /// <param name="list"></param>
-    /// <param name="element">要查找的元素</param>
-    /// <param name="start">包含</param>
-    /// <param name="end">不包含</param>
-    /// <param name="comparer">equals实现</param>
-    /// <typeparam name="T"></typeparam>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static int LastIndexOf<T>(IList<T> list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
-        if (!typeof(T).IsValueType && element == null) {
-            for (int i = end - 1; i >= start; i--) {
-                if (list[i] == null) {
-                    return i;
-                }
-            }
-        } else {
-            if (comparer == null) {
-                comparer = EqualityComparer<T>.Default;
-            }
-            for (int i = end - 1; i >= start; i--) {
-                if (comparer.Equals(element, list[i])) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    #endregion
-
     #region indexref
 
     /** 查询List中是否包含指定对象引用 */
@@ -144,7 +69,7 @@ public static partial class CollectionUtil
     /** 反向查对象引用在数组中的下标 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LastIndexOfRef<T>(IList<T> list, object element) where T : class {
-        return LastIndexOfRef(list, element, 0, list.Count);
+        return LastIndexOfRef(list, element, list.Count - 1, list.Count);
     }
 
     /// <summary>
@@ -152,22 +77,15 @@ public static partial class CollectionUtil
     /// </summary>
     /// <param name="list">数组</param>
     /// <param name="element">要查找的元素</param>
-    /// <param name="start">开始下标，包含</param>
-    /// <param name="end">结束下标，不包含</param>
+    /// <param name="start">开始下标</param>
+    /// <param name="len">查询长度</param>
     /// <typeparam name="T"></typeparam>
-    public static int IndexOfRef<T>(IList<T> list, object element, int start, int end) where T : class {
+    public static int IndexOfRef<T>(IList<T> list, object element, int start, int len) where T : class {
         if (list == null) throw new ArgumentNullException(nameof(list));
-        if (element == null) {
-            for (int i = start; i < end; i++) {
-                if (list[i] == null) {
-                    return i;
-                }
-            }
-        } else {
-            for (int i = start; i < end; i++) {
-                if (element == list[i]) {
-                    return i;
-                }
+        if (len < 0) throw new ArgumentNullException(nameof(len));
+        for (int i = start, end = start + len; i < end; i++) {
+            if (element == list[i]) {
+                return i;
             }
         }
         return -1;
@@ -179,20 +97,14 @@ public static partial class CollectionUtil
     /// <param name="list">数组</param>
     /// <param name="element">要查找的元素</param>
     /// <param name="start">开始下标，包含</param>
-    /// <param name="end">结束下标，不包含</param>
+    /// <param name="len">查询长度</param>
     /// <typeparam name="T"></typeparam>
-    public static int LastIndexOfRef<T>(IList<T> list, object element, int start, int end) where T : class {
-        if (element == null) {
-            for (int i = end - 1; i >= start; i--) {
-                if (list[i] == null) {
-                    return i;
-                }
-            }
-        } else {
-            for (int i = end - 1; i >= start; i--) {
-                if (element == list[i]) {
-                    return i;
-                }
+    public static int LastIndexOfRef<T>(IList<T> list, object element, int start, int len) where T : class {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        if (len < 0) throw new ArgumentNullException(nameof(len));
+        for (int i = start, end = start - len; i > end; i--) {
+            if (element == list[i]) {
+                return i;
             }
         }
         return -1;
@@ -206,54 +118,6 @@ public static partial class CollectionUtil
         }
         list.RemoveAt(index);
         return true;
-    }
-
-    #endregion
-
-    #region indexOfCustom
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int IndexOfCustom<T>(IList<T> list, Predicate<T> filter) {
-        return IndexOfCustom(list, filter, 0, list.Count);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LastIndexOfCustom<T>(IList<T> list, Predicate<T> filter) {
-        return LastIndexOfCustom(list, filter, 0, list.Count);
-    }
-
-    /// <summary>
-    /// 查对象引用在数组中的下标
-    /// </summary>
-    /// <param name="list">数组</param>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="start">开始下标，包含</param>
-    /// <param name="end">结束下标，不包含</param>
-    /// <typeparam name="T"></typeparam>
-    public static int IndexOfCustom<T>(IList<T> list, Predicate<T> filter, int start, int end) {
-        for (int idx = start; idx < end; idx++) {
-            if (filter(list[idx])) {
-                return idx;
-            }
-        }
-        return -1;
-    }
-
-    /// <summary>
-    /// 反向查对象引用在数组中的下标
-    /// </summary>
-    /// <param name="list">数组</param>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="start">开始下标，包含</param>
-    /// <param name="end">结束下标，不包含</param>
-    /// <typeparam name="T"></typeparam>
-    public static int LastIndexOfCustom<T>(IList<T> list, Predicate<T> filter, int start, int end) {
-        for (int i = end - 1; i >= start; i--) {
-            if (filter(list[i])) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     #endregion

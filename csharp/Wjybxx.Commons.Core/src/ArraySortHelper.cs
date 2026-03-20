@@ -41,7 +41,7 @@ internal static class ArraySortHelper
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             int midVal = array[mid];
 
             if (midVal < key)
@@ -64,7 +64,7 @@ internal static class ArraySortHelper
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             T midVal = a[mid];
             int cmp = c.Compare(midVal, key);
             if (cmp < 0)
@@ -87,7 +87,7 @@ internal static class ArraySortHelper
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             T midVal = a[mid];
             int cmp = c.Invoke(midVal);
             if (cmp < 0)
@@ -114,7 +114,7 @@ internal static class ArraySortHelper
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             T midVal = a[mid];
             int cmp = c.Compare(midVal, key);
             if (cmp < 0)
@@ -137,7 +137,7 @@ internal static class ArraySortHelper
         int high = toIndex - 1;
 
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = low + (high - low) / 2; // 防溢出
             T midVal = a[mid];
             int cmp = c.Invoke(midVal);
             if (cmp < 0)

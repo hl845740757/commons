@@ -124,15 +124,26 @@ public class Regulator {
         return this;
     }
 
+    /** 获取下次执行的延迟 */
+    public long getDelay(long curTime) {
+        long nextTime = triggerCount == 0
+                ? triggerTime + firstDelay
+                : triggerTime + period;
+        return Math.max(0, curTime - nextTime);
+    }
+
     /**
      * @param curTime 当前时间
-     * @return 如果应该执行一次update或者tick，则返回true，否则返回false
+     * @return 如果应该执行一次update，则返回true，否则返回false
      */
     public boolean isReady(long curTime) {
-        boolean ready = triggerCount == 0
-                ? (curTime - triggerTime >= firstDelay)
-                : (period > 0 && (curTime - triggerTime >= period));
-        if (ready) {
+        if (type == ONCE && triggerCount > 0) {
+            return false;
+        }
+        long nextTime = triggerCount == 0
+                ? triggerTime + firstDelay
+                : triggerTime + period;
+        if (curTime >= nextTime) {
             internalUpdate(curTime);
             return true;
         }
@@ -166,14 +177,6 @@ public class Regulator {
             }
         }
         triggerCount++;
-    }
-
-    /** 获取下次执行的延迟 */
-    public long getDelay(long curTime) {
-        if (triggerCount == 0) {
-            return Math.max(0, curTime - triggerTime - firstDelay);
-        }
-        return Math.max(0, curTime - triggerTime - period);
     }
 
     /** 校准时间 */

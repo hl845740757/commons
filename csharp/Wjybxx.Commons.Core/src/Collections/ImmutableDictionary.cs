@@ -297,7 +297,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
 
     public bool ContainsValue(TValue value) {
         if (value == null) {
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 if (e.value == null) {
                     return true;
@@ -307,7 +307,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
             return false;
         } else {
             IEqualityComparer<TValue>? valComparer = ValComparer;
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 if (valComparer.Equals(value, e.value)) {
                     return true;
@@ -770,7 +770,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
         #region itr
 
         public KeyCollection Reversed() {
-            return _dictionary.CachedKeys(_reversed);
+            return _dictionary.CachedKeys(!_reversed);
         }
 
         public KeyEnumerator GetEnumerator() {
@@ -825,7 +825,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
         #region itr
 
         public ValueCollection Reversed() {
-            return _dictionary.CachedValues(_reversed);
+            return _dictionary.CachedValues(!_reversed);
         }
 
         public ValueEnumerator GetEnumerator() {

@@ -818,8 +818,10 @@ public static class ExecutorUtil
                 case TaskStatus.Success: {
                     return Task.FromResult(future.ResultNow());
                 }
-                case TaskStatus.Cancelled: {
-                    return Task.FromCanceled(default);
+                case TaskStatus.Cancelled: { // 必须传入已取消的Token...
+                    CancellationTokenSource cts = new CancellationTokenSource();
+                    cts.Cancel(throwOnFirstException: false);
+                    return Task.FromCanceled(cts.Token);
                 }
                 case TaskStatus.Failed: {
                     return Task.FromException(future.ExceptionNow());
@@ -893,8 +895,10 @@ public static class ExecutorUtil
                 case TaskStatus.Success: {
                     return Task.FromResult(future.ResultNow());
                 }
-                case TaskStatus.Cancelled: {
-                    return Task.FromCanceled<T>(default);
+                case TaskStatus.Cancelled: { // 必须传入已取消的Token...
+                    CancellationTokenSource cts = new CancellationTokenSource();
+                    cts.Cancel(throwOnFirstException: false);
+                    return Task.FromCanceled<T>(cts.Token);
                 }
                 case TaskStatus.Failed: {
                     return Task.FromException<T>(future.ExceptionNow());

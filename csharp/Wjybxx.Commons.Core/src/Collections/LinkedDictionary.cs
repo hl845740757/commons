@@ -290,7 +290,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     public bool ContainsValue(TValue value) {
         if (!typeof(TValue).IsValueType && value == null) {
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 if (e.value == null) {
                     return true;
@@ -300,7 +300,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             return false;
         } else {
             IEqualityComparer<TValue> valComparer = ValComparer;
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 if (valComparer.Equals(value, e.value)) {
                     return true;
@@ -1348,7 +1348,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         #region itr
 
         public KeyCollection Reversed() {
-            return _dictionary.CachedKeys(_reversed);
+            return _dictionary.CachedKeys(!_reversed);
         }
 
         public KeyEnumerator GetEnumerator() {
@@ -1403,7 +1403,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         #region itr
 
         public ValueCollection Reversed() {
-            return _dictionary.CachedValues(_reversed);
+            return _dictionary.CachedValues(!_reversed);
         }
 
         public ValueEnumerator GetEnumerator() {

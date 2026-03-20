@@ -110,7 +110,8 @@ internal static class DynamicArrayHelper
     public static void InsertBit(long[] elementsMask, int len, int bitIndex) {
         int wordIndex = WordIndex(bitIndex);
         for (int idx = WordCount(len) - 1; idx > wordIndex; idx--) {
-            elementsMask[idx] = elementsMask[idx] << 1;
+            long sign = elementsMask[idx - 1] < 0 ? 1 : 0; // 下个word的最高位
+            elementsMask[idx] = (elementsMask[idx] << 1) | sign;
         }
         // word所在位置单独调整
         long word = elementsMask[wordIndex];

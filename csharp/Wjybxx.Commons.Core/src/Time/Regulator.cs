@@ -43,6 +43,7 @@ public sealed class Regulator
     private long period;
 
     /**
+     * 上次更新时间
      * 它的真实含义取决于外部，可能是系统时间也可能不是，甚至可能是帧数
      * 在存储已触发次数的情况下还使用上次更新的时间戳，这使得可以在运行的过程中修改间隔，该实现是有状态的。
      * 注意：允许为负数，外部赋值什么就是什么。
@@ -126,15 +127,30 @@ public sealed class Regulator
     }
 
     /// <summary>
+    /// 获取下次执行的延迟
+    /// </summary>
+    /// <param name="curTime">当前时间</param>
+    /// <returns></returns>
+    public long GetDelay(long curTime) {
+        long nextTime = triggerCount == 0
+            ? triggerTime + firstDelay
+            : triggerTime + period;
+        return Math.Max(0, curTime - nextTime);
+    }
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="curTime">当前时间</param>
-    /// <returns>如果应该执行一次update或者tick，则返回true，否则返回false</returns>
+    /// <returns>如果应该执行一次update，则返回true，否则返回false</returns>
     public bool IsReady(long curTime) {
-        bool ready = triggerCount == 0
-            ? (curTime - triggerTime >= firstDelay)
-            : (period > 0 && (curTime - triggerTime >= period));
-        if (ready) {
+        if (type == ONCE && triggerCount > 0) {
+            return false;
+        }
+        long nextTime = triggerCount == 0
+            ? triggerTime + firstDelay
+            : triggerTime + period;
+        if (curTime >= nextTime) {
             InternalUpdate(curTime);
             return true;
         }
@@ -170,18 +186,6 @@ public sealed class Regulator
     }
 
     /// <summary>
-    /// 获取下次执行的延迟
-    /// </summary>
-    /// <param name="curTime">当前事件</param>
-    /// <returns></returns>
-    public long GetDelay(long curTime) {
-        if (triggerCount == 0) {
-            return Math.Max(0, curTime - triggerTime - firstDelay);
-        }
-        return Math.Max(0, curTime - triggerTime - period);
-    }
-
-    /// <summary>
     /// 校准时间
     /// </summary>
     /// <param name="curTime"></param>
@@ -195,7 +199,7 @@ public sealed class Regulator
     public bool IsPeriodic => period != 0;
 
     /// <summary>
-    /// 获取上次成功更新的时间戳
+    /// 上次成功更新的时间戳
     /// 它的具体含义取悦于更新时使用的{@code curTime}的含义。
     /// </summary>
     /// <value></value>

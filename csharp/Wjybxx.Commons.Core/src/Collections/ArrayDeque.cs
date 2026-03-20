@@ -527,10 +527,11 @@ public class ArrayDeque<T> : IDeque<T>
     private void Resize(int newCapacity) {
         T[] elements = new T[newCapacity];
         CopyTo(elements, 0);
+        //
+        int count = Count;
         _elements = elements;
         _version++;
-
-        int count = Count; // 修正head,tail
+        // 修正head,tail
         if (count > 0) {
             _head = 0;
             _tail = count - 1;

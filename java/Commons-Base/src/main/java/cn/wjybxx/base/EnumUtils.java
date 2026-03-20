@@ -404,7 +404,7 @@ public class EnumUtils {
             int low = 0;
             int high = list.size() - 1;
             while (low <= high) {
-                int mid = (low + high) >>> 1;
+                int mid = low + (high - low) / 2; // 防溢出
                 T midVal = list.get(mid);
 
                 int cmp = Integer.compare(midVal.getNumber(), number);

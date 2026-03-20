@@ -151,8 +151,9 @@ public static class EnvironmentUtil
         {
             "true" => true,
             "yes" => true,
-            "Y" => true,
+            "y" => true,
             "1" => true,
+            //
             "false" => false,
             "no" => false,
             "n" => false,

@@ -178,7 +178,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
         if (e == null) {
             return LastNullIndex();
         }
-        return Array.LastIndexOf(elements, e, 0, len);
+        return Array.LastIndexOf(elements, e, len - 1, len);
     }
 
     public int IndexOfRef(E? e) {
@@ -192,7 +192,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
         if (e == null) {
             return LastNullIndex();
         }
-        return ArrayUtil.LastIndexOfRef(elements, e, 0, len);
+        return ArrayUtil.LastIndexOfRef(elements, e, len - 1, len);
     }
 
     private int FirstNullIndex() {

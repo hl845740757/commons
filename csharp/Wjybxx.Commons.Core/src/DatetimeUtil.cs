@@ -95,14 +95,12 @@ public static class DatetimeUtil
 
     /// <summary>
     /// 获取星期对应的数字，星期一为1，星期天为7
-    ///
-    /// C#和Java的旧代码都是0开始，巨恶心人...
     /// </summary>
     /// <param name="dayOfWeek"></param>
     /// <returns></returns>
     public static int GetNumber(this DayOfWeek dayOfWeek) {
         int r = (int)dayOfWeek;
-        return r == 0 ? 7 : r + 1;
+        return r == 0 ? 7 : r;
     }
 
     /// <summary>
