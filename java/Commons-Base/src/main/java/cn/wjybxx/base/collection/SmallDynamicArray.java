@@ -196,7 +196,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         if (e == null) {
             return lastNullIndex();
         }
-        return ArrayUtils.lastIndexOf(elements, e, 0, len);
+        return ArrayUtils.lastIndexOf(elements, e, len - 1, len);
     }
 
     @Override
@@ -212,7 +212,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         if (e == null) {
             return lastNullIndex();
         }
-        return ArrayUtils.lastIndexOfRef(elements, e, 0, len);
+        return ArrayUtils.lastIndexOfRef(elements, e, len - 1, len);
     }
 
     private int firstNullIndex() {

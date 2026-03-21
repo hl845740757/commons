@@ -374,9 +374,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
 
     @Override
     public void shutdown() {
-        if (!runningPromise.isDone()) {
-            runningPromise.trySetException(new StartFailedException("Shutdown"));
-        }
         int expectedState = state;
         for (; ; ) {
             if (expectedState >= EventLoopState.ST_SHUTTING_DOWN) {
@@ -417,6 +414,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             runningPromise.trySetException(new StartFailedException("Stillborn"));
             terminationPromise.trySetResult(null);
         } else {
+            if (!runningPromise.isDone()) {
+                runningPromise.trySetException(new StartFailedException("Shutdown"));
+            }
             // 等待策略是根据alert信号判断EventLoop是否已开始关闭的，因此即使inEventLoop也需要alert，否则可能丢失信号，在waitFor处无法停止
             worker.barrier.alert();
             // 唤醒线程 - 如果线程可能阻塞在其它地方

@@ -243,24 +243,14 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
     }
 
     public bool ContainsValue(TValue value) {
-        if (!typeof(TValue).IsValueType && value == null) {
-            for (int index = _count - 1; index >= 0; index--) {
-                ref Node e = ref _table[index];
-                if (e.value == null) {
-                    return true;
-                }
+        IEqualityComparer<TValue> valComparer = ValComparer;
+        for (int index = _count - 1; index >= 0; index--) {
+            ref Node e = ref _table[index];
+            if (valComparer.Equals(value, e.value)) {
+                return true;
             }
-            return false;
-        } else {
-            IEqualityComparer<TValue> valComparer = ValComparer;
-            for (int index = _count - 1; index >= 0; index--) {
-                ref Node e = ref _table[index];
-                if (valComparer.Equals(value, e.value)) {
-                    return true;
-                }
-            }
-            return false;
         }
+        return false;
     }
 
     public bool Contains(KeyValuePair<TKey, TValue> item) {

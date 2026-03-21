@@ -389,9 +389,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     }
 
     public override void Shutdown() {
-        if (!runningPromise.IsCompleted) { // 尚未启动成功就关闭
-            runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);
-        }
         int expectedState = state;
         for (;;) {
             if (expectedState >= ST_SHUTTING_DOWN) {
@@ -434,6 +431,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             runningPromise.TrySetException(new StartFailedException("Stillborn"));
             terminationPromise.TrySetResult(0);
         } else {
+            if (!runningPromise.IsCompleted) {
+                runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);
+            }
             // 等待策略是根据alert信号判断EventLoop是否已开始关闭的，因此即使inEventLoop也需要alert，否则可能丢失信号，在waitFor处无法停止
             barrier.Alert();
             // 唤醒线程 - 如果线程可能阻塞在其它地方

@@ -59,17 +59,18 @@ public class ArrayUtils {
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询区域长度
      */
-    public static <T> int indexOf(T[] list, Object element, int start, int end) {
+    public static <T> int indexOf(T[] list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
         if (element == null) {
-            for (int i = start; i < end; i++) {
+            for (int i = start, end = start + len; i < end; i++) {
                 if (list[i] == null) {
                     return i;
                 }
             }
         } else {
-            for (int i = start; i < end; i++) {
+            for (int i = start, end = start + len; i < end; i++) {
                 if (element.equals(list[i])) {
                     return i;
                 }
@@ -82,17 +83,18 @@ public class ArrayUtils {
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询区域长度
      */
-    public static <T> int lastIndexOf(T[] list, Object element, int start, int end) {
+    public static <T> int lastIndexOf(T[] list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
         if (element == null) {
-            for (int i = end - 1; i >= start; i--) {
+            for (int i = start, end = start - len; i > end; i--) {
                 if (list[i] == null) {
                     return i;
                 }
             }
         } else {
-            for (int i = end - 1; i >= start; i--) {
+            for (int i = start, end = start - len; i > end; i--) {
                 if (element.equals(list[i])) {
                     return i;
                 }
@@ -117,27 +119,20 @@ public class ArrayUtils {
 
     /** 反向查找对象引用在数组中的索引 */
     public static <T> int lastIndexOfRef(T[] list, Object element) {
-        return lastIndexOfRef(list, element, 0, list.length);
+        return lastIndexOfRef(list, element, list.length - 1, list.length);
     }
 
     /**
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询长度
      */
-    public static <T> int indexOfRef(T[] list, Object element, int start, int end) {
-        if (element == null) {
-            for (int i = start; i < end; i++) {
-                if (list[i] == null) {
-                    return i;
-                }
-            }
-        } else {
-            for (int i = start; i < end; i++) {
-                if (element == list[i]) {
-                    return i;
-                }
+    public static <T> int indexOfRef(T[] list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
+        for (int i = start, end = start + len; i < end; i++) {
+            if (element == list[i]) {
+                return i;
             }
         }
         return -1;
@@ -147,20 +142,13 @@ public class ArrayUtils {
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询长度
      */
-    public static <T> int lastIndexOfRef(T[] list, Object element, int start, int end) {
-        if (element == null) {
-            for (int i = end - 1; i >= start; i--) {
-                if (list[i] == null) {
-                    return i;
-                }
-            }
-        } else {
-            for (int i = end - 1; i >= start; i--) {
-                if (element == list[i]) {
-                    return i;
-                }
+    public static <T> int lastIndexOfRef(T[] list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
+        for (int i = start, end = start - len; i > end; i--) {
+            if (element == list[i]) {
+                return i;
             }
         }
         return -1;

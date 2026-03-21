@@ -279,8 +279,12 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             }
             FutureLogger.LogCause(ex, "periodic task caught exception");
         }
+        // 再次检查Promise的有效性
+        if (IsRecycledOrCompleted(promise, promiseRid)) {
+            return false;
+        }
         // 任务执行后检测取消
-        if (cancelToken.IsRequested || IsRecycledOrCompleted(promise, promiseRid)) {
+        if (cancelToken.IsRequested) {
             TrySetCancelled(cancelToken, CancelCodes.REASON_DEFAULT);
             return false;
         }

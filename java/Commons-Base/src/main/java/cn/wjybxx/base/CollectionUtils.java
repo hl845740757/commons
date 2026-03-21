@@ -151,7 +151,7 @@ public class CollectionUtils {
 
     /** 反向查找对象引用在List中的索引 */
     public static int lastIndexOf(List<?> list, Object element) {
-        return lastIndexOf(list, element, 0, list.size());
+        return lastIndexOf(list, element, list.size() - 1, list.size());
     }
 
     /**
@@ -160,18 +160,18 @@ public class CollectionUtils {
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询长度
      */
-    public static int indexOf(List<?> list, Object element, int start, int end) {
-        Objects.requireNonNull(list, "list");
+    public static int indexOf(List<?> list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
         if (element == null) {
-            for (int i = start; i < end; i++) {
+            for (int i = start, end = start + len; i < end; i++) {
                 if (list.get(i) == null) {
                     return i;
                 }
             }
         } else {
-            for (int i = start; i < end; i++) {
+            for (int i = start, end = start + len; i < end; i++) {
                 if (element.equals(list.get(i))) {
                     return i;
                 }
@@ -186,17 +186,18 @@ public class CollectionUtils {
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询长度
      */
-    public static int lastIndexOf(List<?> list, Object element, int start, int end) {
+    public static int lastIndexOf(List<?> list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
         if (element == null) {
-            for (int i = end - 1; i >= start; i--) {
+            for (int i = start, end = start - len; i > end; i--) {
                 if (list.get(i) == null) {
                     return i;
                 }
             }
         } else {
-            for (int i = end - 1; i >= start; i--) {
+            for (int i = start, end = start - len; i > end; i--) {
                 if (element.equals(list.get(i))) {
                     return i;
                 }
@@ -221,7 +222,7 @@ public class CollectionUtils {
 
     /** 反向查找对象引用在List中的索引 */
     public static int lastIndexOfRef(List<?> list, Object element) {
-        return lastIndexOfRef(list, element, 0, list.size());
+        return lastIndexOfRef(list, element, list.size() - 1, list.size());
     }
 
     /**
@@ -230,21 +231,13 @@ public class CollectionUtils {
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询长度
      */
-    public static int indexOfRef(List<?> list, Object element, int start, int end) {
-        Objects.requireNonNull(list, "list");
-        if (element == null) {
-            for (int i = start; i < end; i++) {
-                if (list.get(i) == null) {
-                    return i;
-                }
-            }
-        } else {
-            for (int i = start; i < end; i++) {
-                if (element == list.get(i)) {
-                    return i;
-                }
+    public static int indexOfRef(List<?> list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
+        for (int i = start, end = start + len; i < end; i++) {
+            if (element == list.get(i)) {
+                return i;
             }
         }
         return -1;
@@ -256,20 +249,13 @@ public class CollectionUtils {
      * @param list    数组
      * @param element 要查找的元素
      * @param start   数组的有效区间起始下标(inclusive)
-     * @param end     数组的有效区间结束下标(exclusive)
+     * @param len     查询长度
      */
-    public static int lastIndexOfRef(List<?> list, Object element, int start, int end) {
-        if (element == null) {
-            for (int i = end - 1; i >= start; i--) {
-                if (list.get(i) == null) {
-                    return i;
-                }
-            }
-        } else {
-            for (int i = end - 1; i >= start; i--) {
-                if (element == list.get(i)) {
-                    return i;
-                }
+    public static int lastIndexOfRef(List<?> list, Object element, int start, int len) {
+        if (len < 0) throw new IllegalArgumentException("len");
+        for (int i = start, end = start - len; i > end; i--) {
+            if (element == list.get(i)) {
+                return i;
             }
         }
         return -1;

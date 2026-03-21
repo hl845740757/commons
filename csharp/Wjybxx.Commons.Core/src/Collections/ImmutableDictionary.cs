@@ -296,26 +296,15 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
     }
 
     public bool ContainsValue(TValue value) {
-        if (value == null) {
-            for (int index = _head; index >= 0;) {
-                ref Node e = ref _table[index];
-                if (e.value == null) {
-                    return true;
-                }
-                index = e.next;
+        IEqualityComparer<TValue>? valComparer = ValComparer;
+        for (int index = _head; index >= 0;) {
+            ref Node e = ref _table[index];
+            if (valComparer.Equals(value, e.value)) {
+                return true;
             }
-            return false;
-        } else {
-            IEqualityComparer<TValue>? valComparer = ValComparer;
-            for (int index = _head; index >= 0;) {
-                ref Node e = ref _table[index];
-                if (valComparer.Equals(value, e.value)) {
-                    return true;
-                }
-                index = e.next;
-            }
-            return false;
+            index = e.next;
         }
+        return false;
     }
 
     public bool Contains(KeyValuePair<TKey, TValue> item) {

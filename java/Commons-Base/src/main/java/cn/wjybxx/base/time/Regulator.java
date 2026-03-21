@@ -129,7 +129,7 @@ public class Regulator {
         long nextTime = triggerCount == 0
                 ? triggerTime + firstDelay
                 : triggerTime + period;
-        return Math.max(0, curTime - nextTime);
+        return Math.max(0, nextTime - curTime);
     }
 
     /**
