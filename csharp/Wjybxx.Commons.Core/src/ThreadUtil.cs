@@ -37,7 +37,7 @@ public static class ThreadUtil
 
     /** 检查线程中断状态 -- 如果线程被中断，则抛出中断异常。 */
     public static void CheckInterrupted() {
-        // c# 居然不支持查询线程的中断信号...
+        // c# 不支持查询线程的中断信号...
         Thread.Sleep(0);
     }
 

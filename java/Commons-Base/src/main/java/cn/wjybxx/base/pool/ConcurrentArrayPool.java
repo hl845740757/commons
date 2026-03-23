@@ -51,7 +51,7 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
             .setClear(false)
             .setDefCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.DefCapacity", 1024))
             .setMaxCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.MaxCapacity", 64 * 1024))
-            .setArrayGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.ArrayGrowFactor", 64 * 1024))
+            .setArrayGrowFactor(SystemPropsUtils.getDouble("Wjybxx.Commons.Pool.SharedCharArrayPool.ArrayGrowFactor", 1.5))
             .setFirstBucketLength(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.FirstBucketLength", 50))
             .setBucketGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.BucketGrowFactor", 1))
             .build();

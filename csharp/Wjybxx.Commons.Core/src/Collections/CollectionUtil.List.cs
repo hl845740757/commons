@@ -354,6 +354,46 @@ public static partial class CollectionUtil
     }
 
     /// <summary>
+    /// 批量添加元素
+    ///
+    /// 低版本.NET的AddRange总是会构造临时数组，无意间增加GC问题。
+    /// </summary>
+    public static void AddRange2<T>(this List<T> list, IEnumerable<T> values) {
+        if (values == null) throw new ArgumentNullException(nameof(values));
+#if NET6_0_OR_GREATER
+        list.AddRange(values);
+#else
+        if (values is List<T> other) {
+            if (list.Capacity < list.Count + other.Count) {
+                list.Capacity = list.Count + other.Count;
+            }
+            for (int index = 0; index < other.Count; index++) {
+                list.Add(other[index]);
+            }
+            return;
+        }
+        if (values is T[] array) {
+            if (list.Capacity < list.Count + array.Length) {
+                list.Capacity = list.Count + array.Length;
+            }
+            for (int index = 0; index < array.Length; index++) {
+                list.Add(array[index]);
+            }
+            return;
+        }
+        if (values is ICollection<T> collection) {
+            if (collection.Count == 0) return;
+            if (list.Capacity < list.Count + collection.Count) {
+                list.Capacity = list.Count + collection.Count;
+            }
+        }
+        foreach (T e in values) {
+            list.Add(e);
+        }
+#endif
+    }
+
+    /// <summary>
     /// 确保List的空间足够
     /// </summary>
     /// <param name="list"></param>

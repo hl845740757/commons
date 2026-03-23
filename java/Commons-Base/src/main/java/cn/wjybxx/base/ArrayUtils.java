@@ -52,7 +52,7 @@ public class ArrayUtils {
 
     /** 反向查找对象引用在数组中的索引 */
     public static <T> int lastIndexOf(T[] list, Object element) {
-        return lastIndexOf(list, element, 0, list.length);
+        return lastIndexOf(list, element, list.length - 1, list.length);
     }
 
     /**

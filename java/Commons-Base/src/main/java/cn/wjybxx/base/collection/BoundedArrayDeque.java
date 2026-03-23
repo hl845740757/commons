@@ -153,6 +153,7 @@ public class BoundedArrayDeque<E> implements Deque<E> {
     @Override
     public boolean offerFirst(E e) {
         Objects.requireNonNull(e);
+        if (capacity == 0) return false;
         if (arrayDeque.size() == capacity) {
             if (!overflowBehavior.allowDiscardTail()) {
                 return false;
@@ -166,6 +167,7 @@ public class BoundedArrayDeque<E> implements Deque<E> {
     @Override
     public boolean offerLast(E e) {
         Objects.requireNonNull(e);
+        if (capacity == 0) return false;
         if (arrayDeque.size() == capacity) {
             if (!overflowBehavior.allowDiscardHead()) {
                 return false;
