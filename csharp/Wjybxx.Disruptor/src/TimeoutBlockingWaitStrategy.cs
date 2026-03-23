@@ -44,10 +44,10 @@ public class TimeoutBlockingWaitStrategy : WaitStrategy
         long current = Util.SystemTickMillis();
         long deadline = current + timeoutMillis;
         // 先通过条件锁等待生产者发布数据
-        if (producerBarrier.Sequence() < sequence) {
+        if (producerBarrier.Sequence() < sequence || !producerBarrier.IsPublished(sequence)) {
             blocker.Lock();
             try {
-                while (producerBarrier.Sequence() < sequence) {
+                if (producerBarrier.Sequence() < sequence || !producerBarrier.IsPublished(sequence)) {
                     barrier.CheckAlert();
                     blocker.Await((int)(deadline - current));
 
@@ -65,7 +65,8 @@ public class TimeoutBlockingWaitStrategy : WaitStrategy
         // sleep方式等待前置消费者消费数据，C#的睡眠单位粒度太大，先尝试一定次数的yield
         int counter = 10;
         long availableSequence;
-        while ((availableSequence = barrier.DependentSequence()) < sequence) {
+        while ((availableSequence = barrier.DependentSequence()) < sequence
+               || producerBarrier.GetHighestPublishedSequence(sequence, availableSequence) <= sequence) {
             barrier.CheckAlert();
 
             if (counter > 0) {

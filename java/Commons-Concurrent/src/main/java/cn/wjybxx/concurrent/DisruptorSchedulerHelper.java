@@ -110,7 +110,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
                 futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
             } else {
                 taskQueue.add(futureTask);
-                enqueued= true;
+                enqueued = true;
             }
         }
         if (!enqueued) {
@@ -122,7 +122,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
         // 执行间隔短的任务就不主动注册监听器，以避免不必要的开销，暂定5S
         return (futureTask.getOptions() & TaskOptions.LISTEN_CANCEL_TOKEN) != 0
                 || futureTask.getTriggerTime() - eventLoop.tickTime() > 5 * TimeUtils.NANOS_PER_SECOND
-                || futureTask.getPeriod() > 5 * 5 * TimeUtils.NANOS_PER_SECOND;
+                || futureTask.getPeriod() > 5 * TimeUtils.NANOS_PER_SECOND;
     }
 
     private void onCancelRequested(ICancelToken cancelToken, Object ctx) {

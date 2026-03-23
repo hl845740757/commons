@@ -57,6 +57,7 @@ public interface IExecutorService extends IExecutor {
      * 返回Future将在Executor终止时进入完成状态。
      * 1. 返回Future应当是只读的，{@link IFuture#asReadonly()}
      * 2. 用户可以在该Future上等待。
+     * 3. 不保证回调线程，建议监听时指定回调线程。
      */
     IFuture<?> terminationFuture();
 

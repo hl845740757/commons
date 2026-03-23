@@ -88,7 +88,7 @@ public static class ScheduledTaskBuilder
     }
 
     public static void ValidatePeriod(long period) {
-        if (period <= 0) throw new ArgumentException("period: 0 (expected: != 0)");
+        if (period <= 0) throw new ArgumentException($"period: {period}, (expected: > 0)");
     }
 
     #endregion

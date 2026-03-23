@@ -452,7 +452,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                 return;
             }
             int realState = Interlocked.CompareExchange(ref state, targetState, expectedState);
-            if (realState >= targetState) { // == 表示CAS成功， > 表示已进入目标状态
+            if (realState >= targetState) {
                 return;
             }
             // retry

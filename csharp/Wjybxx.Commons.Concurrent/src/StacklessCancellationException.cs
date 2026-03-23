@@ -41,6 +41,7 @@ public sealed class StacklessCancellationException : BetterCancellationException
     public override string? StackTrace => null;
 
     public static StacklessCancellationException InstOf(int code) {
+        CancelCodes.CheckCode(code);
         return new StacklessCancellationException(code);
     }
 }

@@ -50,6 +50,7 @@ public final class StacklessCancellationException extends BetterCancellationExce
     }
 
     public static StacklessCancellationException instOf(int code) {
+        CancelCodes.checkCode(code);
         if (code > 0 && code <= INST_CACHE.length) {
             return INST_CACHE[code - 1];
         }

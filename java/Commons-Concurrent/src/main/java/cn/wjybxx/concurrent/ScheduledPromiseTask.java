@@ -73,6 +73,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         deadline = 0;
         countdown = 0;
 
+        closeRegistration();
         qIndex = INDEX_NOT_FOUND;
         cancelRegistration = null;
         helper = null;

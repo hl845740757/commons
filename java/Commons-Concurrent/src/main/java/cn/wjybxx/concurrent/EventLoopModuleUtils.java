@@ -58,7 +58,7 @@ public class EventLoopModuleUtils {
     public static boolean isOverrideEarlyUpdate(IEventLoopModule module) {
         try {
             Method method = module.getClass().getMethod("earlyUpdate", ArrayUtils.EMPTY_CLASS_ARRAY);
-            return !method.getDeclaringClass().isInterface();
+            return method.getDeclaringClass() != EventLoopModule.class;
         } catch (NoSuchMethodException ignore) {
             return false;
         }
@@ -68,7 +68,7 @@ public class EventLoopModuleUtils {
     public static boolean isOverrideUpdate(IEventLoopModule module) {
         try {
             Method method = module.getClass().getMethod("update", ArrayUtils.EMPTY_CLASS_ARRAY);
-            return !method.getDeclaringClass().isInterface();
+            return method.getDeclaringClass() != EventLoopModule.class;
         } catch (NoSuchMethodException ignore) {
             return false;
         }
@@ -78,10 +78,9 @@ public class EventLoopModuleUtils {
     public static boolean isOverrideLateUpdate(IEventLoopModule module) {
         try {
             Method method = module.getClass().getMethod("lateUpdate", ArrayUtils.EMPTY_CLASS_ARRAY);
-            return !method.getDeclaringClass().isInterface();
+            return method.getDeclaringClass() != EventLoopModule.class;
         } catch (NoSuchMethodException ignore) {
             return false;
         }
     }
-
 }

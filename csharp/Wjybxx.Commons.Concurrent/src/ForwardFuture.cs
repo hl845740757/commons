@@ -149,7 +149,8 @@ public class ForwardFuture<T> : IFuture<T>
 
     #endregion
 
-    #region MyRegion
+    // stage相关接口返回底层Promise安全，暂不做过多约束
+    #region stage
 
     public IFuture<U> ComposeCall<U>(Func<object, IFuture<U>> fn, object? ctx, int options = 0) {
         return future.ComposeCall(fn, ctx, options);

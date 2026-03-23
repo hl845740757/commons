@@ -66,15 +66,15 @@ public class ExecutorUtils {
     }
 
     public static Throwable getCause(CompletableFuture<?> future) {
+        // jdk 不支持直接获取取消异常
+        if (future.isCancelled()) {
+            MutableObject<Throwable> causeHolder = new MutableObject<>();
+            future.whenComplete((v, cause) -> causeHolder.setValue(cause));
+            return causeHolder.getValue();
+        }
         // jdk21 支持直接获取普通异常
         if (future.isCompletedExceptionally()) {
             return future.exceptionNow();
-        }
-        // jdk 不支持直接获取取消异常
-        if (future.isCancelled()) {
-            MutableObject<Throwable> causeHolder = new MutableObject<>(); // visitor
-            future.whenComplete((v, cause) -> causeHolder.setValue(cause));
-            return causeHolder.getValue();
         }
         return null;
     }
@@ -658,7 +658,7 @@ public class ExecutorUtils {
 
         private EventLoopTimeProvider(IEventLoop eventLoop, long time) {
             this.eventLoop = eventLoop;
-            setTime(time);
+            this.time = time;
         }
 
         public void setTime(long curTime) {

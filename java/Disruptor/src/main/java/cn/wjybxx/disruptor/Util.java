@@ -209,6 +209,9 @@ public final class Util {
 
                 sequence = barrier.tryNext(n);
                 if (sequence != -1) {
+                    if (interrupted) { // 恢复中断
+                        Thread.currentThread().interrupt();
+                    }
                     return sequence;
                 }
             } while ((current = System.nanoTime()) < deadline);

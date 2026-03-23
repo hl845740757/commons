@@ -18,6 +18,7 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.concurrent.BetterCancellationException;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
 
@@ -321,7 +322,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     public final boolean trySetException(@Nonnull Throwable cause) {
         Objects.requireNonNull(cause, "cause");
         if (internalComplete(new AltResult(cause))) {
-            FutureLogger.logCause(cause); // 尝试记录日志
+            if (!(cause instanceof CancellationException)) {
+                FutureLogger.logCause(cause); // 记录日志
+            }
             postComplete(this);
             return true;
         }
@@ -361,7 +364,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return isCancelled0(r);
         }
         // 不再记录取消者堆栈，取消者堆栈意义不大
-        if (trySetException(StacklessCancellationException.DEFAULT)) {
+        if (trySetCancelled(CancelCodes.REASON_DEFAULT)) {
             return true;
         }
         // 可能被其它线程取消
@@ -706,7 +709,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(exceptionType);
         Objects.requireNonNull(fallback);
         Promise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeCathing<>(executor, ctx, options, this, promise, exceptionType, fallback));
+        pushCompletion(new UniComposeCatching<>(executor, ctx, options, this, promise, exceptionType, fallback));
         return promise;
     }
 
@@ -1054,7 +1057,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // endregion
     // endregion
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private static final VarHandle VH_RESULT;
     private static final VarHandle VH_STACK;
@@ -1219,7 +1222,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
      * (出现新的异常)
      */
     private boolean completeThrowable(@Nonnull Throwable x) {
-        FutureLogger.logCause(x);
+        if (!(x instanceof CancellationException)) {
+            FutureLogger.logCause(x);
+        }
         // 统一封装为CompletionException
         Throwable cause = (x instanceof CompletionException) ? x : new CompletionException(x);
         return internalComplete(new AltResult(cause));
@@ -1670,13 +1675,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    private static class UniComposeCathing<X extends Throwable, V> extends UniCompletion<V, V> {
+    private static class UniComposeCatching<X extends Throwable, V> extends UniCompletion<V, V> {
 
         Class<X> exceptionType;
         BiFunction<Object, ? super X, ? extends ICompletionStage<V>> fallback;
 
-        public UniComposeCathing(Executor executor, Object ctx, int options, Promise<V> input, Promise<V> output,
-                                 Class<X> exceptionType, BiFunction<Object, ? super X, ? extends ICompletionStage<V>> fallback) {
+        public UniComposeCatching(Executor executor, Object ctx, int options, Promise<V> input, Promise<V> output,
+                                  Class<X> exceptionType, BiFunction<Object, ? super X, ? extends ICompletionStage<V>> fallback) {
             super(executor, ctx, options, input, output);
             this.exceptionType = exceptionType;
             this.fallback = fallback;

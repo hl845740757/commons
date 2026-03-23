@@ -22,7 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * 序号阻塞器
+ * 序号阻塞器(仅负责生产者与消费者协调，不负责消费者之间的协调)
  * <p>
  * 在Disruptor的设计中，消费者只会条件等待生产者的序号发布，而不会条件等待前置消费者的序号发布，生产者也不会条件等待gating消费者的序号发布。
  * 这有一定的缺陷，但我将沿用这个设定，有以下理由：

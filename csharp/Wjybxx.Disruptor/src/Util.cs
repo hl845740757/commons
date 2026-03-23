@@ -217,9 +217,11 @@ internal static class Util
                 catch (ThreadInterruptedException) {
                     interrupted = true;
                 }
-
                 sequence = barrier.TryNext(n);
                 if (sequence != -1) {
+                    if (interrupted) { // 恢复中断
+                        Thread.CurrentThread.Interrupt();
+                    }
                     return sequence;
                 }
             } while ((current = SystemTickMillis()) < deadline);

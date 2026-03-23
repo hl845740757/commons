@@ -287,7 +287,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public bool TrySetException(Exception cause) {
         if (cause == null) throw new ArgumentNullException(nameof(cause));
         if (InternalSetException(cause)) {
-            FutureLogger.LogCause(cause); // 记录日志
+            if (cause is not OperationCanceledException) {
+                FutureLogger.LogCause(cause); // 记录日志
+            }
             OnCompleted();
             PostComplete(this);
             return true;
@@ -795,7 +797,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
      * (出现新的异常)
      */
     private bool CompleteThrowable(Exception x) {
-        FutureLogger.LogCause(x);
+        if (x is not OperationCanceledException) {
+            FutureLogger.LogCause(x);
+        }
         // 统一封装为CompletionException
         if (x is not CompletionException) {
             x = new CompletionException(null, x);

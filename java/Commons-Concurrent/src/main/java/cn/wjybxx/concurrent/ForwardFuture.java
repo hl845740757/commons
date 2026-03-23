@@ -69,30 +69,24 @@ public class ForwardFuture<V> implements IFuture<V> {
         return this; // 返回this
     }
 
-    // onCompleted不能直接转发，否则会导致封装泄漏
-    private static final BiConsumer<? super IFuture<?>, Object> invoker = (f, ctx) -> {
-        @SuppressWarnings("unchecked") Consumer<? super IFuture<?>> action = (Consumer<? super IFuture<?>>) ctx;
-        action.accept(f);
-    };
-
     @Override
     public void onCompleted(Consumer<? super IFuture<V>> action, int options) {
-        future.onCompleted(invoker, action, options);
+        future.onCompleted(wrapAction(action), options);
     }
 
     @Override
     public void onCompleted(Consumer<? super IFuture<V>> action) {
-        future.onCompleted(invoker, action);
+        future.onCompleted(wrapAction(action), action);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action) {
-        future.onCompletedAsync(executor, invoker, action);
+        future.onCompletedAsync(executor, wrapAction(action), action);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action, int options) {
-        future.onCompletedAsync(executor, invoker, action, options);
+        future.onCompletedAsync(executor, wrapAction(action), action, options);
     }
 
     @Override
@@ -115,6 +109,10 @@ public class ForwardFuture<V> implements IFuture<V> {
         future.onCompletedAsync(executor, wrapAction(action), ctx, options);
     }
 
+    private BiConsumer<? super IFuture<V>, Object> wrapAction(Consumer<? super IFuture<V>> action) {
+        return (f, ctx) -> action.accept(this);
+    }
+
     private BiConsumer<? super IFuture<V>, Object> wrapAction(BiConsumer<? super IFuture<V>, Object> action) {
         return (f, ctx) -> action.accept(this, ctx);
     }
@@ -130,7 +128,10 @@ public class ForwardFuture<V> implements IFuture<V> {
 
     @Override
     public IFuture<V> asReadonly() {
-        return future.asReadonly();
+        if (this instanceof ReadOnlyFuture<V>) {
+            return this;
+        }
+        return new ReadOnlyFuture<>(this);
     }
 
     @SuppressWarnings("deprecation")
@@ -237,6 +238,7 @@ public class ForwardFuture<V> implements IFuture<V> {
 
     // endregion
 
+    // stage相关接口返回底层Promise安全，暂不做过多约束
     // region stage
 
     @Override

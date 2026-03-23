@@ -158,9 +158,9 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 betterExecutor.scheduleAction(canceller, delay, timeUnit, this);
                 // executor会自动监听延时任务的cancelToken
             } else {
+                // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
                 JDKCanceller canceller = new JDKCanceller(this, cancelCode);
                 canceller.future = executor.schedule(canceller, delay, timeUnit);
-                // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
                 this.thenNotify(canceller, null);
             }
         }
@@ -406,6 +406,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     private IRegistration uniNotify(Executor executor, ICancelTokenListener listener, Object ctx, int options) {
+        Objects.requireNonNull(listener, "listener");
         if (isRequested() && executor == null) {
             Completion.fireNow(this, TYPE_NOTIFY, listener, ctx);
             return Registration.CLOSED;

@@ -107,6 +107,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         deadline = 0;
         countdown = 0;
 
+        CloseRegistration();
         qIndex = IIndexedElement.IndexNotFound;
         cancelRegistration = default;
         helper = null;

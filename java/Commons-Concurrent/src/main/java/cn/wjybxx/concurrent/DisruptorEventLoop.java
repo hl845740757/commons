@@ -436,7 +436,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
                 return;
             }
             int realState = compareAndExchangeState(expectedState, targetState);
-            if (realState >= targetState) { // == 表示CAS成功， > 表示已进入目标状态
+            if (realState >= targetState) {
                 return;
             }
             // retry

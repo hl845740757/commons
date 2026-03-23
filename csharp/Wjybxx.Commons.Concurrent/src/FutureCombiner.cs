@@ -157,9 +157,9 @@ public sealed class FutureCombiner
         private volatile int succeedCount;
         private volatile int doneCount;
 
-        /** 非volatile，虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
-        private object? result;
-        private Exception? cause;
+        /** 虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
+        private volatile object? result;
+        private volatile Exception? cause;
 
         /** 非volatile，其可见性由{@link #aggregatePromise}保证 */
         internal int futureCount;
@@ -210,6 +210,7 @@ public sealed class FutureCombiner
                 if (result != null) { // anyOf下尽量返回成功
                     return aggregatePromise!.TrySetResult(DecodeValue(result));
                 } else {
+                    if (cause == null) throw new IllegalStateException("anyOf: no cause recorded");
                     return aggregatePromise!.TrySetException(cause);
                 }
             }

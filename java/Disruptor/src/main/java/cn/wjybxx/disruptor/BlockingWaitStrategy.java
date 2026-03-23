@@ -41,10 +41,10 @@ public class BlockingWaitStrategy implements WaitStrategy {
             throws AlertException, InterruptedException {
         SequenceBlocker blocker = Objects.requireNonNull(producerBarrier.getBlocker(), "blocker is null");
         // 先通过条件锁等待生产者发布数据
-        if (producerBarrier.sequence() < sequence) {
+        if (producerBarrier.sequence() < sequence || !producerBarrier.isPublished(sequence)) {
             blocker.lock();
             try {
-                while (producerBarrier.sequence() < sequence) {
+                while (producerBarrier.sequence() < sequence || !producerBarrier.isPublished(sequence)) {
                     barrier.checkAlert();
                     blocker.await();
                 }
@@ -54,7 +54,8 @@ public class BlockingWaitStrategy implements WaitStrategy {
         }
         // sleep方式等待前置消费者消费数据
         long availableSequence;
-        while ((availableSequence = barrier.dependentSequence()) < sequence) {
+        while ((availableSequence = barrier.dependentSequence()) < sequence
+                || producerBarrier.getHighestPublishedSequence(sequence, availableSequence) <= sequence) {
             barrier.checkAlert();
             LockSupport.parkNanos(10);
         }

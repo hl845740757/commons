@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,6 +29,7 @@ import java.util.function.Consumer;
  * @author wjybxx
  * date 2023/4/12
  */
+@NotThreadSafe
 public class FutureCombiner {
 
     private ChildListener childrenListener = new ChildListener();
@@ -167,9 +169,9 @@ public class FutureCombiner {
         private final AtomicInteger succeedCount = new AtomicInteger();
         private final AtomicInteger doneCount = new AtomicInteger();
 
-        /** 非volatile，虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
-        private Object result;
-        private Throwable cause;
+        /** 虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
+        private volatile Object result;
+        private volatile Throwable cause;
 
         /** 非volatile，其可见性由{@link #aggregatePromise}保证 */
         private int futureCount;
@@ -220,6 +222,7 @@ public class FutureCombiner {
                 if (result != null) { // anyOf下尽量返回成功
                     return aggregatePromise.trySetResult(decodeValue(result));
                 } else {
+                    if (cause == null) throw new IllegalStateException("anyOf: no cause recorded");
                     return aggregatePromise.trySetException(cause);
                 }
             }

@@ -248,7 +248,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     @Override
-    public TaskBuilder<V> setCtx(Object ctx) {
+    public ScheduledTaskBuilder<V> setCtx(Object ctx) {
         super.setCtx(ctx);
         return this;
     }
@@ -290,7 +290,8 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     public static void validatePeriod(long period) {
         if (period <= 0) {
-            throw new IllegalArgumentException("period: 0 (expected: != 0)");
+            String msg = String.format("period: %d, (expected: > 0)", period);
+            throw new IllegalArgumentException(msg);
         }
     }
 
