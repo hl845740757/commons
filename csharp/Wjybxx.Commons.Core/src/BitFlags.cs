@@ -94,7 +94,7 @@ public static class BitFlags
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetField(int flags, int mask, int offset) {
-        return (flags & mask) >> offset;
+        return MathCommon.LogicalShiftRight(flags & mask, offset);
     }
 
     /// <summary>
@@ -194,7 +194,7 @@ public static class BitFlags
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetField(long flags, long mask, int offset) {
-        return (flags & mask) >> offset;
+        return MathCommon.LogicalShiftRight(flags & mask, offset);
     }
 
     /// <summary>

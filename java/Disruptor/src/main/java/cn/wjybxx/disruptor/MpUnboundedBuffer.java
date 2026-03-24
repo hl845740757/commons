@@ -355,7 +355,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         // 由线程B追加了两个块，但线程A先返回到用户，并完成填充数据和消费，这时2号块可能已被回收；因此这里回跳步数不是固定的
         if (jumpBackward > 0) {
             do {
-                currentChunk = currentChunk.lvPrev();
+                currentChunk = currentChunk.lvPrev(); // 不为null
             }
             while (currentChunk.lvChunkIndex() > requiredChunkIndex);
         }
@@ -437,7 +437,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         MpUnboundedBufferChunk<E> nextChunk = headChunk.lvNext();
         nextChunk.soPrev(null);
         while (isRecyclable(nextChunk, gatingSequence, producerChunk)) {
-            nextChunk = nextChunk.lvNext();
+            nextChunk = nextChunk.lvNext(); // 不为null
             nextChunk.soPrev(null);
         }
         // 我们立即发布新的head，以允许消费者获取最新的数据;但由于我们仍持有锁，nextChunk将始终有效

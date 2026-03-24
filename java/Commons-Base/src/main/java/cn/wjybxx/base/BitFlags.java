@@ -78,7 +78,7 @@ public class BitFlags {
      * @param offset 需要偏移的bit数
      */
     public static int getField(int flags, int mask, int offset) {
-        return (flags & mask) >> offset;
+        return (flags & mask) >>> offset;
     }
 
     public static int setField(int flags, int mask, int offset, int value) {
@@ -145,7 +145,7 @@ public class BitFlags {
      * @param offset 需要偏移的bit数
      */
     public static long getField(long flags, long mask, int offset) {
-        return (flags & mask) >> offset;
+        return (flags & mask) >>> offset;
     }
 
     public static long setField(long flags, long mask, int offset, long value) {

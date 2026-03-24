@@ -94,8 +94,9 @@ public class ClassScanner {
                     findClassesByFile(classLoader, filePath, classes, pkgName, classNameFilter, classFilter);
                 } else if ("jar".equals(protocol)) {
                     // 如果是jar包文件 jar:
-                    JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile();
-                    findClassesByJar(classLoader, jar, classes, pkgName, classNameFilter, classFilter);
+                    try (JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile()) {
+                        findClassesByJar(classLoader, jar, classes, pkgName, classNameFilter, classFilter);
+                    }
                 }
             }
         } catch (IOException e) {

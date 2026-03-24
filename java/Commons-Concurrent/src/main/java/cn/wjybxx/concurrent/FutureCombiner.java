@@ -180,7 +180,7 @@ public class FutureCombiner {
 
         @Override
         public void accept(IFuture<?> future) {
-            if (future.isFailed()) {
+            if (future.isFailedOrCancelled()) {
                 accept(null, future.exceptionNow(false));
             } else {
                 accept(future.resultNow(), null);

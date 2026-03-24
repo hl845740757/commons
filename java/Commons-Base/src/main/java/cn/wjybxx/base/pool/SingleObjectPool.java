@@ -74,7 +74,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
 //        assert obj != this.value;
         cleaner.accept(obj);
         if (filter == null || filter.test(obj)) {
-            this.value = obj;
+            this.value = obj; // 覆盖式写入
         }
     }
 

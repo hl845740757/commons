@@ -34,7 +34,7 @@ internal static class ArrayPoolCore
     /// <param name="growFactor">数组空间成长系数</param>
     /// <returns>空间信息</returns>
     public static int[] CalArrayCapacities(int defCapacity, int maxCapacity, double growFactor) {
-        if (defCapacity < 0 || maxCapacity < defCapacity) {
+        if (defCapacity <= 0 || maxCapacity < defCapacity) {
             throw new ArgumentException($"defCapacity: {defCapacity}, maxCapacity: {maxCapacity}");
         }
         growFactor = Math.Max(1.25d, growFactor); // 数组长度不可以变小

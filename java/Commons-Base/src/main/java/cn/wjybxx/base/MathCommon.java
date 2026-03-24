@@ -28,7 +28,7 @@ public class MathCommon {
     public static final int MAX_POWER_OF_TWO = 1 << 30;
     public static final long LONG_MAX_POWER_OF_TWO = 1L << 62;
     public static final float FLOAT_ROUNDING_ERROR = 0.00001f;
-    public static final float DOUBLE_ROUNDING_ERROR = 0.000000001f;
+    public static final double DOUBLE_ROUNDING_ERROR = 0.000000001f;
 
     /** 32位无符号整数的最大值 */
     public static final long UINT32_MAX_VALUE = (1L << 32) - 1;
@@ -96,12 +96,14 @@ public class MathCommon {
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
     public static int nextPowerOfTwo(int num) {
         if (num < 1) return 1;
+        if (num > MAX_POWER_OF_TWO) throw new ArithmeticException("overflow: " + num);
         return 1 << (32 - Integer.numberOfLeadingZeros(num - 1));
     }
 
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
     public static long nextPowerOfTwo(long num) {
         if (num < 1) return 1;
+        if (num > LONG_MAX_POWER_OF_TWO) throw new ArithmeticException("overflow: " + num);
         return 1L << (64 - Long.numberOfLeadingZeros(num - 1));
     }
 

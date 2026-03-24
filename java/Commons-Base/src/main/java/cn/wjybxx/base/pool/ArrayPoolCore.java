@@ -86,7 +86,7 @@ final class ArrayPoolCore {
      * @return 空间信息
      */
     public static int[] calArrayCapacities(int defCapacity, int maxCapacity, double growFactor) {
-        if (defCapacity < 0 || maxCapacity < defCapacity) {
+        if (defCapacity <= 0 || maxCapacity < defCapacity) {
             throw new IllegalArgumentException("defCapacity: %d, maxCapacity: %d".formatted(defCapacity, maxCapacity));
         }
         growFactor = Math.max(1.25d, growFactor); // 数组长度不可以变小
