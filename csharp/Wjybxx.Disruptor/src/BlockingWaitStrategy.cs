@@ -50,6 +50,7 @@ public class BlockingWaitStrategy : WaitStrategy
                 blocker.Unlock();
             }
         }
+        // 二阶段不检测超时，如果有特殊需求，可自定义实现
         // sleep方式等待前置消费者消费数据，C#的睡眠单位粒度太大，先尝试一定次数的yield
         int counter = 10;
         long availableSequence;

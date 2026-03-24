@@ -143,7 +143,7 @@ public final class MultiProducerSequencer extends RingBufferSequencer {
         // 查询尽量返回实时的数据 - 不使用缓存
         long consumed = Util.getMinimumSequence(gatingBarriers, cursor.getVolatile());
         long produced = cursor.getVolatile();
-        return bufferSize - (produced - consumed);
+        return Math.max(0, bufferSize - (produced - consumed));
     }
 
     @Override

@@ -78,7 +78,7 @@ public static class DatetimeUtil
     public static readonly TimeSpan ZoneOffsetUtc = TimeSpan.Zero;
     /** 中国时区偏移 */
     public static readonly TimeSpan ZoneOffsetCst = TimeSpan.FromHours(8);
-    /** 系统的时区偏移 */
+    /** 系统的时区偏移 - 不考虑时令问题 */
     public static readonly TimeSpan ZoneOffsetSystem = TimeZoneInfo.Local.BaseUtcOffset;
 
     /** Unix纪元时间 */

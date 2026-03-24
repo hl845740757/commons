@@ -129,16 +129,16 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
         // 查询尽量返回实时的数据 - 不使用缓存
         long consumed = Util.GetMinimumSequence(gatingBarriers, cursor.GetVolatile());
         long produced = cursor.GetVolatile();
-        return bufferSize - (produced - consumed);
+        return Math.Max(0, bufferSize - (produced - consumed));
     }
 
     public override bool HasAvailableCapacity(int requiredCapacity) {
         if (requiredCapacity < 0) throw new ArgumentException("requiredCapacity: " + requiredCapacity);
         if (requiredCapacity > bufferSize) return false;
-        return hasAvailableCapacity(gatingBarriers, requiredCapacity, cursor.GetVolatile());
+        return HasAvailableCapacity(gatingBarriers, requiredCapacity, cursor.GetVolatile());
     }
 
-    private bool hasAvailableCapacity(SequenceBarrier[] gatingBarriers, int requiredCapacity, long cursorValue) {
+    private bool HasAvailableCapacity(SequenceBarrier[] gatingBarriers, int requiredCapacity, long cursorValue) {
         // 可能构成环路的点/环形缓冲区可能追尾的点 = 请求的序号 - 环形缓冲区大小
         long wrapPoint = (cursorValue + requiredCapacity) - bufferSize;
 
@@ -243,14 +243,14 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
 
     public override long TryNext(int n) {
         if (n < 1 || n > bufferSize) {
-            throw new AggregateException("n: " + n);
+            throw new ArgumentException("n: " + n);
         }
         long current;
         long next;
         do {
             current = cursor.GetVolatile();
             next = current + n;
-            if (!hasAvailableCapacity(gatingBarriers, n, current)) {
+            if (!HasAvailableCapacity(gatingBarriers, n, current)) {
                 return -1;
             }
         } while (!cursor.CompareAndSet(current, next));

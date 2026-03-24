@@ -68,6 +68,7 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
         int index = (int)(sequence - chunk.MinSequence());
         chunk.SpElement(index, in evt);
         chunk.Publish(index);
+        SignalAllWhenBlocking();
     }
 
     public void Publish(long sequence) {

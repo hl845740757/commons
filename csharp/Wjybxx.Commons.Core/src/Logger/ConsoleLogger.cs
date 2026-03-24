@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Logger
 internal class ConsoleLogger : ILogger
 {
     private readonly ConsoleLoggerFactory _factory;
-    private readonly string _name;
+    private readonly string _name; // name不含特殊符号
 
     public ConsoleLogger(ConsoleLoggerFactory factory, string name) {
         this._factory = factory;

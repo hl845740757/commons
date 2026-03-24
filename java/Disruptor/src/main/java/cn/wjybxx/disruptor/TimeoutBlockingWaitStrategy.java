@@ -63,6 +63,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
                 blocker.unlock();
             }
         }
+        // 二阶段不检测超时，如果有特殊需求，可自定义实现
         // 轮询式等待其它依赖的消费者消费完该事件
         long availableSequence;
         while ((availableSequence = barrier.dependentSequence()) < sequence) {

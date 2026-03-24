@@ -52,6 +52,7 @@ public class BlockingWaitStrategy implements WaitStrategy {
                 blocker.unlock();
             }
         }
+        // 二阶段不检测超时，如果有特殊需求，可自定义实现
         // sleep方式等待前置消费者消费数据
         long availableSequence;
         while ((availableSequence = barrier.dependentSequence()) < sequence) {
