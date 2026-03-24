@@ -187,7 +187,7 @@ public final class MpUnboundedBufferChunk<E> {
 
     //
 
-    /** 填充chunk - 使用Plain内存语义 */
+    /** 填充chunk - 使用Plain内存语义；通常只需要填充一次 */
     public final void fill(EventFactory<? extends E> factory) {
         for (int i = 0; i < buffer.length; i++) {
             buffer[i] = factory.newInstance();

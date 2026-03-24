@@ -357,7 +357,7 @@ public class CollectionUtils {
         while (low <= high) {
             int mid = low + (high - low) / 2; // 防溢出
             T midVal = array.get(mid);
-            int cmp = c.compare(key, midVal);
+            int cmp = c.compare(midVal, key);
             if (cmp < 0)
                 low = mid + 1;
             else if (cmp > 0)

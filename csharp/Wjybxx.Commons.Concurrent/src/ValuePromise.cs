@@ -631,6 +631,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
         public void TryFire(int mode) {
             if (ExecutorUtil.IsCancelRequested(state, options)) {
+                input?.PrepareToRecycle(); // 手动触发回收
                 return;
             }
             // 异步模式下已经claim

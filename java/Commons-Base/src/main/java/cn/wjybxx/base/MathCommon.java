@@ -28,7 +28,7 @@ public class MathCommon {
     public static final int MAX_POWER_OF_TWO = 1 << 30;
     public static final long LONG_MAX_POWER_OF_TWO = 1L << 62;
     public static final float FLOAT_ROUNDING_ERROR = 0.00001f;
-    public static final double DOUBLE_ROUNDING_ERROR = 0.000000001f;
+    public static final double DOUBLE_ROUNDING_ERROR = 0.000000001d;
 
     /** 32位无符号整数的最大值 */
     public static final long UINT32_MAX_VALUE = (1L << 32) - 1;

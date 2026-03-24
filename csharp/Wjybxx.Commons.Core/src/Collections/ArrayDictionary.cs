@@ -957,7 +957,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
             if (_version != _dictionary._version) {
                 throw new InvalidOperationException("EnumFailedVersion");
             }
-            _nextNode = 0;
+            _nextNode = _reversed ? _dictionary._count - 1 : 0;
             _currNode = default;
         }
 

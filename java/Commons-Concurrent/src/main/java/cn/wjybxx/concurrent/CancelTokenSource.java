@@ -631,7 +631,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         /** 重入id -- 只增不减 */
         int rid;
-        /** 互斥锁 */
+        /** 互斥锁 -- reset不清理 */
         int lock;
 
         CancelTokenSource source;

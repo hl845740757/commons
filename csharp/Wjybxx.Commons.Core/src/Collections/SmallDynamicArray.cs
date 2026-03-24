@@ -196,13 +196,13 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     private int FirstNullIndex() {
-        if (len == 0) return -1;
+        if (len == 0 || len == ElementCount) return -1;
         // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
         return MathCommon.NumberOfTrailingZeros(~elementsMask);
     }
 
     private int LastNullIndex() {
-        if (len == 0) return -1;
+        if (len == 0 || len == ElementCount) return -1;
         // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
         long tempMask = len == 64
             ? (elementsMask)

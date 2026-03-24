@@ -22,7 +22,8 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * 主要封装与时区相关的方法
- * (去除继承限制，子类应当保持实现为不可变)
+ * 1.去除继承限制，子类应当保持实现为不可变。
+ * 2.不支持负数时间戳。
  *
  * @author wjybxx
  * date 2023/4/1

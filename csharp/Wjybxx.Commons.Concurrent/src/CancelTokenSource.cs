@@ -464,7 +464,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
         /** 重入id -- 只增不减；需要在锁的保护下更新，即归还到池需要在锁的保护下 */
         internal int _rid;
-        /** 派发和回收的通知锁 */
+        /** 派发和回收的通知锁 - reset不清理 */
         internal int _lock;
 
 #nullable disable

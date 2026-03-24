@@ -23,7 +23,8 @@ namespace Wjybxx.Commons.Time
 /// <summary>
 /// C#下该类作用好像不大
 /// 
-/// PS：可以通过扩展方法增加功能
+/// 1.可以通过扩展方法增加功能
+/// 2.不支持负数时间戳 
 /// </summary>
 public sealed class TimeHelper
 {
