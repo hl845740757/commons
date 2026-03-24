@@ -492,7 +492,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
         internal void Reset() {
             Debug.Assert(prev == null && next == null);
-            Debug.Assert(_lock == 1);
+            // Debug.Assert(_lock == 1); // Push失败时不需要加锁
             _rid++; // 池化时+1
             source = null;
             executor = null;

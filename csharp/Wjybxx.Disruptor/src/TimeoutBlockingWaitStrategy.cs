@@ -65,8 +65,7 @@ public class TimeoutBlockingWaitStrategy : WaitStrategy
         // sleep方式等待前置消费者消费数据，C#的睡眠单位粒度太大，先尝试一定次数的yield
         int counter = 10;
         long availableSequence;
-        while ((availableSequence = barrier.DependentSequence()) < sequence
-               || producerBarrier.GetHighestPublishedSequence(sequence, availableSequence) <= sequence) {
+        while ((availableSequence = barrier.DependentSequence()) < sequence) {
             barrier.CheckAlert();
 
             if (counter > 0) {

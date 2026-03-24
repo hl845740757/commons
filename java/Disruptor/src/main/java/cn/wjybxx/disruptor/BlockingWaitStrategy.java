@@ -54,8 +54,7 @@ public class BlockingWaitStrategy implements WaitStrategy {
         }
         // sleep方式等待前置消费者消费数据
         long availableSequence;
-        while ((availableSequence = barrier.dependentSequence()) < sequence
-                || producerBarrier.getHighestPublishedSequence(sequence, availableSequence) <= sequence) {
+        while ((availableSequence = barrier.dependentSequence()) < sequence) {
             barrier.checkAlert();
             LockSupport.parkNanos(10);
         }

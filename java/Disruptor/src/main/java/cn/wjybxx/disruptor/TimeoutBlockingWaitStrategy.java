@@ -65,8 +65,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
         }
         // 轮询式等待其它依赖的消费者消费完该事件
         long availableSequence;
-        while ((availableSequence = barrier.dependentSequence()) < sequence
-                || producerBarrier.getHighestPublishedSequence(sequence, availableSequence) <= sequence) {
+        while ((availableSequence = barrier.dependentSequence()) < sequence) {
             barrier.checkAlert();
             LockSupport.parkNanos(100);
         }

@@ -642,7 +642,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         protected void reset() {
             assert prev == null && next == null;
-            assert lock == 1;
+//            assert lock == 1; // Push失败时不需要加锁
 
             rid++; // 池化时+1，volatile安全
             source = null;
