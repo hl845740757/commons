@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.TaskBuilder;
 
@@ -57,13 +58,13 @@ public static class PromiseTask
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<int> OfTask(ITask task, ICancelToken? cancelToken, int options,
+    public static PromiseTask<int> OfTask(ITask task, CancellationToken cancelToken, int options,
                                           ValuePromise<int> promise) {
         return PromiseTask<int>.Acquire(TYPE_TASK, task, cancelToken, options, promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options,
+    public static PromiseTask<int> OfAction(Action action, CancellationToken cancelToken, int options,
                                             ValuePromise<int> promise) {
         return PromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise);
     }
@@ -75,7 +76,7 @@ public static class PromiseTask
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options,
+    public static PromiseTask<T> OfFunction<T>(Func<T> action, CancellationToken cancelToken, int options,
                                                ValuePromise<T> promise) {
         return PromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise);
     }
@@ -157,7 +158,7 @@ public class PromiseTask<T> : IFutureTask
 
     /** 获取上下文中的取消令牌 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ICancelToken GetCancelToken() {
+    public CancellationToken GetCancelToken() {
         return ExecutorUtil.GetCancelToken(ctx, options);
     }
 
@@ -201,9 +202,9 @@ public class PromiseTask<T> : IFutureTask
     public virtual void Run() {
         // 超类可以直接调用Internal方法，因为不会有其它地方更新Promise
         ValuePromise<T> promise = this.promise;
-        ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken.IsRequested) {
-            promise.Internal_TrySetCancelled(cancelToken.CancelCode);
+        CancellationToken cancelToken = GetCancelToken();
+        if (cancelToken.IsCancellationRequested) {
+            promise.Internal_TrySetCancelled(cancelToken);
             TryRelease();
             return;
         }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Concurrent
@@ -89,7 +90,7 @@ public static class TaskOptions
     ///</summary>
     public const int STAGE_TRY_INLINE = 1 << 23;
     /// <summary>
-    /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="ICancelToken"/>类型，并检测取消信号。
+    /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="CancellationToken"/>类型，并检测取消信号。
     /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
     /// </summary>
     public const int STAGE_UNCANCELLABLE_CTX = 1 << 24;

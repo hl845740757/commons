@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -53,15 +54,13 @@ public readonly struct AsyncTaskContext
     /// </summary>
     /// <returns></returns>
     /// <exception cref="GuardedOperationException">如果当前不在事件循环线程</exception>
-    public ValueFuture Yield() => _helper.Sleep(TimeSpan.Zero, null);
+    public ValueFuture Yield() => _helper.Sleep(TimeSpan.Zero);
 
     /// <summary>
     /// 等待一段时间再次执行
     /// </summary>
-    /// <param name="timeSpan"></param>
-    /// <param name="cancelToken"></param>
     /// <exception cref="GuardedOperationException">如果当前不在事件循环线程</exception>
-    public ValueFuture Sleep(TimeSpan timeSpan, ICancelToken? cancelToken = null) {
+    public ValueFuture Sleep(TimeSpan timeSpan, CancellationToken cancelToken = default) {
         return _helper.Sleep(timeSpan, cancelToken);
     }
 }

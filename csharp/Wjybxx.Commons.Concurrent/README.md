@@ -20,6 +20,17 @@
 
 ## ReleaseNotes
 
+### 2.0.x
+
+1. 破坏性变更：弃用自实现的CancelTokenSource，以获得更好的库兼容性
+2.
+
+### 1.6.x
+
+1. fix PromiseTask等未完全回收的问题
+2. fix Promise打印取消操作的日志
+3. fix ForwardFuture封装泄漏问题
+
 ### 1.5.0
 
 1. 撤销1.4.x中取消令牌的挪动，取消令牌重新挪回Concurrent包。

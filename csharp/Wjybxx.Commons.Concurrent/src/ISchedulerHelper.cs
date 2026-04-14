@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -71,10 +72,8 @@ public interface ISchedulerHelper
     /// <summary>
     /// 延迟一段时间
     /// </summary>
-    /// <param name="timeSpan"></param>
-    /// <param name="cancelToken"></param>
     /// <returns></returns>
-    ValueFuture Sleep(TimeSpan timeSpan, ICancelToken? cancelToken);
+    ValueFuture Sleep(TimeSpan timeSpan, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 分配一个任务id

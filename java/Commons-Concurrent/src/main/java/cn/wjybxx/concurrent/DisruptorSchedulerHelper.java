@@ -127,6 +127,9 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
 
     private void onCancelRequested(ICancelToken cancelToken, Object ctx) {
         Canceller canceller = (Canceller) ctx;
+        if (canceller.futureTask.getId() != canceller.taskId) {
+            return;
+        }
         if (eventLoop.inEventLoop()) {
             cancel(canceller.futureTask, canceller.taskId, cancelToken.cancelCode());
         } else {

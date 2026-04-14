@@ -413,7 +413,7 @@ public abstract class AbstractPromise
 
         public override AbstractPromise? TryFire(int mode) {
             {
-                if (ExecutorUtil.IsCancelRequested(state, options)) {
+                if (ExecutorUtil.IsCancellationRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

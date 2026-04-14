@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -46,7 +47,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null);
+    ValueFuture ScheduleAction(Action action, TimeSpan delay, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托
@@ -64,7 +65,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, ICancelToken? cancelToken = null);
+    ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托
@@ -86,7 +87,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="period">后续执行间隔</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
+    ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 以固定频率执行给定的任务（慎用）
@@ -98,7 +99,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="period">后续执行间隔</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
+    ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default);
 
     #endregion
 }

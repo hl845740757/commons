@@ -86,7 +86,7 @@ public interface IFuture
      * 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；
      * 但有些时候，我们需要将取消也视为失败的一种，因此需要快捷的方法。
      */
-    bool IsFailedOrCancelled => Status.IsFailedOrCancelled();
+    bool IsFailedOrCancelled => Status > TaskStatus.Success;
 
     #endregion
 

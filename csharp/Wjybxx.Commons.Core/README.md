@@ -37,6 +37,12 @@ LinkedDictionary特殊接口示例：
 
 ## ReleaseNotes
 
+### 1.6.x
+
+1. fix 一系列手误bug
+2. fix ArrayUtil与ListUtil的LastIndexOf实现，与C#库对齐
+3. fix DynamicArrayCore中的InsertBit实现
+
 ### 1.5.0
 
 1. 撤销1.4.x中取消令牌的挪动，取消令牌重新挪回Concurrent包。

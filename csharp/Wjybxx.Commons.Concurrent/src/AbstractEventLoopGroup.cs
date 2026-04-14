@@ -80,7 +80,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().SubmitAction(action, options);
     }
 
-    public virtual ValueFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
+    public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken, int options = 0) {
         return Select().SubmitAction(action, cancelToken, options);
     }
 
@@ -92,7 +92,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().SubmitFunc(action, options);
     }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken, int options = 0) {
         return Select().SubmitFunc(action, cancelToken, options);
     }
 
@@ -108,7 +108,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().Schedule(in builder);
     }
 
-    public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, CancellationToken cancelToken = default) {
         return Select().ScheduleAction(action, delay, cancelToken);
     }
 
@@ -116,7 +116,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().ScheduleAction(action, ctx, delay);
     }
 
-    public virtual ValueFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, CancellationToken cancelToken = default) {
         return Select().ScheduleFunc(action, delay, cancelToken);
     }
 
@@ -124,11 +124,11 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().ScheduleFunc(action, ctx, delay);
     }
 
-    public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
         return Select().ScheduleWithFixedDelay(action, delay, period, cancelToken);
     }
 
-    public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
         return Select().ScheduleAtFixedRate(action, delay, period, cancelToken);
     }
 

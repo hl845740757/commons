@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.PromiseTask;
@@ -34,12 +35,12 @@ public static class ScheduledPromiseTask
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfEmpty(ICancelToken? cancelToken, int options, ValuePromise<int> promise) {
+    public static ScheduledPromiseTask<int> OfEmpty(CancellationToken cancelToken, int options, ValuePromise<int> promise) {
         return ScheduledPromiseTask<int>.Acquire(TYPE_EMPTY, null!, cancelToken, options, promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options, ValuePromise<int> promise) {
+    public static ScheduledPromiseTask<int> OfAction(Action action, CancellationToken cancelToken, int options, ValuePromise<int> promise) {
         return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise);
     }
 
@@ -49,7 +50,7 @@ public static class ScheduledPromiseTask
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options, ValuePromise<T> promise) {
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, CancellationToken cancelToken, int options, ValuePromise<T> promise) {
         return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise);
     }
 
@@ -71,7 +72,7 @@ public static class ScheduledPromiseTask
 /// 2.由于存在多处修改<see cref="ValuePromise{T}"/>状态的情况，因此需要校验rid -- 但都在EventLoop线程更新Promise。
 /// 3.因此Task不主动调用回收，而是由调度器确定没有持有者后再触发回收。
 ///
-/// TODO 或可不继承<see cref="PromiseTask{T}"/>，而是统一装箱结果。
+/// TODO 或可不继承<see cref="PromiseTask{T}"/>，而是统一装箱结果以优化对象池。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask, IIndexedElement
@@ -91,7 +92,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /** 在队列中的下标 */
     private int qIndex = IIndexedElement.IndexNotFound;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
-    private Registration cancelRegistration;
+    private CancellationTokenRegistration registration;
     /** 用于避免具体类型依赖 */
     private ISchedulerHelper helper;
 #nullable restore
@@ -109,7 +110,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
 
         CloseRegistration();
         qIndex = IIndexedElement.IndexNotFound;
-        cancelRegistration = default;
+        registration = default;
         helper = null;
     }
 
@@ -167,9 +168,9 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     public bool IsPeriodic => ScheduleType != 0;
     public bool IsTriggered => (ctl & MASK_TRIGGERED) != 0;
 
-    public Registration CancelRegistration {
-        get => cancelRegistration;
-        set => cancelRegistration = value;
+    public CancellationTokenRegistration Registration {
+        get => registration;
+        set => registration = value;
     }
 
     public int CollectionIndex(object collection) {
@@ -193,9 +194,9 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
 
     #region core
 
-    public void Cancel(int cancelCode) {
+    public void Cancel(CancellationToken cts = default) {
         Debug.Assert(helper.InEventLoop());
-        TrySetCancelled(cancelCode);
+        TrySetCancelled(cts);
     }
 
     /** 该方法仅在任务出队列的时候调用 */
@@ -227,13 +228,13 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         }
         // 由于存在多处更新Promise的逻辑，因此先检测Promise的有效性
         ValuePromise<T> promise = this.promise;
-        if (IsRecycledOrCompleted(promise, promiseRid)) {
+        if (promise.IsRecycledOrCompleted(promiseRid)) {
             return false;
         }
         // 先检测取消
-        ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken.IsRequested) {
-            TrySetCancelled(cancelToken.CancelCode);
+        CancellationToken cancelToken = GetCancelToken();
+        if (cancelToken.IsCancellationRequested) {
+            TrySetCancelled(cancelToken);
             return false;
         }
         // 一次性任务 -- 不能调用基类的Run
@@ -281,22 +282,22 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             FutureLogger.LogCause(ex, "periodic task caught exception");
         }
         // 再次检查Promise的有效性
-        if (IsRecycledOrCompleted(promise, promiseRid)) {
+        if (promise.IsRecycledOrCompleted(promiseRid)) {
             return false;
         }
         // 任务执行后检测取消
-        if (cancelToken.IsRequested) {
-            TrySetCancelled(cancelToken, CancelCodes.REASON_DEFAULT);
+        if (cancelToken.IsCancellationRequested) {
+            TrySetCancelled(cancelToken);
             return false;
         }
         // 未被取消的情况下检测超时
         if (HasDeadline && deadline <= tickTime) {
-            TrySetCancelled(cancelToken, CancelCodes.REASON_TIMEOUT);
+            TrySetCancelled(CancellationToken.None);
             return false;
         }
         // 检测次数限制
         if (HasCountdown && (--countdown < 1)) {
-            TrySetCancelled(cancelToken, CancelCodes.REASON_COUNT_LIMIT);
+            TrySetCancelled(CancellationToken.None);
             return false;
         }
         SetNextRunTime(tickTime, scheduleType);
@@ -333,22 +334,16 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CloseRegistration() {
-        Registration registration = this.cancelRegistration;
-        this.cancelRegistration = default;
-        registration.Dispose();
+        this.registration.Dispose();
+        this.registration = default;
     }
 
     #endregion
 
     #region setResult
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsRecycledOrCompleted(ValuePromise<T> promise, int rid) {
-        return promise.IsRecycled(rid) || promise.GetStatus(rid).IsCompleted();
-    }
-
     private bool TrySetResult(TaskResult<T> result) {
-        if (IsRecycledOrCompleted(promise, promiseRid)) {
+        if (promise.IsRecycledOrCompleted(promiseRid)) {
             return false;
         }
         if (result.IsSucceeded) {
@@ -362,24 +357,17 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TrySetResult(T value) {
-        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetResult(promiseRid, value);
+        return !promise.IsRecycled(promiseRid) && promise.TrySetResult(promiseRid, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TrySetException(Exception ex) {
-        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetException(promiseRid, ex);
+        return !promise.IsRecycled(promiseRid) && promise.TrySetException(promiseRid, ex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool TrySetCancelled(int cancelCode) {
-        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetCancelled(promiseRid, cancelCode);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool TrySetCancelled(ICancelToken cancelToken, int def) {
-        int cancelCode = cancelToken.CancelCode;
-        if (cancelCode == 0) cancelCode = def;
-        return !IsRecycledOrCompleted(promise, promiseRid) && promise.TrySetCancelled(promiseRid, cancelCode);
+    private bool TrySetCancelled(CancellationToken cts) {
+        return !promise.IsRecycled(promiseRid) && promise.TrySetCancelled(promiseRid, cts);
     }
 
     #endregion

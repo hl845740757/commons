@@ -33,6 +33,10 @@ PS：C#其实可以采用FieldOffset来实现缓存行填充，但为了保持�
 
 ## ReleaseNotes
 
+### 1.2.2
+
+1. fix阻塞等待策略未正确通知的问题
+
 ### 1.2.1
 
 1. 修复内存填充未生效问题，引用(class)类型需要显示声明`LayoutKind.Sequential`。

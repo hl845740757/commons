@@ -76,10 +76,17 @@ public class ValuePromise<T> : IValuePromise<T>
     /// <summary>
     /// 测试对象是否已被回收
     /// </summary>
-    /// <param name="rid"></param>
-    /// <returns></returns>
     public bool IsRecycled(int rid) {
         return rid != _reentryId;
+    }
+
+    /// <summary>
+    /// Promise是否已回收或已进入完成状态
+    /// </summary>
+    /// <param name="rid"></param>
+    /// <returns></returns>
+    public bool IsRecycledOrCompleted(int rid) {
+        return rid != _reentryId || Status >= TaskStatus.Success;
     }
 
     /// <summary>
@@ -245,8 +252,9 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool Internal_TrySetCancelled(int cancelCode) {
-        if (InternalSetException(StacklessCancellationException.InstOf(cancelCode))) {
+    internal bool Internal_TrySetCancelled(CancellationToken cts) {
+        if (PeekState(_ex) > ST_COMPUTING) return false; // 避免创建不必要的异常
+        if (InternalSetException(new OperationCanceledException(cts))) {
             PostComplete();
             return true;
         }
@@ -469,10 +477,9 @@ public class ValuePromise<T> : IValuePromise<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ValidateReentryId(int reentryId, bool ignoreReentrant = false) {
-        if (ignoreReentrant || reentryId == this._reentryId) {
-            return;
+        if (!ignoreReentrant && reentryId != this._reentryId) {
+            throw new IllegalStateException("promise has been reused");
         }
-        throw new IllegalStateException("promise has been reused");
     }
 
     #endregion
@@ -532,14 +539,14 @@ public class ValuePromise<T> : IValuePromise<T>
         }
     }
 
-    public bool TrySetCancelled(int reentryId, int cancelCode) {
+    public bool TrySetCancelled(int reentryId, CancellationToken cts = default) {
         ValidateReentryId(reentryId);
-        return Internal_TrySetCancelled(cancelCode);
+        return Internal_TrySetCancelled(cts);
     }
 
-    public void SetCancelled(int reentryId, int cancelCode) {
+    public void SetCancelled(int reentryId, CancellationToken cts = default) {
         ValidateReentryId(reentryId);
-        if (!Internal_TrySetCancelled(cancelCode)) {
+        if (!Internal_TrySetCancelled(cts)) {
             throw new IllegalStateException("Already complete");
         }
     }
@@ -630,7 +637,7 @@ public class ValuePromise<T> : IValuePromise<T>
         }
 
         public void TryFire(int mode) {
-            if (ExecutorUtil.IsCancelRequested(state, options)) {
+            if (ExecutorUtil.IsCancellationRequested(state, options)) {
                 input?.PrepareToRecycle(); // 手动触发回收
                 return;
             }

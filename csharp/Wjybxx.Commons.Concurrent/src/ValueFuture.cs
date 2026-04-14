@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Concurrent
@@ -124,8 +125,8 @@ public readonly struct ValueFuture
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ValueFuture FromCancelled(int cancelCode = CancelCodes.REASON_DEFAULT) {
-        Exception ex = StacklessCancellationException.InstOf(cancelCode);
+    public static ValueFuture FromCancelled(CancellationToken cts = default) {
+        Exception ex = new OperationCanceledException(cts);
         return new ValueFuture(null, ex);
     }
 
@@ -436,14 +437,14 @@ public readonly struct ValueFuture<T>
         => new(this, null, (int)suppressedTypes);
 
     /// <summary>
-    /// <see cref="IFuture.GetAwaitable"/>
+    /// 
     /// </summary>
+    /// <param name="executor">回调线程</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable<T> GetAwaitable(IExecutor? executor, int options = 0) => new(this, executor, options);
 
-    /// <summary>
-    /// <see cref="IFuture.GetAwaitable"/>
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable2<T> GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0) =>
         new(this, executor, (int)suppressedTypes | options);
@@ -474,8 +475,8 @@ public readonly struct ValueFuture<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ValueFuture<T> FromCancelled(int cancelCode = CancelCodes.REASON_DEFAULT) {
-        Exception ex = StacklessCancellationException.InstOf(cancelCode);
+    public static ValueFuture<T> FromCancelled(CancellationToken cts = default) {
+        Exception ex = new OperationCanceledException(cts);
         return new ValueFuture<T>(default, ex);
     }
 

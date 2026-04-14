@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -96,16 +97,13 @@ public interface IPromise : IFuture
     /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则返回false
     /// </summary>
-    /// <param name="cancelCode">相关的取消码</param>
-    /// <returns></returns>
-    bool TrySetCancelled(int cancelCode);
+    bool TrySetCancelled(CancellationToken cts = default);
 
     /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
     /// </summary>
-    /// <param name="cancelCode">相关的取消码</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
-    void SetCancelled(int cancelCode);
+    void SetCancelled(CancellationToken cts = default);
 }
 
 /// <summary>

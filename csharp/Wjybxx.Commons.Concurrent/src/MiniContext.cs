@@ -16,6 +16,8 @@
 
 #endregion
 
+using System.Threading;
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
@@ -23,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public sealed class MiniContext : IContext
 {
-    public static readonly MiniContext SHARABLE = new MiniContext(null, ICancelToken.NONE);
+    public static readonly MiniContext SHARABLE = new MiniContext(null);
 
 #nullable disable
     /// <summary>
@@ -32,22 +34,21 @@ public sealed class MiniContext : IContext
     public object State { get; }
 
     /// <summary>
-    /// 取消令牌 -- 如果未指定，则默认赋值为<see cref="ICancelToken.NONE"/>
+    /// 取消令牌
     /// </summary>
-    public ICancelToken CancelToken { get; }
+    public CancellationToken CancelToken { get; }
 #nullable restore
 
-    private MiniContext(object? state, ICancelToken? cancelToken) {
+    private MiniContext(object? state, CancellationToken cancelToken = default) {
         State = state;
-        CancelToken = cancelToken ?? ICancelToken.NONE;
+        CancelToken = cancelToken;
     }
 
     public static MiniContext OfState(object? state) {
-        if (state == null) return SHARABLE;
-        return new MiniContext(state, ICancelToken.NONE);
+        return state == null ? SHARABLE : new MiniContext(state);
     }
 
-    public static MiniContext OfState(object? state, ICancelToken cancelToken) {
+    public static MiniContext OfState(object? state, CancellationToken cancelToken) {
         return new MiniContext(state, cancelToken);
     }
 }

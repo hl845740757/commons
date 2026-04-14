@@ -28,7 +28,7 @@ namespace Commons.Tests.Concurrent;
 /// </summary>
 public class ExceptionDispatchTest
 {
-    private static readonly BetterCancellationException singletonEx = new BetterCancellationException(1);
+    private static readonly OperationCanceledException singletonEx = new OperationCanceledException();
 
     /// <summary>
     /// 测试单例异常在多个线程下抛出的堆栈

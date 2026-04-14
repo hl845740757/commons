@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -66,8 +67,8 @@ public readonly struct TaskResult
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TaskResult FromCancelled(int cancelCode = 1) {
-        Exception ex = StacklessCancellationException.InstOf(cancelCode);
+    public static TaskResult FromCancelled(CancellationToken cts = default) {
+        Exception ex = new OperationCanceledException(cts);
         return new TaskResult(null, ex);
     }
 
@@ -122,23 +123,6 @@ public readonly struct TaskResult
                 return ExceptionUtil.RestoreStackTrace(dispatchInfo);
             }
             return null;
-        }
-    }
-
-    /// <summary>
-    /// 获取取消码
-    ///
-    /// 注：如果任务是被取消的，则返回对应的取消码，如果不包含取消码信息，则返回默认的取消码。
-    /// </summary>
-    public int CancelCode {
-        get {
-            if (_ex is BetterCancellationException ex2) {
-                return ex2.Code;
-            }
-            if (_ex is OperationCanceledException) {
-                return CancelCodes.REASON_DEFAULT;
-            }
-            return 0;
         }
     }
 
@@ -239,8 +223,8 @@ public readonly struct TaskResult<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TaskResult<T> FromCancelled(int cancelCode = 1) {
-        Exception ex = StacklessCancellationException.InstOf(cancelCode);
+    public static TaskResult<T> FromCancelled(CancellationToken cts = default) {
+        Exception ex = new OperationCanceledException(cts);
         return new TaskResult<T>(default, ex);
     }
 
@@ -295,23 +279,6 @@ public readonly struct TaskResult<T>
                 return ExceptionUtil.RestoreStackTrace(dispatchInfo);
             }
             return null;
-        }
-    }
-
-    /// <summary>
-    /// 获取取消码
-    ///
-    /// 注：如果任务是被取消的，则返回对应的取消码，如果不包含取消码信息，则返回默认的取消码。
-    /// </summary>
-    public int CancelCode {
-        get {
-            if (_ex is BetterCancellationException ex2) {
-                return ex2.Code;
-            }
-            if (_ex is OperationCanceledException) {
-                return CancelCodes.REASON_DEFAULT;
-            }
-            return 0;
         }
     }
 

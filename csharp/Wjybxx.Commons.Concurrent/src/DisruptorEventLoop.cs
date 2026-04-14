@@ -432,7 +432,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             terminationPromise.TrySetResult(0);
         } else {
             if (!runningPromise.IsCompleted) {
-                runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);
+                runningPromise.TrySetCancelled();
             }
             // 等待策略是根据alert信号判断EventLoop是否已开始关闭的，因此即使inEventLoop也需要alert，否则可能丢失信号，在waitFor处无法停止
             barrier.Alert();
@@ -482,7 +482,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     /** 启动所有模块 */
     protected void StartModules() {
         // 模块的部分数据初始化
-        foreach (EventLoopModule module in _moduleList) {
+        foreach (EventLoopModule module in moduleList) {
             if (module.Cid.shared) {
                 continue;
             }
@@ -491,14 +491,14 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             }
         }
         // 解决模块之间的依赖
-        foreach (EventLoopModule module in _moduleList) {
+        foreach (EventLoopModule module in moduleList) {
             if (!module.Cid.IsPrivateScript) {
                 continue;
             }
             module.ResolveDependence();
         }
         // 顺序启动 - Start
-        foreach (EventLoopModule module in _moduleList) {
+        foreach (EventLoopModule module in moduleList) {
             if (!module.Cid.IsPrivateScript) {
                 continue;
             }
@@ -509,8 +509,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     /** 停止所有模块 */
     protected void StopModules() {
         // 逆序停止
-        for (int index = _moduleList.Count - 1; index >= 0; index--) {
-            EventLoopModule module = _moduleList[index];
+        for (int index = moduleList.Count - 1; index >= 0; index--) {
+            EventLoopModule module = moduleList[index];
             if (!module.Cid.IsPrivateScript) {
                 continue;
             }
@@ -529,7 +529,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     /** 销毁所有模块 -- 不删除引用 */
     protected void DestroyModules() {
         // 顺序销毁 -- 组件之间不能有时序依赖
-        foreach (EventLoopModule module in _moduleList) {
+        foreach (EventLoopModule module in moduleList) {
             if (module.Cid.shared) {
                 continue;
             }
@@ -550,8 +550,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         long tickTime = this.TickTime;
         while (agent.CheckMainLoop(tickTime)) {
             agent.BeforeMainLoop(tickTime);
-            for (int i = 0; i < _earlyUpdateModuleList.Count; i++) {
-                EventLoopModule module = _earlyUpdateModuleList[i];
+            for (int i = 0; i < earlyUpdateModuleList.Count; i++) {
+                EventLoopModule module = earlyUpdateModuleList[i];
                 try {
                     module.EarlyUpdate();
                 }
@@ -559,8 +559,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                     logger.Info(ex, "module.earlyUpdate caught exception");
                 }
             }
-            for (int i = 0; i < _updateModuleList.Count; i++) {
-                EventLoopModule module = _updateModuleList[i];
+            for (int i = 0; i < updateModuleList.Count; i++) {
+                EventLoopModule module = updateModuleList[i];
                 try {
                     module.Update();
                 }
@@ -568,8 +568,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                     logger.Info(ex, "module.update caught exception");
                 }
             }
-            for (int i = 0; i < _lateUpdateModuleList.Count; i++) {
-                EventLoopModule module = _lateUpdateModuleList[i];
+            for (int i = 0; i < lateUpdateModuleList.Count; i++) {
+                EventLoopModule module = lateUpdateModuleList[i];
                 try {
                     module.LateUpdate();
                 }
@@ -588,9 +588,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         if (type == TYPE_REMOVE_SCHEDULE) {
             // 删除延时任务
             IScheduledFutureTask futureTask = (IScheduledFutureTask)evt.Obj1;
+            CancellationToken cts = (CancellationToken)evt.Obj2;
             long taskId = evt.LongVal1;
-            int cancelCode = (int)evt.LongVal2;
-            schedulerHelper.Cancel(futureTask, taskId, cancelCode);
+            schedulerHelper.Cancel(futureTask, taskId, cts);
         }
     }
 

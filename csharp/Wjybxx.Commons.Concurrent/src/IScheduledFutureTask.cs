@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
@@ -89,13 +90,13 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// <summary>
     /// 取消令牌的监听句柄
     /// </summary>
-    Registration CancelRegistration { get; set; }
+    CancellationTokenRegistration Registration { get; set; }
 
     /// <summary>
     /// 关联的取消令牌
     /// </summary>
     /// <returns></returns>
-    ICancelToken GetCancelToken();
+    CancellationToken GetCancelToken();
 
     #endregion
 
@@ -112,7 +113,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// 取消执行
     /// 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
     /// </summary>
-    void Cancel(int cancelCode);
+    void Cancel(CancellationToken cts = default);
 
     /// <summary>
     /// 归还到对象池（解决泛型问题）

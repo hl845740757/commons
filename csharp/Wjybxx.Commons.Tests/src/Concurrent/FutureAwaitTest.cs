@@ -42,7 +42,7 @@ public class FutureAwaitTest
     }
 
     private static async IFuture<int> CountAsync() {
-        IFuture<int> future = ExecutorUtil.SubmitFunc(executor, () => 1, null).AsFuture();
+        IFuture<int> future = ExecutorUtil.SubmitFunc(executor, () => 1).AsFuture();
         Assert.IsFalse(globalEventLoop.InEventLoop(), "0. before globalEventLoop.InEventLoop() == true");
 
         await future.GetAwaitable(globalEventLoop);

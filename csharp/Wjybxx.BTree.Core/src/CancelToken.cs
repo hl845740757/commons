@@ -133,7 +133,6 @@ public class CancelToken : ICancelTokenListener
     /// <summary>
     /// 检查当前是否收到了取消信号
     /// </summary>
-    /// <exception cref="BetterCancellationException"></exception>
     public void CheckCancel() {
         if (code != 0) {
             throw new BetterCancellationException(code);

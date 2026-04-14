@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -26,11 +27,19 @@ public interface IValuePromise
 {
     /// <summary>
     /// Promise是否已回收
-    /// （是否已进入新的生命周期，限任务的调度者使用）
+    /// （限任务的调度者使用）
     /// </summary>
     /// <param name="rid"></param>
     /// <returns></returns>
     bool IsRecycled(int rid);
+
+    /// <summary>
+    /// Promise是否已回收或已进入完成状态
+    /// (限任务的调度者使用)
+    /// </summary>
+    /// <param name="rid"></param>
+    /// <returns></returns>
+    bool IsRecycledOrCompleted(int rid);
 
     #region future
 
@@ -194,17 +203,17 @@ public interface IValuePromise
     /// 将Future置为已取消状态，如果future已进入完成状态，则返回false
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>
-    /// <param name="cancelCode">相关的取消码</param>
+    /// <param name="cts">相关的取消令牌</param>
     /// <returns></returns>
-    bool TrySetCancelled(int reentryId, int cancelCode);
+    bool TrySetCancelled(int reentryId, CancellationToken cts = default);
 
     /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
     /// </summary>
     /// <param name="reentryId">重入id</param>
-    /// <param name="cancelCode">相关的取消码</param>
+    /// <param name="cts">相关的取消令牌</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
-    void SetCancelled(int reentryId, int cancelCode);
+    void SetCancelled(int reentryId, CancellationToken cts = default);
 
     #endregion
 }

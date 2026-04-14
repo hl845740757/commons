@@ -334,11 +334,11 @@ public static class ExecutorUtil
 
     public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, int options = 0) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
-        executor.Execute(PromiseTask.OfFunction(task, null, options, promise));
+        executor.Execute(PromiseTask.OfFunction(task, default, options, promise));
         return promise.Future;
     }
 
-    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, ICancelToken? cancelToken, int options = 0) {
+    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, CancellationToken cancelToken, int options = 0) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
         executor.Execute(PromiseTask.OfFunction(task, cancelToken, options, promise));
         return promise.Future;
@@ -356,11 +356,11 @@ public static class ExecutorUtil
 
     public static ValueFuture SubmitAction(IExecutor executor, Action task, int options = 0) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(executor);
-        executor.Execute(PromiseTask.OfAction(task, null, options, promise));
+        executor.Execute(PromiseTask.OfAction(task, default, options, promise));
         return promise.VoidFuture;
     }
 
-    public static ValueFuture SubmitAction(IExecutor executor, Action task, ICancelToken? cancelToken, int options) {
+    public static ValueFuture SubmitAction(IExecutor executor, Action task, CancellationToken cancelToken, int options) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(executor);
         executor.Execute(PromiseTask.OfAction(task, cancelToken, options, promise));
         return promise.VoidFuture;
@@ -376,18 +376,13 @@ public static class ExecutorUtil
 
     #region execute
 
-    public static void Execute(this IExecutor executor, Action action, ICancelToken? cancelToken, int options) {
+    public static void Execute(this IExecutor executor, Action action, CancellationToken cancelToken, int options) {
         ITask task = ToTask(action, cancelToken, options);
         executor.Execute(task);
     }
 
     public static void Execute(this IExecutor executor, Action<object> action, object? ctx, int options) {
         ITask task = ToTask(action, ctx, options);
-        executor.Execute(task);
-    }
-
-    public static void Execute(this IExecutor executor, Action action, CancellationToken cancellationToken, int options = 0) {
-        ITask task = ToTask(action, cancellationToken, options);
         executor.Execute(task);
     }
 
@@ -414,47 +409,25 @@ public static class ExecutorUtil
     #region cancel-token
 
     /// <summary>
-    /// 获取在指定线程上执行回调的Awaiter
-    /// 
-    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
-    /// <code>
-    ///     // await后的代码将在eventLoop线程执行
-    ///     await future.GetAwaitable(eventLoop); 
-    /// 
-    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
-    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
-    /// </code>
-    /// </summary>
-    /// <param name="cts">要等待的取消令牌</param>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CancelTokenAwaitable GetAwaitable(this ICancelToken cts, IExecutor? executor, int options = 0) {
-        return new CancelTokenAwaitable(cts, executor, options);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CancelTokenAwaiter GetAwaiter(this ICancelToken cts) {
-        return new CancelTokenAwaiter(cts, null, 0);
-    }
-
-    /// <summary>
     /// 获取ctx中的取消令牌
     /// </summary>
     /// <param name="ctx"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public static ICancelToken GetCancelToken(object? ctx, int options) {
+    public static CancellationToken GetCancelToken(object? ctx, int options) {
         if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
-            return ICancelToken.NONE;
+            return CancellationToken.None;
         }
-        if (ctx is ICancelToken cts) {
-            return cts;
+        if (ctx is CancellationTokenSource cts) {
+            return cts.Token;
+        }
+        if (ctx is CancellationToken ct) {
+            return ct;
         }
         if (ctx is IContext ctx2) {
             return ctx2.CancelToken;
         }
-        return ICancelToken.NONE;
+        return CancellationToken.None;
     }
 
     /// <summary>
@@ -463,15 +436,18 @@ public static class ExecutorUtil
     /// <param name="ctx"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public static bool IsCancelRequested(object? ctx, int options) {
+    public static bool IsCancellationRequested(object? ctx, int options) {
         if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
-        if (ctx is ICancelToken cts) {
-            return cts.IsRequested;
+        if (ctx is CancellationTokenSource cts) {
+            return cts.IsCancellationRequested;
+        }
+        if (ctx is CancellationToken ct) {
+            return ct.IsCancellationRequested;
         }
         if (ctx is IContext ctx2) {
-            return ctx2.CancelToken.IsRequested;
+            return ctx2.CancelToken.IsCancellationRequested;
         }
         return false;
     }
@@ -517,20 +493,14 @@ public static class ExecutorUtil
         return new ActionWrapper1(action, options);
     }
 
-    public static ITask ToTask(Action action, ICancelToken? cancelToken, int options = 0) {
+    public static ITask ToTask(Action action, CancellationToken cancelToken, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (cancelToken == null) throw new ArgumentNullException(nameof(cancelToken));
         return new ActionWrapper2(action, cancelToken, options);
     }
 
     public static ITask ToTask(Action<object> action, object? ctx, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper3(action, ctx, options);
-    }
-
-    public static ITask ToTask(Action action, CancellationToken cancelToken, int options = 0) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper4(action, cancelToken, options);
     }
 
     #endregion
@@ -561,10 +531,10 @@ public static class ExecutorUtil
     private class ActionWrapper2 : ITask
     {
         private readonly Action action;
-        private readonly ICancelToken? cancelToken;
+        private readonly CancellationToken cancelToken;
         private readonly int options;
 
-        public ActionWrapper2(Action action, ICancelToken? cancelToken, int options) {
+        public ActionWrapper2(Action action, CancellationToken cancelToken, int options) {
             this.action = action;
             this.cancelToken = cancelToken;
             this.options = options;
@@ -573,7 +543,7 @@ public static class ExecutorUtil
         public int Options => options;
 
         public void Run() {
-            if (cancelToken != null && cancelToken.IsRequested) {
+            if (cancelToken.IsCancellationRequested) {
                 return;
             }
             action();
@@ -599,36 +569,10 @@ public static class ExecutorUtil
         public int Options => options;
 
         public void Run() {
-            if (IsCancelRequested(ctx, options)) {
+            if (IsCancellationRequested(ctx, options)) {
                 return;
             }
             action(ctx);
-        }
-
-        public override string ToString() {
-            return $"{nameof(action)}: {action}, {nameof(options)}: {options}";
-        }
-    }
-
-    private class ActionWrapper4 : ITask
-    {
-        private readonly Action action;
-        private readonly CancellationToken cancelToken;
-        private readonly int options;
-
-        public ActionWrapper4(Action action, CancellationToken cancelToken, int options) {
-            this.action = action;
-            this.cancelToken = cancelToken;
-            this.options = options;
-        }
-
-        public int Options => options;
-
-        public void Run() {
-            if (cancelToken.IsCancellationRequested) {
-                return;
-            }
-            action();
         }
 
         public override string ToString() {
@@ -843,7 +787,7 @@ public static class ExecutorUtil
             } else if (task.IsFaulted) {
                 promise.TrySetException(task.Exception!);
             } else {
-                promise.TrySetCancelled(CancelCodes.REASON_DEFAULT);
+                promise.TrySetCancelled();
             }
         };
 
@@ -855,7 +799,7 @@ public static class ExecutorUtil
                 if (task.IsFaulted) {
                     return Promise<int>.FromException(task.Exception!);
                 }
-                return Promise<int>.FromCancelled(CancelCodes.REASON_DEFAULT);
+                return Promise<int>.FromCancelled();
             }
             Promise<int> promise = new Promise<int>();
             task.ContinueWith(_invokerToFuture, promise);
@@ -919,7 +863,7 @@ public static class ExecutorUtil
             } else if (task.IsFaulted) {
                 promise.TrySetException(task.Exception!);
             } else {
-                promise.TrySetCancelled(CancelCodes.REASON_DEFAULT);
+                promise.TrySetCancelled();
             }
         };
 
@@ -931,7 +875,7 @@ public static class ExecutorUtil
                 if (task.IsFaulted) {
                     return Promise<T>.FromException(task.Exception!);
                 }
-                return Promise<T>.FromCancelled(CancelCodes.REASON_DEFAULT);
+                return Promise<T>.FromCancelled();
             }
             Promise<T> promise = new Promise<T>();
             task.ContinueWith(_invokerToFuture, promise);

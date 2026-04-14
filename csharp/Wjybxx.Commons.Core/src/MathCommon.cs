@@ -78,6 +78,7 @@ public static class MathCommon
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NextPowerOfTwo(int num) {
+        if (num > MaxPowerOfTwo) throw new ArgumentException();
         if (num < 1) return 1;
         return 1 << (32 - NumberOfLeadingZeros(num - 1));
     }
@@ -85,6 +86,7 @@ public static class MathCommon
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long NextPowerOfTwo(long num) {
+        if (num > LongMaxPowerOfTwo) throw new ArgumentException();
         if (num < 1) return 1;
         return 1L << (64 - NumberOfLeadingZeros(num - 1));
     }

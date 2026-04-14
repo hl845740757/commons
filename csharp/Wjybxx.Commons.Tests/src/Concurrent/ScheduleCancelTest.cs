@@ -1,4 +1,5 @@
 ﻿#region LICENSE
+
 // Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #endregion
 
 using System;
@@ -24,7 +26,7 @@ using Wjybxx.Disruptor;
 namespace Commons.Tests.Concurrent;
 
 /// <summary>
-/// 测试能否通过<see cref="ICancelToken"/>取消任务
+/// 测试能否通过取消令牌取消任务
 /// </summary>
 public class ScheduleCancelTest
 {
@@ -46,17 +48,17 @@ public class ScheduleCancelTest
         consumer.ShutdownNow();
         consumer.TerminationFuture.Join();
     }
-    
+
     [Test]
     public void testCancel() {
-        CancelTokenSource cts = new CancelTokenSource();
-        IFuture future = consumer.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(1000), cts).AsFuture();
+        CancellationTokenSource cts = new CancellationTokenSource();
+        IFuture future = consumer.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(1000), cts.Token).AsFuture();
 
-        cts.Cancel(1);
+        cts.Cancel();
         future.AwaitUninterruptibly();
         Assert.IsTrue(future.IsCancelled);
     }
-    
+
     [Test]
     public void testTimeout() {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => { });
@@ -65,9 +67,9 @@ public class ScheduleCancelTest
 
         IFuture<int> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
-        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
+        Assert.IsTrue(future.ExceptionNow(false) is OperationCanceledException);
     }
-    
+
     [Test]
     public void testCountLimit() {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => { });
@@ -76,10 +78,10 @@ public class ScheduleCancelTest
 
         IFuture<int> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
-        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
+        Assert.IsTrue(future.ExceptionNow(false) is OperationCanceledException);
     }
-    
-    
+
+
     [Test]
     public void testErrorCode() {
         MutableInt counter = new MutableInt(0);

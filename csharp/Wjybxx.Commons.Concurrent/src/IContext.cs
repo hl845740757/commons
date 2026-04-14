@@ -17,6 +17,8 @@
 #endregion
 
 
+using System.Threading;
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
@@ -52,9 +54,9 @@ public interface IContext
 
     /// <summary>
     /// 任务绑定的取消令牌（取消上下文）
-    /// 1.每个任务可有独立的取消信号；
-    /// 2.运行时不为null -- 不要返回null，使用<see cref="ICancelToken.NONE"/>代替。
+    /// 1.每个任务可有独立的取消信号
+    /// 2.
     /// </summary>
-    ICancelToken CancelToken { get; }
+    CancellationToken CancelToken { get; }
 }
 }

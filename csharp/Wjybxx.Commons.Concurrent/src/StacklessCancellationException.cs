@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using Wjybxx.Commons.Ex;
 
 namespace Wjybxx.Commons.Concurrent
@@ -24,25 +25,29 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 不打印堆栈的取消异常
 /// </summary>
-public sealed class StacklessCancellationException : BetterCancellationException, NoLogRequiredException
+public sealed class StacklessCancellationException : OperationCanceledException, NoLogRequiredException
 {
     // c# 的异常不适合单例，会导致堆栈冲突
-    public static StacklessCancellationException Default => new StacklessCancellationException(CancelCodes.REASON_DEFAULT);
+    public static StacklessCancellationException Default => new StacklessCancellationException();
 
-    public StacklessCancellationException(int code) : base(code) {
+    public StacklessCancellationException() {
     }
 
-    public StacklessCancellationException(int code, string? message) : base(code, message) {
+    public StacklessCancellationException(string? message) : base(message) {
     }
 
-    public StacklessCancellationException(int code, string? message, Exception? innerException) : base(code, message, innerException) {
+    public StacklessCancellationException(string? message, Exception? innerException) : base(message, innerException) {
+    }
+
+    public StacklessCancellationException(string? message, Exception? innerException, CancellationToken token) : base(message, innerException, token) {
+    }
+
+    public StacklessCancellationException(string? message, CancellationToken token) : base(message, token) {
+    }
+
+    public StacklessCancellationException(CancellationToken token) : base(token) {
     }
 
     public override string? StackTrace => null;
-
-    public static StacklessCancellationException InstOf(int code) {
-        CancelCodes.CheckCode(code);
-        return new StacklessCancellationException(code);
-    }
 }
 }

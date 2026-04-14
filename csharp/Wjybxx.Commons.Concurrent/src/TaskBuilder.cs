@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -58,7 +59,7 @@ public static class TaskBuilder
 
     #region factory
 
-    public static TaskBuilder<int> NewAction(Action action, ICancelToken? cancelToken = null) {
+    public static TaskBuilder<int> NewAction(Action action, CancellationToken cancelToken = default) {
         return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION, action, cancelToken);
     }
 
@@ -66,7 +67,7 @@ public static class TaskBuilder
         return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION_CTX, action, ctx);
     }
 
-    public static TaskBuilder<T> NewFunc<T>(Func<T> func, ICancelToken? cancelToken = null) {
+    public static TaskBuilder<T> NewFunc<T>(Func<T> func, CancellationToken cancelToken = default) {
         return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func, cancelToken);
     }
 

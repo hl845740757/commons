@@ -131,7 +131,7 @@ public interface IExecutorService : IExecutor
     /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    ValueFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0);
+    ValueFuture SubmitAction(Action action, CancellationToken cancelToken, int options = 0);
 
     /// <summary>
     /// 提交一个任务
@@ -157,7 +157,7 @@ public interface IExecutorService : IExecutor
     /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    ValueFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0);
+    ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken, int options = 0);
 
     /// <summary>
     /// 提交一个任务

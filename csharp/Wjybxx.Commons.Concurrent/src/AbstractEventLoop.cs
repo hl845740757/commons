@@ -39,15 +39,15 @@ public abstract class AbstractEventLoop : IEventLoop
     private readonly TaskScheduler _scheduler;
 
     /** 所有的模块 -- 不可变List，保留为添加顺序 */
-    protected readonly ImmutableList<EventLoopModule> _moduleList;
+    protected readonly ImmutableList<EventLoopModule> moduleList;
     /** 高速缓存的模块列表 */
-    protected readonly ImmutableList<EventLoopModule?> _indexedModuleList;
+    protected readonly ImmutableList<EventLoopModule?> indexedModuleList;
     /** 重写了earlyUpdate方法的模块 */
-    protected readonly ImmutableList<EventLoopModule> _earlyUpdateModuleList;
+    protected readonly ImmutableList<EventLoopModule> earlyUpdateModuleList;
     /** 重写了update方法的模块 */
-    protected readonly ImmutableList<EventLoopModule> _updateModuleList;
+    protected readonly ImmutableList<EventLoopModule> updateModuleList;
     /** 重写了lateUpdate方法的模块 */
-    protected readonly ImmutableList<EventLoopModule> _lateUpdateModuleList;
+    protected readonly ImmutableList<EventLoopModule> lateUpdateModuleList;
 
     protected AbstractEventLoop(IEventLoopGroup? parent,
                                 List<EventLoopModule> moduleList) {
@@ -57,18 +57,18 @@ public abstract class AbstractEventLoop : IEventLoop
         _scheduler = new ExecutorTaskScheduler(this);
         // 需要去重
         LinkedHashSet<EventLoopModule> copiedModuleList = new LinkedHashSet<EventLoopModule>(moduleList);
-        _moduleList = copiedModuleList.ToImmutableList2();
-        _indexedModuleList = ToIndexedArray(copiedModuleList).ToImmutableList2();
+        this.moduleList = copiedModuleList.ToImmutableList2();
+        this.indexedModuleList = ToIndexedArray(copiedModuleList).ToImmutableList2();
         // 需要update的模块缓存
-        _earlyUpdateModuleList = copiedModuleList
+        this.earlyUpdateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
             .Where(EventLoopModuleUtil.IsOverrideEarlyUpdate)
             .ToImmutableList2();
-        _updateModuleList = copiedModuleList
+        this.updateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
             .Where(EventLoopModuleUtil.IsOverrideUpdate)
             .ToImmutableList2();
-        _lateUpdateModuleList = copiedModuleList
+        this.lateUpdateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
             .Where(EventLoopModuleUtil.IsOverrideLateUpdate)
             .ToImmutableList2();
@@ -157,11 +157,11 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual ValueFuture SubmitAction(Action action, int options = 0) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
-        Execute(PromiseTask.OfAction(action, null, options, promise));
+        Execute(PromiseTask.OfAction(action, default, options, promise));
         return promise.VoidFuture;
     }
 
-    public virtual ValueFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
+    public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken, int options = 0) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
         Execute(PromiseTask.OfAction(action, cancelToken, options, promise));
         return promise.VoidFuture;
@@ -175,11 +175,11 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        Execute(PromiseTask.OfFunction(action, null, options, promise));
+        Execute(PromiseTask.OfFunction(action, default, options, promise));
         return promise.Future;
     }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken, int options = 0) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
         Execute(PromiseTask.OfFunction(action, cancelToken, options, promise));
         return promise.Future;
@@ -227,7 +227,7 @@ public abstract class AbstractEventLoop : IEventLoop
         return promise.Future;
     }
 
-    public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, CancellationToken cancelToken = default) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
         ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(action, cancelToken, 0, promise);
         InitTriggerTime(promiseTask, delay);
@@ -245,7 +245,7 @@ public abstract class AbstractEventLoop : IEventLoop
         return promise.VoidFuture;
     }
 
-    public virtual ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, CancellationToken cancelToken = default) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
         ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfFunction(action, cancelToken, 0, promise);
         InitTriggerTime(promiseTask, delay);
@@ -263,13 +263,13 @@ public abstract class AbstractEventLoop : IEventLoop
         return promise.Future;
     }
 
-    public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
         builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
         return Schedule(in builder).Box(false);
     }
 
-    public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
         builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
         return Schedule(in builder).Box(false);
@@ -282,19 +282,19 @@ public abstract class AbstractEventLoop : IEventLoop
     // ReSharper disable PossibleUnintendedReferenceComparison
 
     public List<IEventLoopModule> GetComponents() {
-        return new List<IEventLoopModule>(_moduleList);
+        return new List<IEventLoopModule>(moduleList);
     }
 
     public void GetComponents(List<IEventLoopModule> outList) {
-        outList.AddRange(_moduleList);
+        outList.AddRange(moduleList);
     }
 
-    public int ComponentCount => _moduleList.Count;
+    public int ComponentCount => moduleList.Count;
 
     public T? GetComponent<T>(ComponentId<T> cid) where T : class {
         IEventLoopModule? comp;
-        if (cid.cacheIndex < _indexedModuleList.Count
-            && (comp = _indexedModuleList[cid.cacheIndex]) != null
+        if (cid.cacheIndex < indexedModuleList.Count
+            && (comp = indexedModuleList[cid.cacheIndex]) != null
             && comp.Cid == cid) {
             return (T)comp;
         }
@@ -303,8 +303,8 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public IEventLoopModule? GetComponent(ComponentId cid) {
         IEventLoopModule? comp;
-        if (cid.cacheIndex < _indexedModuleList.Count
-            && (comp = _indexedModuleList[cid.cacheIndex]) != null
+        if (cid.cacheIndex < indexedModuleList.Count
+            && (comp = indexedModuleList[cid.cacheIndex]) != null
             && comp.Cid == cid) {
             return comp;
         }
@@ -313,7 +313,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public bool ContainsComponent(IEventLoopModule comp) {
         int index = comp.Cid.cacheIndex;
-        return index < _indexedModuleList.Count && _indexedModuleList[index] == comp;
+        return index < indexedModuleList.Count && indexedModuleList[index] == comp;
     }
 
     #endregion

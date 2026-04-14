@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -36,7 +37,7 @@ public static class ScheduledTaskBuilder
 
     #region factory
 
-    public static ScheduledTaskBuilder<int> NewAction(Action task, ICancelToken? cancelToken = null) {
+    public static ScheduledTaskBuilder<int> NewAction(Action task, CancellationToken cancelToken = default) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, cancelToken);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
@@ -46,7 +47,7 @@ public static class ScheduledTaskBuilder
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task, ICancelToken? cancelToken = null) {
+    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task, CancellationToken cancelToken = default) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, cancelToken);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
@@ -270,7 +271,7 @@ public struct ScheduledTaskBuilder<T>
 
     /// <summary>
     /// 1. 默认只在执行任务后检查是否超时，以确保至少会执行一次
-    /// 2. 达到截止时间后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
+    /// 2. 达到截止时间后任务将被取消，任何的主动退出都使用取消
     ///
     /// PS：使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化。
     /// </summary>
@@ -309,7 +310,7 @@ public struct ScheduledTaskBuilder<T>
     /// 设置任务的执行次数限制
     ///
     /// 注：
-    /// 1.到达执行上限后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
+    /// 1.到达执行上限后任务将被取消，任何的主动退出都使用取消。
     /// 2.使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化。
     /// </summary>
     public int CountLimit {
