@@ -611,7 +611,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
         }
         if (!typeof(TKey).IsValueType && key == null) {
             Node nullNode = table[_mask + 1];
-            return nullNode.IsNull() ? -(_mask + 2) : (_mask + 1);
+            return !nullNode.hasKey ? -(_mask + 2) : (_mask + 1);
         }
 
         IEqualityComparer<TKey> keyComparer = _keyComparer;
@@ -619,7 +619,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
         // 先测试无冲突位置
         int pos = mask & hash;
         ref Node node = ref table[pos];
-        if (node.IsNull()) return -(pos + 1);
+        if (!node.hasKey) return -(pos + 1);
         if (node.hash == hash && keyComparer.Equals(node.key, key)) {
             return pos;
         }
@@ -629,7 +629,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
         for (int i = 0; i < mask; i++) {
             pos = (pos + 1) & mask;
             node = ref table[pos];
-            if (node.IsNull()) return -(pos + 1);
+            if (!node.hasKey) return -(pos + 1);
             if (node.hash == hash && keyComparer.Equals(node.key, key)) {
                 return pos;
             }
@@ -1012,9 +1012,6 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
             this.prev = prev;
             this.next = -1;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsNull() => hasKey == false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public KeyValuePair<TKey, TValue> AsPair() {

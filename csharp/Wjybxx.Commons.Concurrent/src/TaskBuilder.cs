@@ -52,10 +52,7 @@ public static class TaskBuilder
     /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
     /// </summary>
     public const int TYPE_TASK = 5;
-    /// <summary>
-    /// 异步任务<see cref="Func{AsyncTaskContext, ValueFuture}"/>
-    /// </summary>
-    public const int TYPE_ASYNC_TASK = 6;
+
 
     #region factory
 
@@ -77,10 +74,6 @@ public static class TaskBuilder
 
     public static TaskBuilder<int> NewTask(ITask task) {
         return new TaskBuilder<int>(TaskBuilder.TYPE_TASK, task);
-    }
-
-    internal static TaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_ASYNC_TASK, task);
     }
 
     #endregion

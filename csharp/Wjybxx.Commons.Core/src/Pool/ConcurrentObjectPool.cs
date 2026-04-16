@@ -67,8 +67,7 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
     /// <param name="filter">回收对象的过滤器</param>
     /// <param name="destroyer">对象销毁器</param>
     public ConcurrentObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64,
-                                Func<T, bool>? filter = null,
-                                Action<T>? destroyer = null) {
+                                Func<T, bool>? filter = null, Action<T>? destroyer = null) {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _cleaner = cleaner ?? DO_NOTHING;
         _filter = filter;

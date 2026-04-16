@@ -62,23 +62,6 @@ public static class ScheduledTaskBuilder
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    /// <summary>
-    /// 创建一个异步任务
-    /// 
-    /// 异步任务必须是周期性任务，事件循环会定期检查任务是否完成和取消信号，默认50毫秒检查一次。
-    /// (这只是一个简单的类协程任务实现，真实的协程任务由用户扩展 -- 因为调度需求不能统一)
-    /// </summary>
-    /// <param name="task">要调度的异步任务</param>
-    /// <param name="checkPeriod">检查取消信号和结果的间隔</param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    public static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task, long checkPeriod = 50) {
-        TaskBuilder<T> taskBuilder = TaskBuilder.NewAsyncTask(task);
-        ScheduledTaskBuilder<T> builder = new ScheduledTaskBuilder<T>(ref taskBuilder);
-        builder.SetFixedDelay(0, checkPeriod, TimeSpan.FromMilliseconds(1));
-        return builder;
-    }
-
     #endregion
 
     #region 校验
@@ -316,11 +299,8 @@ public struct ScheduledTaskBuilder<T>
     public int CountLimit {
         get => _countLimit;
         set {
-            if (value < 1) {
-                throw new ArgumentException("invalid count limit: " + value);
-            }
             _countLimit = value;
-            _core.Enable(TaskOptions.HAS_COUNT_LIMIT);
+            _core.SetEnable(TaskOptions.HAS_COUNT_LIMIT, value > 0);
         }
     }
 

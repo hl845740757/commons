@@ -730,13 +730,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             int type = eventObj.Type;
             try {
                 if (type == 0) {
-                    if (eventObj.Obj1 == null) {
-                        // 由于c#支持值类型，用户设置错工厂容易导致该问题
-                        logger.Warn("bad event factory");
-                    } else if (eventObj.Obj1 is Action action) {
+                    if (eventObj.Obj1 is Action action) {
                         action();
-                    } else {
-                        ITask task = (ITask)eventObj.Obj1;
+                    } else if (eventObj.Obj1 is ITask task) {
                         task.Run();
                     }
                 } else if (type > 0) {
@@ -817,13 +813,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                     continue;
                 }
                 if (type == 0) {
-                    if (eventObj.Obj1 == null) {
-                        // 由于c#支持值类型，用户设置错工厂容易导致该问题
-                        logger.Warn("bad event factory");
-                    } else if (eventObj.Obj1 is Action action) {
+                    if (eventObj.Obj1 is Action action) {
                         action();
-                    } else {
-                        ITask task = (ITask)eventObj.Obj1;
+                    } else if (eventObj.Obj1 is ITask task) {
                         task.Run();
                     }
                 } else if (type > 0) {

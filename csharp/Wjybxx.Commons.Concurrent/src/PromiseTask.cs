@@ -138,6 +138,7 @@ public class PromiseTask<T> : IFutureTask
         this.ctx = null;
         this.options = 0;
         this.promise = null;
+        this.promiseRid = 0;
         this.ctl = 0;
     }
 
@@ -145,8 +146,7 @@ public class PromiseTask<T> : IFutureTask
 
     public int Options => options;
 
-    /** 任务的类型 */
-    protected int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
+    public int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
 
     //** 任务是否启用了指定选项 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -261,7 +261,7 @@ public class PromiseTask<T> : IFutureTask
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Release(PromiseTask<T> promiseTask) {
         if (promiseTask.GetType() != typeof(PromiseTask<T>)) {
-            throw new ArgumentException("promiseTask");
+            throw new ArgumentException(null, nameof(promiseTask));
         }
         POOL.Release(promiseTask);
     }

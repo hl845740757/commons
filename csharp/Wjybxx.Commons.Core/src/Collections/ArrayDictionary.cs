@@ -941,7 +941,7 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
             if (_version != _dictionary._version) {
                 throw new InvalidOperationException("EnumFailedVersion");
             }
-            if (_currNode.IsNull()) {
+            if (!_currNode.hasKey) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
             int currIndex = _reversed ? _nextNode + 1 : _nextNode - 1;
@@ -1095,9 +1095,6 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
             this.value = value;
             this.hasKey = true;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsNull() => hasKey == false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public KeyValuePair<TKey, TValue> AsPair() {

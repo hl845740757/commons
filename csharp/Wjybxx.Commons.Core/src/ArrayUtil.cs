@@ -387,17 +387,35 @@ public static class ArrayUtil
     }
 
     /// <summary>
+    /// 根据索引区间清理数组
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="star">起始下标</param>
+    /// <param name="end">结束下标</param>
+    /// <param name="mode">区间模式</param>
+    /// <typeparam name="T"></typeparam>
+    public static void Clear2<T>(T[] list, int star, int end, RangeMode mode = RangeMode.LeftClosed) {
+        switch (mode) {
+            case RangeMode.Closed: Array.Clear(list, star, end - star + 1); break;
+            case RangeMode.Open: Array.Clear(list, star + 1, end - star); break;
+            case RangeMode.LeftClosed: Array.Clear(list, star, end - star); break;
+            case RangeMode.LeftOpen: Array.Clear(list, star + 1, end - star + 1); break;
+            default: throw new ArgumentOutOfRangeException(nameof(mode));
+        }
+    }
+
+    /// <summary>
     /// java风格的Fill
     /// </summary>
-    /// <param name="src"></param>
+    /// <param name="list"></param>
     /// <param name="startIndex">开始下标(包含)</param>
     /// <param name="endIndex">结束下标（不包含）</param>
     /// <param name="value">要填充的值</param>
     /// <typeparam name="T"></typeparam>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Fill2<T>(T[] src, int startIndex, int endIndex, T value) {
+    public static void Fill2<T>(T[] list, int startIndex, int endIndex, T value) {
         int count = endIndex - startIndex;
-        Array.Fill(src, value, startIndex, count);
+        Array.Fill(list, value, startIndex, count);
     }
 
     /// <summary>

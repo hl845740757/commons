@@ -252,20 +252,12 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             }
             return false;
         }
-        // 周期性任务 -- 已检查Promise状态的情况下，TrySetComputing不应该失败
-        if (firstTrigger) {
-            if (!promise.TrySetComputing(promiseRid)) {
-                return false;
-            }
+        // 周期性任务 - 设置Computing状态不是必须的
+        if (firstTrigger && !promise.TrySetComputing(promiseRid)) {
+            return false;
         }
         try {
-            if (TaskType == TYPE_ASYNC_TASK) {
-                if (firstTrigger) {
-                    StartAsyncTask().Forget();
-                }
-            } else {
-                RunTask();
-            }
+            RunTask();
         }
         catch (Exception ex) {
             // 通过异常传递结果
@@ -304,20 +296,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         return true;
     }
 
-    /// <summary>
-    /// 注意：我们用事件驱动代替心跳检测以后，如果当前事件循环是有界队列，任务在其它线程进入完成状态，提交回调到当前线程可能被阻塞
-    /// </summary>
-    private async ValueFuture StartAsyncTask() {
-        Func<AsyncTaskContext, ValueFuture<T>> task = (Func<AsyncTaskContext, ValueFuture<T>>)this.task;
-        ValueFuture<T> future = task(new AsyncTaskContext(helper, ctx));
-        long taskId = this.id;
-        TaskResult<T> taskResult = await future.GetAwaitable(helper.EventLoop, SuppressedTypes.All, TaskOptions.STAGE_TRY_INLINE);
-        if (taskId != this.id) {
-            return;
-        }
-        TrySetResult(taskResult);
-    }
-
     private bool CanCaughtException(Exception _) {
         return ScheduleType != ScheduledTaskBuilder.SCHEDULE_ONCE
                && TaskOptions.IsEnabled(options, TaskOptions.CAUGHT_EXCEPTION);
@@ -341,19 +319,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     #endregion
 
     #region setResult
-
-    private bool TrySetResult(TaskResult<T> result) {
-        if (promise.IsRecycledOrCompleted(promiseRid)) {
-            return false;
-        }
-        if (result.IsSucceeded) {
-            return promise.TrySetResult(promiseRid, result.Result);
-        } else if (result.IsCancelled) { // 避免不必要的异常堆栈恢复
-            return promise.TrySetException(promiseRid, result.Exception!);
-        } else {
-            return promise.TrySetException(promiseRid, result.ExceptionDispatchInfo!);
-        }
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TrySetResult(T value) {

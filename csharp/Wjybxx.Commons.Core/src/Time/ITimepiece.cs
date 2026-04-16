@@ -63,14 +63,14 @@ public interface ITimepiece : ITimeProvider
     /// <summary>
     /// 重新启动计时器
     /// </summary>
-    /// <param name="currentTime">当前时间</param>
-    /// <param name="deltaTime">时间间隔</param>
-    /// <param name="frameCount">当前帧号</param>
-    void Restart(long currentTime, int deltaTime = 0, int frameCount = 0);
+    void Restart();
 
     /// <summary>
     /// 重新启动计时器
     /// </summary>
-    void Restart();
+    /// <param name="currentTime">当前时间</param>
+    /// <param name="deltaTime">时间间隔</param>
+    /// <param name="frameCount">当前帧号</param>
+    void Restart(long currentTime, int deltaTime = 0, int frameCount = 0);
 }
 }

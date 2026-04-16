@@ -156,22 +156,11 @@ public static class ObjectUtil
         return mode switch
         {
             RangeMode.Closed => value.Substring(start, end - start + 1),
-            RangeMode.Open => value.Substring(start + 1, end - start - 1),
+            RangeMode.Open => value.Substring(start + 1, end - start),
             RangeMode.LeftClosed => value.Substring(start, end - start),
-            RangeMode.LeftOpen => value.Substring(start + 1, end - start),
+            RangeMode.LeftOpen => value.Substring(start + 1, end - start + 1),
             _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
         };
-    }
-
-    /// <summary>
-    /// 该接口用于统一API -- 避免一会用原生API，一会儿用自定义API
-    /// </summary>
-    /// <param name="value"></param>
-    /// <param name="start">开始索引 inclusive</param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string Substring2(this string value, int start) {
-        return value.Substring(start);
     }
 
     /// <summary>
@@ -185,6 +174,20 @@ public static class ObjectUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static StringBuilder Append2(this StringBuilder sb, string value, int start, int end) {
         sb.Append(value, start, end - start);
+        return sb;
+    }
+
+    /// <summary>
+    /// 通过索引区间追加子字符串
+    /// </summary>
+    public static StringBuilder Append2(this StringBuilder sb, string value, int start, int end, RangeMode mode) {
+        switch (mode) {
+            case RangeMode.Closed: sb.Append(value, start, end - start + 1); break;
+            case RangeMode.Open: sb.Append(value, start + 1, end - start); break;
+            case RangeMode.LeftClosed: sb.Append(value, start, end - start); break;
+            case RangeMode.LeftOpen: sb.Append(value, start + 1, end - start + 1); break;
+            default: throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
+        }
         return sb;
     }
 

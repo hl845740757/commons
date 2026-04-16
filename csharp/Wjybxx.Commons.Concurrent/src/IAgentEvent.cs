@@ -41,6 +41,7 @@ public interface IAgentEvent
     ///
     /// 1.用户自定义事件必须大于0，否否则可能影响事件循环的工作。
     /// 2.由于clean的存在，用户忘记赋值的情况下仍然可能为 -1，事件循环的实现者需要注意
+    /// 3.值类型事件绑定工厂方法时务必小心，不可以使用default，否则Type默认0将导致错误
     /// </summary>
     int Type { get; set; }
 

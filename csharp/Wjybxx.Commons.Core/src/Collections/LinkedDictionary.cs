@@ -937,7 +937,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
         if (!typeof(TKey).IsValueType && key == null) {
             Node nullNode = table[_mask + 1];
-            return nullNode.IsNull() ? -(_mask + 2) : (_mask + 1);
+            return !nullNode.hasKey ? -(_mask + 2) : (_mask + 1);
         }
 
         IEqualityComparer<TKey> keyComparer = _keyComparer;
@@ -945,7 +945,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         // 先测试无冲突位置
         int pos = mask & hash;
         ref Node node = ref table[pos];
-        if (node.IsNull()) return -(pos + 1);
+        if (!node.hasKey) return -(pos + 1);
         if (node.hash == hash && keyComparer.Equals(node.key, key)) {
             return pos;
         }
@@ -955,7 +955,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         for (int i = 0; i < mask; i++) {
             pos = (pos + 1) & mask;
             node = ref table[pos];
-            if (node.IsNull()) return -(pos + 1);
+            if (!node.hasKey) return -(pos + 1);
             if (node.hash == hash && keyComparer.Equals(node.key, key)) {
                 return pos;
             }
@@ -1111,7 +1111,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             pos = (pos + 1) & mask; // + 1 可能绕回到首部
             while (true) {
                 ref Node curr = ref table[pos];
-                if (curr.IsNull()) {
+                if (!curr.hasKey) {
                     table[last] = default;
                     return;
                 }
@@ -1466,7 +1466,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             if (_version != _dictionary._version) {
                 throw new InvalidOperationException("EnumFailedVersion");
             }
-            if (_currNode.IsNull()) {
+            if (!_currNode.hasKey) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
             TKey nextKey = default;
@@ -1649,9 +1649,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             this.prev = prev;
             this.next = -1;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsNull() => hasKey == false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public KeyValuePair<TKey, TValue> AsPair() {
