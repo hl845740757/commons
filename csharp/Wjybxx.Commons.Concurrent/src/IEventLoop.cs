@@ -76,12 +76,12 @@ public interface IEventLoop : IEventLoopGroup, ISingleThreadExecutor
     /// 但如果我们需要确保所有的EventLoop都处于正确的状态才对外服务时，则可以显式启动EventLoop。
     /// </summary>
     /// <returns>RunningFuture</returns>
-    IFuture Start();
+    IFuture<int> Start();
 
     /// <summary>
     /// future会在EventLoop成功启动的时候进入完成状态
     /// </summary>
-    IFuture RunningFuture { get; }
+    IFuture<int> RunningFuture { get; }
 
     /// <summary>
     /// 当前线程的时间

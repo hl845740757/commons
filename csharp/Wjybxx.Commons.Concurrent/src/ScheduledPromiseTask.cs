@@ -35,33 +35,38 @@ public static class ScheduledPromiseTask
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfEmpty(CancellationToken cancelToken, int options, ValuePromise<int> promise) {
-        return ScheduledPromiseTask<int>.Acquire(TYPE_EMPTY, null!, cancelToken, options, promise);
+    public static ScheduledPromiseTask<int> OfEmpty(ValuePromise<int> promise,
+                                                    CancellationToken cancelToken = default, int options = 0) {
+        return ScheduledPromiseTask<int>.Acquire(promise, TYPE_EMPTY, null!, null, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfAction(Action action, CancellationToken cancelToken, int options, ValuePromise<int> promise) {
-        return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise);
+    public static ScheduledPromiseTask<int> OfAction(ValuePromise<int> promise, Action action,
+                                                     CancellationToken cancelToken = default, int options = 0) {
+        return ScheduledPromiseTask<int>.Acquire(promise, TYPE_ACTION, action, null, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<int> OfAction(Action<object> action, object ctx, int options, ValuePromise<int> promise) {
-        return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION_CTX, action, ctx, options, promise);
+    public static ScheduledPromiseTask<int> OfAction(ValuePromise<int> promise, Action<object> action, object? state,
+                                                     CancellationToken cancelToken = default, int options = 0) {
+        return ScheduledPromiseTask<int>.Acquire(promise, TYPE_ACTION_STATE, action, state, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, CancellationToken cancelToken, int options, ValuePromise<T> promise) {
-        return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise);
+    public static ScheduledPromiseTask<T> OfFunction<T>(ValuePromise<T> promise, Func<T> action,
+                                                        CancellationToken cancelToken = default, int options = 0) {
+        return ScheduledPromiseTask<T>.Acquire(promise, TYPE_FUNC, action, null, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<object, T> action, object ctx, int options, ValuePromise<T> promise) {
-        return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC_CTX, action, ctx, options, promise);
+    public static ScheduledPromiseTask<T> OfFunction<T>(ValuePromise<T> promise, Func<object, T> action, object? state,
+                                                        CancellationToken cancelToken = default, int options = 0) {
+        return ScheduledPromiseTask<T>.Acquire(promise, TYPE_FUNC_STATE, action, state, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder, ValuePromise<T> promise) {
-        return ScheduledPromiseTask<T>.Acquire(builder.Type, builder.Task, builder.Context, builder.Options, promise);
+    public static ScheduledPromiseTask<T> OfBuilder<T>(ValuePromise<T> promise, in ScheduledTaskBuilder<T> builder) {
+        return ScheduledPromiseTask<T>.Acquire(promise, builder.Type, builder.Task, builder.State, builder.CancelToken, builder.Options);
     }
 
     #endregion
@@ -232,7 +237,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             return false;
         }
         // 先检测取消
-        CancellationToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancellationRequested) {
             TrySetCancelled(cancelToken);
             return false;
@@ -347,16 +351,18 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /// 申请一个PromiseTask对象，Task在进入完成状态后会自动回收。
     /// 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
     /// </summary>
+    /// <param name="promise">关联的Promise</param>
     /// <param name="taskType">任务类型</param>
     /// <param name="action">任务</param>
-    /// <param name="ctx">任务关联上下文</param>
+    /// <param name="state">任务关联上下文</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">任务调度选项</param>
-    /// <param name="promise">关联的Promise</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal new static ScheduledPromiseTask<T> Acquire(int taskType, object action, object? ctx, int options, ValuePromise<T> promise) {
+    internal new static ScheduledPromiseTask<T> Acquire(ValuePromise<T> promise, int taskType, object action, object? state,
+                                                        CancellationToken cancelToken, int options) {
         ScheduledPromiseTask<T> promiseTask = POOL.Acquire();
-        promiseTask.Init(taskType, action, ctx, options, promise);
+        promiseTask.Init(promise, taskType, action, state, cancelToken, options);
         return promiseTask;
     }
 

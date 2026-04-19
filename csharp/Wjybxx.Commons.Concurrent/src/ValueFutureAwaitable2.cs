@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -28,24 +29,25 @@ public readonly struct ValueFutureAwaitable2
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
+    private readonly CancellationToken _cancelToken;
     private readonly int _options;
-    private readonly bool _requireResult;
 
     /// <param name="future">future</param>
-    /// <param name="requireResult">是否需要获取最终结果</param>
     /// <param name="executor">回调线程</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    public ValueFutureAwaitable2(ValueFuture future, bool requireResult, IExecutor? executor = null, int options = 0) {
+    public ValueFutureAwaitable2(ValueFuture future, IExecutor? executor,
+                                 CancellationToken cancelToken = default, int options = 0) {
         _future = future;
         _executor = executor;
+        _cancelToken = cancelToken;
         _options = options;
-        _requireResult = requireResult;
     }
 
     public ValueFuture Future => _future;
     public IExecutor? Executor => _executor;
+    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
-    public bool RequireResult => _requireResult;
 
     /// <summary>
     /// 增加调度选项
@@ -53,29 +55,19 @@ public readonly struct ValueFutureAwaitable2
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2 AddOptions(int options) {
-        return new ValueFutureAwaitable2(_future, _requireResult, _executor, _options | options);
+        return new ValueFutureAwaitable2(_future, _executor, _cancelToken, _options | options);
     }
 
     /// <summary>
-    /// 替换调度选项(保留异常禁用信息)
+    /// 替换调度选项
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2 WithOptions(int options) {
-        int suppressed = _options & (int)SuppressedTypes.All;
-        return new ValueFutureAwaitable2(_future, _requireResult, _executor, suppressed | options);
+        return new ValueFutureAwaitable2(_future, _executor, _cancelToken, options);
     }
 
-    /// <summary>
-    /// 设置是否获取最终的结果
-    /// </summary>
-    /// <param name="requireResult"></param>
-    /// <returns></returns>
-    public ValueFutureAwaitable2 WithRequireResult(bool requireResult = true) {
-        return new ValueFutureAwaitable2(_future, requireResult, _executor, _options);
-    }
-
-    public ValueFutureAwaiter2 GetAwaiter() => new(_future, _requireResult, _executor, _options);
+    public ValueFutureAwaiter2 GetAwaiter() => new(_future, _executor, _cancelToken, _options);
 }
 
 /// <summary>
@@ -86,16 +78,20 @@ public readonly struct ValueFutureAwaitable2<T>
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
+    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
-    public ValueFutureAwaitable2(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
+    public ValueFutureAwaitable2(ValueFuture<T> future, IExecutor? executor,
+                                 CancellationToken cancelToken = default, int options = 0) {
         _future = future;
         _executor = executor;
+        _cancelToken = cancelToken;
         _options = options;
     }
 
     public ValueFuture<T> Future => _future;
     public IExecutor? Executor => _executor;
+    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
     /// <summary>
@@ -104,19 +100,18 @@ public readonly struct ValueFutureAwaitable2<T>
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2<T> AddOptions(int options) {
-        return new ValueFutureAwaitable2<T>(_future, _executor, _options | options);
+        return new ValueFutureAwaitable2<T>(_future, _executor, _cancelToken, _options | options);
     }
 
     /// <summary>
-    /// 替换调度选项(保留异常禁用信息)
+    /// 替换调度选项
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2<T> WithOptions(int options) {
-        int suppressed = _options & (int)SuppressedTypes.All;
-        return new ValueFutureAwaitable2<T>(_future, _executor, suppressed | options);
+        return new ValueFutureAwaitable2<T>(_future, _executor, _cancelToken, options);
     }
 
-    public ValueFutureAwaiter2<T> GetAwaiter() => new(_future, _executor, _options);
+    public ValueFutureAwaiter2<T> GetAwaiter() => new(_future, _executor, _cancelToken, _options);
 }
 }

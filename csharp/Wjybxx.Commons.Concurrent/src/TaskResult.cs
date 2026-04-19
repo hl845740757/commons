@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Concurrent
 public readonly struct TaskResult
 {
     public static readonly TaskResult COMPLETED = new TaskResult();
-    public static readonly TaskResult CANCELLED = new TaskResult(null, StacklessCancellationException.Default);
+    public static readonly TaskResult CANCELLED = new TaskResult(null, new OperationCanceledException());
 
     /// <summary>
     /// 正常结果
@@ -100,15 +100,7 @@ public readonly struct TaskResult
     /// 获取任务的结果，只有成功的情况下可调用
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
-    public object Result {
-        get {
-            if (_ex != null) {
-                throw new InvalidOperationException();
-            }
-            return _result;
-        }
-    }
-#nullable restore
+    public object Result => _ex == null ? _result : throw new InvalidOperationException();
 
     /// <summary>
     /// 获取任务关联的异常，成功的情况下返回null
@@ -137,6 +129,7 @@ public readonly struct TaskResult
             return null;
         }
     }
+#nullable restore
 
     /// <summary>
     /// 抛出关联的异常
@@ -161,17 +154,6 @@ public readonly struct TaskResult
             : TaskResult<T>.FromResult(_result == null ? default : (T)_result);
     }
 
-    /// <summary>
-    /// 将失败的Result转换为其它类型
-    /// (其实也可以Box再Unbox)
-    /// </summary>
-    /// <typeparam name="U"></typeparam>
-    /// <returns></returns>
-    public TaskResult<U> CastFailed<U>() {
-        if (_ex == null) throw new InvalidOperationException();
-        return TaskResult<U>.InternalFromException(_ex);
-    }
-
     internal void Deconstruct(out object? result, out object? ex) {
         result = _result;
         ex = _ex;
@@ -185,7 +167,7 @@ public readonly struct TaskResult
 public readonly struct TaskResult<T>
 {
     public static readonly TaskResult<T> COMPLETED = new TaskResult<T>();
-    public static readonly TaskResult<T> CANCELLED = new TaskResult<T>(default, StacklessCancellationException.Default);
+    public static readonly TaskResult<T> CANCELLED = new TaskResult<T>(default, new OperationCanceledException());
 
     /// <summary>
     /// 正常结果
@@ -256,15 +238,7 @@ public readonly struct TaskResult<T>
     /// 获取任务的结果，只有成功的情况下可调用
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
-    public T Result {
-        get {
-            if (_ex != null) {
-                throw new InvalidOperationException();
-            }
-            return _result;
-        }
-    }
-#nullable restore
+    public T Result => _ex == null ? _result : throw new InvalidOperationException();
 
     /// <summary>
     /// 获取任务关联的异常，成功的情况下返回null
@@ -293,6 +267,7 @@ public readonly struct TaskResult<T>
             return null;
         }
     }
+#nullable restore
 
     /// <summary>
     /// 抛出关联的异常
@@ -316,14 +291,14 @@ public readonly struct TaskResult<T>
     }
 
     /// <summary>
-    /// 将失败的Result转换为其它类型
-    /// (其实也可以Box再Unbox)
+    /// 类型转换
+    /// 注：通常用于转换失败的结果。
     /// </summary>
-    /// <typeparam name="U"></typeparam>
     /// <returns></returns>
-    public TaskResult<U> CastFailed<U>() {
-        if (_ex == null) throw new InvalidOperationException();
-        return TaskResult<U>.InternalFromException(_ex);
+    public TaskResult<U> Cast<U>() {
+        return _ex != null
+            ? TaskResult<U>.InternalFromException(_ex)
+            : TaskResult<U>.FromResult((U)(object)_result);
     }
 
     internal void Deconstruct(out T result, out object? ex) {

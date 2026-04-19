@@ -54,12 +54,12 @@ public class DefaultEventLoopGroup : AbstractEventLoopGroup, IEventLoopGroup
 
         // 监听关闭信号
         foreach (IEventLoop child in children) {
-            child.TerminationFuture.OnCompleted(OnChildTerminated);
+            child.TerminationFuture.OnCompleted(OnChildTerminated, null);
         }
     }
 
     /** 子节点关闭回调 */
-    private void OnChildTerminated(IFuture future) {
+    private void OnChildTerminated(IFuture future, object _) {
         if (Interlocked.Increment(ref terminatedChildren) == children.Length) {
             terminationPromise.TrySetResult(0);
         }
@@ -90,7 +90,7 @@ public class DefaultEventLoopGroup : AbstractEventLoopGroup, IEventLoopGroup
     public override bool IsShuttingDown => children.All(e => e.IsShuttingDown);
     public override bool IsShutdown => children.All(e => e.IsShutdown);
     public override bool IsTerminated => terminationPromise.IsCompleted;
-    public override IFuture TerminationFuture => terminationPromise.AsReadonly();
+    public override IFuture<int> TerminationFuture => terminationPromise;
 
     public override IEnumerator<IEventLoop> GetEnumerator() {
         return readonlyChildren.GetEnumerator();

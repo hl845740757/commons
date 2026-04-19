@@ -369,8 +369,9 @@ public abstract class AbstractPromise
     internal class MoveNextCompletion : Completion
     {
 #nullable disable
-        protected IExecutor executor;
-        protected int options;
+        private IExecutor executor;
+        private CancellationToken cancelToken;
+        private int options;
         private Action<object> action;
         private object state;
 #nullable restore
@@ -378,8 +379,10 @@ public abstract class AbstractPromise
         private MoveNextCompletion() {
         }
 
-        public void Init(IExecutor? executor, int options, Action<object?> action, object? state) {
+        public void Init(IExecutor? executor, CancellationToken cancelToken, int options,
+                         Action<object?> action, object? state) {
             this.executor = executor;
+            this.cancelToken = cancelToken;
             this.options = options;
             this.action = action;
             this.state = state;
@@ -388,6 +391,7 @@ public abstract class AbstractPromise
         public override void Reset() {
             next = null; // 减少调用
             executor = null;
+            cancelToken = default;
             options = 0;
             action = null;
             state = null;
@@ -413,7 +417,7 @@ public abstract class AbstractPromise
 
         public override AbstractPromise? TryFire(int mode) {
             {
-                if (ExecutorUtil.IsCancellationRequested(state, options)) {
+                if (cancelToken.IsCancellationRequested) {
                     goto outer;
                 }
                 // 异步模式下已经claim

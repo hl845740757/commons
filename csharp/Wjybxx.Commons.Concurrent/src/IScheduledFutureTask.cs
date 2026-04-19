@@ -88,15 +88,14 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     bool IsTriggered { get; }
 
     /// <summary>
+    /// 关联的取消令牌
+    /// </summary>
+    /// <value></value>
+    CancellationToken CancelToken { get; }
+    /// <summary>
     /// 取消令牌的监听句柄
     /// </summary>
     CancellationTokenRegistration Registration { get; set; }
-
-    /// <summary>
-    /// 关联的取消令牌
-    /// </summary>
-    /// <returns></returns>
-    CancellationToken GetCancelToken();
 
     #endregion
 

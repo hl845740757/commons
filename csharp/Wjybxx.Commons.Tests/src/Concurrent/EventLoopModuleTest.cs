@@ -125,7 +125,7 @@ public class EventLoopModuleTest
         internal long updateCount;
         internal long lastUpdateCount;
         internal int eventCount;
-        DisruptorEventLoop<AgentEvent> eventLoop;
+        internal DisruptorEventLoop<AgentEvent> eventLoop;
 
         public override void OnAwake() {
             awakeInvoked = true;

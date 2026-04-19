@@ -96,9 +96,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     private readonly IPromise<int> runningPromise;
     /** 进入终止状态的promise */
     private readonly IPromise<int> terminationPromise;
-    /** 只读future - 缓存字段 */
-    private readonly IFuture runningFuture;
-    private readonly IFuture terminationFuture;
 
     /// <summary>
     /// 
@@ -128,8 +125,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
         runningPromise = new Promise<int>(this);
         terminationPromise = new Promise<int>(this);
-        runningFuture = runningPromise.AsReadonly();
-        terminationFuture = terminationPromise.AsReadonly();
 
         // worker只依赖生产者屏障
         barrier = eventSequencer.NewSingleConsumerBarrier(builder.WaitStrategy);
@@ -173,8 +168,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     public sealed override bool IsShutdown => state >= ST_SHUTDOWN;
     public sealed override bool IsTerminated => state == ST_TERMINATED;
 
-    public sealed override IFuture RunningFuture => runningFuture;
-    public override IFuture TerminationFuture => terminationFuture;
+    public override IFuture<int> RunningFuture => runningPromise;
+    public override IFuture<int> TerminationFuture => terminationPromise;
 
     public sealed override bool InEventLoop() {
         return this.thread == Thread.CurrentThread;
@@ -383,9 +378,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         }
     }
 
-    public override IFuture Start() {
+    public override IFuture<int> Start() {
         EnsureThreadStarted();
-        return runningFuture;
+        return runningPromise;
     }
 
     public override void Shutdown() {
@@ -583,14 +578,12 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void OnInternalEvent(long curSequence, ref T evt) {
+    private void OnInternalEvent(long sequence, ref T evt) {
         int type = evt.Type;
         if (type == TYPE_REMOVE_SCHEDULE) {
             // 删除延时任务
             IScheduledFutureTask futureTask = (IScheduledFutureTask)evt.Obj1;
-            CancellationToken cts = (CancellationToken)evt.Obj2;
-            long taskId = evt.LongVal1;
-            schedulerHelper.Cancel(futureTask, taskId, cts);
+            schedulerHelper.Cancel(futureTask, evt.LongVal1);
         }
     }
 

@@ -41,7 +41,7 @@ public sealed class FutureCombiner
             throw new IllegalStateException("Adding futures is not allowed after finished adding");
         }
         ++futureCount;
-        future.OnCompleted(invoker, childrenListener, 0);
+        future.OnCompleted(invoker, childrenListener);
         return this;
     }
 

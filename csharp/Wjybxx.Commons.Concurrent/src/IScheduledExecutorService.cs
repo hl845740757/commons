@@ -53,10 +53,11 @@ public interface IScheduledExecutorService : IExecutorService
     /// 在给定的延迟之后执行给定的委托
     /// </summary>
     /// <param name="action">要调度的任务</param>
-    /// <param name="ctx">委托参数，注意<see cref="IConstant"/>类型</param>
+    /// <param name="state">任务参数</param>
     /// <param name="delay">执行延迟</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture ScheduleAction(Action<object> action, object ctx, TimeSpan delay);
+    ValueFuture ScheduleAction(Action<object> action, object? state, TimeSpan delay, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托
@@ -71,11 +72,12 @@ public interface IScheduledExecutorService : IExecutorService
     /// 在给定的延迟之后执行给定的委托
     /// </summary>
     /// <param name="action">要调度的任务</param>
-    /// <param name="ctx">委托参数，注意<see cref="IConstant"/>类型</param>
+    /// <param name="state">任务参数</param>
     /// <param name="delay">执行延迟</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object ctx, TimeSpan delay);
+    ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object? state, TimeSpan delay, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 以固定延迟执行给定的任务

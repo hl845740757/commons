@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -28,21 +29,22 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
+    private readonly CancellationToken _cancelToken;
     private readonly int _options;
-    private readonly bool _requireResult;
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="future">future</param>
-    /// <param name="requireResult">是否需要获取最终结果</param>
     /// <param name="executor">回调线程</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    public ValueFutureAwaiter2(ValueFuture future, bool requireResult, IExecutor? executor = null, int options = 0) {
+    public ValueFutureAwaiter2(ValueFuture future, IExecutor? executor = null,
+                               CancellationToken cancelToken = default, int options = 0) {
         _future = future;
         _executor = executor;
+        _cancelToken = cancelToken;
         _options = options;
-        _requireResult = requireResult;
     }
 
     // 1.IsCompleted
@@ -58,7 +60,7 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TaskResult GetResult() {
-        return _future.GetResult((SuppressedTypes)_options, _requireResult);
+        return _future.GetResult(_options);
     }
 
     // 3. OnCompleted
@@ -69,17 +71,28 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
+    /// <summary>
+    /// 添加一个Future完成时的回调
+    /// </summary>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
-        _future.OnCompleted(continuation, state, _executor, _options | extraOptions);
+    public void OnCompleted(Action<object> continuation, object state) {
+        OnCompleted(continuation, state, _executor, _cancelToken, _options);
+    }
+
+    private void OnCompleted(Action<object> continuation, object state,
+                             IExecutor? executor, CancellationToken cancelToken, int options) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        _future.OnCompleted(continuation, state, executor, cancelToken, options);
     }
 }
 
@@ -87,17 +100,14 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
+    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="future"></param>
-    /// <param name="executor"></param>
-    /// <param name="options"></param>
-    public ValueFutureAwaiter2(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
+    public ValueFutureAwaiter2(ValueFuture<T> future, IExecutor? executor = null,
+                               CancellationToken cancelToken = default, int options = 0) {
         _future = future;
         _executor = executor;
+        _cancelToken = cancelToken;
         _options = options;
     }
 
@@ -114,7 +124,7 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TaskResult<T> GetResult() {
-        return _future.GetResult((SuppressedTypes)_options);
+        return _future.GetResult(_options);
     }
 
     // 3. OnCompleted
@@ -125,17 +135,28 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
+    /// <summary>
+    /// 添加一个Future完成时的回调
+    /// </summary>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
-        _future.OnCompleted(continuation, state, _executor, _options | extraOptions);
+    public void OnCompleted(Action<object> continuation, object state) {
+        OnCompleted(continuation, state, _executor, _cancelToken, _options);
+    }
+
+    private void OnCompleted(Action<object> continuation, object state,
+                             IExecutor? executor, CancellationToken cancelToken, int options) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        _future.OnCompleted(continuation, state, executor, cancelToken, options);
     }
 }
 }

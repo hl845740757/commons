@@ -37,7 +37,7 @@ public static class TaskBuilder
     /// <summary>
     /// 表示委托类型为<see cref="Action{T}"/>
     /// </summary>
-    public const int TYPE_ACTION_CTX = 2;
+    public const int TYPE_ACTION_STATE = 2;
 
     /// <summary>
     /// 表示委托类型为<see cref="Func{TResult}"/>
@@ -46,7 +46,7 @@ public static class TaskBuilder
     /// <summary>
     /// 表示委托类型为<see cref="Func{T,R}"/>
     /// </summary>
-    public const int TYPE_FUNC_CTX = 4;
+    public const int TYPE_FUNC_STATE = 4;
 
     /// <summary>
     /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
@@ -57,23 +57,23 @@ public static class TaskBuilder
     #region factory
 
     public static TaskBuilder<int> NewAction(Action action, CancellationToken cancelToken = default) {
-        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION, action, cancelToken);
+        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION, action, null, cancelToken);
     }
 
-    public static TaskBuilder<int> NewAction(Action<object> action, object ctx) {
-        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION_CTX, action, ctx);
+    public static TaskBuilder<int> NewAction(Action<object> action, object? state, CancellationToken cancelToken = default) {
+        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION_STATE, action, state, cancelToken);
     }
 
     public static TaskBuilder<T> NewFunc<T>(Func<T> func, CancellationToken cancelToken = default) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func, cancelToken);
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func, null, cancelToken);
     }
 
-    public static TaskBuilder<T> NewFunc<T>(Func<object, T> func, object ctx) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, ctx);
+    public static TaskBuilder<T> NewFunc<T>(Func<object, T> func, object? state, CancellationToken cancelToken = default) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_STATE, func, state, cancelToken);
     }
 
-    public static TaskBuilder<int> NewTask(ITask task) {
-        return new TaskBuilder<int>(TaskBuilder.TYPE_TASK, task);
+    public static TaskBuilder<int> NewTask(ITask task, CancellationToken cancelToken = default) {
+        return new TaskBuilder<int>(TaskBuilder.TYPE_TASK, task, null, cancelToken);
     }
 
     #endregion
@@ -87,7 +87,8 @@ public struct TaskBuilder<T>
 {
     private readonly int type;
     private readonly object task;
-    private object? ctx;
+    private object? state;
+    private CancellationToken cancelToken;
     private int options;
 
     /// <summary>
@@ -95,11 +96,13 @@ public struct TaskBuilder<T>
     /// </summary>
     /// <param name="type">任务的类型</param>
     /// <param name="task">委托</param>
-    /// <param name="ctx">任务的上下文</param>
-    internal TaskBuilder(int type, object task, object? ctx = null) {
+    /// <param name="state">任务的上下文</param>
+    /// <param name="cancelToken">取消令牌</param>
+    internal TaskBuilder(int type, object task, object? state, CancellationToken cancelToken = default) {
         this.type = type;
         this.task = task ?? throw new ArgumentNullException(nameof(task));
-        this.ctx = ctx;
+        this.state = state;
+        this.cancelToken = cancelToken;
         this.options = 0;
     }
 
@@ -107,22 +110,26 @@ public struct TaskBuilder<T>
     /// 任务的类型
     /// </summary>
     public int Type => type;
-
     /// <summary>
-    /// 委托
+    /// 任务对象
     /// </summary>
     public object Task => task;
-
     /// <summary>
-    /// 任务的上下文
+    /// 任务参数
     /// </summary>
-    public object? Context {
-        get => ctx;
-        set => ctx = value;
+    public object? State {
+        get => state;
+        set => state = value;
     }
-
     /// <summary>
-    /// 最终options
+    /// 任务的取消令牌
+    /// </summary>
+    public CancellationToken CancelToken {
+        get => cancelToken;
+        set => cancelToken = value;
+    }
+    /// <summary>
+    /// 任务调度选项
     /// </summary>
     public int Options {
         get => options;

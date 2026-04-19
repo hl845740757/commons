@@ -96,8 +96,10 @@ public interface IValuePromise
     /// <param name="reentryId">重入id，校验是否被重用</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(int reentryId, Action<object?> continuation, object? state, int options = 0);
+    void OnCompleted(int reentryId, Action<object?> continuation, object? state,
+                     CancellationToken cancelToken = default, int options = 0);
 
     /// <summary>
     /// 添加一个完成回调
@@ -106,8 +108,10 @@ public interface IValuePromise
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="executor">回调线程</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state, int options = 0);
+    void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state,
+                          CancellationToken cancelToken = default, int options = 0);
 
     /// <summary>
     /// 转换为普通的Future

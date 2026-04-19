@@ -58,38 +58,39 @@ public static class PromiseTask
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<int> OfTask(ITask task, CancellationToken cancelToken, int options,
-                                          ValuePromise<int> promise) {
-        return PromiseTask<int>.Acquire(TYPE_TASK, task, cancelToken, options, promise);
+    public static PromiseTask<int> OfTask(ValuePromise<int> promise, ITask task,
+                                          CancellationToken cancelToken = default, int options = 0) {
+        return PromiseTask<int>.Acquire(promise, TYPE_TASK, task, null, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<int> OfAction(Action action, CancellationToken cancelToken, int options,
-                                            ValuePromise<int> promise) {
-        return PromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise);
+    public static PromiseTask<int> OfAction(ValuePromise<int> promise, Action action,
+                                            CancellationToken cancelToken = default, int options = 0) {
+        return PromiseTask<int>.Acquire(promise, TYPE_ACTION, action, null, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<int> OfAction(Action<object> action, object? ctx, int options,
-                                            ValuePromise<int> promise) {
-        return PromiseTask<int>.Acquire(TYPE_ACTION_CTX, action, ctx, options, promise);
+    public static PromiseTask<int> OfAction(ValuePromise<int> promise, Action<object> action, object? state,
+                                            CancellationToken cancelToken = default, int options = 0) {
+        return PromiseTask<int>.Acquire(promise, TYPE_ACTION_STATE, action, state, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<T> OfFunction<T>(Func<T> action, CancellationToken cancelToken, int options,
-                                               ValuePromise<T> promise) {
-        return PromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise);
+    public static PromiseTask<T> OfFunction<T>(ValuePromise<T> promise, Func<T> action,
+                                               CancellationToken cancelToken = default, int options = 0) {
+        return PromiseTask<T>.Acquire(promise, TYPE_FUNC, action, null, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<T> OfFunction<T>(Func<object, T> action, object? ctx, int options,
-                                               ValuePromise<T> promise) {
-        return PromiseTask<T>.Acquire(TYPE_FUNC_CTX, action, ctx, options, promise);
+    public static PromiseTask<T> OfFunction<T>(ValuePromise<T> promise, Func<object, T> action, object? state,
+                                               CancellationToken cancelToken = default, int options = 0) {
+        return PromiseTask<T>.Acquire(promise, TYPE_FUNC_STATE, action, state, cancelToken, options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, ValuePromise<T> promise) {
-        return PromiseTask<T>.Acquire(builder.Type, builder.Task, builder.Context, builder.Options, promise);
+    public static PromiseTask<T> OfBuilder<T>(ValuePromise<T> promise, in TaskBuilder<T> builder) {
+        return PromiseTask<T>.Acquire(promise, builder.Type, builder.Task, builder.State,
+            builder.CancelToken, builder.Options);
     }
 
     #endregion
@@ -107,9 +108,12 @@ public class PromiseTask<T> : IFutureTask
     /** 用户的委托 */
     internal object task;
     /** 任务的上下文 */
-    internal object ctx;
+    internal object state;
+    /** 任务的取消令牌 */
+    protected CancellationToken cancelToken;
     /** 任务的调度选项 */
     protected int options;
+
     /** 任务关联的promise -- 不会返回给用户 */
     protected ValuePromise<T> promise;
     /** promise关联的重入id -- 其实仅子类需要 */
@@ -121,10 +125,12 @@ public class PromiseTask<T> : IFutureTask
     protected PromiseTask() {
     }
 
-    protected void Init(int taskType, object task, object? ctx, int options, ValuePromise<T> promise) {
+    protected void Init(ValuePromise<T> promise, int taskType, object task, object? state,
+                        CancellationToken cancelToken, int options) {
         if (task == null && taskType != 0) throw new ArgumentNullException(nameof(task));
         this.task = task;
-        this.ctx = ctx;
+        this.state = state;
+        this.cancelToken = cancelToken;
         this.options = options;
         this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
         this.promiseRid = promise.ReentryId;
@@ -135,7 +141,8 @@ public class PromiseTask<T> : IFutureTask
 
     protected virtual void Reset() {
         this.task = null;
-        this.ctx = null;
+        this.state = null;
+        this.cancelToken = default;
         this.options = 0;
         this.promise = null;
         this.promiseRid = 0;
@@ -157,9 +164,9 @@ public class PromiseTask<T> : IFutureTask
     #endregion
 
     /** 获取上下文中的取消令牌 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public CancellationToken GetCancelToken() {
-        return ExecutorUtil.GetCancelToken(ctx, options);
+    public CancellationToken CancelToken {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => cancelToken;
     }
 
     /** 运行可直接得出结果的任务 */
@@ -174,18 +181,18 @@ public class PromiseTask<T> : IFutureTask
                 task();
                 return default;
             }
-            case TYPE_ACTION_CTX: {
+            case TYPE_ACTION_STATE: {
                 Action<object> task = (Action<object>)this.task;
-                task(ctx);
+                task(state);
                 return default;
             }
             case TYPE_FUNC: {
                 Func<T> task = (Func<T>)this.task;
                 return task();
             }
-            case TYPE_FUNC_CTX: {
+            case TYPE_FUNC_STATE: {
                 Func<object, T> task = (Func<object, T>)this.task;
-                return task(ctx);
+                return task(state);
             }
             case TYPE_TASK: {
                 ITask task = (ITask)this.task;
@@ -202,7 +209,7 @@ public class PromiseTask<T> : IFutureTask
     public virtual void Run() {
         // 超类可以直接调用Internal方法，因为不会有其它地方更新Promise
         ValuePromise<T> promise = this.promise;
-        CancellationToken cancelToken = GetCancelToken();
+        CancellationToken cancelToken = CancelToken;
         if (cancelToken.IsCancellationRequested) {
             promise.Internal_TrySetCancelled(cancelToken);
             TryRelease();
@@ -239,17 +246,18 @@ public class PromiseTask<T> : IFutureTask
     /// 申请一个PromiseTask对象，Task在进入完成状态后会自动回收。
     /// 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
     /// </summary>
+    /// <param name="promise">关联的Promise</param>
     /// <param name="taskType">任务类型</param>
     /// <param name="action">任务</param>
-    /// <param name="ctx">任务关联上下文</param>
+    /// <param name="state">任务参数</param>
+    /// <param name="cancelToken">取消令牌+</param>
     /// <param name="options">任务调度选项</param>
-    /// <param name="promise">关联的Promise</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static PromiseTask<T> Acquire(int taskType, object action, object? ctx, int options,
-                                           ValuePromise<T> promise) {
+    internal static PromiseTask<T> Acquire(ValuePromise<T> promise, int taskType, object action, object? state,
+                                           CancellationToken cancelToken, int options) {
         PromiseTask<T> promiseTask = POOL.Acquire();
-        promiseTask.Init(taskType, action, ctx, options, promise);
+        promiseTask.Init(promise, taskType, action, state, cancelToken, options);
         return promiseTask;
     }
 

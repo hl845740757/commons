@@ -42,8 +42,8 @@ public static class ScheduledTaskBuilder
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<int> NewAction(Action<object> task, object ctx) {
-        TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, ctx);
+    public static ScheduledTaskBuilder<int> NewAction(Action<object> task, object? state, CancellationToken cancelToken = default) {
+        TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, state, cancelToken);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
@@ -52,13 +52,13 @@ public static class ScheduledTaskBuilder
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<object, T> task, object ctx) {
-        TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, ctx);
+    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<object, T> task, object? state, CancellationToken cancelToken = default) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, state, cancelToken);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<int> NewTask(ITask task) {
-        TaskBuilder<int> taskBuilder = TaskBuilder.NewTask(task);
+    public static ScheduledTaskBuilder<int> NewTask(ITask task, CancellationToken cancelToken = default) {
+        TaskBuilder<int> taskBuilder = TaskBuilder.NewTask(task, cancelToken);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
@@ -106,15 +106,31 @@ public struct ScheduledTaskBuilder<T>
 
     #region 代理
 
+    /// <summary>
+    /// 任务类型
+    /// </summary>
     public int Type => _core.Type;
-
+    /// <summary>
+    /// 任务对象
+    /// </summary>
     public object Task => _core.Task;
-
-    public object? Context {
-        get => _core.Context;
-        set => _core.Context = value;
+    /// <summary>
+    /// 任务参数
+    /// </summary>
+    public object? State {
+        get => _core.State;
+        set => _core.State = value;
     }
-
+    /// <summary>
+    /// 任务取消令牌
+    /// </summary>
+    public CancellationToken CancelToken {
+        get => _core.CancelToken;
+        set => _core.CancelToken = value;
+    }
+    /// <summary>
+    /// 任务调度选项
+    /// </summary>
     public int Options {
         get => _core.Options;
         set => _core.Options = value;

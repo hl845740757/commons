@@ -45,17 +45,6 @@ public interface IFuture
     /// </summary>
     IExecutor? Executor { get; }
 
-    /// <summary>
-    /// 返回只读的Future视图，
-    ///
-    /// 如果Future是一个提供了写接口的Promise，则返回一个只读的Future视图，返回的实例会在当前Promise进入完成状态时进入完成状态。
-    /// 1. 一般情况下我们通过接口隔离即可达到读写分离目的，这可以节省开销；在大规模链式调用的情况下，Promise继承Future很有效。
-    /// 2. 但如果觉得返回Promise实例给任务的发起者不够安全，可创建Promise的只读视图返回给用户
-    /// 3. 这里不要求返回的必须是同一个实例，每次都可以创建一个新的实例。
-    /// </summary>
-    /// <returns></returns>
-    IFuture AsReadonly();
-
     #region 状态查询
 
     /** 获取future的状态枚举值 */
@@ -183,42 +172,25 @@ public interface IFuture
     #region async
 
     /// <summary>
-    /// 添加一个监听器 -- 接收future参数
-    ///
-    /// 回调将在使Future完成的线程同步执行。
-    /// </summary>
-    /// <param name="continuation">回调</param>
-    /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture> continuation, int options = 0);
-
-    /// <summary>
-    /// 添加一个监听器 -- 接收future参数
-    ///
-    /// 回调将在给定的Executor线程执行。
-    /// </summary>
-    /// <param name="executor">回调线程</param>
-    /// <param name="continuation">回调</param>
-    /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture> continuation, int options = 0);
-
-    /// <summary>
-    /// 添加一个监听器 -- 接收future和state参数
+    /// 添加一个监听器
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture, object?> continuation, object? state, int options = 0);
+    void OnCompleted(Action<IFuture, object?> continuation, object? state,
+                     CancellationToken cancelToken = default, int options = 0);
 
     /// <summary>
-    /// 添加一个监听器  -- 接收future和state参数
-    ///
-    /// PS:如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOptions.STAGE_UNCANCELLABLE_CTX"/>关闭。
+    /// 添加一个监听器
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state,
+                          CancellationToken cancelToken = default, int options = 0);
 
     /// <summary>
     /// 添加一个监听器
@@ -226,8 +198,10 @@ public interface IFuture
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<object?> continuation, object? state, int options = 0);
+    void OnCompleted(Action<object?> continuation, object? state,
+                     CancellationToken cancelToken = default, int options = 0);
 
     /// <summary>
     /// 添加一个监听器
@@ -236,46 +210,10 @@ public interface IFuture
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0);
-
-    #endregion
-
-    // 不依赖结果的管道函数放该接口
-
-    #region 管道
-
-    /// <summary>
-    /// 该方法表示在当前Future与返回的Future中插入一个异步操作，构建异步管道。
-    /// 
-    /// 该方法返回一个新的Future，它的最终结果与指定的Func返回的Future结果相同。
-    /// 如果当前Future执行失败，则返回的Future将以相同的原因失败，且指定的动作不会执行。
-    /// 如果当前Future执行成功，则当前Future的执行结果将作为指定操作的执行参数。
-    /// 
-    /// </summary>
-    /// <param name="fn"></param>
-    /// <param name="ctx"></param>
-    /// <param name="options"></param>
-    /// <typeparam name="U"></typeparam>
-    /// <returns></returns>
-    IFuture<U> ComposeCall<U>(Func<object, IFuture<U>> fn, object? ctx, int options = 0);
-
-    IFuture<U> ComposeCallAsync<U>(IExecutor executor,
-                                   Func<object, IFuture<U>> fn, object? ctx, int options = 0);
-
-    #endregion
-
-    #region 普通管道
-
-    IFuture<U> ThenCall<U>(Func<object, U> fn, object? ctx, int options = 0);
-
-    IFuture<U> ThenCallAsync<U>(IExecutor executor,
-                                Func<object, U> fn, object? ctx, int options = 0);
-
-    IFuture ThenRun(Action<object> fn, object? ctx, int options = 0);
-
-    IFuture ThenRunAsync(IExecutor executor,
-                         Action<object> fn, object? ctx, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state,
+                          CancellationToken cancelToken = default, int options = 0);
 
     #endregion
 }

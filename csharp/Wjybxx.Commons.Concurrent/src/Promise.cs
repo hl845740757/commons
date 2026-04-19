@@ -41,7 +41,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /// 已被取消的Promise常量实例
     /// </summary>
     [Obsolete("C#异常不适合共享")]
-    public static readonly Promise<T> CANCELLED = new Promise<T>(null, default, StacklessCancellationException.Default);
+    public static readonly Promise<T> CANCELLED = new Promise<T>(null, default, new OperationCanceledException());
 
     /** 任务成功执行时的结果 -- 可见性由<see cref="_ex"/>保证 */
     private T _result;
@@ -205,8 +205,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /// 允许重写，Executor可能存储在其它地方
     /// </summary>
     public virtual IExecutor? Executor => _executor;
-
-    public IFuture<T> AsReadonly() => new ForwardFuture<T>(this);
 
     #endregion
 
@@ -482,62 +480,59 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return new FutureAwaiter<T>(this);
     }
 
-    public FutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) {
-        return new FutureAwaitable<T>(this, executor, options);
+    public FutureAwaitable<T> GetAwaitable(IExecutor executor, CancellationToken cancelToken = default, int options = 0) {
+        return new FutureAwaitable<T>(this, executor, cancelToken, options);
     }
 
     #endregion
 
     #region OnCompleted
 
-    public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
-        PushUniOnCompleted(null, continuation, null, options);
+    public void OnCompleted(Action<IFuture<T>, object?> continuation, object? state,
+                            CancellationToken cancelToken = default, int options = 0) {
+        PushUniOnCompleted(null, cancelToken, options, continuation, state);
     }
 
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object?> continuation, object? state,
+                                 CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        PushUniOnCompleted(executor, continuation, null, options);
+        PushUniOnCompleted(executor, cancelToken, options, continuation, state);
     }
 
-    public void OnCompleted(Action<IFuture<T>, object?> continuation, object? state, int options = 0) {
-        PushUniOnCompleted(null, continuation, state, options);
-    }
-
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object?> continuation, object? state, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        PushUniOnCompleted(executor, continuation, state, options);
-    }
-
-    private void PushUniOnCompleted(IExecutor? executor, object continuation, object? state, int options = 0) {
+    private void PushUniOnCompleted(IExecutor? executor, CancellationToken cancelToken, int options,
+                                    Action<IFuture<T>, object?> continuation, object? state) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
             UniOnCompleted.FireNow(this, continuation, state, null);
         } else {
-            PushCompletion(new UniOnCompleted(executor, options, this, continuation, state));
+            PushCompletion(new UniOnCompleted(executor, cancelToken, options, this, continuation, state));
         }
     }
 
     #endregion
 
-    #region fsm
+    #region OnCompleted-fsm
 
-    public void OnCompleted(Action<object?> continuation, object? state, int options = 0) {
-        PushMoveNextCompletion(null, continuation, state, options);
+    public void OnCompleted(Action<object?> continuation, object? state,
+                            CancellationToken cancelToken = default, int options = 0) {
+        PushMoveNextCompletion(null, cancelToken, options, continuation, state);
     }
 
-    public void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0) {
+    public void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state,
+                                 CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        PushMoveNextCompletion(executor, continuation, state, options);
+        PushMoveNextCompletion(executor, cancelToken, options, continuation, state);
     }
 
     /** 状态机特殊优化 */
-    private void PushMoveNextCompletion(IExecutor? executor, Action<object?> continuation, object? state, int options = 0) {
+    private void PushMoveNextCompletion(IExecutor? executor, CancellationToken cancelToken, int options,
+                                        Action<object?> continuation, object? state) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
             MoveNextCompletion.FireNow(continuation, state, null);
         } else {
             MoveNextCompletion completion = MoveNextCompletion.POOL.Acquire();
-            completion.Init(executor, options, continuation, state);
+            completion.Init(executor, cancelToken, options, continuation, state);
             PushCompletion(completion);
         }
     }
@@ -554,21 +549,23 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region ComposeApply
 
-    public IFuture<U> ComposeApply<U>(Func<object, T, IFuture<U>> fn, object? ctx, int options = 0) {
-        return PushUniComposeApply(null, fn, ctx, options);
+    public IFuture<U> ComposeApply<U>(Func<T, IFuture<U>> fn,
+                                      CancellationToken cancelToken = default, int options = 0) {
+        return PushUniComposeApply(null, cancelToken, options, fn);
     }
 
-    public IFuture<U> ComposeApplyAsync<U>(IExecutor executor, Func<object, T, IFuture<U>> fn, object? ctx, int options = 0) {
+    public IFuture<U> ComposeApplyAsync<U>(IExecutor executor, Func<T, IFuture<U>> fn,
+                                           CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniComposeApply(executor, fn, ctx, options);
+        return PushUniComposeApply(executor, cancelToken, options, fn);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private IFuture<U> PushUniComposeApply<U>(IExecutor? executor,
-                                              Func<object, T, IFuture<U>> fn, object? ctx, int options) {
+    private IFuture<U> PushUniComposeApply<U>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                              Func<T, IFuture<U>> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniComposeApply<T, U>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniComposeApply<T, U>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -576,20 +573,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region compose-call
 
-    public IFuture<U> ComposeCall<U>(Func<object, IFuture<U>> fn, object? ctx, int options = 0) {
-        return PushComposeCall(null, fn, ctx, options);
+    public IFuture<U> ComposeCall<U>(Func<IFuture<U>> fn,
+                                     CancellationToken cancelToken = default, int options = 0) {
+        return PushComposeCall(null, cancelToken, options, fn);
     }
 
-    public IFuture<U> ComposeCallAsync<U>(IExecutor executor, Func<object, IFuture<U>> fn, object? ctx, int options = 0) {
+    public IFuture<U> ComposeCallAsync<U>(IExecutor executor, Func<IFuture<U>> fn,
+                                          CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushComposeCall(executor, fn, ctx, options);
+        return PushComposeCall(executor, cancelToken, options, fn);
     }
 
-    private IFuture<U> PushComposeCall<U>(IExecutor? executor,
-                                          Func<object, IFuture<U>> fn, object? ctx, int options) {
+    private IFuture<U> PushComposeCall<U>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                          Func<IFuture<U>> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniComposeCall<T, U>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniComposeCall<T, U>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -597,20 +596,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region ComposeCatching
 
-    public IFuture<T> ComposeCatching<X>(Func<object, X, IFuture<T>> fallback, object? ctx, int options = 0) where X : Exception {
-        return PushComposeCatching(null, fallback, ctx, options);
+    public IFuture<T> ComposeCatching<X>(Func<X, IFuture<T>> fallback,
+                                         CancellationToken cancelToken = default, int options = 0) where X : Exception {
+        return PushComposeCatching(null, cancelToken, options, fallback);
     }
 
-    public IFuture<T> ComposeCatchingAsync<X>(IExecutor executor, Func<object, X, IFuture<T>> fallback, object? ctx, int options = 0) where X : Exception {
+    public IFuture<T> ComposeCatchingAsync<X>(IExecutor executor, Func<X, IFuture<T>> fallback,
+                                              CancellationToken cancelToken, int options = 0) where X : Exception {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushComposeCatching(executor, fallback, ctx, options);
+        return PushComposeCatching(executor, cancelToken, options, fallback);
     }
 
-    private IFuture<T> PushComposeCatching<X>(IExecutor? executor,
-                                              Func<object, X, IFuture<T>> fallback, object? ctx, int options) where X : Exception {
+    private IFuture<T> PushComposeCatching<X>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                              Func<X, IFuture<T>> fallback) where X : Exception {
         if (fallback == null) throw new ArgumentNullException(nameof(fallback));
         Promise<T> promise = NewIncompletePromise<T>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniComposeCatching<X, T>(executor, ctx, options, this, promise, fallback));
+        PushCompletion(new UniComposeCatching<X, T>(executor, cancelToken, options, this, promise, fallback));
         return promise;
     }
 
@@ -618,20 +619,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region ComposeHandle
 
-    public IFuture<U> ComposeHandle<U>(Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options = 0) {
-        return PushComposeHandle(null, fn, ctx, options);
+    public IFuture<U> ComposeHandle<U>(Func<T, Exception, IFuture<U>> fn,
+                                       CancellationToken cancelToken = default, int options = 0) {
+        return PushComposeHandle(null, cancelToken, options, fn);
     }
 
-    public IFuture<U> ComposeHandleAsync<U>(IExecutor executor, Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options = 0) {
+    public IFuture<U> ComposeHandleAsync<U>(IExecutor executor, Func<T, Exception, IFuture<U>> fn,
+                                            CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushComposeHandle(executor, fn, ctx, options);
+        return PushComposeHandle(executor, cancelToken, options, fn);
     }
 
-    private IFuture<U> PushComposeHandle<U>(IExecutor? executor,
-                                            Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options) {
+    private IFuture<U> PushComposeHandle<U>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                            Func<T, Exception, IFuture<U>> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniComposeHandle<T, U>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniComposeHandle<T, U>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -639,20 +642,23 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region uni-apply
 
-    public IFuture<U> ThenApply<U>(Func<object, T, U> fn, object? ctx, int options = 0) {
-        return PushUniApply(null, fn, ctx, options);
+    public IFuture<U> ThenApply<U>(Func<T, U> fn,
+                                   CancellationToken cancelToken = default, int options = 0) {
+        return PushUniApply(null, cancelToken, options, fn);
     }
 
-    public IFuture<U> ThenApplyAsync<U>(IExecutor executor, Func<object, T, U> fn, object? ctx, int options = 0) {
+    public IFuture<U> ThenApplyAsync<U>(IExecutor executor, Func<T, U> fn,
+                                        CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniApply(executor, fn, ctx, options);
+        return PushUniApply(executor, cancelToken, options, fn);
     }
 
 
-    private IFuture<U> PushUniApply<U>(IExecutor? executor, Func<object, T, U> fn, object? ctx, int options) {
+    private IFuture<U> PushUniApply<U>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                       Func<T, U> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniApply<T, U>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniApply<T, U>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -660,19 +666,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region uni-accpt
 
-    public IFuture ThenAccept(Action<object, T> fn, object? ctx, int options = 0) {
-        return PushUniAccept(null, fn, ctx, options);
+    public IFuture ThenAccept(Action<T> fn,
+                              CancellationToken cancelToken = default, int options = 0) {
+        return PushUniAccept(null, cancelToken, options, fn);
     }
 
-    public IFuture ThenAcceptAsync(IExecutor executor, Action<object, T> fn, object? ctx, int options = 0) {
+    public IFuture ThenAcceptAsync(IExecutor executor, Action<T> fn,
+                                   CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniAccept(executor, fn, ctx, options);
+        return PushUniAccept(executor, cancelToken, options, fn);
     }
 
-    private IFuture PushUniAccept(IExecutor? executor, Action<object, T> fn, object? ctx, int options) {
+    private IFuture PushUniAccept(IExecutor? executor, CancellationToken cancelToken, int options,
+                                  Action<T> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<int> promise = NewIncompletePromise<int>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniAccept<T>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniAccept<T>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -680,19 +689,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region uni-call
 
-    public IFuture<U> ThenCall<U>(Func<object, U> fn, object? ctx, int options = 0) {
-        return PushUniCall(null, fn, ctx, options);
+    public IFuture<U> ThenCall<U>(Func<U> fn,
+                                  CancellationToken cancelToken = default, int options = 0) {
+        return PushUniCall(null, cancelToken, options, fn);
     }
 
-    public IFuture<U> ThenCallAsync<U>(IExecutor executor, Func<object, U> fn, object? ctx, int options = 0) {
+    public IFuture<U> ThenCallAsync<U>(IExecutor executor, Func<U> fn,
+                                       CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniCall(executor, fn, ctx, options);
+        return PushUniCall(executor, cancelToken, options, fn);
     }
 
-    private IFuture<U> PushUniCall<U>(IExecutor? executor, Func<object, U> fn, object? ctx, int options) {
+    private IFuture<U> PushUniCall<U>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                      Func<U> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniCall<T, U>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniCall<T, U>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -700,19 +712,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region uni-run
 
-    public IFuture ThenRun(Action<object> fn, object? ctx, int options = 0) {
-        return PushUniRun(null, fn, ctx, options);
+    public IFuture ThenRun(Action fn,
+                           CancellationToken cancelToken = default, int options = 0) {
+        return PushUniRun(null, cancelToken, options, fn);
     }
 
-    public IFuture ThenRunAsync(IExecutor executor, Action<object> fn, object? ctx, int options = 0) {
+    public IFuture ThenRunAsync(IExecutor executor, Action fn,
+                                CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniRun(executor, fn, ctx, options);
+        return PushUniRun(executor, cancelToken, options, fn);
     }
 
-    private IFuture PushUniRun(IExecutor? executor, Action<object> fn, object? ctx, int options) {
+    private IFuture PushUniRun(IExecutor? executor, CancellationToken cancelToken, int options,
+                               Action fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<int> promise = NewIncompletePromise<int>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniRun<T>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniRun<T>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -720,19 +735,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region uni-catch
 
-    public IFuture<T> Catching<X>(Func<object, X, T> fallback, object? ctx, int options = 0) where X : Exception {
-        return PushUniCatching(null, fallback, ctx, options);
+    public IFuture<T> Catching<X>(Func<X, T> fallback,
+                                  CancellationToken cancelToken = default, int options = 0) where X : Exception {
+        return PushUniCatching(null, cancelToken, options, fallback);
     }
 
-    public IFuture<T> CatchingAsync<X>(IExecutor executor, Func<object, X, T> fallback, object? ctx, int options = 0) where X : Exception {
+    public IFuture<T> CatchingAsync<X>(IExecutor executor, Func<X, T> fallback,
+                                       CancellationToken cancelToken = default, int options = 0) where X : Exception {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniCatching(executor, fallback, ctx, options);
+        return PushUniCatching(executor, cancelToken, options, fallback);
     }
 
-    private IFuture<T> PushUniCatching<X>(IExecutor? executor, Func<object, X, T> fallback, object? ctx, int options) where X : Exception {
+    private IFuture<T> PushUniCatching<X>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                          Func<X, T> fallback) where X : Exception {
         if (fallback == null) throw new ArgumentNullException(nameof(fallback));
         Promise<T> promise = NewIncompletePromise<T>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniCatching<X, T>(executor, ctx, options, this, promise, fallback));
+        PushCompletion(new UniCatching<X, T>(executor, cancelToken, options, this, promise, fallback));
         return promise;
     }
 
@@ -740,19 +758,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region uni-handle
 
-    public IFuture<U> Handle<U>(Func<object, T, Exception, U> fn, object? ctx, int options = 0) {
-        return PushUniHandle(null, fn, ctx, options);
+    public IFuture<U> Handle<U>(Func<T, Exception, U> fn,
+                                CancellationToken cancelToken = default, int options = 0) {
+        return PushUniHandle(null, cancelToken, options, fn);
     }
 
-    public IFuture<U> HandleAsync<U>(IExecutor executor, Func<object, T, Exception, U> fn, object? ctx, int options = 0) {
+    public IFuture<U> HandleAsync<U>(IExecutor executor, Func<T, Exception, U> fn,
+                                     CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniHandle(executor, fn, ctx, options);
+        return PushUniHandle(executor, cancelToken, options, fn);
     }
 
-    private IFuture<U> PushUniHandle<U>(IExecutor? executor, Func<object, T, Exception, U> fn, object? ctx, int options) {
+    private IFuture<U> PushUniHandle<U>(IExecutor? executor, CancellationToken cancelToken, int options,
+                                        Func<T, Exception, U> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniHandle<T, U>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniHandle<T, U>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -760,19 +781,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region uni-when-complete
 
-    public IFuture<T> WhenComplete(Action<object, T, Exception> fn, object? ctx, int options = 0) {
-        return PushUniWhenComplete(null, fn, ctx, options);
+    public IFuture<T> WhenComplete(Action<T, Exception> fn,
+                                   CancellationToken cancelToken = default, int options = 0) {
+        return PushUniWhenComplete(null, cancelToken, options, fn);
     }
 
-    public IFuture<T> WhenComplete(IExecutor executor, Action<object, T, Exception> fn, object? ctx, int options = 0) {
+    public IFuture<T> WhenCompleteAsync(IExecutor executor, Action<T, Exception> fn,
+                                        CancellationToken cancelToken = default, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniWhenComplete(executor, fn, ctx, options);
+        return PushUniWhenComplete(executor, cancelToken, options, fn);
     }
 
-    private IFuture<T> PushUniWhenComplete(IExecutor? executor, Action<object, T, Exception> fn, object? ctx, int options) {
+    private IFuture<T> PushUniWhenComplete(IExecutor? executor, CancellationToken cancelToken, int options,
+                                           Action<T, Exception> fn) {
         if (fn == null) throw new ArgumentNullException(nameof(fn));
         Promise<T> promise = NewIncompletePromise<T>(executor == null ? this.Executor : executor);
-        PushCompletion(new UniWhenComplete<T>(executor, ctx, options, this, promise, fn));
+        PushCompletion(new UniWhenComplete<T>(executor, cancelToken, options, this, promise, fn));
         return promise;
     }
 
@@ -838,14 +862,15 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     private abstract class UniCompletion<V, U> : Completion
     {
         protected IExecutor? executor;
-        protected object? ctx;
+        protected CancellationToken cancelToken;
         protected int options;
         protected Promise<V> input;
         protected Promise<U> output;
 
-        protected UniCompletion(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output) {
+        protected UniCompletion(IExecutor? executor, CancellationToken cancelToken, int options,
+                                Promise<V> input, Promise<U> output) {
             this.executor = executor;
-            this.ctx = ctx;
+            this.cancelToken = cancelToken;
             this.options = options;
             this.input = input;
             this.output = output;
@@ -856,7 +881,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             set => options = value;
         }
 
-        public bool Claim() {
+        protected bool Claim() {
             IExecutor? e = this.executor;
             if (e == CLAIMED) {
                 return true;
@@ -906,25 +931,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniComposeApply<V, U> : UniCompletion<V, U>
     {
-        Func<object, V, IFuture<U>> fn;
+        private Func<V, IFuture<U>> fn;
 
-        public UniComposeApply(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
-                               Func<object, V, IFuture<U>> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniComposeApply(IExecutor? executor, CancellationToken cancelToken, int options,
+                               Promise<V> input, Promise<U> output,
+                               Func<V, IFuture<U>> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<U> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -938,7 +962,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn(ctx, input._result);
+                    IFuture<U> relay = fn(input._result);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         ExecutorUtil.SetPromise(output, relay);
@@ -950,7 +974,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -960,25 +984,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniComposeCall<V, U> : UniCompletion<V, U>
     {
-        Func<object, IFuture<U>> fn;
+        private Func<IFuture<U>> fn;
 
-        public UniComposeCall(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
-                              Func<object, IFuture<U>> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniComposeCall(IExecutor? executor, CancellationToken cancelToken, int options,
+                              Promise<V> input, Promise<U> output,
+                              Func<IFuture<U>> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<U> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -992,7 +1015,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn(ctx);
+                    IFuture<U> relay = fn();
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         ExecutorUtil.SetPromise(output, relay);
@@ -1004,7 +1027,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1014,25 +1037,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniComposeCatching<X, V> : UniCompletion<V, V> where X : Exception
     {
-        Func<object, X, IFuture<V>> fn;
+        private Func<X, IFuture<V>> fn;
 
-        public UniComposeCatching(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<V> output,
-                                  Func<object, X, IFuture<V>> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniComposeCatching(IExecutor? executor, CancellationToken cancelToken, int options,
+                                  Promise<V> input, Promise<V> output,
+                                  Func<X, IFuture<V>> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<V> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1047,7 +1069,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<V> relay = fn(ctx, ex);
+                    IFuture<V> relay = fn(ex);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         ExecutorUtil.SetPromise(output, relay);
@@ -1059,7 +1081,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1069,25 +1091,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniComposeHandle<V, U> : UniCompletion<V, U>
     {
-        Func<object, V, Exception, IFuture<U>> fn;
+        private Func<V, Exception, IFuture<U>> fn;
 
-        public UniComposeHandle(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
-                                Func<object, V, Exception, IFuture<U>> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniComposeHandle(IExecutor? executor, CancellationToken cancelToken, int options,
+                                Promise<V> input, Promise<U> output,
+                                Func<V, Exception, IFuture<U>> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<U> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1098,7 +1119,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     }
                     object rawEx = input._ex!;
                     Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx);
-                    IFuture<U> relay = fn(ctx, input._result, ex);
+                    IFuture<U> relay = fn(input._result, ex);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         ExecutorUtil.SetPromise(output, relay);
@@ -1110,7 +1131,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1124,25 +1145,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniApply<V, U> : UniCompletion<V, U>
     {
-        Func<object, V, U> fn;
+        private Func<V, U> fn;
 
-        public UniApply(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
-                        Func<object, V, U> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniApply(IExecutor? executor, CancellationToken cancelToken, int options,
+                        Promise<V> input, Promise<U> output,
+                        Func<V, U> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<U> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1156,7 +1176,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.CompleteValue(fn(ctx, input._result));
+                    setCompleted = output.CompleteValue(fn(input._result));
                 }
                 catch (Exception e) {
                     setCompleted = output.CompleteThrowable(e);
@@ -1164,7 +1184,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1174,25 +1194,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniAccept<V> : UniCompletion<V, int>
     {
-        Action<object, V> fn;
+        private Action<V> fn;
 
-        public UniAccept(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<int> output,
-                         Action<object, V> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniAccept(IExecutor? executor, CancellationToken cancelToken, int options,
+                         Promise<V> input, Promise<int> output,
+                         Action<V> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<int> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1206,7 +1225,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    fn(ctx, input._result);
+                    fn(input._result);
                     setCompleted = output.CompleteNull();
                 }
                 catch (Exception e) {
@@ -1215,7 +1234,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1225,25 +1244,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniCall<V, U> : UniCompletion<V, U>
     {
-        Func<object, U> fn;
+        private Func<U> fn;
 
-        public UniCall(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
-                       Func<object, U> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniCall(IExecutor? executor, CancellationToken cancelToken, int options,
+                       Promise<V> input, Promise<U> output,
+                       Func<U> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<U> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1257,7 +1275,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.CompleteValue(fn(ctx));
+                    setCompleted = output.CompleteValue(fn());
                 }
                 catch (Exception e) {
                     setCompleted = output.CompleteThrowable(e);
@@ -1265,7 +1283,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1275,25 +1293,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniRun<V> : UniCompletion<V, int>
     {
-        Action<object> fn;
+        private Action fn;
 
-        public UniRun(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<int> output,
-                      Action<object> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniRun(IExecutor? executor, CancellationToken cancelToken, int options,
+                      Promise<V> input, Promise<int> output,
+                      Action fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<int> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1307,7 +1324,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    fn(ctx);
+                    fn();
                     setCompleted = output.CompleteNull();
                 }
                 catch (Exception e) {
@@ -1316,7 +1333,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1326,25 +1343,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniCatching<X, V> : UniCompletion<V, V> where X : Exception
     {
-        Func<object, X, V> fn;
+        private Func<X, V> fn;
 
-        public UniCatching(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<V> output,
-                           Func<object, X, V> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniCatching(IExecutor? executor, CancellationToken cancelToken, int options,
+                           Promise<V> input, Promise<V> output,
+                           Func<X, V> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<V> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1359,7 +1375,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     if (mode <= 0 && !Claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.CompleteValue(fn(ctx, ex));
+                    setCompleted = output.CompleteValue(fn(ex));
                 }
                 catch (Exception e) {
                     setCompleted = output.CompleteThrowable(e);
@@ -1367,7 +1383,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1377,25 +1393,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniHandle<V, U> : UniCompletion<V, U>
     {
-        Func<object, V, Exception, U> fn;
+        private Func<V, Exception, U> fn;
 
-        public UniHandle(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
-                         Func<object, V, Exception, U> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniHandle(IExecutor? executor, CancellationToken cancelToken, int options,
+                         Promise<V> input, Promise<U> output,
+                         Func<V, Exception, U> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<U> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1406,7 +1421,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     }
                     object rawEx = input._ex!;
                     Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx);
-                    setCompleted = output.CompleteValue(fn(ctx, input._result, ex));
+                    setCompleted = output.CompleteValue(fn(input._result, ex));
                 }
                 catch (Exception e) {
                     setCompleted = output.CompleteThrowable(e);
@@ -1414,7 +1429,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1424,25 +1439,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private class UniWhenComplete<V> : UniCompletion<V, V>
     {
-        Action<object, V, Exception> fn;
+        private Action<V, Exception> fn;
 
-        public UniWhenComplete(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<V> output,
-                               Action<object, V, Exception> fn)
-            : base(executor, ctx, options, input, output) {
+        public UniWhenComplete(IExecutor? executor, CancellationToken cancelToken, int options,
+                               Promise<V> input, Promise<V> output,
+                               Action<V, Exception> fn)
+            : base(executor, cancelToken, options, input, output) {
             this.fn = fn;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<V> input = this.input;
             Promise<V> output = this.output;
-            object ctx = this.ctx;
             bool setCompleted;
             {
                 if (output.IsCompleted) {
                     setCompleted = false;
                     goto outer;
                 }
-                CancellationToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancellationRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1453,7 +1467,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     }
                     object rawEx = input._ex!;
                     Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx);
-                    fn(ctx, input._result, ex);
+                    fn(input._result, ex);
                     setCompleted = output.CompleteRelay(input._result, rawEx);
                 }
                 catch (Exception e) {
@@ -1463,7 +1477,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             outer:
             // help gc
-            this.ctx = null;
+            this.cancelToken = default;
             this.input = null!;
             this.output = null!;
             this.fn = null!;
@@ -1479,19 +1493,22 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     {
 #nullable disable
         private IExecutor executor;
+        private CancellationToken cancelToken;
         private int options;
         private Promise<T> input;
-        private object action;
-        private object ctx;
+        private Action<IFuture<T>, object?> action;
+        private object state;
 #nullable restore
 
-        internal UniOnCompleted(IExecutor? executor, int options, Promise<T> input,
-                                object action, object? ctx) {
+        internal UniOnCompleted(IExecutor? executor, CancellationToken cancelToken, int options,
+                                Promise<T> input,
+                                Action<IFuture<T>, object?> action, object? state) {
             this.executor = executor;
+            this.cancelToken = cancelToken;
             this.options = options;
             this.input = input;
             this.action = action;
-            this.ctx = ctx;
+            this.state = state;
         }
 
         public override int Options {
@@ -1515,36 +1532,31 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         public override AbstractPromise? TryFire(int mode) {
             Promise<T>? input = this.input;
             {
-                if (ExecutorUtil.IsCancellationRequested(ctx, options)) {
+                if (cancelToken.IsCancellationRequested) {
                     goto outer;
                 }
                 // 异步模式下已经claim
-                if (!FireNow(input, action, ctx, mode > 0 ? null : this)) {
+                if (!FireNow(input, action, state, mode > 0 ? null : this)) {
                     return null;
                 }
             }
             outer:
             // help gc
-            this.executor = null;
+            this.cancelToken = default;
             this.input = null;
             this.action = null;
-            this.ctx = null;
+            this.state = null;
             return null;
         }
 
         public static bool FireNow(Promise<T> input,
-                                   object rawAction, object? ctx,
+                                   Action<IFuture<T>, object?> action, object? state,
                                    UniOnCompleted? c) {
             try {
                 if (c != null && !c.Claim()) {
                     return false;
                 }
-                if (rawAction is Action<IFuture<T>> action1) {
-                    action1.Invoke(input);
-                } else {
-                    Action<IFuture<T>, object?> action2 = (Action<IFuture<T>, object?>)rawAction;
-                    action2.Invoke(input, ctx);
-                }
+                action.Invoke(input, state);
             }
             catch (Exception e) {
                 FutureLogger.LogCause(e, "UniOnCompleted caught an exception");

@@ -99,7 +99,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     #region 生命周期
 
-    public abstract IFuture Start();
+    public abstract IFuture<int> Start();
 
     public abstract void Shutdown();
 
@@ -113,9 +113,9 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public abstract long TickTime { get; }
 
-    public abstract IFuture RunningFuture { get; }
+    public abstract IFuture<int> RunningFuture { get; }
 
-    public abstract IFuture TerminationFuture { get; }
+    public abstract IFuture<int> TerminationFuture { get; }
 
     public abstract EventLoopState State { get; }
 
@@ -138,7 +138,7 @@ public abstract class AbstractEventLoop : IEventLoop
     public abstract void Execute(ITask task);
 
     public virtual void Execute(Action action, int options = 0) {
-        Execute(ExecutorUtil.ToTask(action, options));
+        Execute(ExecutorUtil.ToTask(action, default, options));
     }
 
     #endregion
@@ -151,43 +151,33 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual ValueFuture<T> Submit<T>(in TaskBuilder<T> builder) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        Execute(PromiseTask.OfBuilder(in builder, promise));
+        Execute(PromiseTask.OfBuilder(promise, in builder));
         return promise.Future;
     }
 
-    public virtual ValueFuture SubmitAction(Action action, int options = 0) {
+
+    public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken = default, int options = 0) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
-        Execute(PromiseTask.OfAction(action, default, options, promise));
+        Execute(PromiseTask.OfAction(promise, action, cancelToken, options));
         return promise.VoidFuture;
     }
 
-    public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken, int options = 0) {
+    public virtual ValueFuture SubmitAction(Action<object> action, object? state, CancellationToken cancelToken = default, int options = 0) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
-        Execute(PromiseTask.OfAction(action, cancelToken, options, promise));
+        Execute(PromiseTask.OfAction(promise, action, state, cancelToken, options));
         return promise.VoidFuture;
     }
 
-    public virtual ValueFuture SubmitAction(Action<object> action, object ctx, int options = 0) {
-        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
-        Execute(PromiseTask.OfAction(action, ctx, options, promise));
-        return promise.VoidFuture;
-    }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken = default, int options = 0) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        Execute(PromiseTask.OfFunction(action, default, options, promise));
+        Execute(PromiseTask.OfFunction(promise, action, cancelToken, options));
         return promise.Future;
     }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object? state, CancellationToken cancelToken = default, int options = 0) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        Execute(PromiseTask.OfFunction(action, cancelToken, options, promise));
-        return promise.Future;
-    }
-
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0) {
-        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        Execute(PromiseTask.OfFunction(action, ctx, options, promise));
+        Execute(PromiseTask.OfFunction(promise, action, state, cancelToken, options));
         return promise.Future;
     }
 
@@ -206,7 +196,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual ValueFuture<T> Schedule<T>(in ScheduledTaskBuilder<T> builder) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfBuilder(in builder, promise);
+        ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfBuilder(promise, in builder);
         //
         ISchedulerHelper helper = SchedulerHelper;
         promiseTask.Helper = helper;
@@ -229,16 +219,16 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, CancellationToken cancelToken = default) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
-        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(action, cancelToken, 0, promise);
+        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
         Execute(promiseTask);
         return promise.VoidFuture;
     }
 
-    public ValueFuture ScheduleAction(Action<object> action, object ctx, TimeSpan delay) {
+    public ValueFuture ScheduleAction(Action<object> action, object? state, TimeSpan delay, CancellationToken cancelToken = default) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
-        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(action, ctx, 0, promise);
+        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, state, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
         Execute(promiseTask);
@@ -247,16 +237,16 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, CancellationToken cancelToken = default) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfFunction(action, cancelToken, 0, promise);
+        ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfFunction(promise, action, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
         Execute(promiseTask);
         return promise.Future;
     }
 
-    public ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object ctx, TimeSpan delay) {
+    public ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object state, TimeSpan delay, CancellationToken cancelToken = default) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
-        ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfFunction(action, ctx, 0, promise);
+        ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfFunction(promise, action, state, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
         Execute(promiseTask);

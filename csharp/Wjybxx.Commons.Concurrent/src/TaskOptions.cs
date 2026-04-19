@@ -50,12 +50,12 @@ public static class TaskOptions
     /// <summary>
     /// 延时任务：包含优先级
     /// </summary>
-    public const int HAS_PRIORITY = 14; // 预留1位给优先级
+    public const int HAS_PRIORITY = 1 << 14; // 预留1位给优先级
     /// <summary>
     /// 延时任务：包含调度阶段
     /// </summary>
     /// <returns></returns>
-    public const int HAS_SCHEDULE_PHASE = 15;
+    public const int HAS_SCHEDULE_PHASE = 1 << 15;
     /// <summary>
     /// 延时任务：包含次数限制
     /// </summary>
@@ -93,6 +93,7 @@ public static class TaskOptions
     /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="CancellationToken"/>类型，并检测取消信号。
     /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
     /// </summary>
+    [Obsolete("新版本切割用户上下文和调度上下文，不再使用该参数")]
     public const int STAGE_UNCANCELLABLE_CTX = 1 << 24;
     /// <summary>
     /// 监听用户上下文中包含的取消令牌

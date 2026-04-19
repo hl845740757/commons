@@ -54,7 +54,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public abstract bool IsTerminated { get; }
 
-    public abstract IFuture TerminationFuture { get; }
+    public abstract IFuture<int> TerminationFuture { get; }
 
     #endregion
 
@@ -76,28 +76,21 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().Submit(in builder);
     }
 
-    public virtual ValueFuture SubmitAction(Action action, int options = 0) {
-        return Select().SubmitAction(action, options);
-    }
-
-    public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken, int options = 0) {
+    public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken = default, int options = 0) {
         return Select().SubmitAction(action, cancelToken, options);
     }
 
-    public virtual ValueFuture SubmitAction(Action<object> action, object ctx, int options = 0) {
-        return Select().SubmitAction(action, ctx, options);
+    public virtual ValueFuture SubmitAction(Action<object> action, object? state, CancellationToken cancelToken = default, int options = 0) {
+        return Select().SubmitAction(action, state, cancelToken, options);
     }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
-        return Select().SubmitFunc(action, options);
-    }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken = default, int options = 0) {
         return Select().SubmitFunc(action, cancelToken, options);
     }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0) {
-        return Select().SubmitFunc(action, ctx, options);
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object? state, CancellationToken cancelToken = default, int options = 0) {
+        return Select().SubmitFunc(action, state, cancelToken, options);
     }
 
     #endregion
@@ -112,16 +105,16 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().ScheduleAction(action, delay, cancelToken);
     }
 
-    public ValueFuture ScheduleAction(Action<object> action, object ctx, TimeSpan delay) {
-        return Select().ScheduleAction(action, ctx, delay);
+    public ValueFuture ScheduleAction(Action<object> action, object? state, TimeSpan delay, CancellationToken cancelToken = default) {
+        return Select().ScheduleAction(action, state, delay, cancelToken);
     }
 
     public virtual ValueFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, CancellationToken cancelToken = default) {
         return Select().ScheduleFunc(action, delay, cancelToken);
     }
 
-    public ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object ctx, TimeSpan delay) {
-        return Select().ScheduleFunc(action, ctx, delay);
+    public ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object? state, TimeSpan delay, CancellationToken cancelToken = default) {
+        return Select().ScheduleFunc(action, state, delay, cancelToken);
     }
 
     public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {

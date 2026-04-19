@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -28,17 +29,17 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
+    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="future"></param>
-    /// <param name="executor"></param>
-    /// <param name="options"></param>
-    public ValueFutureAwaiter(ValueFuture future, IExecutor? executor = null, int options = 0) {
+    public ValueFutureAwaiter(ValueFuture future, IExecutor? executor = null,
+                              CancellationToken cancelToken = default, int options = 0) {
         _future = future;
         _executor = executor;
+        _cancelToken = cancelToken;
         _options = options;
     }
 
@@ -66,17 +67,28 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
+    /// <summary>
+    /// 添加一个Future完成时的回调
+    /// </summary>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
-        _future.OnCompleted(continuation, state, _executor, _options | extraOptions);
+    public void OnCompleted(Action<object> continuation, object state) {
+        OnCompleted(continuation, state, _executor, _cancelToken, _options);
+    }
+
+    private void OnCompleted(Action<object> continuation, object state,
+                             IExecutor? executor, CancellationToken cancelToken, int options) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        _future.OnCompleted(continuation, state, executor, cancelToken, options);
     }
 }
 
@@ -84,17 +96,17 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
+    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="future"></param>
-    /// <param name="executor"></param>
-    /// <param name="options"></param>
-    public ValueFutureAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
+    public ValueFutureAwaiter(ValueFuture<T> future, IExecutor? executor,
+                              CancellationToken cancelToken = default, int options = 0) {
         _future = future;
         _executor = executor;
+        _cancelToken = cancelToken;
         _options = options;
     }
 
@@ -122,17 +134,28 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
     }
 
+    /// <summary>
+    /// 添加一个Future完成时的回调
+    /// </summary>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void OnCompleted(Action<object> continuation, object state, int extraOptions = 0) {
-        _future.OnCompleted(continuation, state, _executor, _options | extraOptions);
+    public void OnCompleted(Action<object> continuation, object state) {
+        OnCompleted(continuation, state, _executor, _cancelToken, _options);
+    }
+
+    private void OnCompleted(Action<object> continuation, object state,
+                             IExecutor? executor, CancellationToken cancelToken, int options) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        _future.OnCompleted(continuation, state, executor, cancelToken, options);
     }
 }
 }

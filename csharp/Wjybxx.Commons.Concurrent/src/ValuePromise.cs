@@ -25,8 +25,6 @@ using static Wjybxx.Commons.Concurrent.AbstractPromise;
 
 namespace Wjybxx.Commons.Concurrent
 {
-#nullable restore
-
 /// <summary>
 ///
 /// 1.该类型由于要复用，不能继承Promise，否则可能导致用户使用到错误的接口，也可能导致类型测试时的混乱。
@@ -367,7 +365,7 @@ public class ValuePromise<T> : IValuePromise<T>
                 if (status == TaskStatus.Computing) {
                     promise.TrySetComputing();
                 }
-                SetCompletion(TYPE_SET_PROMISE_U, promise, null, null, 0);
+                SetCompletion(TYPE_SET_PROMISE_U, null, promise, null, default, 0);
                 return promise;
             }
         }
@@ -395,7 +393,7 @@ public class ValuePromise<T> : IValuePromise<T>
                 if (status == TaskStatus.Computing) {
                     promise.TrySetComputing();
                 }
-                SetCompletion(TYPE_SET_PROMISE_T, promise, null, null, 0);
+                SetCompletion(TYPE_SET_PROMISE_T, null, promise, null, default, 0);
                 return promise;
             }
         }
@@ -403,28 +401,31 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public void Forget(int reentryId) {
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_FORGET, "", null, null, 0);
+        SetCompletion(TYPE_FORGET, null, null, null, default, 0);
     }
 
     #endregion
 
     #region 回调
 
-    public void OnCompleted(int reentryId, Action<object?> continuation, object? state, int options = 0) {
+    public void OnCompleted(int reentryId, Action<object?> continuation, object? state,
+                            CancellationToken cancelToken = default, int options = 0) {
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_RUN_CTX, continuation, state, null, options);
+        SetCompletion(TYPE_RUN_CTX, continuation, state, null, cancelToken, options);
     }
 
-    public void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state, int options = 0) {
+    public void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state,
+                                 CancellationToken cancelToken = default, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_RUN_CTX, continuation, state, executor, options);
+        SetCompletion(TYPE_RUN_CTX, continuation, state, executor, cancelToken, options);
     }
 
     #endregion
 
-    private void SetCompletion(int type, object action, object? state, IExecutor? executor, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
+    private void SetCompletion(int type, object? action, object? state,
+                               IExecutor? executor, CancellationToken cancelToken, int options) {
+        // if (action == null) throw new ArgumentNullException(nameof(action));
         // 去除用户的低位，记录type
         options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
@@ -435,6 +436,7 @@ public class ValuePromise<T> : IValuePromise<T>
         if (oldCtl == 0) {
             completion.input = this;
             completion.executor = executor;
+            completion.cancelToken = cancelToken;
             completion.options = options;
             completion.action = action;
             completion.state = state;
@@ -448,6 +450,7 @@ public class ValuePromise<T> : IValuePromise<T>
         // Future已完成
         completion.input = this;
         completion.executor = executor;
+        completion.cancelToken = cancelToken;
         completion.options = options;
         completion.action = action;
         completion.state = state;
@@ -594,6 +597,10 @@ public class ValuePromise<T> : IValuePromise<T>
         /// </summary>
         internal IExecutor executor;
         /// <summary>
+        /// 取消令牌
+        /// </summary>
+        internal CancellationToken cancelToken;
+        /// <summary>
         /// 回调任务选项
         /// PS：低8位存储任务类型和其它控制标记。
         /// </summary>
@@ -612,6 +619,7 @@ public class ValuePromise<T> : IValuePromise<T>
             input = null;
             ctl = 0;
             executor = null;
+            cancelToken = default;
             options = 0;
             action = null;
             state = null;
@@ -624,7 +632,7 @@ public class ValuePromise<T> : IValuePromise<T>
         }
 
         private bool Claim() {
-            IExecutor e = this.executor;
+            IExecutor? e = this.executor;
             if (e == CLAIMED) {
                 return true;
             }
@@ -637,7 +645,7 @@ public class ValuePromise<T> : IValuePromise<T>
         }
 
         public void TryFire(int mode) {
-            if (ExecutorUtil.IsCancellationRequested(state, options)) {
+            if (cancelToken.IsCancellationRequested) {
                 input?.PrepareToRecycle(); // 手动触发回收
                 return;
             }
@@ -665,7 +673,7 @@ public class ValuePromise<T> : IValuePromise<T>
                     }
                     case TYPE_SET_PROMISE_U: {
                         // 装箱
-                        IPromise output = (IPromise)this.action;
+                        IPromise output = (IPromise)this.state;
                         if (input.Status == TaskStatus.Success) {
                             output.TrySetResult(input.ResultNow());
                         } else {
@@ -677,7 +685,7 @@ public class ValuePromise<T> : IValuePromise<T>
                     }
                     case TYPE_SET_PROMISE_T: {
                         // 非装箱
-                        IPromise<T> output = (IPromise<T>)this.action;
+                        IPromise<T> output = (IPromise<T>)this.state;
                         if (input.Status == TaskStatus.Success) {
                             output.TrySetResult(input.ResultNow());
                         } else {

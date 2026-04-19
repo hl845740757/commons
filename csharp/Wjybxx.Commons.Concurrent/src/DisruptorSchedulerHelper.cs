@@ -99,7 +99,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             futureTask.Release();
             return;
         }
-        CancellationToken cancelToken = futureTask.GetCancelToken();
+        CancellationToken cancelToken = futureTask.CancelToken;
         if (cancelToken.IsCancellationRequested) {
             futureTask.Cancel(cancelToken);
             futureTask.Release();
@@ -137,13 +137,13 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                || futureTask.Period > 5 * TimeSpan.TicksPerSecond;
     }
 
-    private void OnCancelRequested(object ctx, CancellationToken cancelToken) {
-        Canceller canceller = (Canceller)ctx;
+    private void OnCancelRequested(object state, CancellationToken cancelToken) {
+        Canceller canceller = (Canceller)state;
         if (canceller.futureTask.Id != canceller.taskId) {
             return;
         }
         if (_eventLoop.InEventLoop()) {
-            Cancel(canceller.futureTask, canceller.taskId, cancelToken);
+            Cancel(canceller.futureTask, canceller.taskId);
         } else {
             // 如果在其它线程，尝试发布一个删除任务（能收到取消信号，通常证明Task还未结束）
             long sequence = _eventLoop.TryNextSequence(1);
@@ -153,19 +153,18 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             ref T evt = ref _eventLoop.GetEventRef(sequence);
             evt.Type = DisruptorEventLoop<T>.TYPE_REMOVE_SCHEDULE;
             evt.Obj1 = canceller.futureTask;
-            evt.Obj2 = cancelToken;
             evt.LongVal1 = canceller.taskId;
             _eventLoop.Publish(sequence);
         }
     }
 
-    public void Cancel(IScheduledFutureTask futureTask, long taskId, CancellationToken cts) {
+    public void Cancel(IScheduledFutureTask futureTask, long taskId) {
         if (futureTask.Id != taskId) {
             return;
         }
         // 如果不在调度队列，应当正在执行Trigger方法，在执行完用户回调后会检测到取消信号
         if (_taskQueue.Remove(futureTask)) {
-            futureTask.Cancel(cts);
+            futureTask.Cancel(futureTask.CancelToken);
             futureTask.Release();
         }
     }
@@ -178,7 +177,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             timeSpan = new TimeSpan(1);
         }
         ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
-        ScheduledPromiseTask<int> task = ScheduledPromiseTask.OfEmpty(cancelToken, 0, promise);
+        ScheduledPromiseTask<int> task = ScheduledPromiseTask.OfEmpty(promise, cancelToken, 0);
         ISchedulerHelper helper = this;
         task.Helper = helper;
         task.Id = NextId();
