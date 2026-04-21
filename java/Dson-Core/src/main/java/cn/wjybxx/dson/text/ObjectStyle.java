@@ -28,7 +28,7 @@ public enum ObjectStyle {
      */
     INDENT,
 
-    /** 流模式 - 线性模式 */
+    /** 流模式(单行缩进) */
     FLOW,
 
 }

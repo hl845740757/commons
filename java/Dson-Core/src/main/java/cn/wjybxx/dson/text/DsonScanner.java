@@ -34,7 +34,7 @@ public final class DsonScanner implements AutoCloseable {
 
     private DsonCharStream charStream;
     // 不从共享池申请StringBuilder，因为这里的StringBuilder都很小
-    private final StringBuilder pooledStringBuilder = new StringBuilder(64);
+    private final StringBuilder pooledStringBuilder = new StringBuilder(256);
     private final CharBuffer hexBuffer = new CharBuffer(4);
 
     public DsonScanner(CharSequence dson) {
@@ -625,7 +625,7 @@ public final class DsonScanner implements AutoCloseable {
         int c;
         while ((c = buffer.read()) != -1) {
             if (c == -2 && readLineHead(buffer) == LineHead.END_OF_TEXT) {
-                break;
+                return;
             }
         }
         throw new DsonParseException("End of file in Dson string.");

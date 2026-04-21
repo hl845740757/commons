@@ -175,6 +175,18 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
    }
 ```
 
+### 2.7.x
+
+1. 增加`Double4`类型，可减少DsonObject和DsonArray分配，优化内存占用和序列化大小
+2. 优化`NumberStyle`实现，切割序列化和Core模块的Style依赖
+3. 对象头增加`count`属性约定，以优化初始内存分配
+4. fix：`DsonScanner.ScanHeader`空对象头异常
+5. fix：`DsonScanner.SkipDsonText`未正常退出
+
+### 2.6.x
+
+2.6.x主要改动的是序列化实现，增加了对象图支持。
+
 ### 2.5.x
 
 1. `LineInfo` 修改为值类型，减少文本扫描过程中的GC

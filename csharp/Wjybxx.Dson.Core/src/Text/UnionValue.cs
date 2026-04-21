@@ -33,7 +33,7 @@ namespace Wjybxx.Dson.Text
 public struct UnionValue : IEquatable<UnionValue>
 {
 #nullable disable
-    // 值的类型 -- 偷懒方案，Object表示任意类型
+    // 值的类型
     [FieldOffset(0)] public DsonType type;
     // 固定8个字节
     [FieldOffset(4)] public int iValue;

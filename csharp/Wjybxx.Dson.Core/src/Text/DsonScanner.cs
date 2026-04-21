@@ -39,7 +39,7 @@ public sealed class DsonScanner : IDisposable
     // 转换为AbstractCharStream是否可以提升性能？实测基本无变化
     private IDsonCharStream _charStream;
     // 不从共享池申请StringBuilder，因为这里的StringBuilder都很小
-    private readonly StringBuilder _pooledStringBuilder = new StringBuilder(64);
+    private readonly StringBuilder _pooledStringBuilder = new StringBuilder(256);
     private readonly char[] _hexBuffer = new char[4];
 #nullable restore
 
@@ -628,7 +628,7 @@ public sealed class DsonScanner : IDisposable
         int c;
         while ((c = buffer.Read()) != -1) {
             if (c == -2 && ReadLineHead(buffer) == LineHead.EndOfText) {
-                break;
+                return;
             }
         }
         throw new DsonParseException("End of file in Dson string.");

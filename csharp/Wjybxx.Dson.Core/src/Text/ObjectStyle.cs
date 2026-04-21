@@ -23,13 +23,16 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public enum ObjectStyle : byte
 {
-    /**
-     * 缩进模式
-     * 注意：当父节点是Flow模式时，当前节点也将转换为Flow模式
-     */
+    /// <summary>
+    /// 缩进模式
+    /// 注意：当父节点是Flow模式时，当前节点也将转换为Flow模式
+    /// </summary>
     Indent,
 
-    /** 流模式 - 线性模式 */
+    /// <summary>
+    /// 流模式(单行缩进)
+    /// <code>{x: 0, y: 1, z: 1}</code>
+    /// </summary>
     Flow,
 }
 }
