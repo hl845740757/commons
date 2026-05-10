@@ -43,7 +43,7 @@ public enum DeserializeFeatures
     /// 读取为DsonValue
     /// 注：字段应当声明为Object或DsonValue类型。
     /// </summary>
-	ReadAsDsonValue = 0x40,
+    ReadAsDsonValue = 0x40,
     /// <summary>
     /// 尝试从字符串中解析
     /// </summary>

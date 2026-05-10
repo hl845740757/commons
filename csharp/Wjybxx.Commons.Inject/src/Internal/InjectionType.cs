@@ -47,7 +47,7 @@ internal class InjectionType
     public InjectionType(Type implType) {
         this.type = implType ?? throw new ArgumentNullException(nameof(implType));
         injectionPoints = Util.GetInjectPoints(implType);
-        onCreateHook = Util.FindOnActiveMethod(implType);
+        onCreateHook = Util.FindOnCreateMethod(implType);
         onDisposeHook = Util.FindOnDisposeMethod(implType);
     }
 

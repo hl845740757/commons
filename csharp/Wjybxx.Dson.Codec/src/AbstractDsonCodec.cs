@@ -44,16 +44,16 @@ internal static class AbstractDsonCodec
         r = 0XFF;
         if (!IsOverwrite(type, "BeforeEncode")) r &= ~MASK_BEFORE_ENCODE;
         if (!IsOverwrite(type, "AfterDecode")) r &= ~MASK_AFTER_DECODE;
-        if (!IsOverwrite(type, "WriteObject")) r &= ~MASK_AFTER_DECODE;
-        if (!IsOverwrite(type, "ReadObject")) r &= ~MASK_AFTER_DECODE;
-        if (!IsOverwrite(type, "ReadField")) r &= ~MASK_AFTER_DECODE;
+        if (!IsOverwrite(type, "WriteObject")) r &= ~MASK_WRITE_OBJECT;
+        if (!IsOverwrite(type, "ReadObject")) r &= ~MASK_READ_OBJECT;
+        if (!IsOverwrite(type, "ReadField")) r &= ~MASK_READ_FIELD;
         cache.TryAdd(type, r);
         return r;
     }
 
     private static bool IsOverwrite(Type type, string methodName) {
         MethodInfo methodInfo = type.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-        if (methodInfo == null) throw new AssertionError();
+        if (methodInfo == null) throw new AssertionError(methodName);
         Type declaringType = methodInfo.DeclaringType!;
         if (declaringType.IsGenericType) {
             declaringType = declaringType.GetGenericTypeDefinition();

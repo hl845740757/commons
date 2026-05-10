@@ -126,10 +126,7 @@ internal class Injector : IInjector
 
     private object? TryGetInstanceFromParent(Type serviceType, string? name, bool optional) {
         if (parent == null) {
-            if (optional) {
-                return null;
-            }
-            throw new InjectionException($"serviceType: {serviceType} is not registered");
+            return optional ? null : throw new InjectionException($"serviceType: {serviceType} is not registered");
         }
         return parent.GetInstance(serviceType, name, optional);
     }
@@ -179,7 +176,7 @@ internal class Injector : IInjector
     private InjectionType GetOrCreateInjectionType(Type type) {
         if (!injectionTypeDic.TryGetValue(type, out InjectionType r)) {
             r = new InjectionType(type);
-            injectionTypeDic.TryAdd(type, r);
+            return injectionTypeDic.TryAdd(type, r) ? r : injectionTypeDic[type];
         }
         return r;
     }
@@ -208,12 +205,12 @@ internal class Injector : IInjector
         if (beanInfo.config.scope == InjectScope.Singleton) {
             r = beanInfo.instance;
             if (r != null) return r;
-            // 需要加锁竞争 -- double check
-            lock (beanInfo) {
-                if ((r = beanInfo.instance) != null) {
+            // 需要加锁竞争 -- 需要锁全局对象，否则多线程下可能出现死锁
+            lock (this) {
+                if ((r = beanInfo.instance) != null) { // double check 
                     return r;
                 }
-                if (beanInfo.creatingServiceType != null) {
+                if (beanInfo.creatingServiceType != null) { // 循环依赖
                     throw new InjectionException($"cyclic dependency, {beanInfo.creatingServiceType} => {serviceType}");
                 }
                 beanInfo.creatingServiceType = serviceType;

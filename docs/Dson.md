@@ -16,17 +16,14 @@ Dson最初是为序列化而创建的，但我们在这里只讨论文本格式�
 4. 易于维护(修改)
 5. 易于解析和输出
 6. 易于扩展
-7. 高性能
 
 ## Dson的特性
 
-1. 支持注释
-2. 支持指定值类型，精确解析
-3. 支持行合并，长内容行随意切割
-4. **支持纯文本输入**，所见即所得，真正摆脱转义字符
-5. 引号不是必须的
-6. **支持对象头**，可自定义对象头内容
-7. 支持读取Json
+1. **支持对象头**，可自定义对象头内容
+2. **字符串输入优化**，最大幅度摆脱转义字符
+3. 丰富的类型系统，二进制、时间、指针（引用）...
+4. 支持指定值类型，精确解析
+5. 支持注释
 
 ps: Dson与其它格式的最大的两点不同便是：对象头和Dson文本块。
 
@@ -77,10 +74,11 @@ Dson支持的值类型和内置结构体包括：
 | b   | bool      | 5  | bool值      |                                                                                        | @b true <br> true <br/> @b 1                                                                                      |
 | s   | string    | 6  | 字符串        |                                                                                        | "10"   <br>  abc                                                                                                  |
 | N   | null      | 7  | null，大写N   |                                                                                        | @N null <br> null                                                                                                 |
-| bin | binary    | 8  | 二进制        |                                                                                        | @bin "FFFE"          <br> @bin ""                                                                                 |
-| ptr | pointer   | 11 | 指针         | {<br> string collection;<br> long localId;<br> string localName;<br> int32 type;<br> } | 格式为单值 '@ptr localId' 格式或 object格式 <br/> @ptr 10001 <br> {@ptr localId: 10001, coll : global, type: 1 }            |
+| bin | binary    | 8  | 二进制        |                                                                                        | 十六进制编码<br>@bin "cafebabe" <br> @bin ""                                                                                |
+| ptr | pointer   | 11 | 指针         | {<br> string collection;<br> long localId;<br> string localName;<br> int32 type;<br> } | 单值或object结构<br/> @ptr 10001 <br> {@ptr localId: 10001, coll : global, type: 1 }                                   |
 | dt  | datetime  | 13 | 日期时间       | { <br>  int64 seconds; <br> int32 nanos;<br> int32 offset;<br> int32 enables; <br> }   | 单值或object结构<br/> @dt 2023-06-17T18:37:00 <br/>{@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100} |
 | ts  | timestamp | 14 | 时间戳        | { <br>  int64 seconds; <br> int32 nanos;<br> }                                         | 单值或object结构<br/> @ts 1715659200 <br/>{@ts seconds: 1715659200, nanos: 100}                                        |
+| D4  | double4   | 15 | 4元浮点数      | { <br>  double v0;<br> double v1;<br> double v2; <br> double v3;<br>}                  | obj或array格式<br/> {@D4 x: 1, y: 2, z:1, w: 0} <br/>[@D4 1, 1, 1, 0]                                                |
 |     | header    | 29 | 对象头        |                                                                                        | 对象形式： @{clsName: Vector3 } <br/> 简写形式： @{Vector3}                                                                 |
 |     | array     | 30 | 数组         |                                                                                        | \[ 1, 2, 3, 4, 5 ]                                                                                                |
 |     | object    | 31 | 对象/结构体     |                                                                                        | { name: wjybxx, age: 28 }                                                                                         |
@@ -316,6 +314,19 @@ PS：对于配置文件，指针的最大作用是复用和减少嵌套。
    @ts 1715659200
    @ts 1715659200100ms // ms结尾表示毫秒时间戳   
    {@ts seconds: 1715659200, millis: 100}
+```
+
+### double4
+
+1. double4用于特定场景下的性能优化，用于减少内存中的DsonObject和DsonArray对象。
+2. double4支持两种obj和array两种范式{@D4 x: 0, y: 0, z: 0, w: 0} 和 [@D4 ]
+3. 解码时忽略字段名，第一个输入默认存储在v0，第二个输入存储在v1，以此类推
+
+```
+   // obj 格式
+   {@D4 x: 1, y: 2, z:1, w: 0}
+   // array 格式
+   [@D4 1, 1, 1, 0]
 ```
 
 ### object

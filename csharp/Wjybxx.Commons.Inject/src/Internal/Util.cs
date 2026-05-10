@@ -38,7 +38,7 @@ internal static class Util
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public static MethodInfo? FindOnActiveMethod(Type type) {
+    public static MethodInfo? FindOnCreateMethod(Type type) {
         return FindAnnotatedMethod(type, typeof(InjectOnCreateAttribute));
     }
 

@@ -134,6 +134,7 @@ public sealed class CodeWriter
         importableNamespaces.Clear();
         typeSpecStack.Clear();
         namespaceStack.Clear();
+        pooledTypeNameStack.Clear();
     }
 
     /// <summary>

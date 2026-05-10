@@ -88,7 +88,7 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
             // 尝试转换为超类编码，写入超类的TypeInfo
             Type superType = CastEncoderType(type);
             if (superType != null) {
-                codecImpl = GetEncoder(type);
+                codecImpl = GetEncoder(superType);
             }
         }
         encoderDic.TryAdd(type, codecImpl); // 加入缓存避免每次全流程
@@ -130,7 +130,7 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
             // 尝试转换为子类解码，解码不涉及到写入TypeInfo
             Type subType = CastDecoderType(type);
             if (subType != null) {
-                codecImpl = GetDecoder(type);
+                codecImpl = GetDecoder(subType);
             }
         }
         decoderDic.TryAdd(type, codecImpl); // 加入缓存避免每次全流程

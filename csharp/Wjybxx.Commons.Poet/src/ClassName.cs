@@ -92,7 +92,7 @@ public class ClassName : TypeName
         this.declaredTypeArguments = ImmutableList<TypeName>.Empty;
     }
 
-    private ClassName(in Builder builder)
+    private ClassName(Builder builder)
         : base(builder.Attributes) {
         string ns = builder.Namespace;
         string simpleName = builder.Name;
@@ -475,6 +475,7 @@ public class ClassName : TypeName
         if (type == typeof(string)) return STRING;
         if (type == typeof(object)) return OBJECT;
 
+        if (type == typeof(decimal)) return DECIMAL; // decimal不是基础类型
         if (type == typeof(Enum)) return ENUM;
         if (type == typeof(ValueType)) return VALUE_TYPE;
         if (type == typeof(Nullable<>)) return NULLABLE;
@@ -516,7 +517,7 @@ public class ClassName : TypeName
 
     #endregion
 
-    public struct Builder
+    public class Builder
     {
         /// <summary>
         /// 外部类类名<see cref="Type.DeclaringType"/>
@@ -545,7 +546,7 @@ public class ClassName : TypeName
         internal string? Keyword { get; set; }
 
         public ClassName Build() {
-            return new ClassName(in this);
+            return new ClassName(this);
         }
     }
 }

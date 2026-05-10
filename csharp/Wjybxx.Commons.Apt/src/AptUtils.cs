@@ -319,7 +319,7 @@ public static class AptUtils
         containingTypes.Reverse();
 
         StringBuilder sb = new StringBuilder(32);
-        sb.Append(sb).Append('.');
+        sb.Append(ns).Append('.');
         foreach (INamedTypeSymbol containingType in containingTypes) {
             sb.Append(containingType.MetadataName);
             sb.Append('+');

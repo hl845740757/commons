@@ -148,7 +148,7 @@ public abstract class TypeName : IEquatable<TypeName>
     public static readonly ClassName FLOAT = new ClassName("System", "Single", "float");
     public static readonly ClassName DOUBLE = new ClassName("System", "Double", "double");
 
-    public static readonly ClassName BOOL = new ClassName("System", "Bool", "bool");
+    public static readonly ClassName BOOL = new ClassName("System", "Boolean", "bool");
     public static readonly ClassName BYTE = new ClassName("System", "Byte", "byte");
     public static readonly ClassName SBYTE = new ClassName("System", "SByte", "sbyte");
     public static readonly ClassName SHORT = new ClassName("System", "Int16", "short");

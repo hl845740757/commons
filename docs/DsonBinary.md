@@ -106,6 +106,29 @@ Dson提供了两个版本的二进制格式，从整体上看他们是一样的�
    output.WriteUint64(timestamp.seconds);
    output.WriteUint32(timestamp.nanos);
 ```
+#### Double4
+
+1. 前三个double使用wireType的比特位标记是否使用变长编码
+2. 第四个double固定使用变长编码(第四个数使用到的频率较低)
+
+```
+   if ((wireTypeBits & 0x01) != 0) {
+      output.WriteVarDouble(double4.v0);
+   } else {
+      output.WriteDouble(double4.v0);
+   }
+   if ((wireTypeBits & 0x02) != 0) {
+      output.WriteVarDouble(double4.v1);
+   } else {
+      output.WriteDouble(double4.v1);
+   }
+   if ((wireTypeBits & 0x04) != 0) {
+      output.WriteVarDouble(double4.v2);
+   } else {
+      output.WriteDouble(double4.v2);
+   }
+   output.WriteVarDouble(double4.v3);
+```
 
 ### 其它
 

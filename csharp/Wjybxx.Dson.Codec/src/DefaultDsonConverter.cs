@@ -124,7 +124,7 @@ public class DefaultDsonConverter : IDsonConverter
         EncodeObject(dsonWriter, value, declaredType, default);
         // 不销毁
         IDsonInput inputStream = DsonInputs.NewInstance(outputStream.Buffer, 0, outputStream.Position);
-        DsonBinaryReader<string> dsonReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
+        using DsonBinaryReader<string> dsonReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
         return DecodeObject(dsonReader, targetType, 0, factory);
     }
 

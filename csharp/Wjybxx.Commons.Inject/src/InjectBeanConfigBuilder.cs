@@ -95,7 +95,7 @@ public struct InjectBeanConfigBuilder
         // 检查泛型参数个数是否相同
         foreach (ServiceKey key in serviceKeys) {
             if (key.serviceType.GetGenericArguments().Length != implType.GetGenericArguments().Length) {
-                throw new ArgumentException($"service is not assignable from implType:, {key.serviceType}-{key.serviceName}-{implType}");
+                throw new ArgumentException($"service is not assignable from implType: {key.serviceType}-{key.serviceName}-{implType}");
             }
         }
     }
