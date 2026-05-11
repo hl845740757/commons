@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Benchmarks", "Wjybxx
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Logger.Unity", "Wjybxx.Logger.Unity\Wjybxx.Logger.Unity.csproj", "{28D59115-A522-4965-8F9F-D2A5D852BF0F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.AntPath", "Wjybxx.Commons.AntPath\Wjybxx.Commons.AntPath.csproj", "{69118ED4-2ECA-437B-95D6-BE76C425E366}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,5 +110,9 @@ Global
 		{28D59115-A522-4965-8F9F-D2A5D852BF0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28D59115-A522-4965-8F9F-D2A5D852BF0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28D59115-A522-4965-8F9F-D2A5D852BF0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69118ED4-2ECA-437B-95D6-BE76C425E366}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69118ED4-2ECA-437B-95D6-BE76C425E366}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69118ED4-2ECA-437B-95D6-BE76C425E366}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69118ED4-2ECA-437B-95D6-BE76C425E366}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
