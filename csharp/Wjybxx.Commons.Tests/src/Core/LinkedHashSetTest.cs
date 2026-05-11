@@ -228,4 +228,512 @@ public class LinkedHashSetTest
             Assert.That(realKey, Is.EqualTo(expectedKey));
         }
     }
+
+    // ============= 补充：API 语义 / 复杂场景测试 =============
+
+    /// <summary>
+    /// Add 返回 true/false，重复添加不修改顺序
+    /// </summary>
+    [Test]
+    public void TestAddReturnValue() {
+        LinkedHashSet<string> set = new();
+        Assert.IsTrue(set.Add("a"));
+        Assert.IsTrue(set.Add("b"));
+        Assert.IsFalse(set.Add("a")); // 重复
+        Assert.AreEqual(new[] { "a", "b" }, set.ToArray());
+        Assert.AreEqual(2, set.Count);
+    }
+
+    /// <summary>
+    /// AddFirst / AddLast 对已存在 key 应当返回 false，但仍要重排到首/尾
+    /// </summary>
+    [Test]
+    public void TestAddFirstLastReordersExisting() {
+        LinkedHashSet<string> set = new();
+        set.Add("a");
+        set.Add("b");
+        set.Add("c");
+
+        Assert.IsFalse(set.AddFirst("b")); // 已存在 → false，但移到头部
+        Assert.AreEqual(new[] { "b", "a", "c" }, set.ToArray());
+
+        Assert.IsFalse(set.AddLast("a")); // 已存在 → false，但移到尾部
+        Assert.AreEqual(new[] { "b", "c", "a" }, set.ToArray());
+
+        // 新元素插入
+        Assert.IsTrue(set.AddFirst("d"));
+        Assert.AreEqual(new[] { "d", "b", "c", "a" }, set.ToArray());
+        Assert.IsTrue(set.AddLast("e"));
+        Assert.AreEqual(new[] { "d", "b", "c", "a", "e" }, set.ToArray());
+    }
+
+    /// <summary>
+    /// AddFirstIfAbsent / AddLastIfAbsent 与 AddFirst/AddLast 的差异：已存在不重排
+    /// </summary>
+    [Test]
+    public void TestAddIfAbsentDoesNotReorder() {
+        LinkedHashSet<string> set = new();
+        set.Add("a");
+        set.Add("b");
+        set.Add("c");
+
+        Assert.IsFalse(set.AddFirstIfAbsent("b")); // 已存在 → false，不移动
+        Assert.AreEqual(new[] { "a", "b", "c" }, set.ToArray());
+
+        Assert.IsFalse(set.AddLastIfAbsent("a"));
+        Assert.AreEqual(new[] { "a", "b", "c" }, set.ToArray());
+
+        // 新元素插入到首/尾
+        Assert.IsTrue(set.AddFirstIfAbsent("d"));
+        Assert.AreEqual(new[] { "d", "a", "b", "c" }, set.ToArray());
+        Assert.IsTrue(set.AddLastIfAbsent("e"));
+        Assert.AreEqual(new[] { "d", "a", "b", "c", "e" }, set.ToArray());
+    }
+
+    /// <summary>
+    /// AddBefore / AddAfter 顺序与异常
+    /// </summary>
+    [Test]
+    public void TestAddBeforeAfter() {
+        LinkedHashSet<string> set = new();
+        set.Add("a");
+        set.Add("c");
+
+        set.AddAfter("b", "a"); // a, b, c
+        Assert.AreEqual(new[] { "a", "b", "c" }, set.ToArray());
+
+        set.AddBefore("z", "c"); // a, b, z, c
+        Assert.AreEqual(new[] { "a", "b", "z", "c" }, set.ToArray());
+
+        // 已存在 key 调用 AddAfter → 内部 TryInsert 返回 false，但随后会执行 MoveToAfter
+        set.AddAfter("a", "c"); // a 移动到 c 之后 → b, z, c, a
+        Assert.AreEqual(new[] { "b", "z", "c", "a" }, set.ToArray());
+
+        Assert.Throws<KeyNotFoundException>(() => set.AddAfter("x", "missing"));
+        Assert.Throws<KeyNotFoundException>(() => set.AddBefore("x", "missing"));
+        Assert.Throws<ArgumentException>(() => set.AddAfter("a", "a"));
+        Assert.Throws<ArgumentException>(() => set.AddBefore("a", "a"));
+    }
+
+    /// <summary>
+    /// MoveToFirst / MoveToLast / MoveToBefore / MoveToAfter 行为及异常
+    /// </summary>
+    [Test]
+    public void TestMoveOperations() {
+        LinkedHashSet<int> set = new();
+        for (int i = 0; i < 5; i++) set.Add(i);
+
+        set.MoveToFirst(3);
+        Assert.AreEqual(new[] { 3, 0, 1, 2, 4 }, set.ToArray());
+
+        set.MoveToLast(0);
+        Assert.AreEqual(new[] { 3, 1, 2, 4, 0 }, set.ToArray());
+
+        set.MoveToAfter(1, 4); // 1 移到 4 之后
+        Assert.AreEqual(new[] { 3, 2, 4, 1, 0 }, set.ToArray());
+
+        set.MoveToBefore(0, 3); // 0 移到 3 之前
+        Assert.AreEqual(new[] { 0, 3, 2, 4, 1 }, set.ToArray());
+
+        Assert.Throws<KeyNotFoundException>(() => set.MoveToFirst(99));
+        Assert.Throws<KeyNotFoundException>(() => set.MoveToLast(99));
+        Assert.Throws<KeyNotFoundException>(() => set.MoveToAfter(99, 0));
+        Assert.Throws<KeyNotFoundException>(() => set.MoveToAfter(0, 99));
+        Assert.Throws<InvalidOperationException>(() => set.MoveToAfter(0, 0));
+        Assert.Throws<InvalidOperationException>(() => set.MoveToBefore(0, 0));
+    }
+
+    /// <summary>
+    /// NextKey / PrevKey 链式遍历 + 不存在 key 抛异常
+    /// </summary>
+    [Test]
+    public void TestNextPrevKey() {
+        LinkedHashSet<string> set = new();
+        set.Add("a");
+        set.Add("b");
+        set.Add("c");
+
+        Assert.IsTrue(set.NextKey("a", out string n1));
+        Assert.AreEqual("b", n1);
+        Assert.IsTrue(set.NextKey("b", out string n2));
+        Assert.AreEqual("c", n2);
+        Assert.IsFalse(set.NextKey("c", out string _)); // 末尾
+
+        Assert.IsTrue(set.PrevKey("c", out string p1));
+        Assert.AreEqual("b", p1);
+        Assert.IsTrue(set.PrevKey("b", out string p2));
+        Assert.AreEqual("a", p2);
+        Assert.IsFalse(set.PrevKey("a", out string _)); // 开头
+
+        Assert.Throws<KeyNotFoundException>(() => set.NextKey("missing", out string _));
+        Assert.Throws<KeyNotFoundException>(() => set.PrevKey("missing", out string _));
+    }
+
+    /// <summary>
+    /// PeekFirst / PeekLast / RemoveFirst / RemoveLast 在空集合上的行为
+    /// </summary>
+    [Test]
+    public void TestPeekRemoveOnEmpty() {
+        LinkedHashSet<int> set = new();
+        Assert.Throws<InvalidOperationException>(() => set.PeekFirst());
+        Assert.Throws<InvalidOperationException>(() => set.PeekLast());
+        Assert.Throws<InvalidOperationException>(() => set.RemoveFirst());
+        Assert.Throws<InvalidOperationException>(() => set.RemoveLast());
+
+        Assert.IsFalse(set.TryPeekFirst(out _));
+        Assert.IsFalse(set.TryPeekLast(out _));
+        Assert.IsFalse(set.TryRemoveFirst(out _));
+        Assert.IsFalse(set.TryRemoveLast(out _));
+    }
+
+    /// <summary>
+    /// PeekFirst / PeekLast / RemoveFirst / RemoveLast 在有元素时的正确性
+    /// </summary>
+    [Test]
+    public void TestPeekRemoveFirstLast() {
+        LinkedHashSet<int> set = new();
+        for (int i = 1; i <= 4; i++) set.Add(i);
+
+        Assert.AreEqual(1, set.PeekFirst());
+        Assert.AreEqual(4, set.PeekLast());
+        Assert.IsTrue(set.TryPeekFirst(out int f));
+        Assert.AreEqual(1, f);
+        Assert.IsTrue(set.TryPeekLast(out int l));
+        Assert.AreEqual(4, l);
+
+        Assert.AreEqual(1, set.RemoveFirst());
+        Assert.AreEqual(4, set.RemoveLast());
+        Assert.AreEqual(new[] { 2, 3 }, set.ToArray());
+
+        Assert.IsTrue(set.TryRemoveFirst(out int rf));
+        Assert.AreEqual(2, rf);
+        Assert.IsTrue(set.TryRemoveLast(out int rl));
+        Assert.AreEqual(3, rl);
+        Assert.AreEqual(0, set.Count);
+    }
+
+    /// <summary>
+    /// Reversed 视图、双重 Reversed
+    /// </summary>
+    [Test]
+    public void TestReversedView() {
+        LinkedHashSet<int> set = new();
+        for (int i = 0; i < 5; i++) set.Add(i);
+
+        ISequencedSet<int> rev = set.Reversed();
+        List<int> revKeys = new();
+        foreach (int v in rev) revKeys.Add(v);
+        Assert.AreEqual(new[] { 4, 3, 2, 1, 0 }, revKeys);
+
+        ISequencedSet<int> revRev = rev.Reversed();
+        List<int> revRevKeys = new();
+        foreach (int v in revRev) revRevKeys.Add(v);
+        Assert.AreEqual(new[] { 0, 1, 2, 3, 4 }, revRevKeys);
+    }
+
+    /// <summary>
+    /// CopyTo 正向 / 反向
+    /// </summary>
+    [Test]
+    public void TestCopyTo() {
+        LinkedHashSet<int> set = new();
+        for (int i = 0; i < 5; i++) set.Add(i);
+
+        int[] forward = new int[5];
+        set.CopyTo(forward, 0);
+        Assert.AreEqual(new[] { 0, 1, 2, 3, 4 }, forward);
+
+        int[] reversed = new int[5];
+        set.CopyTo(reversed, 0, true);
+        Assert.AreEqual(new[] { 4, 3, 2, 1, 0 }, reversed);
+
+        // 偏移
+        int[] withOffset = new int[7];
+        set.CopyTo(withOffset, 2);
+        Assert.AreEqual(new[] { 0, 0, 0, 1, 2, 3, 4 }, withOffset);
+
+        // 容量不足
+        int[] tooSmall = new int[3];
+        Assert.Throws<ArgumentException>(() => set.CopyTo(tooSmall, 0));
+    }
+
+    /// <summary>
+    /// 迭代过程中修改集合应触发版本冲突
+    /// </summary>
+    [Test]
+    public void TestEnumeratorVersionConflict() {
+        LinkedHashSet<int> set = new();
+        for (int i = 0; i < 5; i++) set.Add(i);
+
+        var e1 = set.GetEnumerator();
+        e1.MoveNext();
+        set.Add(99);
+        Assert.Throws<InvalidOperationException>(() => e1.MoveNext());
+
+        var e2 = set.GetEnumerator();
+        e2.MoveNext();
+        set.Remove(99);
+        Assert.Throws<InvalidOperationException>(() => e2.Reset());
+    }
+
+    /// <summary>
+    /// IUnsafeIterator.Remove 在迭代中删除每隔一个元素
+    /// </summary>
+    [Test]
+    public void TestUnsafeIteratorRemoveDuringIteration() {
+        LinkedHashSet<int> set = new();
+        for (int i = 0; i < 10; i++) set.Add(i);
+
+        var it = set.GetEnumerator();
+        bool deleteFlag = false;
+        while (it.MoveNext()) {
+            if (deleteFlag) {
+                it.Remove();
+            }
+            deleteFlag = !deleteFlag;
+        }
+        Assert.AreEqual(new[] { 0, 2, 4, 6, 8 }, set.ToArray());
+    }
+
+    /// <summary>
+    /// nullKey 完整支持：add、contains、remove、移动、迭代
+    /// </summary>
+    [Test]
+    public void TestNullKeyFullSupport() {
+        LinkedHashSet<string> set = new();
+        set.Add("a");
+        Assert.IsTrue(set.Add(null));
+        set.Add("b");
+        Assert.IsFalse(set.Add(null)); // 重复
+
+        Assert.IsTrue(set.Contains(null));
+        Assert.AreEqual(new[] { "a", null, "b" }, set.ToArray());
+
+        set.MoveToFirst(null);
+        Assert.AreEqual(new[] { null, "a", "b" }, set.ToArray());
+
+        set.MoveToLast(null);
+        Assert.AreEqual(new[] { "a", "b", null }, set.ToArray());
+
+        Assert.IsTrue(set.Remove(null));
+        Assert.IsFalse(set.Contains(null));
+        Assert.AreEqual(2, set.Count);
+    }
+
+    /// <summary>
+    /// 哈希冲突压力：所有 key 强制返回相同 hash，依旧能正确 contains/remove，且插入顺序保持
+    /// </summary>
+    [Test]
+    public void TestHashCollisionStress() {
+        LinkedHashSet<string> set = new(16, 0.5f, new ConstantHashComparer());
+        const int n = 500;
+        List<string> keys = new();
+        for (int i = 0; i < n; i++) {
+            string key = "key_" + i;
+            keys.Add(key);
+            set.Add(key);
+        }
+        Assert.AreEqual(n, set.Count);
+        Assert.AreEqual(keys.ToArray(), set.ToArray());
+
+        Random rng = new(20251205);
+        for (int i = 0; i < 200; i++) {
+            int idx = rng.Next(keys.Count);
+            Assert.IsTrue(set.Contains(keys[idx]));
+        }
+
+        for (int i = 0; i < n; i += 2) {
+            Assert.IsTrue(set.Remove(keys[i]));
+        }
+        List<string> expected = new();
+        for (int i = 1; i < n; i += 2) expected.Add(keys[i]);
+        Assert.AreEqual(expected, set.ToArray());
+    }
+
+    private sealed class ConstantHashComparer : IEqualityComparer<string>
+    {
+        public bool Equals(string x, string y) => string.Equals(x, y);
+        public int GetHashCode(string obj) => 0;
+    }
+
+    /// <summary>
+    /// 多次 rehash 后插入顺序保持不变
+    /// </summary>
+    [Test]
+    public void TestRehashPreservesOrder() {
+        LinkedHashSet<int> set = new(2);
+        const int n = 1000;
+        for (int i = 0; i < n; i++) {
+            set.Add(i);
+        }
+        int idx = 0;
+        foreach (int v in set) {
+            Assert.AreEqual(idx, v);
+            idx++;
+        }
+        Assert.AreEqual(n, idx);
+    }
+
+    /// <summary>
+    /// 从 IEnumerable 构造保持源序
+    /// </summary>
+    [Test]
+    public void TestConstructFromEnumerable() {
+        int[] src = { 5, 3, 9, 1, 7 };
+        LinkedHashSet<int> set = new(src);
+        Assert.AreEqual(src, set.ToArray());
+
+        // 含重复 → 仅保留首次出现
+        int[] withDup = { 1, 2, 1, 3, 2, 4 };
+        LinkedHashSet<int> set2 = new(withDup);
+        Assert.AreEqual(new[] { 1, 2, 3, 4 }, set2.ToArray());
+    }
+
+    /// <summary>
+    /// Clear 后能正确重用
+    /// </summary>
+    [Test]
+    public void TestClearAndReuse() {
+        LinkedHashSet<int> set = new();
+        for (int i = 0; i < 50; i++) set.Add(i);
+        set.Clear();
+        Assert.AreEqual(0, set.Count);
+        Assert.IsTrue(set.IsEmpty);
+        Assert.IsFalse(set.Contains(0));
+        Assert.IsFalse(set.TryPeekFirst(out _));
+
+        set.Add(99);
+        Assert.AreEqual(1, set.Count);
+        Assert.AreEqual(99, set.PeekFirst());
+        Assert.AreEqual(99, set.PeekLast());
+    }
+
+    /// <summary>
+    /// 与 LinkedList+HashSet 参考实现的随机 Oracle 对照测试
+    /// </summary>
+    [Test]
+    [Repeat(3)]
+    public void TestOracleAgainstReferenceImpl() {
+        const int rounds = 5000;
+        Random rng = new(20260511);
+
+        LinkedHashSet<int> set = new();
+        LinkedList<int> orderRef = new();
+        HashSet<int> presenceRef = new();
+
+        for (int i = 0; i < rounds; i++) {
+            int op = rng.Next(11);
+            int key = rng.Next(100); // 小 key 域，制造大量重复
+
+            switch (op) {
+                case 0: { // Add
+                    bool added = set.Add(key);
+                    if (presenceRef.Add(key)) {
+                        Assert.IsTrue(added);
+                        orderRef.AddLast(key);
+                    } else {
+                        Assert.IsFalse(added);
+                    }
+                    break;
+                }
+                case 1: { // AddFirst (重排或插入)
+                    bool inserted = set.AddFirst(key);
+                    if (presenceRef.Contains(key)) {
+                        Assert.IsFalse(inserted);
+                        orderRef.Remove(key);
+                    } else {
+                        Assert.IsTrue(inserted);
+                        presenceRef.Add(key);
+                    }
+                    orderRef.AddFirst(key);
+                    break;
+                }
+                case 2: { // AddLast
+                    bool inserted = set.AddLast(key);
+                    if (presenceRef.Contains(key)) {
+                        Assert.IsFalse(inserted);
+                        orderRef.Remove(key);
+                    } else {
+                        Assert.IsTrue(inserted);
+                        presenceRef.Add(key);
+                    }
+                    orderRef.AddLast(key);
+                    break;
+                }
+                case 3: { // AddFirstIfAbsent (仅插入不重排)
+                    bool inserted = set.AddFirstIfAbsent(key);
+                    if (presenceRef.Add(key)) {
+                        Assert.IsTrue(inserted);
+                        orderRef.AddFirst(key);
+                    } else {
+                        Assert.IsFalse(inserted);
+                    }
+                    break;
+                }
+                case 4: { // AddLastIfAbsent
+                    bool inserted = set.AddLastIfAbsent(key);
+                    if (presenceRef.Add(key)) {
+                        Assert.IsTrue(inserted);
+                        orderRef.AddLast(key);
+                    } else {
+                        Assert.IsFalse(inserted);
+                    }
+                    break;
+                }
+                case 5: { // Remove
+                    bool removed = set.Remove(key);
+                    if (presenceRef.Remove(key)) {
+                        Assert.IsTrue(removed);
+                        orderRef.Remove(key);
+                    } else {
+                        Assert.IsFalse(removed);
+                    }
+                    break;
+                }
+                case 6: { // Contains
+                    Assert.AreEqual(presenceRef.Contains(key), set.Contains(key));
+                    break;
+                }
+                case 7: { // MoveToFirst
+                    if (presenceRef.Contains(key)) {
+                        set.MoveToFirst(key);
+                        orderRef.Remove(key);
+                        orderRef.AddFirst(key);
+                    }
+                    break;
+                }
+                case 8: { // MoveToLast
+                    if (presenceRef.Contains(key)) {
+                        set.MoveToLast(key);
+                        orderRef.Remove(key);
+                        orderRef.AddLast(key);
+                    }
+                    break;
+                }
+                case 9: { // RemoveFirst
+                    if (orderRef.Count > 0) {
+                        int removed = set.RemoveFirst();
+                        int expected = orderRef.First!.Value;
+                        Assert.AreEqual(expected, removed);
+                        orderRef.RemoveFirst();
+                        presenceRef.Remove(expected);
+                    }
+                    break;
+                }
+                case 10: { // RemoveLast
+                    if (orderRef.Count > 0) {
+                        int removed = set.RemoveLast();
+                        int expected = orderRef.Last!.Value;
+                        Assert.AreEqual(expected, removed);
+                        orderRef.RemoveLast();
+                        presenceRef.Remove(expected);
+                    }
+                    break;
+                }
+            }
+        }
+
+        Assert.AreEqual(orderRef.Count, set.Count);
+        Assert.AreEqual(orderRef.ToArray(), set.ToArray());
+    }
 }

@@ -260,7 +260,7 @@ public class ArrayDeque<T> : IDeque<T>
 
     /** 性能较差，不建议调用 */
     public bool Remove(T item) {
-        int index = IndexOf(item);
+        int index = _head >= 0 ? IndexOf(item) : -1;
         if (index < 0) {
             return false;
         }
@@ -333,6 +333,7 @@ public class ArrayDeque<T> : IDeque<T>
     private int IndexOf(T item) {
         int head = _head;
         int tail = _tail;
+        if (head < 0) return -1;
         // 显式测试null可能导致装箱
         IEqualityComparer<T> comparer = EqualityComparer<T>.Default;
         if (head <= tail) {
