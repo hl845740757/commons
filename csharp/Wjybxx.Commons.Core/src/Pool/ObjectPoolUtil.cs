@@ -88,6 +88,7 @@ public static class ObjectPoolUtil
     public static readonly Func<StringBuilder> stringBuilderFactory = () => new StringBuilder();
     public static readonly Action<StringBuilder> stringBuilderCleaner = sb => sb.Clear();
 
+    // 默认容量版
     public static ObjectPool<StringBuilder> NewStringBuilderPool(int poolSize) {
         return new ObjectPool<StringBuilder>(stringBuilderFactory, stringBuilderCleaner, poolSize);
     }
@@ -120,50 +121,78 @@ public static class ObjectPoolUtil
         return new ObjectPool<LinkedDictionary<K, V>>(ObjectPoolUtil<K, V>.linkedDictionaryFactory, ObjectPoolUtil<K, V>.cleaner, poolSize);
     }
 
+    // 可指定初始容量版
+    public static ObjectPool<List<T>> NewListPool<T>(int initCapacity, int poolSize) {
+        return new ObjectPool<List<T>>(() => new List<T>(initCapacity), ObjectPoolUtil<T>.cleaner, poolSize);
+    }
+
+    public static ObjectPool<HashSet<T>> NewHashSetPool<T>(int initCapacity, int poolSize) {
+        return new ObjectPool<HashSet<T>>(() => new HashSet<T>(initCapacity), ObjectPoolUtil<T>.cleaner, poolSize);
+    }
+
+    public static ObjectPool<LinkedHashSet<T>> NewLinkedHashSetPool<T>(int initCapacity, int poolSize) {
+        return new ObjectPool<LinkedHashSet<T>>(() => new LinkedHashSet<T>(initCapacity), ObjectPoolUtil<T>.cleaner, poolSize);
+    }
+
+    public static ObjectPool<Queue<T>> NewQueuePool<T>(int initCapacity, int poolSize) {
+        return new ObjectPool<Queue<T>>(() => new Queue<T>(initCapacity), ObjectPoolUtil<T>.queueCleaner, poolSize);
+    }
+
+    public static ObjectPool<Stack<T>> NewStackPool<T>(int initCapacity, int poolSize) {
+        return new ObjectPool<Stack<T>>(() => new Stack<T>(initCapacity), ObjectPoolUtil<T>.stackCleaner, poolSize);
+    }
+
+    public static ObjectPool<Dictionary<K, V>> NewDictionaryPool<K, V>(int initCapacity, int poolSize) {
+        return new ObjectPool<Dictionary<K, V>>(() => new Dictionary<K, V>(initCapacity), ObjectPoolUtil<K, V>.cleaner, poolSize);
+    }
+
+    public static ObjectPool<LinkedDictionary<K, V>> NewLinkedDictionaryPool<K, V>(int initCapacity, int poolSize) {
+        return new ObjectPool<LinkedDictionary<K, V>>(() => new LinkedDictionary<K, V>(initCapacity), ObjectPoolUtil<K, V>.cleaner, poolSize);
+    }
     #endregion
 
     #region 集合辅助方法
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static List<T> ClearAndReturn<T>(this List<T> list) {
-        list.Clear();
-        return list;
+    public static List<T> ClearAndReturn<T>(this List<T> self) {
+        self.Clear();
+        return self;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static HashSet<T> ClearAndReturn<T>(this HashSet<T> hashSet) {
-        hashSet.Clear();
-        return hashSet;
+    public static HashSet<T> ClearAndReturn<T>(this HashSet<T> self) {
+        self.Clear();
+        return self;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static LinkedHashSet<T> ClearAndReturn<T>(this LinkedHashSet<T> hashSet) {
-        hashSet.Clear();
-        return hashSet;
+    public static LinkedHashSet<T> ClearAndReturn<T>(this LinkedHashSet<T> self) {
+        self.Clear();
+        return self;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Queue<T> ClearAndReturn<T>(this Queue<T> queue) {
-        queue.Clear();
-        return queue;
+    public static Queue<T> ClearAndReturn<T>(this Queue<T> self) {
+        self.Clear();
+        return self;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Stack<T> ClearAndReturn<T>(this Stack<T> stack) {
-        stack.Clear();
-        return stack;
+    public static Stack<T> ClearAndReturn<T>(this Stack<T> self) {
+        self.Clear();
+        return self;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Dictionary<K, V> ClearAndReturn<K, V>(this Dictionary<K, V> dictionary) {
-        dictionary.Clear();
-        return dictionary;
+    public static Dictionary<K, V> ClearAndReturn<K, V>(this Dictionary<K, V> self) {
+        self.Clear();
+        return self;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static LinkedDictionary<K, V> ClearAndReturn<K, V>(this LinkedDictionary<K, V> dictionary) {
-        dictionary.Clear();
-        return dictionary;
+    public static LinkedDictionary<K, V> ClearAndReturn<K, V>(this LinkedDictionary<K, V> self) {
+        self.Clear();
+        return self;
     }
 
     #endregion

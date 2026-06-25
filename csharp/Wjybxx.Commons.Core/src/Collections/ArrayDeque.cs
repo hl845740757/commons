@@ -511,7 +511,7 @@ public class ArrayDeque<T> : IDeque<T>
         }
         // Double capacity if small; else grow by 50%
         int oldCapacity = _elements.Length;
-        int growUp = oldCapacity < 64 ? oldCapacity : oldCapacity >> 1;
+        int growUp = oldCapacity < 64 ? Math.Max(4, oldCapacity) : oldCapacity >> 1;
         if (growUp < minGrowUp) {
             growUp = minGrowUp;
         }

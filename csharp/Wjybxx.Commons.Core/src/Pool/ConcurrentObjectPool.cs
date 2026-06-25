@@ -50,8 +50,6 @@ public abstract class ConcurrentObjectPool
 [ThreadSafe]
 public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> where T : class
 {
-    private static readonly Action<T> DO_NOTHING = _ => { };
-
     private readonly Func<T> _factory;
     private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
@@ -66,10 +64,10 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
     /// <param name="poolSize">池大小；0表示不缓存对象</param>
     /// <param name="filter">回收对象的过滤器</param>
     /// <param name="destroyer">对象销毁器</param>
-    public ConcurrentObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64,
+    public ConcurrentObjectPool(Func<T> factory, Action<T> cleaner, int poolSize = 64,
                                 Func<T, bool>? filter = null, Action<T>? destroyer = null) {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        _cleaner = cleaner ?? DO_NOTHING;
+        _cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));
         _filter = filter;
         _destroyer = destroyer;
         _freeObjects = new MpmcObjectBucket<T>(poolSize);

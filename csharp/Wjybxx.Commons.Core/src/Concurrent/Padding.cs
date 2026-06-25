@@ -26,11 +26,9 @@ namespace Wjybxx.Commons.Concurrent
 /// 应用于class类型时必须显式应用<see cref="LayoutKind.Sequential"/>值；如果不能指定内存布局（比如存在继承的时候），请封装额外的结构体来存储数据。
 /// 默认情况下，C#和C++编译器会将<see cref="LayoutKind.Sequential"/>布局值应用于结构。 对于类，必须显式应用<see cref="LayoutKind.Sequential"/>值.
 /// </summary>
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 56)]
 public readonly struct Padding56
 {
-    [FieldOffset(48)]
-    private readonly long _padding;
 }
 
 /// <summary>
@@ -39,10 +37,8 @@ public readonly struct Padding56
 /// 应用于class类型时必须显式应用<see cref="LayoutKind.Sequential"/>值；如果不能指定内存布局（比如存在继承的时候），请封装额外的结构体来存储数据。
 /// 默认情况下，C#和C++编译器会将<see cref="LayoutKind.Sequential"/>布局值应用于结构。 对于类，必须显式应用<see cref="LayoutKind.Sequential"/>值.
 /// </summary>
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 64)]
 public readonly struct Padding64
 {
-    [FieldOffset(56)]
-    private readonly long _padding;
 }
 }

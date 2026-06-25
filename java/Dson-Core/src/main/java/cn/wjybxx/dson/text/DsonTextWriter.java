@@ -335,6 +335,10 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     // region 简单值
 
     private void printInt32(DsonPrinter printer, int value, NumberStyle style) {
+        if (style == NumberStyle.SIMPLE) {
+            printer.fastPrint(value);
+            return;
+        }
         StyleOut styleOut = this.styleOut;
         style.toString(value, styleOut.reset());
         if (styleOut.isTyped()) {
@@ -344,6 +348,10 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     }
 
     private void printInt64(DsonPrinter printer, long value, NumberStyle style) {
+        if (style == NumberStyle.SIMPLE) {
+            printer.fastPrint(value, false);
+            return;
+        }
         StyleOut styleOut = this.styleOut;
         style.toString(value, styleOut.reset());
         if (styleOut.isTyped()) {
@@ -443,7 +451,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         // 只有localId时简写
         if (objectPtr.canBeAbbreviated()) {
             printer.fastPrint("@ptr ");
-            printer.fastPrint(Long.toString(objectPtr.getLocalId()));
+            printer.fastPrint(objectPtr.getLocalId(), true);
             return;
         }
 
@@ -452,7 +460,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         {
             printer.fastPrint(ObjectPtr.NAMES_LOCAL_ID);
             printer.fastPrint(": ");
-            printer.fastPrint(Long.toString(objectPtr.getLocalId()));
+            printer.fastPrint(objectPtr.getLocalId(), true);
         }
         if (objectPtr.hasLocalPath()) {
             printer.fastPrint(", ");
@@ -473,7 +481,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer.printlnIfExceed(softLineLength);
             printer.fastPrint(ObjectPtr.NAMES_TYPE);
             printer.fastPrint(": ");
-            printer.fastPrint(Integer.toString(objectPtr.getType()));
+            printer.fastPrint(objectPtr.getType());
         }
         printer.print('}');
     }
@@ -510,11 +518,11 @@ public final class DsonTextWriter extends AbstractDsonWriter {
                 if (dateTime.canConvertNanosToMillis()) {
                     printer.fastPrint(ExtDateTime.NAMES_MILLIS);
                     printer.fastPrint(": ");
-                    printer.fastPrint(Integer.toString(dateTime.convertNanosToMillis()));
+                    printer.fastPrint(dateTime.convertNanosToMillis());
                 } else {
                     printer.fastPrint(ExtDateTime.NAMES_NANOS);
                     printer.fastPrint(": ");
-                    printer.fastPrint(Integer.toString(dateTime.getNanos()));
+                    printer.fastPrint(dateTime.getNanos());
                 }
             }
         }
@@ -537,21 +545,21 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         writeCurrentName(printer, DsonType.TIMESTAMP);
         if (timestamp.getNanos() == 0) { // 打印为缩写
             printer.fastPrint("@ts ");
-            printer.fastPrint(Long.toString(timestamp.getSeconds()));
+            printer.fastPrint(timestamp.getSeconds(), true);
         } else if (timestamp.canConvertNanosToMillis()) {
             printer.fastPrint("@ts ");
-            printer.fastPrint(Long.toString(timestamp.toEpochMillis()));
+            printer.fastPrint(timestamp.toEpochMillis(), true);
             printer.fastPrint("ms");
         } else {
             printer.fastPrint("{@ts ");
             printer.fastPrint(Timestamp.NAMES_SECONDS);
             printer.fastPrint(": ");
-            printer.fastPrint(Long.toString(timestamp.getSeconds()));
+            printer.fastPrint(timestamp.getSeconds(), true);
             printer.fastPrint(", ");
 
             printer.fastPrint(Timestamp.NAMES_NANOS);
             printer.fastPrint(": ");
-            printer.fastPrint(Integer.toString(timestamp.getNanos()));
+            printer.fastPrint(timestamp.getNanos());
             printer.print('}');
         }
     }

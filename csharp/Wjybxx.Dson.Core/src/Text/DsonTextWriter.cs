@@ -329,6 +329,10 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrintInt32(DsonPrinter printer, int value, NumberStyle style) {
+        if (style == NumberStyle.Simple) {
+            printer.FastPrint(value);
+            return;
+        }
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
             printer.FastPrint("@i ");
@@ -338,6 +342,10 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrintInt64(DsonPrinter printer, long value, NumberStyle style) {
+        if (style == NumberStyle.Simple) {
+            printer.FastPrint(value);
+            return;
+        }
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
             printer.FastPrint("@L ");
@@ -426,7 +434,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         // 只有localId时简写
         if (objectPtr.CanBeAbbreviated) {
             printer.FastPrint("@ptr ");
-            printer.FastPrint(objectPtr.LocalId.ToString());
+            printer.FastPrint(objectPtr.LocalId, true);
             return;
         }
 
@@ -435,7 +443,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         {
             printer.FastPrint(ObjectPtr.NamesLocalId);
             printer.FastPrint(": ");
-            printer.FastPrint(objectPtr.LocalId.ToString());
+            printer.FastPrint(objectPtr.LocalId, true);
         }
         if (objectPtr.HashLocalPath) {
             printer.FastPrint(", ");
@@ -456,7 +464,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             printer.PrintlnIfExceed(softLineLength);
             printer.FastPrint(ObjectPtr.NamesType);
             printer.FastPrint(": ");
-            printer.FastPrint(objectPtr.Type.ToString());
+            printer.FastPrint(objectPtr.Type);
         }
         printer.Print('}');
     }
@@ -492,11 +500,11 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
                 if (dateTime.CanConvertNanosToMillis()) {
                     printer.FastPrint(ExtDateTime.NamesMillis);
                     printer.FastPrint(": ");
-                    printer.FastPrint(dateTime.ConvertNanosToMillis().ToString());
+                    printer.FastPrint(dateTime.ConvertNanosToMillis());
                 } else {
                     printer.FastPrint(ExtDateTime.NamesNanos);
                     printer.FastPrint(": ");
-                    printer.FastPrint(dateTime.Nanos.ToString());
+                    printer.FastPrint(dateTime.Nanos);
                 }
             }
         }
@@ -518,21 +526,21 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         WriteCurrentName(printer, DsonType.Timestamp);
         if (timestamp.Nanos == 0) { // 打印为缩写
             printer.FastPrint("@ts ");
-            printer.FastPrint(timestamp.Seconds.ToString());
+            printer.FastPrint(timestamp.Seconds, true);
         } else if (timestamp.CanConvertNanosToMillis()) {
             printer.FastPrint("@ts ");
-            printer.FastPrint(timestamp.ToEpochMillis().ToString());
+            printer.FastPrint(timestamp.ToEpochMillis(), true);
             printer.FastPrint("ms");
         } else {
             printer.FastPrint("{@ts ");
             printer.FastPrint(Timestamp.NamesSeconds);
             printer.FastPrint(": ");
-            printer.FastPrint(timestamp.Seconds.ToString());
+            printer.FastPrint(timestamp.Seconds, true);
             printer.FastPrint(", ");
 
             printer.FastPrint(Timestamp.NamesNanos);
             printer.FastPrint(": ");
-            printer.FastPrint(timestamp.Nanos.ToString());
+            printer.FastPrint(timestamp.Nanos);
             printer.Print('}');
         }
     }

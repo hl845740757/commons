@@ -30,6 +30,7 @@ namespace Wjybxx.Commons.Collections
 /// 注：
 /// 1.可通过<see cref="GetPair(int)"/>以数组方式迭代，且有更好的迭代效率。
 /// 2.可通过<see cref="AddMultiple"/>将字典视作List。
+/// 3.暂不支持自定义Key比较器
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
 /// <typeparam name="TValue"></typeparam>
@@ -460,9 +461,12 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
             _table = new Node[expectedCount < 4 ? 4 : expectedCount];
             return;
         }
-        // 保持小步增长
         int oldCapacity = _table.Length;
         int minGrowUp = expectedCount - oldCapacity;
+        if (minGrowUp <= 0) {
+            return;
+        }
+        // 保持小步增长
         int growUp = oldCapacity <= 16 ? 4 : 8;
         if (growUp < minGrowUp) {
             growUp = minGrowUp;

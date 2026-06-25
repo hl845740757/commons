@@ -325,7 +325,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         set => stateList = value ?? new List<Task<T>>(); // null处理
     }
 
-    public IStateMachineHandler<T>? Handler {
+    public IStateMachineHandler<T> Handler {
         get => handler;
         set => handler = value ?? DefaultStateMachineHandler<T>.Inst; // null处理
     }

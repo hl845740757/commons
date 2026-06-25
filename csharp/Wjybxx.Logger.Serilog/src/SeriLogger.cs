@@ -54,28 +54,29 @@ internal sealed class SeriLogger : ILogger
             _ => false
         };
     }
-
-    public void Log(Level level, Exception ex) {
+    
+    
+    public void Log(Level level, string format) {
         if (!IsEnabled(level)) return;
         switch (level) {
             case Level.Trace: {
-                _logger.Verbose(ex, CheckFormat(null));
+                _logger.Verbose(CheckFormat(format));
                 break;
             }
             case Level.Debug: {
-                _logger.Debug(ex, CheckFormat(null));
+                _logger.Debug(CheckFormat(format));
                 break;
             }
             case Level.Info: {
-                _logger.Information(ex, CheckFormat(null));
+                _logger.Information(CheckFormat(format));
                 break;
             }
             case Level.Warn: {
-                _logger.Warning(ex, CheckFormat(null));
+                _logger.Warning(CheckFormat(format));
                 break;
             }
             case Level.Error: {
-                _logger.Error(ex, CheckFormat(null));
+                _logger.Error(CheckFormat(format));
                 break;
             }
         }
@@ -107,6 +108,32 @@ internal sealed class SeriLogger : ILogger
         }
     }
 
+    public void Log(Level level, Exception ex) {
+        if (!IsEnabled(level)) return;
+        switch (level) {
+            case Level.Trace: {
+                _logger.Verbose(ex, CheckFormat(null));
+                break;
+            }
+            case Level.Debug: {
+                _logger.Debug(ex, CheckFormat(null));
+                break;
+            }
+            case Level.Info: {
+                _logger.Information(ex, CheckFormat(null));
+                break;
+            }
+            case Level.Warn: {
+                _logger.Warning(ex, CheckFormat(null));
+                break;
+            }
+            case Level.Error: {
+                _logger.Error(ex, CheckFormat(null));
+                break;
+            }
+        }
+    }
+    
     public void Log(Level level, Exception? ex, string format) {
         if (!IsEnabled(level)) return;
         switch (level) {

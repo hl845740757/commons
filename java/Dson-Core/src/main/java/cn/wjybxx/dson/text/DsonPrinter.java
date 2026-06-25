@@ -145,6 +145,28 @@ public final class DsonPrinter implements AutoCloseable {
         column++;
     }
 
+    /** 打印int值，避免toString的额外分配 */
+    public void fastPrint(int value) {
+        int prevLen = builder.length();
+        builder.append(value);
+        column += builder.length() - prevLen;
+    }
+
+    /**
+     * 打印long值，避免toString的额外分配
+     *
+     * @param untyped 是否不打印类型标签；为true时即使数值超过double的精确表示范围也不打印{@code @L}前缀。
+     *                当long处于明确的类型上下文中时（如@ptr、@ts），应传true以避免插入非法的类型标签。
+     */
+    public void fastPrint(long value, boolean untyped) {
+        int prevLen = builder.length();
+        if (!untyped && NumberStyle.isUnsafeLong(value)) {
+            builder.append("@L ");
+        }
+        builder.append(value);
+        column += builder.length() - prevLen;
+    }
+
     /** @param cBuffer 内容中无tab字符 */
     public void fastPrint(char[] cBuffer) {
         builder.append(cBuffer);

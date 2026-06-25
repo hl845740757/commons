@@ -145,7 +145,26 @@ public class DsonPrinter : IDisposable
         _builder.Append(c);
         _column++;
     }
+    
+    /** 打印int值，避免ToString()分配 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FastPrint(int value) {
+        int prevLen = _builder.Length;
+        _builder.Append(value);
+        _column += _builder.Length - prevLen;
+    }
 
+    /** 打印long值，避免ToString()分配 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FastPrint(long value, bool untyped = false) {
+        int prevLen = _builder.Length;
+        if (!untyped && NumberStyles.IsUnsafeLong(value)) {
+            _builder.Append("@L ");
+        }
+        _builder.Append(value);
+        _column += _builder.Length - prevLen;
+    }
+    
     /** @param cBuffer 内容中无tab字符 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(ReadOnlySpan<char> cBuffer) {

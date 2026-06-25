@@ -1083,7 +1083,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
         // child未启动的情况下，control可能尚未赋值，因此不能检查control来判别
         int index = indexChild(task);
-        if (index > 0) {
+        if (index >= 0) {
             removeChildImpl(index);
             task.unsetControl();
             return true;

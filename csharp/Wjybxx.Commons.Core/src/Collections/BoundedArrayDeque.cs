@@ -27,6 +27,7 @@ namespace Wjybxx.Commons.Collections
 {
 /// <summary>
 /// 有界双端队列，固定大小不扩容，可以指定溢出策略
+/// 注：上限为0的情况下，可能出现empty和full同时为true的情况，需要手动处理。
 /// </summary>
 [NotThreadSafe]
 public class BoundedArrayDeque<T> : IDeque<T>
@@ -61,7 +62,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
     public bool IsReadOnly => false;
     public int Count => _head < 0 ? 0 : Length(_tail, _head, _elements.Length);
     public bool IsEmpty => _head < 0;
-    public bool IsFull => (_tail + 1 == _head) || (_head == 0 && (_tail + 1 == _elements.Length));
+    public bool IsFull => Count == _elements.Length;
 
     /// <summary>
     /// 读写特定索引下的元素

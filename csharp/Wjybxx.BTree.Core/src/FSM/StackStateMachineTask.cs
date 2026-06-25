@@ -156,6 +156,7 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
             // 进入Null状态，Redo也需要清理
             redoQueue.Clear();
             AddUndoState(curState!);
+            base.BeforeChangeState(curState, null);
             return;
         }
         ChangeStateArgs changeStateArgs = (ChangeStateArgs)nextState.ControlData;

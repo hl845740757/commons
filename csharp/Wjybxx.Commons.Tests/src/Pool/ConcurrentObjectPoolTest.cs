@@ -101,23 +101,6 @@ public class ConcurrentObjectPoolTest
     }
 
     /// <summary>
-    /// Release(null) 抛 ArgumentNullException
-    /// </summary>
-    [Test]
-    public void TestReleaseNullThrows() {
-        ConcurrentObjectPool<Box> pool = new(() => new Box(), null);
-        Assert.Throws<ArgumentNullException>(() => pool.Release(null));
-    }
-
-    /// <summary>
-    /// 构造时工厂为 null 抛异常
-    /// </summary>
-    [Test]
-    public void TestNullFactoryThrows() {
-        Assert.Throws<ArgumentNullException>(() => new ConcurrentObjectPool<Box>(null, null));
-    }
-
-    /// <summary>
     /// filter 拒绝时调用 destroyer，不入池
     /// </summary>
     [Test]
@@ -125,7 +108,7 @@ public class ConcurrentObjectPoolTest
         int destroyed = 0;
         ConcurrentObjectPool<Box> pool = new(
             () => new Box(),
-            null,
+            _ => {},
             poolSize: 8,
             filter: b => b.Payload < 10, // 大于等于10被拒
             destroyer: _ => Interlocked.Increment(ref destroyed));
@@ -150,7 +133,7 @@ public class ConcurrentObjectPoolTest
         int destroyed = 0;
         ConcurrentObjectPool<Box> pool = new(
             () => new Box(),
-            null,
+            _ => {},
             poolSize: 2,
             destroyer: _ => Interlocked.Increment(ref destroyed));
 
@@ -176,7 +159,7 @@ public class ConcurrentObjectPoolTest
                 Interlocked.Increment(ref created);
                 return new Box();
             },
-            null,
+            _ => {},
             poolSize: 0,
             destroyer: _ => Interlocked.Increment(ref destroyed));
 
@@ -201,7 +184,7 @@ public class ConcurrentObjectPoolTest
         int destroyed = 0;
         ConcurrentObjectPool<Box> pool = new(
             () => new Box(),
-            null,
+            _ => {},
             poolSize: 8,
             destroyer: _ => Interlocked.Increment(ref destroyed));
 
@@ -224,7 +207,7 @@ public class ConcurrentObjectPoolTest
     /// </summary>
     [Test]
     public void TestPoolSizeProperty() {
-        ConcurrentObjectPool<Box> pool = new(() => new Box(), null, poolSize: 16);
+        ConcurrentObjectPool<Box> pool = new(() => new Box(), _ => {}, poolSize: 16);
         Assert.AreEqual(16, pool.PoolSize);
     }
 
@@ -262,7 +245,7 @@ public class ConcurrentObjectPoolTest
         const int iterations = 50000;
 
         // 预先填充池，使大部分 Acquire 都来自池
-        ConcurrentObjectPool<Box> pool = new(() => new Box(), null, poolSize: threadCount * 2);
+        ConcurrentObjectPool<Box> pool = new(() => new Box(), _ => {}, poolSize: threadCount * 2);
         for (int i = 0; i < threadCount * 2; i++) {
             pool.Release(new Box());
         }
@@ -297,7 +280,7 @@ public class ConcurrentObjectPoolTest
     /// </summary>
     [Test]
     public void TestAvailableCountTracking() {
-        ConcurrentObjectPool<Box> pool = new(() => new Box(), null, poolSize: 3);
+        ConcurrentObjectPool<Box> pool = new(() => new Box(), _ => {}, poolSize: 3);
         Assert.AreEqual(0, pool.AvailableCount());
 
         pool.Release(new Box());

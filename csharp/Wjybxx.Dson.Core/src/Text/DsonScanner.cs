@@ -82,7 +82,7 @@ public sealed class DsonScanner : IDisposable
                 case ':': return new DsonToken(DsonTokenType.Colon, ":", Position);
                 case ',': return new DsonToken(DsonTokenType.Comma, ",", Position);
                 case '@': return ParseTypeToken(skipValue);
-                case '"': { // 普通文本段
+                case '"': {
                     int indent = buffer.Column - 1;
                     if (buffer.Read() != '"') {
                         buffer.Unread();

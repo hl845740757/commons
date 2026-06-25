@@ -27,6 +27,13 @@ namespace Wjybxx.Dson.Text
 public static class NumberStyles
 {
     /// <summary>
+    /// double能精确表示的最大整数
+    /// </summary>
+    private const long DoubleMaxLong = (1L << 53) - 1;
+
+    internal static bool IsUnsafeLong(long value)  => value < -DoubleMaxLong || value > DoubleMaxLong;
+    
+    /// <summary>
     /// 注：支持16进制和2进制
     /// </summary>
     public static StyleOut ToString(this NumberStyle style, int value) {
@@ -92,7 +99,7 @@ public static class NumberStyles
             }
             default: {
                 // 10进制
-                bool isTyped = (style & NumberStyle.Typed) != 0 || Math.Abs(value) >= DoubleMaxLong;
+                bool isTyped = (style & NumberStyle.Typed) != 0 || IsUnsafeLong(value);
                 return new StyleOut(value.ToString(), isTyped);
             }
         }
@@ -151,12 +158,7 @@ public static class NumberStyles
             return new StyleOut(str, isTyped);
         }
     }
-
-    /// <summary>
-    /// double能精确表示的最大整数
-    /// </summary>
-    private const long DoubleMaxLong = (1L << 53) - 1;
-
+    
     /// <summary>
     /// 转2进制，长度补全为8的倍数
     /// </summary>

@@ -187,8 +187,8 @@ public sealed class FutureCombiner
 
             IPromise<object> aggregatePromise = this.aggregatePromise;
             if (aggregatePromise != null && !aggregatePromise.IsCompleted && CheckComplete()) {
-                result = null;
-                cause = null;
+                // result = null; // 清理可能导致其它线程异常
+                // cause = null;
             }
         }
 

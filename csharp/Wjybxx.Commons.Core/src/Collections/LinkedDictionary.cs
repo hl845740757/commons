@@ -95,6 +95,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     public LinkedDictionary(IDictionary<TKey, TValue> dictionary)
         : this(dictionary.Count, HashCommon.DefaultLoadFactor) {
+        if (dictionary.Count == 0) return;
         foreach (var pair in dictionary) {
             Put(pair.Key, pair.Value);
         }

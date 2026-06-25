@@ -167,7 +167,7 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         }
         // Double capacity if small; else grow by 50%
         int oldCapacity = _items.Length;
-        int growUp = oldCapacity < 64 ? oldCapacity : oldCapacity >> 1;
+        int growUp = oldCapacity < 64 ? Math.Max(4, oldCapacity) : oldCapacity >> 1;
         if (growUp < minGrowUp) {
             growUp = minGrowUp;
         }

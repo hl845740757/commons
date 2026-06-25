@@ -178,7 +178,7 @@ public static class ArrayUtil
     /// <typeparam name="T"></typeparam>
     public static int IndexOfRef<T>(T[] list, object element, int start, int len) where T : class {
         if (list == null) throw new ArgumentNullException(nameof(list));
-        if (len < 0) throw new ArgumentNullException(nameof(len));
+        if (len < 0) throw new ArgumentOutOfRangeException(nameof(len));
         for (int i = start, end = start + len; i < end; i++) {
             if (element == list[i]) {
                 return i;
@@ -197,7 +197,7 @@ public static class ArrayUtil
     /// <typeparam name="T"></typeparam>
     public static int LastIndexOfRef<T>(T[] list, object element, int start, int len) where T : class {
         if (list == null) throw new ArgumentNullException(nameof(list));
-        if (len < 0) throw new ArgumentNullException(nameof(len));
+        if (len < 0) throw new ArgumentOutOfRangeException(nameof(len));
         for (int i = start, end = start - len; i > end; i--) {
             if (element == list[i]) {
                 return i;

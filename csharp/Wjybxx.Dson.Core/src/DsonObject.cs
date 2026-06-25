@@ -33,7 +33,7 @@ public class DsonObject<TK> : AbstractDsonObject<TK>
     }
 
     public DsonObject(DsonObject<TK> src) // 需要拷贝
-        : base(src.Count) {
+        : base(new LinkedDictionary<TK, DsonValue>(src)) {
         if (src._header.Count > 0) {
             _header.PutAll(src._header);
         }

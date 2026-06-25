@@ -62,7 +62,7 @@ public class ChangeStateArgs
     public readonly byte cmd;
     /** 延迟模式 -- 允许用户扩展 */
     public readonly byte delayMode;
-    /** 期望开始运行的帧号；-1表示尚未指定 */
+    /** 期望开始运行的帧号 */
     public readonly int delayArg;
     /** 期望传递给Listener的数据 */
     public readonly object? extraInfo;

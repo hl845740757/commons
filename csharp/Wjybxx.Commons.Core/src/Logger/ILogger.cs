@@ -42,8 +42,8 @@ public interface ILogger
     /// 
     /// </summary>
     /// <param name="level">日志等级</param>
-    /// <param name="ex">异常信息</param>
-    void Log(Level level, Exception ex);
+    /// <param name="format">文本模板</param>
+    void Log(Level level, string format);
 
     /// <summary>
     /// 
@@ -53,6 +53,13 @@ public interface ILogger
     /// <param name="args">格式化参数</param>
     void Log(Level level, string format, params object?[] args);
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="level">日志等级</param>
+    /// <param name="ex">异常信息</param>
+    void Log(Level level, Exception ex);
+    
     /// <summary>
     /// 
     /// </summary>

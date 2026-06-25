@@ -35,8 +35,6 @@ namespace Wjybxx.Commons.Pool
 [NotThreadSafe]
 public class ObjectPool<T> : IObjectPool<T>
 {
-    private static readonly Action<T> DO_NOTHING = _ => { };
-
     private readonly Func<T> _factory;
     private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
@@ -53,10 +51,10 @@ public class ObjectPool<T> : IObjectPool<T>
     /// <param name="poolSize">池大小；0表示不缓存对象</param>
     /// <param name="filter">回收对象的过滤器</param>
     /// <param name="destroyer">对象被销毁时用</param>
-    public ObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64,
+    public ObjectPool(Func<T> factory, Action<T> cleaner, int poolSize = 64,
                       Func<T, bool>? filter = null, Action<T>? destroyer = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._cleaner = cleaner ?? DO_NOTHING;
+        this._cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));;
         this._poolSize = poolSize;
         this._filter = filter;
         this._destroyer = destroyer;

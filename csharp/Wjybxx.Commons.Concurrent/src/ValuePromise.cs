@@ -646,6 +646,9 @@ public class ValuePromise<T> : IValuePromise<T>
 
         public void TryFire(int mode) {
             if (cancelToken.IsCancellationRequested) {
+                if (state is IPromise output) { // 需要使下游Promise进入取消状态
+                    output.TrySetCancelled(cancelToken);
+                }
                 input?.PrepareToRecycle(); // 手动触发回收
                 return;
             }

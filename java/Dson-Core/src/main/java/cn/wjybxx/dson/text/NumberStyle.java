@@ -123,7 +123,7 @@ public final class NumberStyle {
             }
             default: {
                 // 10进制
-                boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0 || Math.abs(value) >= DOUBLE_MAX_LONG;
+                boolean isTyped = (features & NumberStyle.MASK_TYPED) != 0 || isUnsafeLong(value);
                 return styleOut.setValue(Long.toString(value), isTyped);
             }
         }
@@ -184,6 +184,10 @@ public final class NumberStyle {
 
     /** double能精确表示的最大整数 */
     private static final long DOUBLE_MAX_LONG = (1L << 53) - 1;
+
+	public static boolean isUnsafeLong(long value) {
+		return value < -DOUBLE_MAX_LONG || value > DOUBLE_MAX_LONG;
+	}
 
     /// <summary>
     /// 转2进制，长度补全为8的倍数

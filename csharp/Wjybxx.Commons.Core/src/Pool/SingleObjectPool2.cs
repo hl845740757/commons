@@ -28,14 +28,12 @@ namespace Wjybxx.Commons.Pool
 ///
 /// 1.相比直接使用共享对象，使用该缓存池可避免递归调用带来的bug
 /// 2.新版本支持多线程下调用
-/// 3.该类型是值类型，用于减少开销，但不建议大规模使用
+/// 3.该类型是值类型，用于减少开销，但不建议大规模使用 -- 不可复制，传递时需使用ref
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [ThreadSafe]
 public struct SingleObjectPool2<T> : IObjectPool<T> where T : class
 {
-    private static readonly Action<T> DO_NOTHING = _ => { };
-
     private readonly Func<T> _factory;
     private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
@@ -48,9 +46,9 @@ public struct SingleObjectPool2<T> : IObjectPool<T> where T : class
     /// <param name="cleaner">重置方法</param>
     /// <param name="filter">回收对象的过滤器</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public SingleObjectPool2(Func<T> factory, Action<T>? cleaner, Func<T, bool>? filter = null) {
+    public SingleObjectPool2(Func<T> factory, Action<T> cleaner, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._cleaner = cleaner ?? DO_NOTHING;
+        this._cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));;
         this._filter = filter;
         this._value = null;
     }

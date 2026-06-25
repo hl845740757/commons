@@ -84,10 +84,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     [NonSerialized] internal Task<T> control;
 
     /// <summary>
-    ///任务运行时依赖的黑板（主要上下文）
-    ///1.每个任务可有独立的黑板（数据）；
-    ///2.运行时不能为null；
-    ///3.如果是自动继承的，exit后自动删除；如果是Control赋值的，则由control删除。
+    /// 任务运行时依赖的黑板（主要上下文）
+    /// 1.每个任务可有独立的黑板（数据）；
+    /// 2.运行时不能为null；
+    /// 3.如果是自动继承的，exit后自动删除；如果是Control赋值的，则由control删除。
     /// </summary>
     [NonSerialized] protected T blackboard;
     /// <summary>
@@ -101,7 +101,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     [NonSerialized] protected object sharedProps;
     /// <summary>
     /// 取消令牌（取消上下文）
-    /// 1.每个任务可有独立的取消信号；
+    /// 1.每个任务可以有独立的取消信号；
     /// 2.运行时不能为null；
     /// 3.如果是自动继承的，exit后自动删除；如果是Control赋值的，则由control删除。
     /// </summary>
@@ -526,7 +526,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /// <summary>
-    /// 当前节点自身是否为active状态，
+    /// 当前节点自身是否为active状态
     /// </summary>
     public bool IsActiveSelf {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1086,7 +1086,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (task == null) throw new ArgumentNullException(nameof(task));
         // child未启动的情况下，control可能尚未赋值，因此不能检查control来判别
         int index = IndexChild(task);
-        if (index > 0) {
+        if (index >= 0) {
             RemoveChildImpl(index);
             task.UnsetControl();
             return true;

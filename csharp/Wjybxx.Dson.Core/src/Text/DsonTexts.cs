@@ -417,16 +417,27 @@ public static class DsonTexts
     private static int ParseInt32Flags(string str) {
         int value = 0;
         foreach (string e in ObjectUtil.SplitAndTrim(str, '|')) {
-            uint v = uint.Parse(e);
+            uint v;
+            if (e.Length >2 && e[0] == '0' && e[1] == 'x') {
+                v = uint.Parse(e.AsSpan(2), GNumberStyles.HexNumber);
+            } else {
+                v = uint.Parse(e);
+            }
             value |= (int)v;
         }
         return value;
+        
     }
 
     private static long ParseInt64Flags(string str) {
         long value = 0;
         foreach (string e in ObjectUtil.SplitAndTrim(str, '|')) {
-            ulong v = ulong.Parse(e);
+            ulong v;
+            if (e.Length >2 && e[0] == '0' && e[1] == 'x') {
+                v = ulong.Parse(e.AsSpan(2), GNumberStyles.HexNumber);
+            } else {
+                v = ulong.Parse(e);
+            }
             value |= (long)v;
         }
         return value;
@@ -437,13 +448,14 @@ public static class DsonTexts
         if (str.Length == 0) {
             throw new ArgumentException("NumberFormatException:" + rawStr);
         }
-        if (rawStr.Equals("Infinity")) {
-            return float.PositiveInfinity;
-        }
-        if (rawStr.Equals("-Infinity")) {
-            return float.NegativeInfinity;
-        }
-        return float.Parse(str);
+
+        return rawStr switch
+        {
+            "Infinity" => float.PositiveInfinity,
+            "-Infinity" => float.NegativeInfinity,
+            "NaN" => float.NaN,
+            _ => float.Parse(str)
+        };
     }
 
     public static double ParseDouble(string rawStr) {
@@ -451,13 +463,14 @@ public static class DsonTexts
         if (str.Length == 0) {
             throw new ArgumentException("NumberFormatException:" + rawStr);
         }
-        if (rawStr.Equals("Infinity")) {
-            return double.PositiveInfinity;
-        }
-        if (rawStr.Equals("-Infinity")) {
-            return double.NegativeInfinity;
-        }
-        return double.Parse(str);
+
+        return rawStr switch
+        {
+            "Infinity" => double.PositiveInfinity,
+            "-Infinity" => double.NegativeInfinity,
+            "NaN" => double.NaN,
+            _ => double.Parse(str)
+        };
     }
 
     private static readonly ThreadLocal<StringBuilder> localBuilder = new ThreadLocal<StringBuilder>(() => new StringBuilder(64));

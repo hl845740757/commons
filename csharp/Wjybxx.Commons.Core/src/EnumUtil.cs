@@ -76,6 +76,7 @@ public static class EnumUtil
 
     /// <summary>
     /// 获取枚举对应的int值
+    /// 注意：不适用long/ulong类型枚举
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>

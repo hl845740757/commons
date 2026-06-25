@@ -85,7 +85,7 @@ public final class DsonScanner implements AutoCloseable {
                     return new DsonToken(DsonTokenType.COMMA, ",", getPosition());
                 case '@':
                     return parseTypeToken(skipValue);
-                case '"': { // 普通文本段
+                case '"': {
                     int indent = buffer.getColumn() - 1;
                     if (buffer.read() != '"') {
                         buffer.unread();

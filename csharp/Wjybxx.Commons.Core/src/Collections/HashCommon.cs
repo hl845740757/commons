@@ -74,7 +74,7 @@ public static class HashCommon
     /** 检查负载因子的合法性 */
     public static void CheckLoadFactor(float loadFactor) {
         if (loadFactor <= 0 || loadFactor >= 1) {
-            throw new Exception("Load factor must be greater than 0 and smaller than 1");
+            throw new ArgumentException("Load factor must be greater than 0 and smaller than 1");
         }
     }
 }

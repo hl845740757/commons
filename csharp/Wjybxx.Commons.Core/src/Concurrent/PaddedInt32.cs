@@ -31,7 +31,7 @@ public struct PaddedInt32
     [FieldOffset(0)]
     private readonly long lhsPadding;
 
-    [FieldOffset(64 - 4)]
+    [FieldOffset(64 - 4)] // 前后各填充60个字节
     private int _value;
 
     [FieldOffset(124 - 8)]

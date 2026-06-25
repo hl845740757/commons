@@ -33,8 +33,6 @@ namespace Wjybxx.Commons.Pool
 [ThreadSafe]
 public class SingleObjectPool<T> : IObjectPool<T> where T : class
 {
-    private static readonly Action<T> DO_NOTHING = _ => { };
-
     private readonly Func<T> _factory;
     private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
@@ -47,9 +45,9 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
     /// <param name="cleaner">重置方法</param>
     /// <param name="filter">回收对象的过滤器</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public SingleObjectPool(Func<T> factory, Action<T>? cleaner, Func<T, bool>? filter = null) {
+    public SingleObjectPool(Func<T> factory, Action<T> cleaner, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._cleaner = cleaner ?? DO_NOTHING;
+        this._cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));;
         this._filter = filter;
     }
 

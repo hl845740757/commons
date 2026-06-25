@@ -236,7 +236,7 @@ public static class DsonOutputs
         }
 
         public int SpaceLeft => _bufferPool != null
-            ? -_rawLimit - _bufferPos
+            ? _rawLimit - _bufferPos
             : _posLimit - _bufferPos;
 
         public void WriteComplete(int safePosition) {
