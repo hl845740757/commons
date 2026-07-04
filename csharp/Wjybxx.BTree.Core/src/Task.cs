@@ -75,7 +75,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** enter前相关options */
     private const int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
     /** 禁用execute的options */
-    private const int MASK_DISABLE_EXECUTE_OPTIONS = MASK_NOT_ACTIVE_IN_HIERARCHY | MASK_DISABLE_EXECUTE;
+    private const int MASK_DISABLE_EXECUTE_OPTIONS = MASK_DISABLE_EXECUTE;
 
 #nullable disable
     /** 任务树的入口(缓存以避免递归查找) */
@@ -451,7 +451,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// </summary>
     /// <param name="cancelToken">进入取消状态的取消令牌</param>
     /// <param name="ctx">监听取消信号时的传入的参数</param>
-    public virtual void OnCancelRequested(CancelToken cancelToken, object ctx) {
+    public virtual void OnCancellationRequested(CancelToken cancelToken, object ctx) {
         if (IsRunning) SetCompleted(TaskStatus.CANCELLED, false);
     }
 
@@ -523,66 +523,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     public void ResetChildren() {
         // 由于所有的子节点都已停止，因此重置顺序无影响
         VisitChildren(TaskVisitors.Reset<T>(), null);
-    }
-
-    /// <summary>
-    /// 当前节点自身是否为active状态
-    /// </summary>
-    public bool IsActiveSelf {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ctl & MASK_NOT_ACTIVE_SELF) == 0;
-    }
-
-    /// <summary>
-    /// 当前节点及其所有父节点是否都为active状态
-    /// </summary>
-    public bool IsActiveInHierarchy {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) == 0;
-    }
-
-    /// <summary>
-    /// 修改节点的active状态
-    /// 注意：
-    /// 1.active为false表示可以不执行心跳逻辑<see cref="Execute"/>。
-    /// 2.只有停止Execute而不影响逻辑的场景，才可能需要该特性。比如：等待事件发生。
-    /// 3.如果等待条件或事件的过程中需要响应超时，通常需要通过定时任务唤醒。
-    /// 4.如果Task处于非运行状态，该属性在运行时被重置。
-    /// 5.该属性对条件检查无效。
-    /// </summary>
-    /// <param name="value"></param>
-    public void SetActive(bool value) {
-        if (IsActiveSelf == value) {
-            return;
-        }
-        SetCtlBit(MASK_NOT_ACTIVE_SELF, !value); // 取反
-        RefreshActiveInHierarchy();
-    }
-
-    /// <summary>
-    /// 当节点在层次结构中的Active状态发生变化时调用
-    /// 1.该方法只在Task处于运行状态下调用。
-    /// 2.该方法不应该产生状态迁移，即不应该使Task进入完成状态。
-    /// 3.该方法主要用于暂停关联的外部逻辑，如停止外部计时器。
-    /// 4.重写该方法通常应该重写enter方法，在enter方法中处理未激活的情况。
-    /// 5.如果期望子节点先响应事件，可以重写该方法实现
-    /// </summary>
-    protected virtual void OnActiveInHierarchyChanged() {
-    }
-
-    /// <summary>
-    /// 刷新Task在层次结构中的active状态
-    /// </summary>
-    public void RefreshActiveInHierarchy() {
-        bool newState = IsActiveSelf && (control == null || control.IsActiveInHierarchy);
-        if (newState == IsActiveInHierarchy) {
-            return;
-        }
-        SetCtlBit(MASK_NOT_ACTIVE_IN_HIERARCHY, !newState); // 取反
-        if (status != TaskStatus.RUNNING) return;
-        //
-        OnActiveInHierarchyChanged();
-        VisitChildren(TaskVisitors.RefreshActive<T>(), null);
     }
 
     #endregion

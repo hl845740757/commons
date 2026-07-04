@@ -20,33 +20,8 @@ namespace Wjybxx.BTree
 {
 public static class TaskVisitors
 {
-    public static TaskVisitor<T> RefreshActive<T>() where T : class {
-        return RefreshActiveVisitor<T>.Inst;
-    }
-
     public static TaskVisitor<T> Reset<T>() where T : class {
         return ResetForRestartVisitor<T>.Inst;
-    }
-
-    private class RefreshActiveVisitor<T> : TaskVisitor<T> where T : class
-    {
-        public static readonly RefreshActiveVisitor<T> Inst = new RefreshActiveVisitor<T>();
-
-        public void VisitChild(Task<T> child, int index, object? param) {
-            if (child.IsRunning) child.RefreshActiveInHierarchy();
-        }
-
-        public void VisitHook(string name, Task<T> child, object? param) {
-            if (child.IsRunning) child.RefreshActiveInHierarchy();
-        }
-
-        public void VisitList(string name, Task<T> child, int index, object? param) {
-            if (child.IsRunning) child.RefreshActiveInHierarchy();
-        }
-
-        public void VisitMap<TKey>(string name, Task<T> child, TKey key, object? param) {
-            if (child.IsRunning) child.RefreshActiveInHierarchy();
-        }
     }
 
     private class ResetForRestartVisitor<T> : TaskVisitor<T> where T : class

@@ -349,6 +349,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 case DsonHeader.Names_ClassName:
                 case DsonHeader.Names_Collection:
                 case DsonHeader.Names_LocalPath:
+                case DsonHeader.Names_Name:
                     PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
                 case DsonHeader.Names_LocalId: {

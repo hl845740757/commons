@@ -125,9 +125,6 @@ public class TaskEntry<T> : Task<T> where T : class
     /// </summary>
     public void UpdateInlined() {
         if (IsRunning) {
-            if (GetCtlBit(MASK_NOT_ACTIVE_SELF)) {
-                return;
-            }
             // 内联Execute逻辑
             Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
@@ -148,15 +145,6 @@ public class TaskEntry<T> : Task<T> where T : class
         Debug.Assert(IsInited());
         Template_Start(null, MASK_CHECKING_GUARD); // entry本身不是条件节点
         return IsSucceeded;
-    }
-
-    /** 在行为树场景，我们绝大多数情况下不需要层次化的Active管理 */
-    public void SetActiveSelf(bool value) {
-        if (IsActiveSelf == value) return;
-        SetCtlBit(MASK_NOT_ACTIVE_SELF, !value); // 取反
-        if (IsRunning && handler != null) {
-            handler.OnActiveChanged(this);
-        }
     }
 
     protected override void Enter(int reentryId) {
@@ -192,12 +180,6 @@ public class TaskEntry<T> : Task<T> where T : class
         SetCompleted(child.Status, true);
         if (handler != null) {
             handler.OnCompleted(this);
-        }
-    }
-
-    protected override void OnActiveInHierarchyChanged() {
-        if (handler != null) {
-            handler.OnActiveChanged(this);
         }
     }
 

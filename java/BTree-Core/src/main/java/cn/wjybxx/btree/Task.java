@@ -85,7 +85,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     /** enter前相关options */
     private static final int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
     /** 禁用execute的options */
-    private static final int MASK_DISABLE_EXECUTE_OPTIONS = MASK_NOT_ACTIVE_IN_HIERARCHY | MASK_DISABLE_EXECUTE;
+    private static final int MASK_DISABLE_EXECUTE_OPTIONS = MASK_DISABLE_EXECUTE;
 
     /** 任务树的入口(缓存以避免递归查找) */
     transient TaskEntry<T> taskEntry;
@@ -452,7 +452,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 注意：如果未启动自动监听，手动监听时也建议绑定到该方法
      */
     @Override
-    public void onCancelRequested(CancelToken cancelToken, Object ctx) {
+    public void onCancellationRequested(CancelToken cancelToken, Object ctx) {
         if (isRunning()) setCompleted(TaskStatus.CANCELLED, false);
     }
 
@@ -528,60 +528,6 @@ public abstract class Task<T> implements ICancelTokenListener {
     public final void resetChildren() {
         // 由于所有的子节点都已停止，因此重置顺序无影响
         visitChildren(TaskVisitors.reset(), null);
-    }
-
-    /** 当前节点自身是否为active状态 */
-    public final boolean isActiveSelf() {
-        return (ctl & MASK_NOT_ACTIVE_SELF) == 0;
-    }
-
-    /** 当前节点及其所有父节点是否都为active状态 */
-    public final boolean isActiveInHierarchy() {
-        return (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) == 0;
-    }
-
-    /**
-     * 修改节点的active状态
-     * 注意：
-     * 1.active为false表示可以不执行心跳逻辑{@link #execute()}
-     * 2.只有停止Execute而不影响逻辑的场景，才可能需要该特性。比如：等待事件发生。
-     * 3.如果等待条件或事件的过程中需要响应超时，通常需要通过定时任务唤醒。
-     * 4.如果Task处于非运行状态，该属性在运行时被重置。
-     * 5.该属性对条件检查无效。
-     * 6.为控制复杂度，暂不打算支持activeChanged事件。
-     */
-    public final void setActive(boolean value) {
-        if (isActiveSelf() == value) {
-            return;
-        }
-        setCtlBit(MASK_NOT_ACTIVE_SELF, !value); // 取反
-        refreshActiveInHierarchy();
-    }
-
-    /**
-     * 当节点在层次结构中的Active状态发生变化时调用
-     * 1.该方法只在Task处于运行状态下调用。
-     * 2.该方法不应该产生状态迁移，即不应该使Task进入完成状态。
-     * 3.该方法主要用于暂停关联的外部逻辑，如停止外部计时器。
-     * 4.重写该方法通常应该重写enter方法，在enter方法中处理未激活的情况。
-     */
-    protected void onActiveInHierarchyChanged() {
-
-    }
-
-    /**
-     * 刷新Task在层次结构中的active状态
-     */
-    public final void refreshActiveInHierarchy() {
-        boolean newState = isActiveSelf() && (control == null || control.isActiveInHierarchy());
-        if (newState == isActiveInHierarchy()) {
-            return;
-        }
-        setCtlBit(MASK_NOT_ACTIVE_IN_HIERARCHY, !newState); // 取反
-        if (status != TaskStatus.RUNNING) return;
-        //
-        onActiveInHierarchyChanged();
-        visitChildren(TaskVisitors.refreshActive(), null);
     }
 
     // endregion

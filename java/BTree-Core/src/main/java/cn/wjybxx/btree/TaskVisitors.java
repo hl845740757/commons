@@ -25,27 +25,8 @@ package cn.wjybxx.btree;
 public class TaskVisitors {
 
     @SuppressWarnings("unchecked")
-    public static <T> TaskVisitor<T> refreshActive() {
-        return (TaskVisitor<T>) RefreshActiveVisitor.INST;
-    }
-
-    @SuppressWarnings("unchecked")
     public static <T> TaskVisitor<T> reset() {
         return (TaskVisitor<T>) ResetForRestartVisitor.INST;
-    }
-
-    private static class RefreshActiveVisitor<T> implements TaskVisitor<T> {
-        private static final RefreshActiveVisitor<?> INST = new RefreshActiveVisitor<>();
-
-        @Override
-        public void visitChild(Task<? extends T> child, int index, Object param) {
-            if (child.isRunning()) child.refreshActiveInHierarchy();
-        }
-
-        @Override
-        public void visitHook(Task<? extends T> child, Object param) {
-            if (child.isRunning()) child.refreshActiveInHierarchy();
-        }
     }
 
     private static class ResetForRestartVisitor<T> implements TaskVisitor<T> {

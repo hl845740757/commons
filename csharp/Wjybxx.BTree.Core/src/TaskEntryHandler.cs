@@ -43,12 +43,5 @@ public interface ITaskEntryHandler<T> where T : class
     /// </summary>
     /// <param name="taskEntry"></param>
     void OnCompleted(TaskEntry<T> taskEntry);
-
-    /// <summary>
-    /// 任务的激活状态发生改变
-    /// </summary>
-    /// <param name="taskEntry"></param>
-    void OnActiveChanged(TaskEntry<T> taskEntry) {
-    }
 }
 }

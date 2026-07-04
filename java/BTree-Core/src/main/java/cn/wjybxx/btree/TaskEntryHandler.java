@@ -35,8 +35,4 @@ public interface TaskEntryHandler<T> {
 
     /** 任务进入完成状态 */
     void onCompleted(TaskEntry<T> taskEntry);
-
-    /** 任务的激活状态发生改变 */
-    default void onActiveChanged(TaskEntry<T> taskEntry) {
-    }
 }

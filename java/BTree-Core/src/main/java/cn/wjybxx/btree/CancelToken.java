@@ -56,7 +56,7 @@ public class CancelToken implements ICancelTokenListener {
     /** 收到其它地方的取消信号 -- 用户不应该调用该方法 */
     @Deprecated
     @Override
-    public final void onCancelRequested(CancelToken cancelToken, Object ctx) {
+    public final void onCancellationRequested(CancelToken cancelToken, Object ctx) {
         cancel(cancelToken.cancelCode());
     }
 
@@ -159,7 +159,7 @@ public class CancelToken implements ICancelTokenListener {
     @SuppressWarnings("unchecked")
     private static void invoke(CancelToken cancelToken, CallbackInfo callbackInfo) {
         if (callbackInfo.action instanceof ICancelTokenListener listener) {
-            listener.onCancelRequested(cancelToken, callbackInfo.state);
+            listener.onCancellationRequested(cancelToken, callbackInfo.state);
             return;
         }
         if (callbackInfo.action instanceof BiConsumer) {
@@ -188,7 +188,7 @@ public class CancelToken implements ICancelTokenListener {
         if (listener == this) throw new IllegalArgumentException("add self");
         if (code != 0) {
             try {
-                listener.onCancelRequested(this, null);
+                listener.onCancellationRequested(this, null);
             } catch (Throwable e) {
                 Task.logger.info("listener caught exception", e);
             }

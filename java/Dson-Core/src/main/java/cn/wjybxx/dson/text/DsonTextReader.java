@@ -349,7 +349,8 @@ public final class DsonTextReader extends AbstractDsonReader {
             switch (nextName) {
                 case DsonHeader.NAMES_CLASS_NAME,
                      DsonHeader.NAMES_COLLECTION,
-                     DsonHeader.NAMES_LOCAL_PATH -> {
+                     DsonHeader.NAMES_LOCAL_PATH,
+					 DsonHeader.NAMES_NAME -> {
                     pushNextValue(unquotedString);
                     return DsonType.STRING;
                 }

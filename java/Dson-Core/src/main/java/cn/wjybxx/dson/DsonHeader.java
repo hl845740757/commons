@@ -66,6 +66,7 @@ public class DsonHeader<K> extends AbstractDsonObject<K> {
     // header常见属性名
     public static final String NAMES_CLASS_NAME = "clsName";
     public static final String NAMES_COLLECTION = "coll";
+    public static final String NAMES_NAME = "name";
     public static final String NAMES_LOCAL_PATH = "localPath";
     public static final String NAMES_LOCAL_ID = "localId";
     public static final String NAMES_COUNT = "count";

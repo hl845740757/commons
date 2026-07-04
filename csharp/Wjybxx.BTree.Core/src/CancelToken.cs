@@ -37,7 +37,7 @@ public interface ICancelTokenListener
     /// </summary>
     /// <param name="cancelToken">收到取消信号的令牌</param>
     /// <param name="ctx">回调上下文</param>
-    void OnCancelRequested(CancelToken cancelToken, object ctx);
+    void OnCancellationRequested(CancelToken cancelToken, object ctx);
 #nullable restore
 }
 
@@ -70,7 +70,7 @@ public class CancelToken : ICancelTokenListener
         this.code = code;
     }
 
-    void ICancelTokenListener.OnCancelRequested(CancelToken cancelToken, object ctx) {
+    void ICancelTokenListener.OnCancellationRequested(CancelToken cancelToken, object ctx) {
         Cancel(cancelToken.CancelCode);
     }
 
@@ -182,7 +182,7 @@ public class CancelToken : ICancelTokenListener
     private static void Invoke(CancelToken cancelToken, CallbackInfo callbackInfo) {
         switch (callbackInfo.action) {
             case ICancelTokenListener listener:
-                listener.OnCancelRequested(cancelToken, callbackInfo.state);
+                listener.OnCancellationRequested(cancelToken, callbackInfo.state);
                 break;
             case Action<CancelToken, object> action2:
                 action2(cancelToken, callbackInfo.state);
@@ -208,7 +208,7 @@ public class CancelToken : ICancelTokenListener
         if (listener == this) throw new ArgumentException("add self");
         if (code != 0) {
             try {
-                listener.OnCancelRequested(this, state);
+                listener.OnCancellationRequested(this, state);
             }
             catch (Exception e) {
                 TaskLogger.Info(e, "listener caught exception");
