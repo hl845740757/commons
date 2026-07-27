@@ -1,13 +1,13 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
-// 
+// Copyright 2024 wjybxx(845740757@qq.com)
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,14 @@ using System.Collections.Generic;
 namespace Wjybxx.Commons.Poet
 {
 /// <summary>
-/// 字段(或事件)
-/// 注意：C#的事件本身并不是字段，但实在不想整那么复杂了...
+/// 事件
+///
+/// 1.未设置访问器时输出为字段式事件，如：<code>public event EventHandler Changed;</code>
+/// 2.设置访问器时输出add/remove块 -- C#要求add/remove必须成对实现，且不能再有初始化块。
+/// 3.暂不支持add/remove访问器上的独立注解。
 /// </summary>
-public class FieldSpec : ISpecification
+public class EventSpec : ISpecification
 {
-    public readonly Kind kind;
     public readonly TypeName type;
     public readonly string name;
     public readonly Modifiers modifiers;
@@ -35,66 +37,60 @@ public class FieldSpec : ISpecification
     public readonly CodeBlock headerCode;
     public readonly IList<AttributeSpec> attributes;
 
-    public readonly CodeBlock? initializer; // 初始化块
+    public readonly CodeBlock? initializer; // 初始化块（仅字段式事件可用）
+    public readonly CodeBlock? adder; // add访问器代码块
+    public readonly CodeBlock? remover; // remove访问器代码块
 
-    private FieldSpec(Builder builder) {
-        kind = builder.kind;
+    private EventSpec(Builder builder) {
         type = builder.type;
         name = builder.name;
         modifiers = builder.modifiers;
-        attributes = Util.ToImmutableList(builder.attributes);
         document = builder.document.Build();
         headerCode = builder.headerCode.Build();
+        attributes = Util.ToImmutableList(builder.attributes);
 
         initializer = builder.initializer;
-    }
+        adder = builder.adder;
+        remover = builder.remover;
 
-    public bool IsEvent => kind == Kind.Event;
+        if (adder != null || remover != null) {
+            if (adder == null || remover == null) {
+                throw new InvalidOperationException("add and remove accessors must be paired");
+            }
+            if (initializer != null) {
+                throw new InvalidOperationException("event with accessors cannot have an initializer");
+            }
+        }
+    }
 
     public string Name => name;
-    public SpecType SpecType => SpecType.Field;
+    public SpecType SpecType => SpecType.Event;
 
-    public enum Kind
-    {
-        /// <summary>
-        /// 普通字段
-        /// </summary>
-        Field,
-        /// <summary>
-        /// 事件字段（C#的大量语法糖现在都是坑）
-        /// </summary>
-        Event,
-    }
+    /// <summary>
+    /// 是否包含自定义的add/remove访问器
+    /// </summary>
+    public bool HasAccessors => adder != null;
 
     #region builder
 
     public static Builder NewBuilder(TypeName type, string name, Modifiers modifiers = 0) {
         if (type == null) throw new ArgumentNullException(nameof(type));
         if (name == null) throw new ArgumentNullException(nameof(name));
-        return new Builder(Kind.Field, type, name, modifiers);
+        return new Builder(type, name, modifiers);
     }
 
     public static Builder NewBuilder(Type type, string name, Modifiers modifiers = 0) {
         return NewBuilder(TypeName.Get(type), name, modifiers);
     }
 
-    [Obsolete("请使用EventSpec")]
-    public static Builder NewEventBuilder(TypeName type, string name, Modifiers modifiers = 0) {
-        if (type == null) throw new ArgumentNullException(nameof(type));
-        if (name == null) throw new ArgumentNullException(nameof(name));
-        return new Builder(Kind.Event, type, name, modifiers);
-    }
-
-    [Obsolete("请使用EventSpec")]
-    public static Builder NewEventBuilder(Type type, string name, Modifiers modifiers = 0) {
-        return NewEventBuilder(TypeName.Get(type), name, modifiers);
-    }
-
     public Builder ToBuilder() {
-        Builder builder = new Builder(kind, type, name, modifiers);
+        Builder builder = new Builder(type, name, modifiers);
         builder.document.Add(document);
+        builder.headerCode.Add(headerCode);
         builder.attributes.AddRange(attributes);
         builder.initializer = initializer;
+        builder.adder = adder;
+        builder.remover = remover;
         return builder;
     }
 
@@ -102,7 +98,6 @@ public class FieldSpec : ISpecification
 
     public class Builder
     {
-        public readonly Kind kind;
         public readonly TypeName type;
         public readonly string name;
         public Modifiers modifiers;
@@ -111,16 +106,17 @@ public class FieldSpec : ISpecification
         public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
 
         internal CodeBlock? initializer;
+        internal CodeBlock? adder;
+        internal CodeBlock? remover;
 
-        internal Builder(Kind kind, TypeName type, string name, Modifiers modifiers) {
-            this.kind = kind;
+        internal Builder(TypeName type, string name, Modifiers modifiers) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
             this.name = Util.CheckNotBlank(name, "name is blank");
             this.modifiers = modifiers;
         }
 
-        public FieldSpec Build() {
-            return new FieldSpec(this);
+        public EventSpec Build() {
+            return new EventSpec(this);
         }
 
         public Builder AddModifiers(Modifiers modifiers) {
@@ -182,6 +178,28 @@ public class FieldSpec : ISpecification
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
             if (this.initializer != null) throw new InvalidOperationException("initializer was already set");
             this.initializer = codeBlock;
+            return this;
+        }
+
+        public Builder Adder(string format, params object?[] args) {
+            return Adder(CodeBlock.Of(format, args));
+        }
+
+        public Builder Adder(CodeBlock codeBlock) {
+            if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
+            if (this.adder != null) throw new InvalidOperationException("adder was already set");
+            this.adder = codeBlock;
+            return this;
+        }
+
+        public Builder Remover(string format, params object?[] args) {
+            return Remover(CodeBlock.Of(format, args));
+        }
+
+        public Builder Remover(CodeBlock codeBlock) {
+            if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
+            if (this.remover != null) throw new InvalidOperationException("remover was already set");
+            this.remover = codeBlock;
             return this;
         }
     }

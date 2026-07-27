@@ -519,10 +519,13 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 重置所有的子节点
+    /// 注：钩子节点也应该在这里重置，即不再Child计数中的其它字段。
     /// </summary>
-    public void ResetChildren() {
+    public virtual void ResetChildren() {
         // 由于所有的子节点都已停止，因此重置顺序无影响
-        VisitChildren(TaskVisitors.Reset<T>(), null);
+        for (int idx = ChildCount - 1; idx >= 0; idx--) {
+            GetChild(idx).Reset();
+        }
     }
 
     #endregion

@@ -140,6 +140,19 @@ Poet包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 
 ## ReleaseNotes
 
+### 1.5.2
+
+1. 新增`EventSpec`，完整支持事件：字段式事件、初始化块、自定义add/remove访问器（表达式或块风格）。
+2. `TypeSpec.Builder`新增`AddEvent`/`AddEvents`便捷方法。
+3. `FieldSpec.NewEventBuilder`标记为过时，请使用`EventSpec`。
+
+```csharp
+  public event EventHandler Changed {
+    add => changed += value;
+    remove => changed -= value;
+  }
+```
+
 ### 1.5.0
 
 1. 增加了元组和记录类型支持

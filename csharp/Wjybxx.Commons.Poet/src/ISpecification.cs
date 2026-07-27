@@ -92,5 +92,9 @@ public enum SpecType : byte
     /// 类型变量（泛型变量）
     /// </summary>
     TypeParameter,
+    /// <summary>
+    /// 事件
+    /// </summary>
+    Event,
 }
 }

@@ -93,8 +93,8 @@ public class TypeSpec : ISpecification
             Kind.Interface => "interface",
             Kind.Delegator => "delegate",
             Kind.RefStruct => "ref struct",
-            Kind.RecordClass => "record",
-            Kind.RecordStruct => "record",
+            Kind.RecordClass => "record", // class可省略
+            Kind.RecordStruct => "record struct", // struct需显式声明
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
         };
     }
@@ -367,6 +367,32 @@ public class TypeSpec : ISpecification
 
         public Builder AddField(Type type, string name, Modifiers modifiers = 0) {
             return AddField(TypeName.Get(type), name, modifiers);
+        }
+
+        #endregion
+
+        #region event
+
+        public Builder AddEvents(IEnumerable<EventSpec> eventSpecs) {
+            if (eventSpecs == null) throw new ArgumentNullException(nameof(eventSpecs));
+            foreach (EventSpec eventSpec in eventSpecs) {
+                AddEvent(eventSpec);
+            }
+            return this;
+        }
+
+        public Builder AddEvent(EventSpec eventSpec) {
+            if (eventSpec == null) throw new ArgumentNullException(nameof(eventSpec));
+            nestedSpecs.Add(eventSpec);
+            return this;
+        }
+
+        public Builder AddEvent(TypeName type, string name, Modifiers modifiers = 0) {
+            return AddEvent(EventSpec.NewBuilder(type, name, modifiers).Build());
+        }
+
+        public Builder AddEvent(Type type, string name, Modifiers modifiers = 0) {
+            return AddEvent(TypeName.Get(type), name, modifiers);
         }
 
         #endregion

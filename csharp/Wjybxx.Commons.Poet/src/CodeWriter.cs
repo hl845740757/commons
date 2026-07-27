@@ -282,6 +282,10 @@ public sealed class CodeWriter
                 EmitField((FieldSpec)nestedSpec);
                 break;
             }
+            case SpecType.Event: {
+                EmitEvent((EventSpec)nestedSpec);
+                break;
+            }
             case SpecType.Property: {
                 EmitProperty((PropertySpec)nestedSpec);
                 break;
@@ -435,6 +439,8 @@ public sealed class CodeWriter
         if (typeSpec.IsMethodLike) {
             MethodSpec methodSpec = (MethodSpec)typeSpec.nestedSpecs[0];
             if (typeSpec.kind == TypeSpec.Kind.Delegator) {
+                EmitTypeName(methodSpec.returnType);
+                Emit(" ");
                 EmitMethodCore(methodSpec);
                 Emit(";");
             } else {
@@ -523,6 +529,61 @@ public sealed class CodeWriter
         }
         EmitIfLastCharNot(';'); // 代码可能未包含';'
         Emit("\n");
+    }
+
+    #endregion
+
+    #region event
+
+    private void EmitEvent(EventSpec eventSpec) {
+        EmitDocument(eventSpec.document);
+        Emit(eventSpec.headerCode, true);
+        EmitAttributes(eventSpec.attributes);
+
+        EmitModifiers(eventSpec.modifiers);
+        Emit("event ");
+        // Type name
+        EmitTypeName(eventSpec.type);
+        Emit(" ");
+        Emit(eventSpec.name);
+
+        // 自定义add/remove访问器 -- 不能有初始化块，末尾无分号
+        if (eventSpec.HasAccessors) {
+            Emit(" {\n");
+            {
+                Indent();
+                EmitAdderRemover(eventSpec.adder!, true);
+                EmitAdderRemover(eventSpec.remover!, false);
+                Unindent();
+            }
+            Emit("}\n");
+            return;
+        }
+
+        if (!CodeBlock.IsNullOrEmpty(eventSpec.initializer)) {
+            Emit(" = ");
+            Emit(eventSpec.initializer!);
+        }
+        EmitIfLastCharNot(';'); // 代码可能未包含';'
+        Emit("\n");
+    }
+
+    private void EmitAdderRemover(CodeBlock codeBlock, bool isAdder) {
+        if (codeBlock.expressionStyle) {
+            Emit(isAdder ? "add => " : "remove => ");
+            Emit(codeBlock);
+            EmitIfLastCharNot(';'); // 代码可能未包含';'
+            Emit("\n");
+        } else {
+            Emit(isAdder ? "add {" : "remove {");
+            Emit("\n");
+            {
+                Indent();
+                Emit(codeBlock, true);
+                Unindent();
+            }
+            Emit("}\n");
+        }
     }
 
     #endregion
