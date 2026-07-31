@@ -8,7 +8,7 @@
 // 
 //      http://www.apache.org/licenses/LICENSE-2.0
 // 
-//  Unless required by applicable law or agreed to iBn writing, software
+//  Unless required by applicable law or agreed to in writing, software
 //  distributed under the License is distributed on an "AS IS" BASIS,
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //  See the License for the specific language governing permissions and
@@ -26,7 +26,7 @@ namespace Wjybxx.Dson
 ///
 /// 1.Header不可以再持有header，否则陷入死循环
 /// 2.Header的结构应该是简单清晰的，可简单编解码的 -- 不应该继承。
-/// 3.header的number编号不遵循<see cref="Dsons.MakeFullNumber"/>规则，而是每一个字段编号都是固定的。
+/// 3.Header的number编号不遵循<see cref="Dsons.MakeFullNumber"/>规则，而是每一个字段编号都是固定的。
 /// </summary>
 public class DsonHeader<TK> : AbstractDsonObject<TK>
 {
