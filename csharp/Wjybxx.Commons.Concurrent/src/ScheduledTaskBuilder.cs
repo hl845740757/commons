@@ -290,7 +290,7 @@ public struct ScheduledTaskBuilder<T>
     /// <param name="count"></param>
     public void SetTimeoutByCount(int count) {
         if (count < 1) {
-            throw new ArithmeticException("invalid count: " + count);
+            throw new ArgumentException("invalid count: " + count);
         }
         if (count == 1) {
             this.timeout = Math.Max(0, initialDelay);

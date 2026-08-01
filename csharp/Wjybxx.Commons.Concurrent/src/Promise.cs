@@ -37,11 +37,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /// 已完成的Promise常量实例
     /// </summary>
     public static readonly Promise<T> COMPLETED = new Promise<T>(null, default, null);
-    /// <summary>
-    /// 已被取消的Promise常量实例
-    /// </summary>
-    [Obsolete("C#异常不适合共享")]
-    public static readonly Promise<T> CANCELLED = new Promise<T>(null, default, new OperationCanceledException());
 
     /** 任务成功执行时的结果 -- 可见性由<see cref="_ex"/>保证 */
     private T _result;
@@ -529,7 +524,10 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                                         Action<object?> continuation, object? state) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
-            MoveNextCompletion.FireNow(continuation, state, null);
+            // 需检查取消令牌，行为一致性
+            if (!cancelToken.IsCancellationRequested) {
+                MoveNextCompletion.FireNow(continuation, state, null);
+            }
         } else {
             MoveNextCompletion completion = MoveNextCompletion.POOL.Acquire();
             completion.Init(executor, cancelToken, options, continuation, state);
@@ -1061,7 +1059,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                 }
                 object rawEx = input._ex!;
                 X ex; // 这里暂不恢复堆栈
-                if (IsSucceed(rawEx) || (ex = UnwrapException(rawEx) as X) == null) {
+                if (IsSucceed(rawEx) || (ex = UnwrapException(rawEx, restore: false) as X) == null) {
                     setCompleted = output.CompleteRelay(input._result, rawEx);
                     goto outer;
                 }
@@ -1457,8 +1455,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
+                // 下游始终保持为上游结果，不进入取消状态
                 if (cancelToken.IsCancellationRequested) {
-                    setCompleted = output.CompleteCancelled(cancelToken);
+                    setCompleted = output.CompleteRelay(input._result, input._ex!);
                     goto outer;
                 }
                 try {

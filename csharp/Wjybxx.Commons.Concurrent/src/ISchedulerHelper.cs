@@ -70,12 +70,6 @@ public interface ISchedulerHelper
     void DoSchedule(IScheduledFutureTask futureTask);
 
     /// <summary>
-    /// 延迟一段时间
-    /// </summary>
-    /// <returns></returns>
-    ValueFuture Sleep(TimeSpan timeSpan, CancellationToken cancelToken = default);
-
-    /// <summary>
     /// 分配一个任务id
     /// </summary>
     /// <returns></returns>

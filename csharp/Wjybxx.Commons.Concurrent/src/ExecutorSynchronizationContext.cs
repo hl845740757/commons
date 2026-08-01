@@ -50,8 +50,7 @@ public class ExecutorSynchronizationContext : SynchronizationContext
         _executor.Execute(new PostCallbackWrapper(d, state));
     }
 
-    public override void Send(SendOrPostCallback d, object? state)
-    {
+    public override void Send(SendOrPostCallback d, object? state) {
         _executor.Execute(new PostCallbackWrapper(d, state));
     }
 

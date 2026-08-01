@@ -169,23 +169,6 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         }
     }
 
-    public ValueFuture Sleep(TimeSpan timeSpan, CancellationToken cancelToken) {
-        if (!_eventLoop.InEventLoop()) {
-            throw new GuardedOperationException();
-        }
-        if (timeSpan.Ticks == 0) { // 强制跳过当前帧
-            timeSpan = new TimeSpan(1);
-        }
-        ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
-        ScheduledPromiseTask<int> task = ScheduledPromiseTask.OfEmpty(promise, cancelToken, 0);
-        ISchedulerHelper helper = this;
-        task.Helper = helper;
-        task.Id = NextId();
-        task.TriggerTime = helper.TriggerTime(1, timeSpan);
-        DoSchedule(task);
-        return promise.VoidFuture;
-    }
-
     /// <summary>
     /// 清理任务队列
     /// </summary>
@@ -209,10 +192,14 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     public long TickTime => _eventLoop.TickTime;
 
     public long Normalize(long worldTime, TimeSpan timeUnit) {
+        if (worldTime < 0)
+            throw new ArgumentOutOfRangeException(nameof(worldTime));
         return worldTime * timeUnit.Ticks;
     }
 
     public long Denormalize(long localTime, TimeSpan timeUnit) {
+        if (localTime < 0)
+            throw new ArgumentOutOfRangeException(nameof(localTime));
         return localTime / timeUnit.Ticks;
     }
 

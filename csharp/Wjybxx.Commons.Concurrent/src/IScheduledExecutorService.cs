@@ -26,7 +26,6 @@ namespace Wjybxx.Commons.Concurrent
 ///
 /// 1.调度器什么时候响应取消信号，是不确定的。
 /// 2.定时任务可通过<see cref="TaskResultException"/>返回结果。
-/// 3.需要结果的任务，更推荐通过异步任务实现 —— <see cref="ScheduledTaskBuilder.NewAsyncTask{T}"/>。
 /// </summary>
 public interface IScheduledExecutorService : IExecutorService
 {

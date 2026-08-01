@@ -302,11 +302,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     private void setNextRunTime(long tickTime, int scheduleType) {
-        long maxDelay = hasDeadline() ? (deadline - tickTime) : Long.MAX_VALUE;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            triggerTime = triggerTime + Math.min(period, maxDelay); // 逻辑时间
+            triggerTime = triggerTime + period; // 逻辑时间
         } else {
-            triggerTime = tickTime + Math.min(period, maxDelay); // 真实时间
+            triggerTime = tickTime + period; // 真实时间
         }
     }
 

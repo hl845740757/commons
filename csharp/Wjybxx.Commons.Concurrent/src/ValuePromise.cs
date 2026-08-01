@@ -457,6 +457,7 @@ public class ValuePromise<T> : IValuePromise<T>
         completion.TryFire(SYNC);
     }
 
+    // 用户不会在添加回调以后，通知之前还主动查询结果，因此不存在回收竞争
     private void PostComplete() {
         while (true) {
             int ctl = Volatile.Read(ref _completion.ctl);

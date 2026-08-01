@@ -29,7 +29,6 @@ namespace Wjybxx.Commons.Concurrent
 public readonly struct TaskResult
 {
     public static readonly TaskResult COMPLETED = new TaskResult();
-    public static readonly TaskResult CANCELLED = new TaskResult(null, new OperationCanceledException());
 
     /// <summary>
     /// 正常结果
@@ -167,7 +166,6 @@ public readonly struct TaskResult
 public readonly struct TaskResult<T>
 {
     public static readonly TaskResult<T> COMPLETED = new TaskResult<T>();
-    public static readonly TaskResult<T> CANCELLED = new TaskResult<T>(default, new OperationCanceledException());
 
     /// <summary>
     /// 正常结果

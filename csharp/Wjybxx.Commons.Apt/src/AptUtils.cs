@@ -339,8 +339,18 @@ public static class AptUtils
             if (!member.IsStatic || member.Kind != SymbolKind.Field) continue;
 
             IFieldSymbol fieldSymbol = (IFieldSymbol)member;
-            if (fieldSymbol.ConstantValue is int constantValue && constantValue == value) {
-                return fieldSymbol.Name;
+            if (!fieldSymbol.HasConstantValue) {
+                continue;
+            }
+
+            switch (fieldSymbol.ConstantValue) {
+                case int v1 when v1 == value:
+                case short v2 when v2 == value:
+                case byte v3 when v3 == value:
+                case uint v4 when v4 == value:
+                case ushort v5 when v5 == value: {
+                    return fieldSymbol.Name;
+                }
             }
         }
         return null;
@@ -409,8 +419,15 @@ public static class AptUtils
     /// <returns></returns>
     public static int GetAttributeValueValue(AttributeData attributeData, string propertyName, int def) {
         foreach (var pair in attributeData.NamedArguments) {
-            if (pair.Key == propertyName) {
-                return (int)pair.Value.Value!;
+            if (pair.Key != propertyName) {
+                continue;
+            }
+            switch (pair.Value.Value) {
+                case int v1: return v1;
+                case short v2: return v2;
+                case byte v3: return v3;
+                case uint v4: return (int)v4;
+                case ushort v5: return v5;
             }
         }
         return def;
@@ -561,9 +578,11 @@ public static class AptUtils
 
     /// <summary>
     /// name解析缓存--避免频繁解析Symbol
-    /// 注意：需要包含Nullable注解信息
+    /// 
+    /// 注意：理论上比较相等性时应当包含Nullable注解信息，<see cref="SymbolEqualityComparer.IncludeNullability"/>，但通用并发字典可能导致内存泄漏；
+    /// CWT内部是获取的原始Hash和引用相等，因此不会让NRT和非NRT匹配到同一个Key，所以不会导致错误。
     /// </summary>
-    private static readonly ConcurrentDictionary<INamedTypeSymbol, TypeName> typeSymbol2NameCache = new(SymbolEqualityComparer.IncludeNullability);
+    private static readonly ConditionalWeakTable<INamedTypeSymbol, TypeName> typeSymbol2NameCache = new();
 
     /// <summary>
     /// 解析编译时的<see cref="ITypeSymbol"/>为<see cref="TypeName"/>
@@ -601,7 +620,7 @@ public static class AptUtils
             case SpecialType.System_SByte: return SBYTE;
             case SpecialType.System_Int16: return SHORT;
             case SpecialType.System_UInt16: return USHORT;
-            case SpecialType.System_Char: return USHORT;
+            case SpecialType.System_Char: return CHAR;
             case SpecialType.System_Decimal: return DECIMAL;
 
             case SpecialType.System_String: return typeSymbol.IsNullableAnnotated() ? NRT_STRING : STRING;
@@ -643,7 +662,12 @@ public static class AptUtils
                 typeSymbol.Name, genericArgumentNames,
                 typeSymbol.NullableAnnotation.ToTypeNameAttributes());
         }
-        typeSymbol2NameCache[typeSymbol] = r;
+
+        try {
+            typeSymbol2NameCache.Add(typeSymbol, r); // 低版本不能访问TryAdd和AddOrUpdate...
+        }
+        catch (ArgumentException) {
+        }
         return r;
     }
 

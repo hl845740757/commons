@@ -194,7 +194,7 @@ public interface IFuture
 
     /// <summary>
     /// 添加一个监听器
-    /// (该接口不接收future参数，主要用于异步状态机)
+    /// (该接口不接收future参数，主要用于异步状态机；慎重传入取消令牌，传入取消令牌的情况下状态机回调可能不被执行)
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
@@ -205,7 +205,7 @@ public interface IFuture
 
     /// <summary>
     /// 添加一个监听器
-    /// (该接口不接收future参数，主要用于异步状态机)
+    /// (该接口不接收future参数，主要用于异步状态机；慎重传入取消令牌，传入取消令牌的情况下状态机回调可能不被执行)
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>

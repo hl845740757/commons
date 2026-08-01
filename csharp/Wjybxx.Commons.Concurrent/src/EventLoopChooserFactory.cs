@@ -74,7 +74,13 @@ public class EventLoopChooserFactory
             this._eventLoops = children ?? throw new ArgumentNullException(nameof(children));
         }
 
-        private int NextIndex() => Interlocked.Increment(ref idx) - 1;
+        private int NextIndex() {
+            int r = Interlocked.Increment(ref idx) - 1;
+            if (r == int.MinValue) {
+                r = Interlocked.Increment(ref idx) - 1;
+            }
+            return r;
+        }
 
         public IEventLoop Select() {
             int key = Math.Abs(NextIndex()); // 改为普通int需要取绝对值
@@ -96,7 +102,13 @@ public class EventLoopChooserFactory
             this._eventLoops = children ?? throw new ArgumentNullException(nameof(children));
         }
 
-        private int NextIndex() => Interlocked.Increment(ref idx) - 1;
+        private int NextIndex() {
+            int r = Interlocked.Increment(ref idx) - 1;
+            if (r == int.MinValue) {
+                r = Interlocked.Increment(ref idx) - 1;
+            }
+            return r;
+        }
 
         public IEventLoop Select() {
             int key = Math.Abs(NextIndex()); // 改为普通int需要取绝对值

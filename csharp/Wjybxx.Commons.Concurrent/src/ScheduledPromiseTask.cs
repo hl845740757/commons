@@ -306,12 +306,10 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     }
 
     private void SetNextRunTime(long tickTime, int scheduleType) {
-        long maxDelay = HasDeadline ? (deadline - tickTime) : long.MaxValue;
-        Debug.Assert(maxDelay > 0);
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            triggerTime = triggerTime + Math.Min(period, maxDelay); // 逻辑时间
+            triggerTime = triggerTime + period; // 逻辑时间
         } else {
-            triggerTime = tickTime + Math.Min(period, maxDelay); // 真实时间
+            triggerTime = tickTime + period; // 真实时间
         }
     }
 

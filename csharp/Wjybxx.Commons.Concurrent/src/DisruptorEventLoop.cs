@@ -790,7 +790,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                 break;
             }
             while (!producerBarrier.IsPublished(nextSequence)) {
-                Thread.Sleep(1); // 等待发布-1ms
+                Thread.Yield(); // 等待发布，Sleep可能抛出中断异常
             }
             ref T eventObj = ref dataProvider.ConsumerGetRef(nextSequence);
             int type = eventObj.Type;

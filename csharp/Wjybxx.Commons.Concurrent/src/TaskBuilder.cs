@@ -142,7 +142,7 @@ public struct TaskBuilder<T>
     /// <param name="optionMask"></param>
     /// <returns></returns>
     public bool IsEnabled(int optionMask) {
-        return (options & optionMask) != 0;
+        return (options & optionMask) == optionMask;
     }
 
     /// <summary>
