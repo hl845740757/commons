@@ -96,8 +96,8 @@ public class ClassName : TypeName
         : base(builder.Attributes) {
         string ns = builder.Namespace;
         string simpleName = builder.Name;
-        if (string.IsNullOrWhiteSpace(ns)) throw new ArgumentException("namespace cant be blank");
         if (string.IsNullOrWhiteSpace(simpleName)) throw new ArgumentException("simpleName cant be blank");
+        if (string.IsNullOrWhiteSpace(ns)) throw new ArgumentException("namespace cant be blank, name: " + simpleName);
 
         this.enclosingClassName = builder.EnclosingClassName;
         this.ns = ns;

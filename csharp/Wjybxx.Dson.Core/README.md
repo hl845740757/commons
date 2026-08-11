@@ -151,19 +151,30 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
 
 ### 2.6.x
 
-1. 引入`Double4`类型，以减少运行时的`DsonObject/DsonArray`数量
+主要改动的是序列化实现，增加了对象图支持。
+
+1. 引入`Double4`类型，可减少DsonObject和DsonArray分配，优化内存占用和序列化大小
 2. 删除BackToWait方法(与序列化强绑定，局限性太大)
 3. Dsons尝试读取Header中的`count`属性初始化字典和List空间，以减少额外的扩容。
+4. 优化`NumberStyle`实现，切割序列化和Core模块的Style依赖
+5. 对象头增加`count`属性约定，以优化初始内存分配
+6. fix：`DsonScanner.ScanHeader`空对象头异常
+7. fix：`DsonScanner.SkipDsonText`未正常退出
+8. 优化`Double4Style`和`NumberStyle`实现
+9. 重命名`Dsons.ToCollectionDson`方法为`ToFlatDson`
+10. `DsonTextWriter`增加打印辅助内容支持，以支持更好的排版
 
 ### 2.5.x
 
 1. Fix Unity下创建`DsonCollectionReader`时会崩溃的问题
-2. `DsonInt32`、`DsonInt64`、`DsonFloat`、`DsonDouble`、`DsonString`增加常量对象
+2. `DsonInt32`、`DsonInt64`、`DsonFloat`、`DsonDouble`、`DsonString`增加对象池
 3. 增加字符串转义和取消转义工具方法：`DsonTexts.Escape`、`DsonTexts.Unescape`
 4. Dson-Codec值类型兼容改善，`EnumCodec`支持Flags类型
 5. 重写`DsonObject`和`DsonArray`的HashCode方法
 6. 顶层对象之间不打印逗号分隔符(顶层对象之间可以无分隔符)
 7. 优化`ObjectPtr`，删除`ObjectLitePtr`
+8. `LineInfo` 修改为值类型，减少文本扫描过程中的GC
+9. `IDsonCharStream` 中删除获取当前行信息的接口，增加了基于行迭代的`PreparedCharStream`
 
 ```csharp
    private class Context<TName> : ISequentialEnumerator<KeyValuePair<TName, DsonValue>> {
@@ -174,26 +185,6 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
         }
    }
 ```
-
-### 2.7.x
-
-1. 增加`Double4`类型，可减少DsonObject和DsonArray分配，优化内存占用和序列化大小
-2. 优化`NumberStyle`实现，切割序列化和Core模块的Style依赖
-3. 对象头增加`count`属性约定，以优化初始内存分配
-4. fix：`DsonScanner.ScanHeader`空对象头异常
-5. fix：`DsonScanner.SkipDsonText`未正常退出
-
-### 2.6.x
-
-2.6.x主要改动的是序列化实现，增加了对象图支持。
-
-### 2.5.x
-
-1. `LineInfo` 修改为值类型，减少文本扫描过程中的GC
-2. `IDsonCharStream` 中删除获取当前行信息的接口
-3. 增加了基于行迭代的CharStream
-4. `DsonInt32`、`DsonInt64`、`DsonDouble`增加对象池
-5. `Binary`修改为引用类型
 
 ### 2.4.x
 

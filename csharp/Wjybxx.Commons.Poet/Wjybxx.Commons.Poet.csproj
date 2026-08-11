@@ -6,7 +6,7 @@
         <LangVersion>9</LangVersion>
         <RootNamespace>Wjybxx.Commons.Poet</RootNamespace>
         <PackageId>Wjybxx.Commons.Poet</PackageId>
-        <PackageVersion>1.5.1</PackageVersion>
+        <PackageVersion>1.5.2</PackageVersion>
 
         <Title>Wjybxx.Commons.Poet</Title>
         <Description>参照Javapoet实现的代码生成工具，可能是最好的csharp代码生成器</Description>
