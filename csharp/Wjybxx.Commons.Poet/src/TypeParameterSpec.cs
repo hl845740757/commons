@@ -76,7 +76,7 @@ public class TypeParameterSpec : ISpecification
     /// </summary>
     /// <param name="bounds">边界</param>
     /// <returns>新的对象</returns>
-    public TypeParameterSpec WithBounds(IList<TypeName> bounds) {
+    public TypeParameterSpec WithBounds(IList<TypeName>? bounds) {
         return new TypeParameterSpec(name, constraints, bounds);
     }
 

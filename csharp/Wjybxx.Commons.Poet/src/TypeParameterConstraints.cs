@@ -46,7 +46,6 @@ public enum TypeParameterConstraints
     /// </summary>
     NotNullableReferenceType = 0x02,
 
-
     /// <summary>
     /// 引用类型约束
     /// <see cref="GenericParameterAttributes.ReferenceTypeConstraint"/>
@@ -71,5 +70,14 @@ public enum TypeParameterConstraints
     /// 泛型变量包含out修饰符
     /// </summary>
     VarianceOut = 0x40,
+
+    /// <summary>
+    /// 非托管类型约束(unmanaged)
+    /// </summary>
+    UnmanagedTypeConstraint = 0x0100,
+    /// <summary>
+    /// 默认类型约束/无类型约束(default)
+    /// </summary>
+    DefaultTypeConstraint = 0x0200,
 }
 }

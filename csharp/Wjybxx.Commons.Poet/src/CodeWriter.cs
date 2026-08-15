@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Runtime.CompilerServices;
@@ -748,9 +749,10 @@ public sealed class CodeWriter
         EmitMethodParameters(methodSpec);
 
         // 泛型变量约束
-        if (HasConstraints(methodSpec.typeParameters)) {
+        bool isOverriding = (methodSpec.modifiers & Modifiers.Override) != 0;
+        if (HasConstraints(methodSpec.typeParameters, isOverriding)) {
             Emit(" ");
-            EmitTypeParameterConstraints(methodSpec.typeParameters);
+            EmitTypeParameterConstraints(methodSpec.typeParameters, isOverriding);
         }
     }
 
@@ -948,28 +950,35 @@ public sealed class CodeWriter
     }
 
     /// <summary>
-    /// 是否包含泛型变量约束
+    /// 是否包含需要发射的泛型变量约束
     /// </summary>
-    /// <param name="typeParameters"></param>
-    /// <returns></returns>
-    private bool HasConstraints(IList<TypeParameterSpec> typeParameters) {
+    private bool HasConstraints(IList<TypeParameterSpec> typeParameters, bool isOverriding = false) {
         foreach (TypeParameterSpec typeParameter in typeParameters) {
-            if (typeParameter.HasConstraints) return true;
+            if (HasConstraints(typeParameter, isOverriding)) return true;
         }
         return false;
+    }
+
+    private bool HasConstraints(TypeParameterSpec typeParameter, bool isOverriding) {
+        const TypeParameterConstraints overrideConstraints = TypeParameterConstraints.ReferenceTypeConstraint
+                                                             | TypeParameterConstraints.ValueTypeConstraint
+                                                             | TypeParameterConstraints.DefaultTypeConstraint;
+        if (isOverriding && (typeParameter.constraints & overrideConstraints) == 0) {
+            return false;
+        }
+        return typeParameter.constraints != 0 || typeParameter.bounds.Count > 0;
     }
 
     /// <summary>
     /// 发射泛型变量的约束
     /// </summary>
-    /// <param name="typeParameters"></param>
-    private void EmitTypeParameterConstraints(IList<TypeParameterSpec> typeParameters) {
+    private void EmitTypeParameterConstraints(IList<TypeParameterSpec> typeParameters, bool overriding = false) {
         if (typeParameters.Count == 0) return;
         // 如果有多个变量存在约束，则每行输出一个
         int c = 0;
         for (int i = 0; i < typeParameters.Count; i++) {
             TypeParameterSpec typeParameter = typeParameters[i];
-            if (typeParameter.HasConstraints) {
+            if (HasConstraints(typeParameter, overriding)) {
                 c++;
             }
         }
@@ -980,18 +989,18 @@ public sealed class CodeWriter
             Indent();
             for (int i = 0; i < typeParameters.Count; i++) {
                 TypeParameterSpec typeParameter = typeParameters[i];
-                if (typeParameter.HasConstraints) {
+                if (HasConstraints(typeParameter, overriding)) {
                     Emit("\n");
                     EmitIndentation();
-                    EmitTypeParameterConstraints(typeParameter);
+                    EmitTypeParameterConstraints(typeParameter, overriding);
                 }
             }
             Unindent();
         } else {
             for (int i = 0; i < typeParameters.Count; i++) {
                 TypeParameterSpec typeParameter = typeParameters[i];
-                if (typeParameter.HasConstraints) {
-                    EmitTypeParameterConstraints(typeParameter);
+                if (HasConstraints(typeParameter, overriding)) {
+                    EmitTypeParameterConstraints(typeParameter, overriding);
                 }
             }
         }
@@ -1000,17 +1009,22 @@ public sealed class CodeWriter
     /// <summary>
     /// 发射单个泛型变量的约束。
     /// </summary>
-    private void EmitTypeParameterConstraints(TypeParameterSpec typeParameter) {
+    private void EmitTypeParameterConstraints(TypeParameterSpec typeParameter, bool overriding = false) {
         if (typeParameter.constraints == 0 && typeParameter.bounds.Count == 0) {
             return;
         }
         Emit("where $L : ", typeParameter.name);
-        if ((typeParameter.constraints & TypeParameterConstraints.ValueTypeConstraint) != 0) {
-            Emit("struct");
+        // 官方文档：最多可应用 struct、class、class?、notnull 和 unmanaged 约束中的一个
+        // 而override基类方法时，只需要输出class、struct、default三种约束，其它约束自动从父类/接口继承。
+        if ((typeParameter.constraints & TypeParameterConstraints.DefaultTypeConstraint) != 0) {
+            Emit("default"); // default只能用在override方法
             return;
         }
-
         int count = 0;
+        if ((typeParameter.constraints & TypeParameterConstraints.ValueTypeConstraint) != 0) {
+            Emit("struct");
+            count++;
+        }
         if ((typeParameter.constraints & TypeParameterConstraints.ReferenceTypeConstraint) != 0) {
             Emit("class");
             if ((typeParameter.constraints & TypeParameterConstraints.NullableReferenceType) != 0) {
@@ -1018,14 +1032,25 @@ public sealed class CodeWriter
             }
             count++;
         }
-        if ((typeParameter.constraints & TypeParameterConstraints.NotNullableReferenceType) != 0) {
-            if (count++ > 0) Emit(", ");
-            Emit("notnull");
+        if (overriding) {
+            return;
         }
+        if (((typeParameter.constraints & TypeParameterConstraints.UnmanagedTypeConstraint) != 0)) {
+            Emit("unmanaged");
+            count++;
+        }
+        if ((typeParameter.constraints & TypeParameterConstraints.NotNullableReferenceType) != 0) {
+            Emit("notnull");
+            count++;
+        }
+        Debug.Assert(count <= 1);
+
+        // 上限约束
         foreach (TypeName bound in typeParameter.bounds) {
             if (count++ > 0) Emit(", ");
-            EmitTypeName(bound); // 打印优化的TypeName
+            EmitTypeName(bound);
         }
+
         // new() 需要放最后...
         if ((typeParameter.constraints & TypeParameterConstraints.DefaultConstructorConstraint) != 0) {
             if (count++ > 0) Emit(", ");
