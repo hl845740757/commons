@@ -50,6 +50,9 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     /// <param name="initCapacity">初始空间大小</param>
     /// <param name="nullFactor">null元素的比重</param>
     public SmallDynamicArray(int initCapacity, float nullFactor = 0) {
+        if (initCapacity < 0 || initCapacity > MAX_CAPACITY) {
+            throw new ArgumentOutOfRangeException(nameof(initCapacity));
+        }
         this.elements = initCapacity == 0 ? Array.Empty<E>() : new E[initCapacity];
         this.nullFactor = Math.Max(0, nullFactor);
     }
@@ -143,10 +146,9 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     public void Clear() {
-        if (elementsMask == 0) {
-            return;
+        if (elementsMask != 0) {
+            Array.Clear(elements, 0, len);
         }
-        ArrayUtil.Fill2(elements, 0, len, null);
         elementsMask = 0;
         if (recursionDepth == 0) {
             len = 0;

@@ -216,6 +216,10 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
     @Override
     public void clear() {
         if (elementCount == 0) {
+            // 避免迭代无效区
+            if (recursionDepth == 0) {
+                len = 0;
+            }
             return;
         }
         for (int idx = 0, len = this.len; idx < len; idx++) {

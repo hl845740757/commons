@@ -42,10 +42,23 @@ internal static class CodedUtil
     private const long LONG_CODED_MASK7 = -1L << 50;
     private const long LONG_CODED_MASK8 = -1L << 57;
 
+    // varfloat是大端编码，因此掩码与varint相反：检测低位是否为0；由于低版本dotnet没有逻辑右移，因此通过MaxValue算术右移
+    private const int FLOAT_CODED_MASK1 = int.MaxValue >> 14; // 高15位0（8 + 7）
+    private const int FLOAT_CODED_MASK2 = int.MaxValue >> 21; // 高22位0（8 + 7 + 7）
+    private const int FLOAT_CODED_MASK3 = int.MaxValue >> 28; // 高29位0
+
+    private const long DOUBLE_CODED_MASK1 = long.MaxValue >> 14; // 高15位0
+    private const long DOUBLE_CODED_MASK2 = long.MaxValue >> 21; // 高22位0
+    private const long DOUBLE_CODED_MASK3 = long.MaxValue >> 28;
+    private const long DOUBLE_CODED_MASK4 = long.MaxValue >> 35;
+    private const long DOUBLE_CODED_MASK5 = long.MaxValue >> 42;
+    private const long DOUBLE_CODED_MASK6 = long.MaxValue >> 49;
+    private const long DOUBLE_CODED_MASK7 = long.MaxValue >> 56; // 高57位0
+
     public const int MAX_VAR_INT32_LENGTH = 5; // 7 * 5 = 35
     public const int MAX_VAR_INT64_LENGTH = 10; // 7 * 9 = 63
-    public const int MAX_VAR_FLOAT32_LENGTH = 5; // 8 + 7 * 4
-    public const int MAX_VAR_FLOAT64_LENGTH = 9; // 8 + 7 * 8 =64
+    public const int MAX_VAR_FLOAT32_LENGTH = 5; // 8 + 7 * 4 = 36
+    public const int MAX_VAR_FLOAT64_LENGTH = 9; // 8 + 7 * 8 = 64
 
     /// <summary>
     /// 计算原始的32位变长整形的编码长度
@@ -75,6 +88,38 @@ internal static class CodedUtil
         if ((value & LONG_CODED_MASK6) == 0) return 6;
         if ((value & LONG_CODED_MASK7) == 0) return 7;
         if ((value & LONG_CODED_MASK8) == 0) return 8;
+        return 9;
+    }
+
+    /// <summary>
+    /// 计算原始的32位变长浮点数的编码长度
+    /// (float采用大端编码，高8位固定编码，剩余bit按7位一组变长编码；因此尾部bit全0时可省略)
+    /// </summary>
+    /// <param name="value">float的原始bit</param>
+    /// <returns>编码长度</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int ComputeRawVarFloat32Size(int value) {
+        if ((value & FLOAT_CODED_MASK1) == 0) return 2; // 所有低位为0
+        if ((value & FLOAT_CODED_MASK2) == 0) return 3;
+        if ((value & FLOAT_CODED_MASK3) == 0) return 4;
+        return 5;
+    }
+
+    /// <summary>
+    /// 计算原始的64位变长浮点数的编码长度
+    /// (double采用大端编码，高8位固定编码，剩余bit按7位一组变长编码；因此尾部bit全0时可省略)
+    /// </summary>
+    /// <param name="value">double的原始bit</param>
+    /// <returns>编码长度</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int ComputeRawVarFloat64Size(long value) {
+        if ((value & DOUBLE_CODED_MASK1) == 0) return 2; // 所有低位为0
+        if ((value & DOUBLE_CODED_MASK2) == 0) return 3;
+        if ((value & DOUBLE_CODED_MASK3) == 0) return 4;
+        if ((value & DOUBLE_CODED_MASK4) == 0) return 5;
+        if ((value & DOUBLE_CODED_MASK5) == 0) return 6;
+        if ((value & DOUBLE_CODED_MASK6) == 0) return 7;
+        if ((value & DOUBLE_CODED_MASK7) == 0) return 8;
         return 9;
     }
 

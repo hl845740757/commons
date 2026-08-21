@@ -42,11 +42,13 @@ public partial class ComponentId : AbstractConstant
     public readonly int maxCount;
     /** 高速缓存下标 */
     public readonly int cacheIndex;
-    /** 更新顺序 */
+    /** 更新组 -- 类似Unity的SortingLayer */
+    public readonly int updateGroup;
+    /** 更新顺序 -- 类似Unity的OrderInLayer */
     public readonly int updateOrder;
 
     /** 业务自定义flags */
-    public readonly long flags;
+    public readonly int flags;
     /** 挂载路径 */
     public readonly string mountPath;
     /** 用户扩展数据 -- 必须的不可变的 */
@@ -59,6 +61,7 @@ public partial class ComponentId : AbstractConstant
         this.shared = builder.Shared;
         this.maxCount = Math.Max(1, builder.MaxCount);
         this.cacheIndex = builder.CacheIndex;
+        this.updateGroup = builder.UpdateGroup;
         this.updateOrder = builder.UpdateOrder;
 
         this.flags = builder.Flags;
@@ -66,7 +69,9 @@ public partial class ComponentId : AbstractConstant
         this.extraInfo = builder.ExtraInfo;
     }
 
-    /** 是否是私有脚本 --- 需要被框架调度 */
+    /// <summary>
+    /// 是否是私有脚本(需要被框架调度)
+    /// </summary>
     public bool IsPrivateScript => !shared && kind == ComponentKind.Script;
 
     /// <summary>

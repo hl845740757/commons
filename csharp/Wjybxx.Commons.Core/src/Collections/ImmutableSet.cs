@@ -163,47 +163,47 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     #region 修改接口
 
     public bool Add(TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool AddFirst(TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool AddLast(TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool AddFirstIfAbsent(TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool AddLastIfAbsent(TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool Remove(TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void Clear() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public TKey RemoveFirst() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryRemoveFirst(out TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public TKey RemoveLast() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryRemoveLast(out TKey item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     #endregion
@@ -460,68 +460,68 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     #region 系统库set接口适配
 
     void ISet<TKey>.ExceptWith(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     void ISet<TKey>.IntersectWith(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     void ISet<TKey>.SymmetricExceptWith(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     void ISet<TKey>.UnionWith(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool ISet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool ISet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool ISet<TKey>.IsSubsetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool ISet<TKey>.IsSupersetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool ISet<TKey>.Overlaps(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
 #if NET6_0_OR_GREATER
     bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool IReadOnlySet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool IReadOnlySet<TKey>.IsSubsetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool IReadOnlySet<TKey>.IsSupersetOf(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool IReadOnlySet<TKey>.Overlaps(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 #endif
 

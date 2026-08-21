@@ -74,7 +74,7 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
 
     public T this[int index] {
         get => _elements[index];
-        set => throw new NotImplementedException();
+        set => throw new NotSupportedException();
     }
 
     public T PeekFirst() {
@@ -124,47 +124,47 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
     #region 修改接口
 
     public void Add(T item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool Remove(T item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void Insert(int index, T item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void RemoveAt(int index) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void Clear() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void AddFirst(T item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void AddLast(T item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public T RemoveFirst() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryRemoveFirst(out T item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public T RemoveLast() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryRemoveLast(out T item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     #endregion

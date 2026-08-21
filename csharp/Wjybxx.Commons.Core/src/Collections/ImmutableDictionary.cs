@@ -174,7 +174,7 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
             ref Node node = ref _table[index];
             return node.value;
         }
-        set => throw new NotImplementedException();
+        set => throw new NotSupportedException();
     }
 
     #region peek
@@ -332,71 +332,71 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
     #region 修改接口
 
     public void Add(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool Remove(TKey key) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryAdd(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public PutResult<TValue> Put(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool Remove(TKey key, out TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public KeyValuePair<TKey, TValue> RemoveFirst() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryRemoveFirst(out KeyValuePair<TKey, TValue> item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public KeyValuePair<TKey, TValue> RemoveLast() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryRemoveLast(out KeyValuePair<TKey, TValue> item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void AddFirst(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryAddFirst(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void AddLast(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool TryAddLast(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public PutResult<TValue> PutFirst(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public PutResult<TValue> PutLast(TKey key, TValue value) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public bool Remove(KeyValuePair<TKey, TValue> item) {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public void Clear() {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     #endregion

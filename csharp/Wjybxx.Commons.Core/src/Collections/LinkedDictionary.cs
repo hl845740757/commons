@@ -56,7 +56,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /** 版本号 -- 发生结构性变化的时候增加，即增加和删除元素的时候；替换Key的Value不增加版本号 */
     private int _version;
 
-    /** 当前计算下标使用的掩码，不依赖数组长度；相反，我们可以通过mask获得数组的真实长度 */
+    /** 当前计算下标使用的掩码，不依赖数组长度；相反，我们可以通过mask获得数组的真实长度；null槽在回环外 */
     private int _mask;
     /** 负载因子 */
     private float _loadFactor;
@@ -462,7 +462,22 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     #endregion
 
     #region sp
-
+    
+    /// <summary>
+    /// 获取Key关联的Value的地址
+    /// 注意：不可以长期持有Value的地址，字典结构变化时可能指向错误的地址。
+    /// </summary>
+    public ref TValue TryGetValueRefOrAddDefault(TKey key) {
+        _table ??= new Node[_mask +2];
+        int hash = KeyHash(key, _keyComparer);
+        int pos = Find(key, hash);
+        if (pos < 0) {
+            pos = -pos - 1;
+            Insert(pos, hash, key, default, InsertionOrder.Default);
+        }
+        return ref _table[pos].value;
+    }
+    
     /// <summary>
     /// 获取元素，并将元素移动到首部
     /// （这几个接口不适合定义在接口中，因为只有查询效率高的有序字典才可以定义）

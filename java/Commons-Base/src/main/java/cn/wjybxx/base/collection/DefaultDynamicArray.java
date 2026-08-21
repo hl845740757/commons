@@ -159,18 +159,9 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public void clear() {
-        if (elementCount == 0) {
-            return;
-        }
-        for (int idx = 0, len = this.len; idx < len; idx++) {
-            @SuppressWarnings("unchecked") E e = (E) elements[idx];
-            if (e == null) {
-                continue;
-            }
-            elements[idx] = null;
-        }
-        for (int idx = 0, wordCount = wordCount(len); idx < wordCount; idx++) {
-            elementsMask[idx] = 0;
+        if (elementCount != 0) {
+            Arrays.fill(elements, 0, len, null);
+            Arrays.fill(elementsMask, 0, wordCount(len), 0);
         }
         elementCount = 0;
         if (recursionDepth == 0) {

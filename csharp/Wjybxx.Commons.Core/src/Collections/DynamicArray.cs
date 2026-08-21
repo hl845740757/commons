@@ -143,18 +143,9 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     public void Clear() {
-        if (elementCount == 0) {
-            return;
-        }
-        for (int idx = 0, len = this.len; idx < len; idx++) {
-            E e = elements[idx];
-            if (e == null) {
-                continue;
-            }
-            elements[idx] = null;
-        }
-        for (int idx = 0, wordCount = WordCount(len); idx < wordCount; idx++) {
-            elementsMask[idx] = 0;
+        if (elementCount != 0) {
+            Array.Clear(elements, 0, len);
+            Array.Clear(elementsMask, 0, WordCount(len));
         }
         elementCount = 0;
         if (recursionDepth == 0) {

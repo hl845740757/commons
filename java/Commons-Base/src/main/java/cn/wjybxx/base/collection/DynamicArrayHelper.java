@@ -25,12 +25,12 @@ final class DynamicArrayHelper {
     private static final long WORD_MASK = -1;
     private static final int ADDRESS_BITS_PER_WORD = 6;
 
-    public static int wordIndex(int index) {
-        return index >> ADDRESS_BITS_PER_WORD;
+    public static int wordIndex(int bitIndex) {
+        return bitIndex >> ADDRESS_BITS_PER_WORD;
     }
 
     public static int wordCount(int bitCount) {
-        return (bitCount >> ADDRESS_BITS_PER_WORD) + 1;
+        return ((bitCount - 1) >> ADDRESS_BITS_PER_WORD) + 1; // -1右移仍为-1
     }
 
     public static boolean isCompressionNeeded(float nullFactor, int len, int elementCount) {
@@ -106,7 +106,8 @@ final class DynamicArrayHelper {
 
     public static void insertBit(long[] elementsMask, int len, int bitIndex) {
         int wordIndex = wordIndex(bitIndex);
-        for (int idx = wordCount(len) - 1; idx > wordIndex; idx--) {
+        // 插入后位数为len+1，最高位下标为len，因此需搬移到wordIndex(len)所在的word
+        for (int idx = wordIndex(len); idx > wordIndex; idx--) {
             long sign = elementsMask[idx - 1] < 0 ? 1 : 0; // 下个word的最高位
             elementsMask[idx] = (elementsMask[idx] << 1) | sign;
         }

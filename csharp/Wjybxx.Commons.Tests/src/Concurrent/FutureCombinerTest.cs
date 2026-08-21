@@ -53,7 +53,7 @@ public class FutureCombinerTest
             }
             combiner.Add(future);
         }
-        Assert.IsNull(combiner.SelectN(succeedCount, false).Join());
+        Assert.IsNull(combiner.Select(succeedCount, false).Join());
 
         consumer.Shutdown();
         consumer.TerminationFuture.Join();

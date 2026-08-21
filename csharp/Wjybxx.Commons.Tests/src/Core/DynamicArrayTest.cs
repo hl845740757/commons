@@ -50,7 +50,7 @@ public class DynamicArrayTest
             dynamicArray = new SmallDynamicArray<Indexed>(capacity / 3); // 测试扩容
         } else {
             capacity = 1000;
-            dynamicArray = new IndexedDynamicArray<Indexed>(Helper.INST, capacity / 6); // 测试扩容
+            dynamicArray = new IndexedDynamicArray<Indexed>(Helper.Inst, capacity / 6); // 测试扩容
         }
         for (int i = 0; i < capacity; i++) {
             dynamicArray.Add(ValueOf(i));
@@ -139,7 +139,7 @@ public class DynamicArrayTest
         cacheMap.Clear(); // 默认的缓存数据会导致异常--添加到了另一个队列
 
         int capacity = 16;
-        IndexedDynamicArray<Indexed> dynamicArray = new IndexedDynamicArray<Indexed>(Helper.INST, capacity / 3);
+        IndexedDynamicArray<Indexed> dynamicArray = new IndexedDynamicArray<Indexed>(Helper.Inst, capacity / 3);
         for (int i = 0; i < capacity; i++) {
             dynamicArray.Add(ValueOf(i));
         }
@@ -492,7 +492,7 @@ public class DynamicArrayTest
     /// </summary>
     [Test]
     public void TestIndexedDynamicArrayDuplicateAddThrows() {
-        IndexedDynamicArray<Indexed> arr = new(Helper.INST, 8);
+        IndexedDynamicArray<Indexed> arr = new(Helper.Inst, 8);
         Indexed a = new(1);
         arr.Add(a);
         Assert.Throws<ArgumentException>(() => arr.Add(a));
@@ -503,7 +503,7 @@ public class DynamicArrayTest
     /// </summary>
     [Test]
     public void TestIndexedDynamicArrayMoveToMissingThrows() {
-        IndexedDynamicArray<Indexed> arr = new(Helper.INST, 8);
+        IndexedDynamicArray<Indexed> arr = new(Helper.Inst, 8);
         for (int i = 0; i < 5; i++) arr.Add(new Indexed(i));
 
         Indexed orphan = new(99); // 未加入
@@ -515,7 +515,7 @@ public class DynamicArrayTest
     /// </summary>
     [Test]
     public void TestIndexedDynamicArrayMaintainsQIndex() {
-        IndexedDynamicArray<Indexed> arr = new(Helper.INST, 8);
+        IndexedDynamicArray<Indexed> arr = new(Helper.Inst, 8);
         Indexed[] items = new Indexed[5];
         for (int i = 0; i < 5; i++) {
             items[i] = new Indexed(i);
@@ -571,7 +571,7 @@ public class DynamicArrayTest
 
     private class Helper : IIndexedElementHelper<Indexed>
     {
-        internal static readonly Helper INST = new Helper();
+        internal static readonly Helper Inst = new Helper();
 
         public int CollectionIndex(Object collection, Indexed element) {
             return element.qIndex;

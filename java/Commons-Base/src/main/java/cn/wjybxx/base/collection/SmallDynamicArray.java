@@ -159,10 +159,9 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public void clear() {
-        if (elementsMask == 0) {
-            return;
+        if (elementsMask != 0) {
+            Arrays.fill(elements, 0, len, null);
         }
-        Arrays.fill(elements, 0, len, null);
         elementsMask = 0;
         if (recursionDepth == 0) {
             len = 0;

@@ -27,13 +27,13 @@ internal static class DynamicArrayHelper
     private const int ADDRESS_BITS_PER_WORD = 6;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WordIndex(int index) {
-        return index >> ADDRESS_BITS_PER_WORD;
+    public static int WordIndex(int bitIndex) {
+        return bitIndex >> ADDRESS_BITS_PER_WORD;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WordCount(int bitCount) {
-        return (bitCount >> ADDRESS_BITS_PER_WORD) + 1;
+        return ((bitCount - 1) >> ADDRESS_BITS_PER_WORD) + 1; // -1右移仍为-1
     }
 
     public static bool IsCompressionNeeded(float nullFactor, int len, int elementCount) {
@@ -109,7 +109,8 @@ internal static class DynamicArrayHelper
 
     public static void InsertBit(long[] elementsMask, int len, int bitIndex) {
         int wordIndex = WordIndex(bitIndex);
-        for (int idx = WordCount(len) - 1; idx > wordIndex; idx--) {
+        // 插入后位数为len+1，最高位下标为len，因此需搬移到WordIndex(len)所在的word
+        for (int idx = WordIndex(len); idx > wordIndex; idx--) {
             long sign = elementsMask[idx - 1] < 0 ? 1 : 0; // 下个word的最高位
             elementsMask[idx] = (elementsMask[idx] << 1) | sign;
         }

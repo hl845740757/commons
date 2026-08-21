@@ -198,6 +198,10 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
 
     public void Clear() {
         if (elementCount == 0) {
+            // 避免迭代无效区
+            if (recursionDepth == 0) {
+                len = 0;
+            }
             return;
         }
         for (int idx = 0, len = this.len; idx < len; idx++) {

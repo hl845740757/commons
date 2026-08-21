@@ -64,7 +64,7 @@ public class ImmutableListTest
     [Test]
     public void TestIndexerSetThrows() {
         ImmutableList<int> list = ImmutableList<int>.CreateRange(new[] { 1, 2, 3 });
-        Assert.Throws<NotImplementedException>(() => list[0] = 100);
+        Assert.Throws<NotSupportedException>(() => list[0] = 100);
     }
 
     [Test]
