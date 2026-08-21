@@ -105,9 +105,9 @@ public interface IValuePromise
     /// 添加一个完成回调
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>
+    /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="executor">回调线程</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state,
@@ -115,14 +115,14 @@ public interface IValuePromise
 
     /// <summary>
     /// 转换为普通的Future
-    /// 需要支持死锁检测
+    /// 注：保留关联的Executor以保留死锁检测能力。
     /// <param name="reentryId">重入id，校验是否被重用</param>
     /// </summary>
     IFuture AsFuture(int reentryId);
 
     /// <summary>
     /// 转换为装箱后普通的Future
-    /// 需要支持死锁检测
+    /// 注：保留关联的Executor以保留死锁检测能力。
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>
     /// <typeparam name="U">下游输入类型</typeparam>

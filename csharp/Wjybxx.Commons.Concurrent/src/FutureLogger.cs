@@ -38,22 +38,18 @@ public sealed class FutureLogger
     /// </summary>
     private static volatile Level logLevel = Level.Info;
 
-    public static Level GetLogLevel() => logLevel;
-
-    public static void SetLogLevel(Level value) => logLevel = value;
-
-    public static ILogHandler? GetHandler() => _handler;
-
-    public static void SetHandler(ILogHandler? handler) {
-        _handler = handler;
+    public static Level LogLevel {
+        get => logLevel;
+        set => logLevel = value;
     }
 
-    private static bool TestException(Exception ex) {
-        if (ex is OperationCanceledException
-            || ex is NoLogRequiredException) {
-            return false;
-        }
-        return true;
+    public static ILogHandler? Handler {
+        get => _handler;
+        set => _handler = value;
+    }
+
+    private static bool IsNoiseException(Exception ex) {
+        return ex is OperationCanceledException || ex is NoLogRequiredException;
     }
 
     /// <summary>
@@ -63,10 +59,10 @@ public sealed class FutureLogger
     /// <param name="message">信息</param>
     public static void LogCause(Exception ex, string? message = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        if (!logger.IsEnabled(logLevel) || !TestException(ex)) {
+        if (!logger.IsEnabled(logLevel) || IsNoiseException(ex)) {
             return;
         }
-        message = message ?? "Task caught exception";
+        message ??= "Task caught exception";
         try {
             if (_handler != null) {
                 _handler.LogCause(logLevel, ex, message);
@@ -74,8 +70,9 @@ public sealed class FutureLogger
             }
             logger.Log(logLevel, ex, message);
         }
-        catch (Exception) {
+        catch (Exception ex2) {
             // 该接口不能出现异常，这里的异常只能被丢弃
+            Console.WriteLine(ex2.ToString());
         }
     }
 
@@ -88,7 +85,7 @@ public sealed class FutureLogger
         /// <summary>
         /// 一定不能抛出异常！！！！
         /// </summary>
-        /// <param name="level"></param>
+        /// <param name="level">日志等级</param>
         /// <param name="ex">底层运算产生的异常</param>
         /// <param name="message">额外消息</param>
         void LogCause(Level level, Exception ex, string message);

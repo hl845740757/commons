@@ -32,45 +32,41 @@ internal readonly struct AggregateOptions
         this.failFast = failFast;
     }
 
-    public bool IsAnyOf => type == TYPE_ANY;
-    public bool IsSelectAll => type == TYPE_SELECT_ALL;
-    public bool IsSelectMany => type == TYPE_SELECT_MANY;
+    public bool IsWhenAny => type == TYPE_ANY;
+    public bool IsWhenAll => type == TYPE_WHEN_ALL;
 
     private const byte TYPE_ANY = 0;
-    private const byte TYPE_SELECT_ALL = 1;
+    private const byte TYPE_WHEN_ALL = 1;
     private const byte TYPE_SELECT_MANY = 2;
 
-    private static readonly AggregateOptions ANY = new AggregateOptions(TYPE_ANY, 0, false);
-    private static readonly AggregateOptions SELECT_ALL = new AggregateOptions(TYPE_SELECT_ALL, 0, false);
-    private static readonly AggregateOptions SELECT_ALL2 = new AggregateOptions(TYPE_SELECT_ALL, 0, true);
+    private static readonly AggregateOptions WHEN_ANY = new AggregateOptions(TYPE_ANY, 0, false);
+    private static readonly AggregateOptions WHEN_ALL = new AggregateOptions(TYPE_WHEN_ALL, 0, false);
 
     /// <summary>
     /// 任意一个完成
     /// </summary>
     /// <returns></returns>
-    public static AggregateOptions AnyOf() {
-        return ANY;
+    public static AggregateOptions WhenAny() {
+        return WHEN_ANY;
     }
 
     /// <summary>
-    /// 全部完成
+    /// 所有任务完成（无快速失败逻辑）
     /// </summary>
-    /// <param name="failFast"></param>
     /// <returns></returns>
-    public static AggregateOptions SelectAll(bool failFast) {
-        return failFast ? SELECT_ALL2 : SELECT_ALL;
+    public static AggregateOptions WhenAll() {
+        return WHEN_ALL;
     }
 
     /// <summary>
     /// 成功完成n个
     /// </summary>
-    /// <param name="futureCount">future数量</param>
     /// <param name="required">需要成功完成的数量</param>
     /// <param name="failFast">是否快速失败</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public static AggregateOptions SelectN(int futureCount, int required, bool failFast) {
-        if (futureCount < 0 || required < 0) {
+    public static AggregateOptions SelectN(int required, bool failFast) {
+        if (required < 0) {
             throw new ArgumentException();
         }
         return new AggregateOptions(TYPE_SELECT_MANY, required, failFast);

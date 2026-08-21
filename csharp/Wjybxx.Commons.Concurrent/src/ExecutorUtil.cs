@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -386,16 +387,40 @@ public static class ExecutorUtil
 
     #region aggregate
 
-    public static IFuture<object> AnyOf(IEnumerable<IFuture> futures) {
+    public static IFuture<object> WhenAny(params IFuture[] futures) {
         return new FutureCombiner()
             .AddAll(futures)
-            .AnyOf();
+            .WhenAny();
     }
 
-    public static IFuture<object> AllOf(IEnumerable<IFuture> futures) {
+    public static IFuture<object> WhenAny(IEnumerable<IFuture> futures) {
         return new FutureCombiner()
             .AddAll(futures)
-            .SelectAll();
+            .WhenAny();
+    }
+
+    public static IFuture<object> WhenAll(params IFuture[] futures) {
+        return new FutureCombiner()
+            .AddAll(futures)
+            .WhenAll();
+    }
+
+    public static IFuture<object> WhenAll(IEnumerable<IFuture> futures) {
+        return new FutureCombiner()
+            .AddAll(futures)
+            .WhenAll();
+    }
+
+    public static IFuture<object> Select(int required, params IFuture[] futures) {
+        return new FutureCombiner()
+            .AddAll(futures)
+            .Select(required);
+    }
+
+    public static IFuture<object> Select(int required, IEnumerable<IFuture> futures) {
+        return new FutureCombiner()
+            .AddAll(futures)
+            .Select(required);
     }
 
     #endregion
@@ -406,7 +431,7 @@ public static class ExecutorUtil
     /// 判断是否可以不提交任务，而是立即执行
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsInlinable(IExecutor? e, int options) {
+    public static bool IsInlinable([NotNullWhen(false)] IExecutor? e, int options) {
         if (e == null) return true;
         return TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
                && e is ISingleThreadExecutor eventLoop

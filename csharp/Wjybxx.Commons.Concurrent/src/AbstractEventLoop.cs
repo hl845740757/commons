@@ -155,7 +155,6 @@ public abstract class AbstractEventLoop : IEventLoop
         return promise.Future;
     }
 
-
     public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken = default, int options = 0) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
         Execute(PromiseTask.OfAction(promise, action, cancelToken, options));
@@ -192,6 +191,16 @@ public abstract class AbstractEventLoop : IEventLoop
         promiseTask.Helper = helper;
         promiseTask.Id = helper.NextId();
         promiseTask.TriggerTime = helper.TriggerTime(delay);
+    }
+    
+    private void InitTriggerTime(IScheduledFutureTask promiseTask, TimeSpan delay, TimeSpan period, int scheduleType) {
+        ISchedulerHelper helper = SchedulerHelper;
+        promiseTask.Helper = helper;
+        promiseTask.Id = helper.NextId();
+        promiseTask.TriggerTime = helper.TriggerTime(delay);
+        
+        promiseTask.ScheduleType = scheduleType;
+        promiseTask.Period = helper.TriggerPeriod(period.Ticks, new TimeSpan(1));
     }
 
     public virtual ValueFuture<T> Schedule<T>(in ScheduledTaskBuilder<T> builder) {
@@ -254,15 +263,21 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
-        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
-        builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
-        return Schedule(in builder).Box(false);
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
+        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, cancelToken);
+        InitTriggerTime(promiseTask, delay, period, ScheduledTaskBuilder.SCHEDULE_FIXED_DELAY);
+
+        Execute(promiseTask);
+        return promise.VoidFuture;
     }
 
     public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
-        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
-        builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
-        return Schedule(in builder).Box(false);
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
+        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, cancelToken);
+        InitTriggerTime(promiseTask, delay, period, ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
+
+        Execute(promiseTask);
+        return promise.VoidFuture;
     }
 
     #endregion

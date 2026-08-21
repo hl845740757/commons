@@ -8,10 +8,10 @@
 
         <AssemblyName>Wjybxx.Commons.Concurrent</AssemblyName>
         <PackageId>Wjybxx.Commons.Concurrent</PackageId>
-        <PackageVersion>2.0.0</PackageVersion>
+        <PackageVersion>2.0.0-preview</PackageVersion>
 
         <Title>Wjybxx.Commons.Concurrent</Title>
-        <Description>并发基础库；提供事件循环和基于事件循环的await语法</Description>
+        <Description>基础并发库；提供事件循环和基于事件循环的await语法</Description>
         <PackageTags>wjybxx;concurrent;eventloop</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>

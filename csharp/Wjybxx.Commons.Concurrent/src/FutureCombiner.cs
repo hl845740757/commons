@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
@@ -27,27 +29,45 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public sealed class FutureCombiner
 {
-    private ChildListener childrenListener = new ChildListener();
-    private IPromise<object>? aggregatePromise;
-    private int futureCount;
+    private List<IFuture> _futures = new List<IFuture>();
+    private FutureListener _listener = new FutureListener();
+    private IPromise<object>? _aggregatePromise;
 
     public FutureCombiner() {
     }
 
     public FutureCombiner Add(IFuture future) {
         if (future == null) throw new ArgumentNullException(nameof(future));
-        ChildListener childrenListener = this.childrenListener;
-        if (childrenListener == null) {
-            throw new IllegalStateException("Adding futures is not allowed after finished adding");
+        FutureListener listener = CheckFinish();
+        _futures.Add(future);
+        future.OnCompleted(invoker, listener);
+        return this;
+    }
+
+    public FutureCombiner AddAll(params IFuture[] futures) {
+        FutureListener listener = CheckFinish();
+        _futures.EnsureCapacity(_futures.Count + futures.Length);
+        foreach (IFuture future in futures) {
+            if (future == null) {
+                throw new NullReferenceException("futures contains null element");
+            }
+            _futures.Add(future);
+            future.OnCompleted(invoker, listener);
         }
-        ++futureCount;
-        future.OnCompleted(invoker, childrenListener);
         return this;
     }
 
     public FutureCombiner AddAll(IEnumerable<IFuture> futures) {
+        FutureListener listener = CheckFinish();
+        if (futures is ICollection<IFuture> coll) {
+            _futures.EnsureCapacity(_futures.Count + coll.Count);
+        }
         foreach (IFuture future in futures) {
-            Add(future);
+            if (future == null) {
+                throw new NullReferenceException("futures contains null element");
+            }
+            _futures.Add(future);
+            future.OnCompleted(invoker, listener);
         }
         return this;
     }
@@ -56,7 +76,7 @@ public sealed class FutureCombiner
     /// 获取监听的future数量
     /// 注意：future计数是不去重的，一个future反复添加会反复计数
     /// </summary>
-    public int FutureCount => futureCount;
+    public int FutureCount => _futures.Count;
 
     //
     /// <summary>
@@ -66,7 +86,7 @@ public sealed class FutureCombiner
     /// <param name="aggregatePromise"></param>
     /// <returns></returns>
     public FutureCombiner SetAggregatePromise(IPromise<object> aggregatePromise) {
-        this.aggregatePromise = aggregatePromise;
+        this._aggregatePromise = aggregatePromise;
         return this;
     }
 
@@ -74,9 +94,9 @@ public sealed class FutureCombiner
     /// 重置状态，使得可以重新添加future和选择
     /// </summary>
     public void Clear() {
-        childrenListener = new ChildListener();
-        aggregatePromise = null;
-        futureCount = 0;
+        _futures = new List<IFuture>();
+        _listener = new FutureListener();
+        _aggregatePromise = null;
     }
 
     // region select
@@ -87,8 +107,18 @@ public sealed class FutureCombiner
     /// 注意：如果future数量为0，返回的promise将无法进入完成状态。
     /// </summary>
     /// <returns></returns>
-    public IPromise<object> AnyOf() {
-        return Finish(AggregateOptions.AnyOf());
+    public IPromise<object> WhenAny() {
+        return Finish(AggregateOptions.WhenAny());
+    }
+
+    /// <summary>
+    /// 返回的promise在所有future进入完成状态时进入完成状态
+    /// 存在失败的Future时，最终进入失败状态，并聚合所有Future的异常
+    /// (无快速失败逻辑)
+    /// </summary>
+    /// <returns></returns>
+    public IPromise<object> WhenAll() {
+        return Finish(AggregateOptions.WhenAll());
     }
 
     /// <summary>
@@ -108,8 +138,8 @@ public sealed class FutureCombiner
     /// <param name="required">期望成成功的任务数</param>
     /// <param name="failFast">是否在不满足条件时立即失败</param>
     /// <returns></returns>
-    public IPromise<object> SelectN(int required, bool failFast) {
-        return Finish(AggregateOptions.SelectN(futureCount, required, failFast));
+    public IPromise<object> Select(int required, bool failFast = true) {
+        return Finish(AggregateOptions.SelectN(required, failFast));
     }
 
     /// <summary>
@@ -119,42 +149,47 @@ public sealed class FutureCombiner
     /// <param name="failFast">是否在不满足条件时立即失败</param>
     /// <returns></returns>
     public IPromise<object> SelectAll(bool failFast = true) {
-        return Finish(AggregateOptions.SelectAll(failFast));
+        return Finish(AggregateOptions.SelectN(FutureCount, failFast));
     }
 
     // region 内部实现
 
-    private IPromise<object> Finish(AggregateOptions options) {
-        ChildListener childrenListener = this.childrenListener;
-        if (childrenListener == null) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private FutureListener CheckFinish() {
+        FutureListener listener = this._listener;
+        if (listener == null) {
             throw new IllegalStateException("Already finished");
         }
-        this.childrenListener = null!;
+        return listener;
+    }
 
-        IPromise<object> aggregatePromise = this.aggregatePromise;
+    private IPromise<object> Finish(AggregateOptions options) {
+        FutureListener listener = CheckFinish();
+        this._listener = null!;
+
+        IPromise<object> aggregatePromise = this._aggregatePromise;
         if (aggregatePromise == null) {
             aggregatePromise = new Promise<object>();
-        } else {
-            this.aggregatePromise = null;
         }
 
         // 数据存储在ChildListener上有助于扩展
-        childrenListener.futureCount = this.futureCount;
-        childrenListener.options = options;
-        childrenListener.aggregatePromise = aggregatePromise;
-        childrenListener.CheckComplete();
+        listener.futures = _futures;
+        listener.options = options;
+        listener.promise = aggregatePromise;
+        listener.CheckComplete();
         return aggregatePromise;
     }
 
     /** 避免过多的闭包 */
     private static readonly Action<IFuture, object> invoker = (future, state) => {
-        ChildListener childListener = (ChildListener)state;
-        childListener.Accept(future);
+        FutureListener listener = (FutureListener)state;
+        listener.Accept(future);
     };
 
-    private class ChildListener
+    private class FutureListener
     {
         private volatile int succeedCount;
+        private volatile int failedCount;
         private volatile int doneCount;
 
         /** 虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
@@ -162,9 +197,9 @@ public sealed class FutureCombiner
         private volatile Exception? cause;
 
         /** 非volatile，其可见性由{@link #aggregatePromise}保证 */
-        internal int futureCount;
+        internal List<IFuture> futures;
         internal AggregateOptions options;
-        internal volatile IPromise<object>? aggregatePromise;
+        internal volatile IPromise<object>? promise;
 
         public void Accept(IFuture future) {
             if (future.IsFailedOrCancelled) {
@@ -174,33 +209,35 @@ public sealed class FutureCombiner
             }
         }
 
-        void Accept(object? r, Exception? throwable) {
-            // 我们先增加succeedCount，再增加doneCount，读取时先读取doneCount，再读取succeedCount，
+        private void Accept(object? r, Exception? ex) {
+            // 更新时先增加succeedCount，再增加doneCount；读取时先读取doneCount，再读取succeedCount，
             // 就可以保证succeedCount是比doneCount更新的值，才可以提前判断是否立即失败
-            if (throwable == null) {
+            if (ex == null) {
                 result = EncodeValue(r);
                 Interlocked.Increment(ref succeedCount);
             } else {
-                cause = throwable;
+                cause = ex;
+                Interlocked.Increment(ref failedCount);
             }
             Interlocked.Increment(ref doneCount);
 
-            IPromise<object> aggregatePromise = this.aggregatePromise;
-            if (aggregatePromise != null && !aggregatePromise.IsCompleted && CheckComplete()) {
+            IPromise<object> promise = this.promise;
+            if (promise != null && !promise.IsCompleted && CheckComplete()) {
                 // result = null; // 清理可能导致其它线程异常
                 // cause = null;
             }
         }
 
         internal bool CheckComplete() {
-            // 字段的读取顺序不可以调整
             int doneCount = this.doneCount;
             int succeedCount = this.succeedCount;
             if (doneCount < succeedCount) { // 退出竞争，另一个线程来完成
                 return false;
             }
 
-            if (options.IsAnyOf) {
+            IPromise<object> promise = this.promise!;
+            int futureCount = futures.Count;
+            if (options.IsWhenAny) {
                 if (futureCount == 0) { // anyOf不能完成，考虑打印log
                     return false;
                 }
@@ -208,30 +245,53 @@ public sealed class FutureCombiner
                     return false;
                 }
                 if (result != null) { // anyOf下尽量返回成功
-                    return aggregatePromise!.TrySetResult(DecodeValue(result));
+                    return promise.TrySetResult(DecodeValue(result));
                 } else {
-                    if (cause == null) throw new IllegalStateException("anyOf: no cause recorded");
-                    return aggregatePromise!.TrySetException(cause);
+                    return promise.TrySetException(cause);
                 }
             }
+            if (options.IsWhenAll) {
+                if (doneCount < futureCount) {
+                    return false;
+                }
+                Exception cause = this.cause;
+                if (cause != null) {
+                    cause = CreateAggregateException();
+                    return promise.TrySetException(cause);
+                }
+                return promise.TrySetResult(null);
+            }
 
-            // 懒模式需要等待所有任务完成
+            // 非快速失败模式需要等待所有任务完成
             if (!options.failFast && doneCount < futureCount) {
                 return false;
             }
             // 包含了require小于等于0的情况
-            int successRequire = options.IsSelectAll ? futureCount : options.required;
+            int successRequire = options.required;
             if (succeedCount >= successRequire) {
-                return aggregatePromise!.TrySetResult(null);
+                return promise.TrySetResult(null);
             }
             // 剩余的任务不足以达到成功，则立即失败；包含了require大于futureCount的情况
             if (succeedCount + (futureCount - doneCount) < successRequire) {
-                if (cause == null) {
-                    cause = TaskInsufficientException.Create(futureCount, doneCount, succeedCount, successRequire);
+                Exception cause = this.cause;
+                if (cause != null) {
+                    cause = CreateAggregateException();
+                } else {
+                    cause = new OperationCanceledException("FailFast"); // 改用系统库异常
                 }
-                return aggregatePromise!.TrySetException(cause);
+                return promise.TrySetException(cause);
             }
             return false;
+        }
+
+        private AggregateException CreateAggregateException() {
+            List<Exception> exceptions = new List<Exception>();
+            foreach (IFuture upstream in futures) {
+                if (upstream.IsFailedOrCancelled) {
+                    exceptions.Add(upstream.ExceptionNow(false));
+                }
+            }
+            return new AggregateException(exceptions);
         }
     }
 

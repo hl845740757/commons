@@ -36,7 +36,7 @@ internal sealed class FutureStateMachineTask<T, S> : Promise<T>, IFutureStateMac
     /// <summary>
     /// 驱动状态机的委托
     /// </summary>
-    private Action _moveToNext;
+    private readonly Action _moveToNext;
 
     private FutureStateMachineTask() {
         _moveToNext = Run;
@@ -64,7 +64,6 @@ internal sealed class FutureStateMachineTask<T, S> : Promise<T>, IFutureStateMac
     /// </summary>
     protected override void OnCompleted() {
         _stateMachine = default;
-        _moveToNext = null!;
     }
 
     /// <summary>

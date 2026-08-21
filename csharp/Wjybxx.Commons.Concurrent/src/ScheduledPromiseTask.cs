@@ -64,7 +64,7 @@ public static class ScheduledPromiseTask
         return ScheduledPromiseTask<T>.Acquire(promise, TYPE_FUNC_STATE, action, state, cancelToken, options);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)] // 调度信息由外部再初始化
     public static ScheduledPromiseTask<T> OfBuilder<T>(ValuePromise<T> promise, in ScheduledTaskBuilder<T> builder) {
         return ScheduledPromiseTask<T>.Acquire(promise, builder.Type, builder.Task, builder.State, builder.CancelToken, builder.Options);
     }

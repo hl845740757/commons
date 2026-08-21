@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons.Ex;
 
 
 namespace Wjybxx.Commons.Concurrent
@@ -25,7 +26,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 不捕获堆栈的超时异常
 /// (c#下意义不大)
 /// </summary>
-public class StacklessTimeoutException : TimeoutException
+public class StacklessTimeoutException : TimeoutException, NoLogRequiredException
 {
     // C#的异常不适合单例，会导致堆栈冲突
     public static StacklessTimeoutException Inst => new StacklessTimeoutException();

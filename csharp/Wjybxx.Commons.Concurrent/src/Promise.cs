@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -100,9 +101,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region internal
 
-    /// <summary>
-    /// 
-    /// </summary>
     internal void Reset() {
         stack = null;
         _executor = null;
@@ -213,7 +211,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     /** 是否表示完成状态 -- 不包含发布状态 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsDone0(object? ex) {
+    private static bool IsDone0([NotNullWhen(true)] object? ex) {
         return ex != null
                && ex != EX_COMPUTING
                && ex != EX_PUBLISHING;
@@ -236,7 +234,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
     public bool IsFailedOrCancelled => PeekState(_ex) > ST_SUCCESS;
 
-    internal sealed override bool IsRelaxedCompleted => PeekState(_ex, false) >= ST_SUCCESS;
+    internal sealed override bool IsRelaxedCompleted => PeekState(_ex, strict: false) >= ST_SUCCESS;
     internal sealed override bool IsStrictlyCompleted => PeekState(_ex) >= ST_SUCCESS;
 
     #endregion
@@ -884,9 +882,10 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             if (e == CLAIMED) {
                 return true;
             }
-            if (!output.TrySetComputing()) { // 被用户取消
-                throw StacklessCancellationException.Default;
-            }
+            // 不应该存在其它竞争任务更新output，用户取消应该总是通过令牌实现
+            // if (!output.TrySetComputing()) {
+            //     throw new OperationCanceledException();
+            // }
             this.executor = CLAIMED;
             if (!ExecutorUtil.IsInlinable(e, options)) {
                 e.Execute(this);
