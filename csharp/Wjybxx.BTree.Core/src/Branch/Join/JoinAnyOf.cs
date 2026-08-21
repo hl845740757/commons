@@ -23,12 +23,12 @@ namespace Wjybxx.BTree.Branch.Join
 /// 相当于并发编程中的anyOf
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class JoinAnyOf<T> : JoinPolicy<T> where T : class
+public class JoinAnyOf<T> : IJoinPolicy<T> where T : class
 {
     /** 单例 */
-    private static readonly JoinAnyOf<T> INST = new JoinAnyOf<T>();
+    private static readonly JoinAnyOf<T> Inst = new JoinAnyOf<T>();
 
-    public static JoinAnyOf<T> GetInstance() => INST;
+    public static JoinAnyOf<T> GetInstance() => Inst;
 
     public void Reset() {
     }

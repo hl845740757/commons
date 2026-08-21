@@ -27,7 +27,7 @@ namespace BTree.Tests;
 
 public class JoinTest
 {
-    private static TaskEntry<Blackboard> newJoinTree(JoinPolicy<Blackboard> joinPolicy) {
+    private static TaskEntry<Blackboard> newJoinTree(IJoinPolicy<Blackboard> joinPolicy) {
         TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
         Join<Blackboard> join = new Join<Blackboard>();
         join.Policy = joinPolicy;

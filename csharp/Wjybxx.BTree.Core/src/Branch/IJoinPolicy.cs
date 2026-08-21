@@ -22,7 +22,7 @@ namespace Wjybxx.BTree.Branch
 /// <see cref="Join{T}"/>的完成策略
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface JoinPolicy<T> where T : class
+public interface IJoinPolicy<T> where T : class
 {
     /** 重置自身数据 */
     void Reset();

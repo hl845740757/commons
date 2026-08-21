@@ -22,9 +22,7 @@ namespace Wjybxx.BTree.Branch
 {
 /// <summary>
 /// 主动选择节点
-/// 每次运行时都会重新测试节点的运行条件，选择一个新的可运行节点。
-/// 如果新选择的运行节点与之前的运行节点不同，则取消之前的任务。
-/// (ActiveSelector也是比较常用的节点，做内联支持是合适的)
+/// 每次运行时都会重新测试节点的运行条件，选择一个新的可运行节点；如果新选择的运行节点与之前的运行节点不同，则取消之前的任务。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class ActiveSelector<T> : SingleRunningChildBranch<T> where T : class

@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Wjybxx.BTree.Condition;
 using Wjybxx.Commons;
 using static Wjybxx.BTree.TaskAttributes;
 
@@ -132,7 +133,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 但由于Task只能有一个Control，因此将前置条件存储在Task可避免额外的映射，从而可提高查询性能和易用性；
     /// 另外，将前置条件存储在Task上，可以让行为树的结构更加清晰。
     /// </summary>
-    [SerializeReference] private Task<T> guard;
+    [SerializeReference] private object? guard;
     /// <summary>
     /// 任务的自定义标识
     /// 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
@@ -241,16 +242,16 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
 #nullable disable
     /// <summary>
-    /// 获取行为树绑定的实体 -- 最好让Entity也在黑板中
+    /// 获取行为树的宿主对象
     /// </summary>
     /// <value></value>
     /// <exception cref="InvalidOperationException"></exception>
-    public object Entity {
+    public object HostObject {
         get {
             if (taskEntry == null) {
                 throw new InvalidOperationException("This task has never run");
             }
-            return taskEntry.Entity;
+            return taskEntry.HostObject;
         }
     }
 #nullable restore
@@ -506,8 +507,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             Stop();
         }
         ResetChildren();
-        if (guard != null) {
-            guard.Reset();
+        if (guard is Task<T> task) {
+            task.Reset();
         }
         if (this != taskEntry) {
             UnsetControl();
@@ -698,14 +699,13 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         // 初始化基础上下文后才可以检测取消
         if (control != null) {
             initMask |= CaptureContext(control);
-            initMask |= (control.ctl & MASK_NOT_ACTIVE_IN_HIERARCHY);
         }
         initMask |= (ctl & MASK_OVERRIDES); // 方法实现bits
         initMask |= (flags & MASK_CONTROL_FLOW_OPTIONS); // 控制流bits
         ctl = initMask;
 
         CancelToken cancelToken = this.cancelToken;
-        if (cancelToken.IsRequested) { // 胎死腹中
+        if (cancelToken.IsRequested && !IsCheckingGuard()) { // 胎死腹中
             ReleaseContext();
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
@@ -879,38 +879,44 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// </summary>
     /// <param name="guard">前置条件；可以是子节点的guard属性，也可以是条件子节点，也可以是外部的条件节点</param>
     /// <returns></returns>
-    public bool Template_CheckGuard(Task<T>? guard) {
+    public bool Template_CheckGuard(object? guard) {
         if (guard == null) {
             return true;
         }
+        if (guard is ICondition<T> cond) {
+            return cond.Test(blackboard) == 0;
+        }
+        if (guard is not Task<T> task) {
+            throw new InvalidOperationException("invalid guard type: " + guard.GetType());
+        }
         // 注意：此时需要从flags读取反转标记，因为尚未运行(且guard.guard失败的情况下不会运行)
-        bool inverted = (guard.flags & MASK_INVERTED_GUARD) != 0;
+        bool inverted = (task.flags & MASK_INVERTED_GUARD) != 0;
         try {
             // 极少情况下会有前置的前置，更推荐组合节点，更清晰；guard的guard也是检测当前上下文
-            if (guard.guard != null && !Template_CheckGuard(guard.guard)) {
-                guard.ctl |= MASK_DISABLE_NOTIFY;
-                guard.SetCompleted(inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED, false);
+            if (task.guard != null && !Template_CheckGuard(task.guard)) {
+                task.ctl |= MASK_DISABLE_NOTIFY;
+                task.SetCompleted(inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED, false);
                 return inverted;
             }
-            guard.Template_Start(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
-            if (guard.IsSucceeded) {
+            task.Template_Start(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
+            if (task.IsSucceeded) {
                 if (inverted) {
-                    guard.status = TaskStatus.ERROR;
+                    task.status = TaskStatus.ERROR;
                     return false;
                 }
                 return true;
             }
-            if (guard.IsFailed) {
+            if (task.IsFailed) {
                 if (inverted) {
-                    guard.status = TaskStatus.SUCCESS;
+                    task.status = TaskStatus.SUCCESS;
                     return true;
                 }
                 return false;
             }
-            throw new IllegalStateException($"Illegal guard status {guard.status}. Guards must either succeed or fail in one step.");
+            throw new IllegalStateException($"Illegal guard status {task.status}. Guards must either succeed or fail in one step.");
         }
         finally {
-            guard.UnsetControl(); // 条件类节点总是及时清理
+            task.UnsetControl(); // 条件类节点总是及时清理
         }
     }
 
@@ -1062,9 +1068,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         return -1;
     }
 
-    /** 访问所有的子节点(含hook节点) -- 只访问运行时数据，不访问配置数据 */
-    public abstract void VisitChildren(TaskVisitor<T> visitor, object param);
-
     /** 子节点的数量（仅包括普通意义上的child，不包括钩子任务） */
     public abstract int ChildCount { get; }
 
@@ -1193,7 +1196,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         set => name = value;
     }
 
-    public Task<T> Guard {
+    public object? Guard {
         get => guard;
         set => guard = value;
     }

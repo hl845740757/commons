@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,29 +16,24 @@
 
 #endregion
 
-namespace Wjybxx.BTree.Leaf
-{
-/// <summary>
-/// 固定返回失败的子节点
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public class Failure<T> : LeafTask<T> where T : class
-{
-    private int errorCode;
+using System.Collections.Generic;
 
-    protected override void Execute() {
-        SetFailed(TaskStatus.ToFailure(errorCode));
+namespace Wjybxx.BTree.Condition
+{
+public class ConditionAnd<T> : ConditionGroup<T>
+{
+    public ConditionAnd() {
     }
 
-    protected override void OnEventImpl(object _) {
+    public ConditionAnd(List<ICondition<T>> children) : base(children) {
     }
 
-    /// <summary>
-    /// 失败时使用的状态码
-    /// </summary>
-    public int ErrorCode {
-        get => errorCode;
-        set => errorCode = value;
+    public override int Test(T blackboard) {
+        foreach (ICondition<T> child in children) {
+            int code = child.Test(blackboard);
+            if (code != 0) return code;
+        }
+        return 0;
     }
 }
 }

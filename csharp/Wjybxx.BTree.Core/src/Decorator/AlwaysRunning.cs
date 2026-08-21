@@ -28,6 +28,7 @@ namespace Wjybxx.BTree.Decorator
 [TaskInlinable]
 public class AlwaysRunning<T> : Decorator<T> where T : class
 {
+    private bool treatCancelAsRunning;
     [NonSerialized] private bool started;
 
     public AlwaysRunning() {
@@ -71,10 +72,17 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
         inlineHelper.StopInline();
         IsBreakInline = true; // 阻断内联，避免频繁通知父节点
 
-        // 不响应其它状态，但还是需要响应取消...
-        if (child.IsCancelled) {
+        if (child.IsCancelled && !treatCancelAsRunning) {
             SetCancelled();
         }
+    }
+    
+    /// <summary>
+    /// 是否将取消也视作运行
+    /// </summary>
+    public bool TreatCancelAsRunning {
+        get => treatCancelAsRunning;
+        set => treatCancelAsRunning = value;
     }
 }
 }

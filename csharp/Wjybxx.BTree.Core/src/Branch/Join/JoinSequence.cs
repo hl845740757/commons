@@ -22,12 +22,12 @@ namespace Wjybxx.BTree.Branch.Join
 /// Join版本的Sequence
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class JoinSequence<T> : JoinPolicy<T> where T : class
+public class JoinSequence<T> : IJoinPolicy<T> where T : class
 {
     /** 单例 */
-    private static readonly JoinSequence<T> INST = new JoinSequence<T>();
+    private static readonly JoinSequence<T> Inst = new JoinSequence<T>();
 
-    public static JoinSequence<T> GetInstance() => INST;
+    public static JoinSequence<T> GetInstance() => Inst;
 
     public void Reset() {
     }

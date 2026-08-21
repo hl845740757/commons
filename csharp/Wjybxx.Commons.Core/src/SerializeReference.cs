@@ -29,7 +29,7 @@ namespace Wjybxx.Commons
 ///
 /// 2.当用于类型时，表示该类型及其子类默认序列化为引用类型 —— 可能与Unity的兼容性不好，减少使用。
 /// </summary>
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
 public sealed class SerializeReference : Attribute
 {
     public SerializeReference() {

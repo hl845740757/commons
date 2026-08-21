@@ -85,10 +85,6 @@ public abstract class Decorator<T> : Task<T> where T : class
 
     #region child
 
-    public override void VisitChildren(TaskVisitor<T> visitor, object param) {
-        if (child != null) visitor.VisitChild(child, 0, param);
-    }
-
     public sealed override int IndexChild(Task<T> task) {
         if (task != null && task == this.child) {
             return 0;

@@ -20,6 +20,7 @@ using System.Reflection;
 using Wjybxx.BTree;
 using Wjybxx.BTree.Branch;
 using Wjybxx.BTree.Branch.Join;
+using Wjybxx.BTree.Condition;
 using Wjybxx.BTree.Decorator;
 using Wjybxx.BTree.FSM;
 using Wjybxx.BTree.FSM.Handler;
@@ -114,6 +115,14 @@ public class BtreeCodecLinker
         private SimpleRandom<object> simpleRandom;
         private Success<object> success;
         private SimpleWaitFrame<object> waitFrame;
+    }
+
+    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Condition")]
+    public class CondLinker
+    {
+        private ConditionNot<object> _conditionNot;
+        private ConditionOr<object> _conditionOr;
+        private ConditionAnd<object> _conditionAnd;
     }
 }
 }

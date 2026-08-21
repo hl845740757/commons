@@ -38,6 +38,11 @@ public abstract class LoopDecorator<T> : Decorator<T> where T : class
     protected LoopDecorator(Task<T> child) : base(child) {
     }
 
+    public override void Reset() {
+        base.Reset();
+        curLoop = 0;
+    }
+    
     protected override void BeforeEnter() {
         base.BeforeEnter();
         curLoop = 0;

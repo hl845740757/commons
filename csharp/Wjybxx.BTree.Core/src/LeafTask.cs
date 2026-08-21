@@ -39,9 +39,6 @@ public abstract class LeafTask<T> : Task<T> where T : class
 
     #region child
 
-    public override void VisitChildren(TaskVisitor<T> visitor, object param) {
-    }
-
     public sealed override int IndexChild(Task<T> task) {
         return -1;
     }

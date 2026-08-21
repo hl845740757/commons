@@ -23,12 +23,12 @@ namespace Wjybxx.BTree.Branch.Join
 /// 类似<see cref="SimpleParallel{T}"/>，但Join在得出结果前不重复运行已完成的子节点
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class JoinMain<T> : JoinPolicy<T> where T : class
+public class JoinMain<T> : IJoinPolicy<T> where T : class
 {
     /** 单例 */
-    private static readonly JoinMain<T> INST = new JoinMain<T>();
+    private static readonly JoinMain<T> Inst = new JoinMain<T>();
 
-    public static JoinMain<T> GetInstance() => INST;
+    public static JoinMain<T> GetInstance() => Inst;
 
     public void Reset() {
     }

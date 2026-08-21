@@ -26,7 +26,7 @@ namespace Wjybxx.BTree.Branch
 public class Join<T> : ParallelBranch<T> where T : class
 {
 #nullable disable
-    protected JoinPolicy<T> policy;
+    protected IJoinPolicy<T> policy;
     /** 已进入完成状态的子节点 */
     [NonSerialized] protected int completedCount;
     /** 成功完成的子节点 */
@@ -117,7 +117,7 @@ public class Join<T> : ParallelBranch<T> where T : class
     public int CompletedCount => completedCount;
     public int SucceededCount => succeededCount;
 
-    public JoinPolicy<T> Policy {
+    public IJoinPolicy<T> Policy {
         get => policy;
         set => policy = value;
     }

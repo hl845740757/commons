@@ -25,7 +25,8 @@ namespace Wjybxx.BTree.Decorator
 [TaskInlinable]
 public class AlwaysFail<T> : Decorator<T> where T : class
 {
-    private int failureStatus;
+    private bool treatCancelAsFailure;
+    private int errorCode;
 
     public AlwaysFail() {
     }
@@ -35,7 +36,7 @@ public class AlwaysFail<T> : Decorator<T> where T : class
 
     protected override void Execute() {
         if (child == null) {
-            SetFailed(TaskStatus.ToFailure(failureStatus));
+            SetFailed(TaskStatus.ToFailure(errorCode));
             return;
         }
         Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
@@ -54,15 +55,26 @@ public class AlwaysFail<T> : Decorator<T> where T : class
 
     protected override void OnChildCompleted(Task<T> child) {
         inlineHelper.StopInline();
-        SetCompleted(TaskStatus.ToFailure(child.Status), true); // 错误码有传播的价值
+        if (child.IsCancelled && !treatCancelAsFailure) {
+            SetCancelled();
+        } else { 
+            SetCompleted(TaskStatus.ToFailure(child.Status), true); // 错误码有传播的价值
+        }
     }
 
     /// <summary>
+    /// 是否将取消也视作失败
+    /// </summary>
+    public bool TreatCancelAsFailure {
+        get => treatCancelAsFailure;
+        set => treatCancelAsFailure = value;
+    }
+    /// <summary>
     /// 失败时使用的状态码
     /// </summary>
-    public int FailureStatus {
-        get => failureStatus;
-        set => failureStatus = value;
+    public int ErrorCode {
+        get => errorCode;
+        set => errorCode = value;
     }
 }
 }

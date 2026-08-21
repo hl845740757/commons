@@ -28,7 +28,7 @@ namespace Wjybxx.BTree
 /// 
 /// 1. 该实现并不是典型的行为树实现，而是更加通用的任务树，因此命名TaskEntry。
 /// 2. 该类允许继承，以提供一些额外的方法，但核心方法是禁止重写的。
-/// 3. Entry的数据尽量也保存在黑板中，尤其是绑定的实体（Entity），尽可能使业务逻辑仅依赖黑板即可完成。
+/// 3. Entry的数据尽量也保存在黑板中，尤其是绑定的宿主对象（HostObject），尽可能使业务逻辑仅依赖黑板即可完成。
 /// 4. Entry默认不检查<see cref="Task{T}.Guard"/>，如果需要由用户（逻辑上的control）检查。
 /// 5. 如果要复用行为树，应当以树为单位整体复用，万莫以Task为单位复用 -- 节点之间的引用千丝万缕，容易内存泄漏。
 /// 6. 该行为树虽然是事件驱动的，但心跳不是事件，仍需要每一帧调用<see cref="Update"/>方法。
@@ -42,8 +42,8 @@ public class TaskEntry<T> : Task<T> where T : class
     /** 行为树的类型 -- 用于加载时筛选 */
     private int type;
 
-    /** 行为树绑定的实体 -- 最好也存储在黑板里；这里的字段本是为了提高性能 */
-    [NonSerialized] protected object? entity;
+    /** 行为树的宿主对象 -- 最好也存储在黑板里；这里的字段本是为了提高性能 */
+    [NonSerialized] protected object? hostObject;
     /** 行为树加载器 -- 用于加载Task或配置 */
     [NonSerialized] protected ITreeLoader treeLoader;
     /** 用于Entry的事件驱动 */
@@ -85,9 +85,9 @@ public class TaskEntry<T> : Task<T> where T : class
         set => handler = value;
     }
 
-    public new object? Entity {
-        get => entity;
-        set => entity = value;
+    public new object? HostObject {
+        get => hostObject;
+        set => hostObject = value;
     }
 
     #endregion
@@ -210,10 +210,6 @@ public class TaskEntry<T> : Task<T> where T : class
 #nullable disable
 
     #region child
-
-    public override void VisitChildren(TaskVisitor<T> visitor, object param) {
-        if (rootTask != null) visitor.VisitChild(rootTask, 0, param);
-    }
 
     public sealed override int IndexChild(Task<T> task) {
         if (task != null && task == this.rootTask) {

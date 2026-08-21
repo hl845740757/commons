@@ -42,11 +42,11 @@ public abstract class ConditionTask<T> : LeafTask<T> where T : class
     protected sealed override void Execute() {
         int status = Test();
         switch (status) {
-            case TaskStatus.NEW:
             case TaskStatus.RUNNING:
             case TaskStatus.CANCELLED: {
                 throw new IllegalStateException("Illegal condition status: " + status);
             }
+            case TaskStatus.NEW:
             case TaskStatus.SUCCESS: {
                 SetSuccess();
                 break;
@@ -59,9 +59,9 @@ public abstract class ConditionTask<T> : LeafTask<T> where T : class
     }
 
     /// <summary>
-    /// 检查条件 -- 同步返回
+    /// 检查条件
     /// </summary>
-    /// <returns>状态码</returns>
+    /// <returns>错误码，0表示成功</returns>
     protected abstract int Test();
 
     /** 条件节点正常情况下不会触发事件 */

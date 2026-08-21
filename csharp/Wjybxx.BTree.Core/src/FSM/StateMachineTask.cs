@@ -23,7 +23,6 @@ using System.Runtime.CompilerServices;
 using Wjybxx.BTree.Branch;
 using Wjybxx.BTree.FSM.Handler;
 using Wjybxx.Commons;
-using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.BTree.FSM
 {
@@ -43,6 +42,8 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     [NonSerialized] private Task<T>? tempNextState;
+    /** 状态切换监听器，主要用于简化用户代码 */
+    [NonSerialized] private StateMachineListener<T>? listener;
     /** handler也加入序列化，用于在编辑器中配置 */
     private IStateMachineHandler<T> handler = DefaultStateMachineHandler<T>.Inst;
 
@@ -232,7 +233,11 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     protected virtual void BeforeChangeState(Task<T>? curState, Task<T>? nextState) {
         Debug.Assert(curState != null || nextState != null);
-        handler.BeforeChangeState(this, curState, nextState);
+        if (listener != null) {
+            listener.Invoke(this, curState, nextState);
+        } else {
+            handler.BeforeChangeState(this, curState, nextState);
+        }
     }
 
     protected override void OnChildRunning(Task<T> child, bool starting) {
@@ -328,6 +333,12 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     public IStateMachineHandler<T> Handler {
         get => handler;
         set => handler = value ?? DefaultStateMachineHandler<T>.Inst; // null处理
+    }
+
+    public StateMachineListener<T>? Listener
+    {
+        get => listener;
+        set => listener = value;
     }
 
     #endregion

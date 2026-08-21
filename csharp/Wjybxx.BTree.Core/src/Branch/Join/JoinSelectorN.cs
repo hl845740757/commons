@@ -24,7 +24,7 @@ namespace Wjybxx.BTree.Branch.Join
 /// Join版本的SelectorN
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class JoinSelectorN<T> : JoinPolicy<T> where T : class
+public class JoinSelectorN<T> : IJoinPolicy<T> where T : class
 {
     /** 需要达成的次数 */
     private int required = 1;

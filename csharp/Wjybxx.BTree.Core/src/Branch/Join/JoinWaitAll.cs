@@ -23,12 +23,12 @@ namespace Wjybxx.BTree.Branch.Join
 /// 相当于并发编程中的WaitAll
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class JoinWaitAll<T> : JoinPolicy<T> where T : class
+public class JoinWaitAll<T> : IJoinPolicy<T> where T : class
 {
     /** 单例 */
-    private static readonly JoinWaitAll<T> INST = new JoinWaitAll<T>();
+    private static readonly JoinWaitAll<T> Inst = new JoinWaitAll<T>();
 
-    public static JoinWaitAll<T> GetInstance() => INST;
+    public static JoinWaitAll<T> GetInstance() => Inst;
 
     public void Reset() {
     }

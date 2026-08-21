@@ -56,6 +56,10 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     }
 
     protected override void Execute() {
+        if (nextState == null) {
+            SetFailed();
+            return;
+        }
         nextState.SharedProps = stateProps;
         //
         int reentryId = ReentryId;

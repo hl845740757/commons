@@ -24,7 +24,7 @@ namespace Wjybxx.BTree
 /// <summary>
 /// Task的基础状态码
 /// </summary>
-public class TaskStatus
+public static class TaskStatus
 {
     /** 初始状态 */
     public const int NEW = 0;
@@ -47,6 +47,8 @@ public class TaskStatus
     public const int TIMEOUT = 8;
     /** 循环结束 */
     public const int MAX_LOOP_LIMIT = 9;
+    /** 上下文错误 - 主要用于条件测试中，告诉装饰器不可以反转条件测试结果 */
+    public const int CONTEXT_ERROR = 10;
 
     /** 这是Task类能捕获的最大前一个状态的值，超过该值时将被修正该值 */
     public const int MAX_PREV_STATUS = 31;
@@ -55,44 +57,43 @@ public class TaskStatus
     /** 任务是否正在运行 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsRunning(int status) {
-        return status == TaskStatus.RUNNING;
+        return status == RUNNING;
     }
 
     /** 任务是否已完成(成功、失败、取消) */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsCompleted(int status) {
-        return status >= TaskStatus.SUCCESS;
+        return status >= SUCCESS;
     }
 
     /** 任务是否已成功 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSucceeded(int status) {
-        return status == TaskStatus.SUCCESS;
+        return status == SUCCESS;
     }
 
     /** 任务是否已被取消 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsCancelled(int status) {
-        return status == TaskStatus.CANCELLED;
+        return status == CANCELLED;
     }
 
     /** 任务是否已失败 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFailed(int status) {
-        return status > TaskStatus.CANCELLED;
+        return status > CANCELLED;
     }
 
     /** 任务是否已失败或被取消 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFailedOrCancelled(int status) {
-        return status > TaskStatus.SUCCESS;
+        return status > SUCCESS;
     }
 
     //
     /** 将给定状态码归一化，所有的失败码将被转为<code>ERROR</code>  */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Normalize(int status) {
-        if (status < 0) return 0;
         return status > ERROR ? ERROR : status;
     }
 
@@ -108,7 +109,9 @@ public class TaskStatus
         if (status < SUCCESS) {
             throw new ArgumentException(nameof(status));
         }
-        if (status == CANCELLED) return CANCELLED;
+        if (status == CANCELLED) {
+            return CANCELLED;
+        }
         return status == SUCCESS ? ERROR : SUCCESS;
     }
 }

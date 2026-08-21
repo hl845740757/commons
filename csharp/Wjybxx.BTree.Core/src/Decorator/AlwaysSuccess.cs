@@ -25,6 +25,8 @@ namespace Wjybxx.BTree.Decorator
 [TaskInlinable]
 public class AlwaysSuccess<T> : Decorator<T> where T : class
 {
+    private bool treatCancelAsSuccess;
+
     public AlwaysSuccess() {
     }
 
@@ -52,7 +54,19 @@ public class AlwaysSuccess<T> : Decorator<T> where T : class
 
     protected override void OnChildCompleted(Task<T> child) {
         inlineHelper.StopInline();
-        SetSuccess();
+        if (child.IsCancelled && !treatCancelAsSuccess) {
+            SetCancelled();
+        } else {
+            SetSuccess();
+        }
+    }
+    
+    /// <summary>
+    /// 是否将取消也视作成功
+    /// </summary>
+    public bool TreatCancelAsSuccess {
+        get => treatCancelAsSuccess;
+        set => treatCancelAsSuccess = value;
     }
 }
 }

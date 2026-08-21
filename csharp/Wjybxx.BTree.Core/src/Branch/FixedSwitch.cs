@@ -40,19 +40,12 @@ public class FixedSwitch<T> : Switch<T> where T : class
 
     protected override void BeforeEnter() {
         base.BeforeEnter();
-        if (children.Count == 0) {
-            AddChildIfNotNull(branch1);
-            AddChildIfNotNull(branch2);
-            AddChildIfNotNull(branch3);
-            AddChildIfNotNull(branch4);
-            AddChildIfNotNull(branch5);
-        }
-    }
-
-    private void AddChildIfNotNull(Task<T>? branch) {
-        if (branch != null) {
-            AddChild(branch);
-        }
+        if (children.Count != 0) return;
+        if (branch1 != null) children.Add(branch1);
+        if (branch2 != null) children.Add(branch2);
+        if (branch3 != null) children.Add(branch3);
+        if (branch4 != null) children.Add(branch4);
+        if (branch5 != null) children.Add(branch5);
     }
 
     public Task<T>? Branch1 {

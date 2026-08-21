@@ -62,7 +62,7 @@ public class ChangeStateArgs
     public readonly byte cmd;
     /** 延迟模式 -- 允许用户扩展 */
     public readonly byte delayMode;
-    /** 期望开始运行的帧号 */
+    /** 延迟参数 */
     public readonly int delayArg;
     /** 期望传递给Listener的数据 */
     public readonly object? extraInfo;
@@ -115,6 +115,10 @@ public class ChangeStateArgs
         return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
     }
 
+    /// <summary>
+    /// 普通状态切换请求，可以指定前一个状态的执行结果，以避免当前状态进入被取消状态
+    /// </summary>
+    /// <param name="result">前一个状态的执行结果</param>
     public static ChangeStateArgs PlainWithArg(int result) {
         return result switch
         {

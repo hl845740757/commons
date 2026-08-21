@@ -28,7 +28,7 @@ namespace Wjybxx.BTree
 /// 3.访问器在访问过程中不能导致Task产生状态迁移，即不能使Task进入完成状态。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface TaskVisitor<T> where T : class
+public interface ITaskVisitor<T> where T : class
 {
     /// <summary>
     /// 访问普通子节点
