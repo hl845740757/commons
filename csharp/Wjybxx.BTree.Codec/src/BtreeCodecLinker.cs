@@ -118,7 +118,7 @@ public class BtreeCodecLinker
     }
 
     [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Condition")]
-    public class CondLinker
+    public class ConditionLinker
     {
         private ConditionNot<object> _conditionNot;
         private ConditionOr<object> _conditionOr;

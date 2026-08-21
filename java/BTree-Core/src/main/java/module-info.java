@@ -11,6 +11,7 @@ module wjybxx.btree.core {
     exports cn.wjybxx.btree;
     exports cn.wjybxx.btree.branch;
     exports cn.wjybxx.btree.branch.join;
+    exports cn.wjybxx.btree.condition;
     exports cn.wjybxx.btree.decorator;
     exports cn.wjybxx.btree.fsm;
     exports cn.wjybxx.btree.fsm.handler;
@@ -19,6 +20,7 @@ module wjybxx.btree.core {
     opens cn.wjybxx.btree;
     opens cn.wjybxx.btree.branch;
     opens cn.wjybxx.btree.branch.join;
+    opens cn.wjybxx.btree.condition;
     opens cn.wjybxx.btree.decorator;
     opens cn.wjybxx.btree.fsm;
     opens cn.wjybxx.btree.fsm.handler;

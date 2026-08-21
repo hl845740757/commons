@@ -21,7 +21,7 @@ package cn.wjybxx.btree;
  * @author wjybxx
  * date - 2023/12/2
  */
-public interface TaskEntryHandler<T> {
+public interface ITaskEntryHandler<T> {
 
     /** 任务启动时调用 -- 同于将任务发布到其它地方，不可执行其它逻辑 */
     default void onEnter(TaskEntry<T> taskEntry) {

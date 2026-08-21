@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * date - 2023/12/3
  */
 @FunctionalInterface
-public interface StateMachineHandler<T> {
+public interface IStateMachineHandler<T> {
 
     /**
      * handler可能也有需要重置的数据。

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 wjybxx(845740757@qq.com)
+ * Copyright 2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.wjybxx.btree.leaf;
+package cn.wjybxx.btree.condition;
 
-import cn.wjybxx.btree.LeafTask;
+import cn.wjybxx.base.SerializeReference;
 import cn.wjybxx.btree.TaskStatus;
 
-import javax.annotation.Nonnull;
-
 /**
+ * 额外的条件节点抽象
+ * <p>
+ * 注：该抽象的目的在于减少条件节点的开销 —— Task实现条件的成本较高，包含大量的状态维护。
+ *
+ * @param <T> 黑板类型
  * @author wjybxx
- * date - 2023/11/26
  */
-public class Failure<T> extends LeafTask<T> {
+@SerializeReference
+public interface ICondition<T> {
 
-    private int errorCode;
+    /**
+     * 条件测试
+     * <p>
+     * 注意：成功码固定为0，失败码应当从4开始，即{@link TaskStatus#ERROR}
+     *
+     * @return 错误码
+     */
+    int test(T blackboard);
 
-    @Override
-    protected void execute() {
-        setFailed(TaskStatus.toFailure(errorCode));
-    }
-
-    @Override
-    protected void onEventImpl(@Nonnull Object event) {
-
-    }
-
-    /** 失败时使用的状态码 */
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(int errorCode) {
-        this.errorCode = errorCode;
-    }
 }

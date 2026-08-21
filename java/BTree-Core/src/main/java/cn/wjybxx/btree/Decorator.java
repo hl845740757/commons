@@ -87,11 +87,6 @@ public abstract class Decorator<T> extends Task<T> {
 
 
     @Override
-    public void visitChildren(TaskVisitor<? super T> visitor, Object param) {
-        if (child != null) visitor.visitChild(child, 0, param);
-    }
-
-    @Override
     public final int indexChild(Task<?> task) {
         if (task != null && task == this.child) {
             return 0;

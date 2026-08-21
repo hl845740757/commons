@@ -17,7 +17,7 @@ package cn.wjybxx.btree.branch.join;
 
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.branch.Join;
-import cn.wjybxx.btree.branch.JoinPolicy;
+import cn.wjybxx.btree.branch.IJoinPolicy;
 
 /**
  * 等待所有任务完成后返回成功
@@ -26,7 +26,7 @@ import cn.wjybxx.btree.branch.JoinPolicy;
  * @author wjybxx
  * date - 2023/12/2
  */
-public class JoinWaitAll<T> implements JoinPolicy<T> {
+public class JoinWaitAll<T> implements IJoinPolicy<T> {
 
     private static final JoinWaitAll<?> INSTANCE = new JoinWaitAll<>();
 

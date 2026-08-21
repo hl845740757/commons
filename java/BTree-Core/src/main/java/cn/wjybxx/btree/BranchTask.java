@@ -99,13 +99,6 @@ public abstract class BranchTask<T> extends Task<T> {
     }
 
     @Override
-    public void visitChildren(TaskVisitor<? super T> visitor, Object param) {
-        for (int i = 0; i < children.size(); i++) {
-            visitor.visitChild(children.get(i), i, param);
-        }
-    }
-
-    @Override
     public int getChildCount() {
         return children.size();
     }

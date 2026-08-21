@@ -26,7 +26,7 @@ import cn.wjybxx.btree.branch.*;
  * @author wjybxx
  * date - 2023/12/2
  */
-public class JoinMain<T> implements JoinPolicy<T> {
+public class JoinMain<T> implements IJoinPolicy<T> {
 
     private static final JoinMain<?> INSTANCE = new JoinMain<>();
 

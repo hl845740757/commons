@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * @author wjybxx
  * date - 2023/11/26
  */
-public interface TreeLoader {
+public interface ITreeLoader {
 
     // region load
 
@@ -90,11 +90,11 @@ public interface TreeLoader {
 
     // region NullLoader
 
-    static TreeLoader nullLoader() {
+    static ITreeLoader nullLoader() {
         return NullLoader.INSTANCE;
     }
 
-    class NullLoader implements TreeLoader {
+    class NullLoader implements ITreeLoader {
 
         static final NullLoader INSTANCE = new NullLoader();
 

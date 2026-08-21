@@ -33,7 +33,7 @@ public class TimingTaskEntry<T> extends TaskEntry<T> {
         super(name, rootTask, blackboard);
     }
 
-    public TimingTaskEntry(String name, Task<T> rootTask, T blackboard, Object entity, TreeLoader treeLoader) {
-        super(name, rootTask, blackboard, entity, treeLoader);
+    public TimingTaskEntry(String name, Task<T> rootTask, T blackboard, Object hostObject, ITreeLoader treeLoader) {
+        super(name, rootTask, blackboard, hostObject, treeLoader);
     }
 }

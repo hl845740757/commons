@@ -26,7 +26,7 @@ import java.util.Objects;
  * <p>
  * 1. 该实现并不是典型的行为树实现，而是更加通用的任务树，因此命名TaskEntry。
  * 2. 该类允许继承，以提供一些额外的方法，但核心方法是禁止重写的。
- * 3. Entry的数据尽量也保存在黑板中，尤其是绑定的实体（Entity），尽可能使业务逻辑仅依赖黑板即可完成。
+ * 3. Entry的数据尽量也保存在黑板中，尤其是绑定的宿主对象（HostObject），尽可能使业务逻辑仅依赖黑板即可完成。
  * 4. Entry默认不检查{@link #getGuard()}，如果需要由用户（逻辑上的control）检查。
  * 5. 如果要复用行为树，应当以树为单位整体复用，万莫以Task为单位复用 -- 节点之间的引用千丝万缕，容易内存泄漏。
  * 6. 该行为树虽然是事件驱动的，但心跳不是事件，仍需要每一帧调用{@link #update()}方法。
@@ -43,12 +43,12 @@ public class TaskEntry<T> extends Task<T> {
     /** 行为树的类型 -- 用于加载时筛选 */
     private int type;
 
-    /** 行为树绑定的实体 -- 最好也存储在黑板里；这里的字段本是为了提高性能 */
-    protected transient Object entity;
+    /** 行为树的宿主对象 -- 最好也存储在黑板里；这里的字段本是为了提高性能 */
+    protected transient Object hostObject;
     /** 行为树加载器 -- 用于加载Task或配置 */
-    protected transient TreeLoader treeLoader;
+    protected transient ITreeLoader treeLoader;
     /** 用于Entry的事件驱动 */
-    protected transient TaskEntryHandler<T> handler;
+    protected transient ITaskEntryHandler<T> handler;
     /** 用于内联优化 */
     protected final transient TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<>();
 
@@ -61,12 +61,12 @@ public class TaskEntry<T> extends Task<T> {
     }
 
     public TaskEntry(String name, Task<T> rootTask, T blackboard,
-                     Object entity, TreeLoader treeLoader) {
+                     Object hostObject, ITreeLoader treeLoader) {
         this.name = name;
         this.rootTask = rootTask;
         this.blackboard = blackboard;
-        this.entity = entity;
-        this.treeLoader = Objects.requireNonNullElse(treeLoader, TreeLoader.nullLoader());
+        this.hostObject = hostObject;
+        this.treeLoader = Objects.requireNonNullElse(treeLoader, ITreeLoader.nullLoader());
 
         taskEntry = this;
         cancelToken = new CancelToken();
@@ -90,29 +90,29 @@ public class TaskEntry<T> extends Task<T> {
         this.type = type;
     }
 
-    public void setEntity(Object entity) {
-        this.entity = entity;
+    public void setHostObject(Object hostObject) {
+        this.hostObject = hostObject;
     }
 
-    public TreeLoader getTreeLoader() {
+    public ITreeLoader getTreeLoader() {
         return treeLoader;
     }
 
-    public TaskEntryHandler<T> getHandler() {
+    public ITaskEntryHandler<T> getHandler() {
         return handler;
     }
 
-    public void setHandler(TaskEntryHandler<T> handler) {
+    public void setHandler(ITaskEntryHandler<T> handler) {
         this.handler = handler;
     }
 
-    public final void setTreeLoader(TreeLoader treeLoader) {
-        this.treeLoader = Objects.requireNonNullElse(treeLoader, TreeLoader.nullLoader());
+    public final void setTreeLoader(ITreeLoader treeLoader) {
+        this.treeLoader = Objects.requireNonNullElse(treeLoader, ITreeLoader.nullLoader());
     }
 
     @Override
-    public final Object getEntity() {
-        return entity;
+    public final Object getHostObject() {
+        return hostObject;
     }
 
     // endregion
@@ -237,11 +237,6 @@ public class TaskEntry<T> extends Task<T> {
     // endregion
 
     // region child
-
-    @Override
-    public void visitChildren(TaskVisitor<? super T> visitor, Object param) {
-        if (rootTask != null) visitor.visitChild(rootTask, 0, param);
-    }
 
     @Override
     public final int indexChild(Task<?> task) {

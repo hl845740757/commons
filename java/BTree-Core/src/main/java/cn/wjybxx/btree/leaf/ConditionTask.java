@@ -45,18 +45,18 @@ public abstract class ConditionTask<T> extends LeafTask<T> {
     protected final void execute() {
         int status = test();
         switch (status) {
-            case TaskStatus.NEW,
-                 TaskStatus.RUNNING,
+            case TaskStatus.RUNNING,
                  TaskStatus.CANCELLED -> throw new IllegalStateException("Illegal condition status: " + status);
-            case TaskStatus.SUCCESS -> setSuccess();
+            case TaskStatus.NEW,
+                 TaskStatus.SUCCESS -> setSuccess();
             default -> setFailed(status);
         }
     }
 
     /**
-     * 检查条件 -- 同步返回
+     * 检查条件
      *
-     * @return 状态码
+     * @return 错误码，0表示成功
      */
     protected abstract int test();
 

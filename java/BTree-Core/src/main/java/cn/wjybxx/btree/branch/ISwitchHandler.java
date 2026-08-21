@@ -13,41 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package cn.wjybxx.btree.branch;
 
-import cn.wjybxx.btree.Task;
+import cn.wjybxx.btree.BranchTask;
 
 /**
- * Join的完成策略
- * 1.不要在Policy上缓存Join的child。
- * 2.尽量少的缓存数据
- *
  * @author wjybxx
- * date - 2023/12/2
+ * date - 2024/7/15
  */
-public interface JoinPolicy<T> {
-
-    /** 重置自身数据 */
-    void resetForRestart();
-
-    /** 启动前初始化 */
-    void beforeEnter(Join<T> join);
-
-    /** 启动 */
-    void enter(Join<T> join);
+public interface ISwitchHandler<T> {
 
     /**
-     * Join在调用该方法前更新了完成计数和成功计数
+     * 选择要执行的子节点
      *
-     * @param child 进入完成状态的child
+     * @param branchTask 要测试的分支
+     * @return 选中的分支索引，-1表示未选中
      */
-    void onChildCompleted(Join<T> join, Task<T> child);
-
-    /**
-     * join节点收到外部事件
-     *
-     * @param event 收到的事件
-     */
-    void onEvent(Join<T> join, Object event);
-
+    int select(BranchTask<? extends T> branchTask);
 }

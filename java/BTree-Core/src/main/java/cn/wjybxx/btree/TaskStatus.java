@@ -79,7 +79,6 @@ public class TaskStatus {
 
     /** 将给定状态码归一化，所有的失败码将被转为{@link #ERROR} */
     public static int normalize(int status) {
-        if (status < 0) return 0;
         //noinspection ManualMinMaxCalculation
         return status > ERROR ? ERROR : status;
     }

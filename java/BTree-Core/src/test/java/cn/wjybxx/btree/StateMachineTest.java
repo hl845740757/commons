@@ -187,7 +187,7 @@ public class StateMachineTest {
         fillRedoQueue(stateMachine);
 
         MutableInt redoFinished = new MutableInt(0);
-        stateMachine.setHandler(new StateMachineHandler<Blackboard>() {
+        stateMachine.setHandler(new IStateMachineHandler<Blackboard>() {
             @Override
             public boolean onNextStateAbsent(StateMachineTask<Blackboard> stateMachineTask, Task<Blackboard> preState) {
                 if (redoFinished.intValue() == 0) {

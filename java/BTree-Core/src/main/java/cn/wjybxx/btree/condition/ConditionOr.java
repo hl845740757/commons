@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 wjybxx(845740757@qq.com)
+ * Copyright 2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.wjybxx.btree.leaf;
+package cn.wjybxx.btree.condition;
 
-import cn.wjybxx.btree.LeafTask;
 import cn.wjybxx.btree.TaskStatus;
 
-import javax.annotation.Nonnull;
+import java.util.List;
 
 /**
+ * 任意条件成功，则成功
+ *
+ * @param <T> 黑板类型
  * @author wjybxx
- * date - 2023/11/26
  */
-public class Failure<T> extends LeafTask<T> {
+public class ConditionOr<T> extends ConditionGroup<T> {
 
-    private int errorCode;
+    public ConditionOr() {
+    }
 
-    @Override
-    protected void execute() {
-        setFailed(TaskStatus.toFailure(errorCode));
+    public ConditionOr(List<ICondition<T>> children) {
+        super(children);
     }
 
     @Override
-    protected void onEventImpl(@Nonnull Object event) {
-
-    }
-
-    /** 失败时使用的状态码 */
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(int errorCode) {
-        this.errorCode = errorCode;
+    public int test(T blackboard) {
+        for (int idx = 0; idx < children.size(); idx++) {
+            int code = children.get(idx).test(blackboard);
+            if (code == 0) return 0;
+        }
+        return TaskStatus.ERROR;
     }
 }

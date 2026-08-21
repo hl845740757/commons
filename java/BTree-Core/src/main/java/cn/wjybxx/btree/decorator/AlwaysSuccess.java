@@ -28,6 +28,9 @@ import cn.wjybxx.btree.TaskInlinable;
 @TaskInlinable
 public class AlwaysSuccess<T> extends Decorator<T> {
 
+    /** 是否将取消也视作成功 */
+    private boolean treatCancelAsSuccess;
+
     public AlwaysSuccess() {
     }
 
@@ -59,6 +62,19 @@ public class AlwaysSuccess<T> extends Decorator<T> {
     @Override
     protected void onChildCompleted(Task<T> child) {
         inlineHelper.stopInline();
-        setSuccess();
+        if (child.isCancelled() && !treatCancelAsSuccess) {
+            setCancelled();
+        } else {
+            setSuccess();
+        }
+    }
+
+    /** 是否将取消也视作成功 */
+    public boolean isTreatCancelAsSuccess() {
+        return treatCancelAsSuccess;
+    }
+
+    public void setTreatCancelAsSuccess(boolean treatCancelAsSuccess) {
+        this.treatCancelAsSuccess = treatCancelAsSuccess;
     }
 }

@@ -17,7 +17,7 @@ package cn.wjybxx.btree.branch.join;
 
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.branch.Join;
-import cn.wjybxx.btree.branch.JoinPolicy;
+import cn.wjybxx.btree.branch.IJoinPolicy;
 import cn.wjybxx.btree.branch.Sequence;
 
 /**
@@ -27,7 +27,7 @@ import cn.wjybxx.btree.branch.Sequence;
  * @author wjybxx
  * date - 2023/12/2
  */
-public class JoinSequence<T> implements JoinPolicy<T> {
+public class JoinSequence<T> implements IJoinPolicy<T> {
 
     private static final JoinSequence<?> INSTANCE = new JoinSequence<>();
 

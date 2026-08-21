@@ -42,8 +42,10 @@ public class StateMachineTask<T> extends Decorator<T> {
 
     /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     protected transient Task<T> tempNextState;
+    /** 状态切换监听器，主要用于简化用户代码 */
+    protected transient StateMachineListener<T> listener;
     /** handler也加入序列化，用于在编辑器中配置 */
-    protected StateMachineHandler<T> handler = DefaultStateMachineHandler.getInstance();
+    protected IStateMachineHandler<T> handler = DefaultStateMachineHandler.getInstance();
 
     // region fsm基础api
 
@@ -131,7 +133,7 @@ public class StateMachineTask<T> extends Decorator<T> {
 
     /** 通过状态的名字发起状态切换 */
     public final void changeState(String stateName, int curStateResult) {
-        Task<T> state = getState(name);
+        Task<T> state = getState(stateName);
         if (state == null) {
             throw new IllegalStateException("state is absent, name: " + stateName);
         }
@@ -140,7 +142,7 @@ public class StateMachineTask<T> extends Decorator<T> {
 
     /** 通过状态的名字发起状态切换 */
     public final void changeState(String stateName, ChangeStateArgs stateArgs) {
-        Task<T> state = getState(name);
+        Task<T> state = getState(stateName);
         if (state == null) {
             throw new IllegalStateException("state is absent, name: " + stateName);
         }
@@ -169,10 +171,10 @@ public class StateMachineTask<T> extends Decorator<T> {
         for (Task<T> task : stateList) {
             task.reset();
         }
-        tempNextState = null;
         if (child != null) {
             removeChild(0);
         }
+        tempNextState = null;
     }
 
     @Override
@@ -243,7 +245,11 @@ public class StateMachineTask<T> extends Decorator<T> {
 
     protected void beforeChangeState(Task<T> curState, Task<T> nextState) {
         assert curState != null || nextState != null;
-        handler.beforeChangeState(this, curState, nextState);
+        if (listener != null) {
+            listener.invoke(this, curState, nextState);
+        } else {
+            handler.beforeChangeState(this, curState, nextState);
+        }
     }
 
     @Override
@@ -342,12 +348,20 @@ public class StateMachineTask<T> extends Decorator<T> {
         this.stateList = stateList == null ? new ArrayList<>() : stateList;
     }
 
-    public StateMachineHandler<T> getHandler() {
+    public IStateMachineHandler<T> getHandler() {
         return handler;
     }
 
-    public void setHandler(StateMachineHandler<T> handler) {
+    public void setHandler(IStateMachineHandler<T> handler) {
         this.handler = handler == null ? DefaultStateMachineHandler.getInstance() : handler;  // 处理null
+    }
+
+    public StateMachineListener<T> getListener() {
+        return listener;
+    }
+
+    public void setListener(StateMachineListener<T> listener) {
+        this.listener = listener;
     }
     // endregion
 }

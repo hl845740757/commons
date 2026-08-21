@@ -32,7 +32,7 @@ import java.util.List;
 public class Join<T> extends ParallelBranch<T> {
 
     /** 子节点的管理策略 */
-    protected JoinPolicy<T> policy;
+    protected IJoinPolicy<T> policy;
     /** 已进入完成状态的子节点 */
     protected transient int completedCount;
     /** 成功完成的子节点 */
@@ -131,11 +131,11 @@ public class Join<T> extends ParallelBranch<T> {
     }
     // endregion
 
-    public JoinPolicy<T> getPolicy() {
+    public IJoinPolicy<T> getPolicy() {
         return policy;
     }
 
-    public void setPolicy(JoinPolicy<T> policy) {
+    public void setPolicy(IJoinPolicy<T> policy) {
         this.policy = policy;
     }
 

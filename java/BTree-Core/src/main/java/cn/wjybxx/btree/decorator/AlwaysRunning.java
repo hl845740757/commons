@@ -29,6 +29,8 @@ import cn.wjybxx.btree.TaskInlinable;
 @TaskInlinable
 public class AlwaysRunning<T> extends Decorator<T> {
 
+    /** 是否将取消也视作运行 */
+    private boolean treatCancelAsRunning;
     private transient boolean started;
 
     @Override
@@ -70,10 +72,17 @@ public class AlwaysRunning<T> extends Decorator<T> {
         inlineHelper.stopInline();
         setBreakInline(true); // 阻断内联，避免频繁通知父节点
 
-        // 不响应其它状态，但还是需要响应取消...
-        if (child.isCancelled()) {
+        if (child.isCancelled() && !treatCancelAsRunning) {
             setCancelled();
         }
     }
 
+    /** 是否将取消也视作运行 */
+    public boolean isTreatCancelAsRunning() {
+        return treatCancelAsRunning;
+    }
+
+    public void setTreatCancelAsRunning(boolean treatCancelAsRunning) {
+        this.treatCancelAsRunning = treatCancelAsRunning;
+    }
 }

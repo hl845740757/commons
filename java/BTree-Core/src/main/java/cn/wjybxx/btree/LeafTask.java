@@ -41,11 +41,6 @@ public abstract class LeafTask<T> extends Task<T> {
     }
 
     @Override
-    public final void visitChildren(TaskVisitor<? super T> visitor, Object param) {
-
-    }
-
-    @Override
     public final int getChildCount() {
         return 0;
     }

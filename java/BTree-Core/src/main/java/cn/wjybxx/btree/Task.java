@@ -17,6 +17,7 @@ package cn.wjybxx.btree;
 
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.SerializeReference;
+import cn.wjybxx.btree.condition.ICondition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +65,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     private static final int MASK_DISABLE_EXECUTE = 1 << 14;
     private final int MASK_DISABLE_NOTIFY = 1 << 15;
     static final int MASK_CHECKING_GUARD = 1 << 16;
-    static final int MASK_NOT_ACTIVE_SELF = 1 << 17;
+    private final int MASK_NOT_ACTIVE_SELF = 1 << 17;
     private static final int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 18;
     private static final int MASK_REGISTERED_LISTENER = 1 << 19;
 
@@ -136,7 +137,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 但由于Task只能有一个Control，因此将前置条件存储在Task可避免额外的映射，从而可提高查询性能和易用性；
      * 另外，将前置条件存储在Task上，可以让行为树的结构更加清晰。
      */
-    private Task<T> guard;
+    private Object guard;
     /**
      * 任务的自定义标识
      * 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
@@ -246,12 +247,12 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     // region context
 
-    /** 获取行为树绑定的实体 -- 最好让Entity也在黑板中 */
-    public Object getEntity() {
+    /** 获取行为树的宿主对象 */
+    public Object getHostObject() {
         if (taskEntry == null) {
             throw new IllegalStateException("This task has never run");
         }
-        return taskEntry.getEntity();
+        return taskEntry.getHostObject();
     }
 
     /**
@@ -513,8 +514,8 @@ public abstract class Task<T> implements ICancelTokenListener {
             stop(TaskStatus.CANCELLED);
         }
         resetChildren();
-        if (guard != null) {
-            guard.reset();
+        if (guard instanceof Task<?> task) {
+            task.reset();
         }
         if (this != taskEntry) {
             unsetControl();
@@ -524,10 +525,15 @@ public abstract class Task<T> implements ICancelTokenListener {
         reentryId++; // 上下文变动，和之前的执行分开
     }
 
-    /** 重置所有的子节点 */
-    public final void resetChildren() {
+    /**
+     * 重置所有的子节点
+     * 注：钩子节点也应该在这里重置，即不在Child计数中的其它字段。
+     */
+    public void resetChildren() {
         // 由于所有的子节点都已停止，因此重置顺序无影响
-        visitChildren(TaskVisitors.reset(), null);
+        for (int idx = getChildCount() - 1; idx >= 0; idx--) {
+            getChild(idx).reset();
+        }
     }
 
     // endregion
@@ -710,7 +716,6 @@ public abstract class Task<T> implements ICancelTokenListener {
         // 初始化基础上下文后才可以检测取消
         if (control != null) {
             initMask |= captureContext(control);
-            initMask |= (control.ctl & MASK_NOT_ACTIVE_IN_HIERARCHY);
         }
         initMask |= (ctl & MASK_OVERRIDES); // 方法实现bits
         initMask |= (flags & MASK_CONTROL_FLOW_OPTIONS); // 控制流bits
@@ -887,38 +892,47 @@ public abstract class Task<T> implements ICancelTokenListener {
      *
      * @param guard 前置条件；可以是子节点的guard属性，也可以是条件子节点，也可以是外部的条件节点
      */
-    public final boolean template_checkGuard(@Nullable Task<T> guard) {
+    @SuppressWarnings("unchecked")
+    public final boolean template_checkGuard(@Nullable Object guard) {
         if (guard == null) {
             return true;
         }
+        if (guard instanceof ICondition<?>) {
+			ICondition<T> cond = (ICondition<T>)guard;
+            return cond.test(blackboard) == 0;
+        }
+        if (!(guard instanceof Task<?>)) {
+            throw new IllegalStateException("Illegal guard type " + guard.getClass());
+        }
+        Task<T> task = (Task<T>) guard;
         // 注意：此时需要从flags读取反转标记，因为尚未运行(且guard.guard失败的情况下不会运行)
-        boolean inverted = (guard.flags & MASK_INVERTED_GUARD) != 0;
+        boolean inverted = (task.flags & MASK_INVERTED_GUARD) != 0;
         try {
             // 极少情况下会有前置的前置，更推荐组合节点，更清晰；guard的guard也是检测当前上下文
-            if (guard.guard != null && !template_checkGuard(guard.guard)) {
-                guard.ctl |= MASK_DISABLE_NOTIFY;
-                guard.setCompleted(inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED, false);
+            if (task.guard != null && !template_checkGuard(task.guard)) {
+                task.ctl |= MASK_DISABLE_NOTIFY;
+                task.setCompleted(inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED, false);
                 return inverted;
             }
-            guard.template_start(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
-            if (guard.isSucceeded()) {
+            task.template_start(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
+            if (task.isSucceeded()) {
                 if (inverted) {
-                    guard.status = TaskStatus.ERROR;
+                    task.status = TaskStatus.ERROR;
                     return false;
                 }
                 return true;
             }
-            if (guard.isFailed()) {
+            if (task.isFailed()) {
                 if (inverted) {
-                    guard.status = TaskStatus.SUCCESS;
+                    task.status = TaskStatus.SUCCESS;
                     return true;
                 }
                 return false;
             }
             throw new IllegalStateException("Illegal guard status '%d'. Guards must either succeed or fail in one step."
-                    .formatted(guard.getStatus()));
+                    .formatted(task.getStatus()));
         } finally {
-            guard.unsetControl(); // 条件类节点总是及时清理
+            task.unsetControl(); // 条件类节点总是及时清理
         }
     }
 
@@ -1062,9 +1076,6 @@ public abstract class Task<T> implements ICancelTokenListener {
         return -1;
     }
 
-    /** 访问所有的子节点(含hook节点) -- 只访问运行时数据，不访问配置数据 */
-    public abstract void visitChildren(TaskVisitor<? super T> visitor, Object param);
-
     /** 子节点的数量（仅包括普通意义上的child，不包括钩子任务） */
     public abstract int getChildCount();
 
@@ -1182,11 +1193,11 @@ public abstract class Task<T> implements ICancelTokenListener {
         this.name = name;
     }
 
-    public Task<T> getGuard() {
+    public Object getGuard() {
         return guard;
     }
 
-    public Task<T> setGuard(Task<T> guard) {
+    public Task<T> setGuard(Object guard) {
         this.guard = guard;
         return this;
     }

@@ -17,7 +17,7 @@ package cn.wjybxx.btree;
 
 import cn.wjybxx.base.ex.InfiniteLoopException;
 import cn.wjybxx.btree.branch.Join;
-import cn.wjybxx.btree.branch.JoinPolicy;
+import cn.wjybxx.btree.branch.IJoinPolicy;
 import cn.wjybxx.btree.branch.join.*;
 import cn.wjybxx.btree.leaf.ActionTask;
 import org.junit.jupiter.api.Assertions;
@@ -36,7 +36,7 @@ import javax.annotation.Nonnull;
  */
 public class JoinTest {
 
-    private static TaskEntry<Blackboard> newJoinTree(JoinPolicy<Blackboard> joinPolicy) {
+    private static TaskEntry<Blackboard> newJoinTree(IJoinPolicy<Blackboard> joinPolicy) {
         TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
         Join<Blackboard> join = new Join<>();
         join.setPolicy(joinPolicy);

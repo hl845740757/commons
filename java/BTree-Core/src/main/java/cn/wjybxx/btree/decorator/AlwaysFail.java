@@ -29,7 +29,9 @@ import cn.wjybxx.btree.TaskStatus;
 @TaskInlinable
 public class AlwaysFail<T> extends Decorator<T> {
 
-    private int failureStatus;
+    /** 是否将取消也视作失败 */
+    private boolean treatCancelAsFailure;
+    private int errorCode;
 
     public AlwaysFail() {
     }
@@ -41,7 +43,7 @@ public class AlwaysFail<T> extends Decorator<T> {
     @Override
     protected void execute() {
         if (child == null) {
-            setFailed(TaskStatus.toFailure(failureStatus));
+            setFailed(TaskStatus.toFailure(errorCode));
             return;
         }
         Task<T> inlinedChild = inlineHelper.getInlinedChild();
@@ -62,14 +64,28 @@ public class AlwaysFail<T> extends Decorator<T> {
     @Override
     protected void onChildCompleted(Task<T> child) {
         inlineHelper.stopInline();
-        setCompleted(TaskStatus.toFailure(child.getStatus()), true); // 错误码有传播的价值
+        if (child.isCancelled() && !treatCancelAsFailure) {
+            setCancelled();
+        } else {
+            setCompleted(TaskStatus.toFailure(child.getStatus()), true); // 错误码有传播的价值
+        }
     }
 
-    public int getFailureStatus() {
-        return failureStatus;
+    /** 失败时使用的状态码 */
+    public int getErrorCode() {
+        return errorCode;
     }
 
-    public void setFailureStatus(int failureStatus) {
-        this.failureStatus = failureStatus;
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    /** 是否将取消也视作失败 */
+    public boolean isTreatCancelAsFailure() {
+        return treatCancelAsFailure;
+    }
+
+    public void setTreatCancelAsFailure(boolean treatCancelAsFailure) {
+        this.treatCancelAsFailure = treatCancelAsFailure;
     }
 }

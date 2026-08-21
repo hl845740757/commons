@@ -18,7 +18,7 @@ package cn.wjybxx.btree.branch.join;
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskStatus;
 import cn.wjybxx.btree.branch.Join;
-import cn.wjybxx.btree.branch.JoinPolicy;
+import cn.wjybxx.btree.branch.IJoinPolicy;
 import cn.wjybxx.btree.branch.SelectorN;
 
 /**
@@ -27,7 +27,7 @@ import cn.wjybxx.btree.branch.SelectorN;
  * @author wjybxx
  * date - 2023/12/2
  */
-public class JoinSelectorN<T> implements JoinPolicy<T> {
+public class JoinSelectorN<T> implements IJoinPolicy<T> {
 
     /** 需要达成的次数 */
     private int required = 1;

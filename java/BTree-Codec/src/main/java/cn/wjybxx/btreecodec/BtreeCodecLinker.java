@@ -18,6 +18,9 @@ package cn.wjybxx.btreecodec;
 import cn.wjybxx.btree.TaskEntry;
 import cn.wjybxx.btree.branch.*;
 import cn.wjybxx.btree.branch.join.*;
+import cn.wjybxx.btree.condition.ConditionAnd;
+import cn.wjybxx.btree.condition.ConditionNot;
+import cn.wjybxx.btree.condition.ConditionOr;
 import cn.wjybxx.btree.decorator.*;
 import cn.wjybxx.btree.fsm.ChangeStateTask;
 import cn.wjybxx.btree.fsm.ChangeStateTask2;
@@ -109,5 +112,12 @@ public class BtreeCodecLinker {
         private SimpleRandom<?> simpleRandom;
         private Success<?> success;
         private SimpleWaitFrame<?> waitFrame;
+    }
+
+    @DsonCodecLinkerGroup(outputPackage = "cn.wjybxx.btreecodec.condition")
+    private static class ConditionLinker {
+        private ConditionNot<?> _not;
+        private ConditionOr<?> _or;
+        private ConditionAnd<?> _and;
     }
 }

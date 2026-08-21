@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 wjybxx(845740757@qq.com)
+ * Copyright 2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package cn.wjybxx.btree.condition;
 
-package cn.wjybxx.btree.branch;
-
-import cn.wjybxx.btree.BranchTask;
+import java.util.List;
 
 /**
+ * 所有条件都成功，则成功
+ *
+ * @param <T> 黑板类型
  * @author wjybxx
- * date - 2024/7/15
  */
-public interface SwitchHandler<T> {
+public class ConditionAnd<T> extends ConditionGroup<T> {
 
-    /**
-     * 选择要执行的子节点
-     *
-     * @param branchTask 要测试的分支
-     * @return 选中的分支索引，-1表示未选中
-     */
-    int select(BranchTask<? extends T> branchTask);
+    public ConditionAnd() {
+    }
+
+    public ConditionAnd(List<ICondition<T>> children) {
+        super(children);
+    }
+
+    @Override
+    public int test(T blackboard) {
+        for (int idx = 0; idx < children.size(); idx++) {
+            int code = children.get(idx).test(blackboard);
+            if (code != 0) return code;
+        }
+        return 0;
+    }
 }

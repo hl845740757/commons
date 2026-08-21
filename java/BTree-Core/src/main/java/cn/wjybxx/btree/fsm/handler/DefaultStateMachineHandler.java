@@ -17,14 +17,14 @@
 package cn.wjybxx.btree.fsm.handler;
 
 import cn.wjybxx.btree.Task;
-import cn.wjybxx.btree.fsm.StateMachineHandler;
+import cn.wjybxx.btree.fsm.IStateMachineHandler;
 import cn.wjybxx.btree.fsm.StateMachineTask;
 
 /**
  * @author wjybxx
  * date - 2024/11/18
  */
-public class DefaultStateMachineHandler<T> implements StateMachineHandler<T> {
+public class DefaultStateMachineHandler<T> implements IStateMachineHandler<T> {
 
     private static final DefaultStateMachineHandler<?> INST = new DefaultStateMachineHandler<>();
 

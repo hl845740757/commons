@@ -23,7 +23,7 @@ import cn.wjybxx.btree.TaskStatus;
  * Switch-选择一个分支运行，直到其结束
  * <p>
  * Switch的基础实现通过逐个检测child的前置条件实现选择，在分支较多的情况下可能开销较大，
- * 在多数情况下，我们可能只是根据配置选择一个分支，可选择{@link SwitchHandler}实现。
+ * 在多数情况下，我们可能只是根据配置选择一个分支，可选择{@link ISwitchHandler}实现。
  * <p>
  * Q：为什么Switch要支持内联？
  * A：Switch有一个重要的用途：决策树。在做出决策以后，中间层的节点就没有价值了，而保留它们会导致较大的运行时开销。
@@ -34,7 +34,7 @@ import cn.wjybxx.btree.TaskStatus;
 @TaskInlinable
 public class Switch<T> extends SingleRunningChildBranch<T> {
 
-    private SwitchHandler<? super T> handler;
+    private ISwitchHandler<? super T> handler;
 
     @Override
     protected void execute() {
@@ -85,11 +85,11 @@ public class Switch<T> extends SingleRunningChildBranch<T> {
         setCompleted(child.getStatus(), true);
     }
 
-    public SwitchHandler<? super T> getHandler() {
+    public ISwitchHandler<? super T> getHandler() {
         return handler;
     }
 
-    public void setHandler(SwitchHandler<? super T> handler) {
+    public void setHandler(ISwitchHandler<? super T> handler) {
         this.handler = handler;
     }
 }

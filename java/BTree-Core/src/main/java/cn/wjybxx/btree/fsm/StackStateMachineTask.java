@@ -151,6 +151,7 @@ public class StackStateMachineTask<T> extends StateMachineTask<T> {
             // 进入null状态，需要清理redo队列
             redoQueue.clear();
             addUndoState(curState);
+            super.beforeChangeState(curState, null);
             return;
         }
         ChangeStateArgs changeStateArgs = (ChangeStateArgs) nextState.getControlData();

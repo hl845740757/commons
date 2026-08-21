@@ -32,11 +32,11 @@ class BtreeTestUtil {
     static final RandomGenerator random = new Random();
 
     public static TimingTaskEntry<Blackboard> newTaskEntry() {
-        return new TimingTaskEntry<>("Main", null, new Blackboard(), null, TreeLoader.nullLoader());
+        return new TimingTaskEntry<>("Main", null, new Blackboard(), null, ITreeLoader.nullLoader());
     }
 
     public static TimingTaskEntry<Blackboard> newTaskEntry(Task<Blackboard> root) {
-        return new TimingTaskEntry<>("Main", root, new Blackboard(), null, TreeLoader.nullLoader());
+        return new TimingTaskEntry<>("Main", root, new Blackboard(), null, ITreeLoader.nullLoader());
     }
 
     public static void untilCompleted(TaskEntry<?> entry) {
