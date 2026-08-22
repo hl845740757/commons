@@ -602,7 +602,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             ref Node node = ref oldTable[nextIndex];
             int pos = Find(node.key, node.hash);
             if (pos >= 0) {
-                throw new IllegalStateException("key: " + node.key);
+                throw new InvalidOperationException("key: " + node.key);
             }
             pos = -pos - 1;
             newTable[pos] = new Node(node.hash, node.key, pos, preNodePos);

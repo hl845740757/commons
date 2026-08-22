@@ -130,7 +130,7 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
             ThreadFactory = new DefaultThreadFactory("DisruptorEventLoop");
         }
         if (eventSequencer == null) {
-            throw new IllegalStateException("eventSequencer is null");
+            throw new InvalidOperationException("eventSequencer is null");
         }
     }
 

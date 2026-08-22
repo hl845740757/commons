@@ -406,9 +406,9 @@ public class DynamicArrayTest
 
         arr.BeginItr();
         try {
-            Assert.Throws<IllegalStateException>(() => arr.Insert(0, "x"));
-            Assert.Throws<IllegalStateException>(() => arr.Sort(Comparer<string>.Default));
-            Assert.Throws<IllegalStateException>(() => arr.Compress(true));
+            Assert.Throws<InvalidOperationException>(() => arr.Insert(0, "x"));
+            Assert.Throws<InvalidOperationException>(() => arr.Sort(Comparer<string>.Default));
+            Assert.Throws<InvalidOperationException>(() => arr.Compress(true));
         }
         finally {
             arr.EndItr();
@@ -421,7 +421,7 @@ public class DynamicArrayTest
     [Test]
     public void TestEndItrWithoutBeginThrows() {
         DynamicArray<string> arr = new();
-        Assert.Throws<IllegalStateException>(() => arr.EndItr());
+        Assert.Throws<InvalidOperationException>(() => arr.EndItr());
     }
 
     /// <summary>
@@ -542,7 +542,7 @@ public class DynamicArrayTest
             arr.Add("v" + i);
         }
         Assert.AreEqual(64, arr.Length);
-        Assert.Throws<IllegalStateException>(() => arr.Add("overflow"));
+        Assert.Throws<InvalidOperationException>(() => arr.Add("overflow"));
     }
 
     /// <summary>

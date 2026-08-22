@@ -103,8 +103,6 @@ public static class ExecutorUtil
     /// 任务失败的情况下抛出异常
     /// (不返回结果以避免装箱)
     /// </summary>
-    /// <param name="future"></param>
-    /// <exception cref="IllegalStateException"></exception>
     public static void ThrowIfFailedOrCancelled(this IFuture future) {
         switch (future.Status) {
             case TaskStatus.Success: {
@@ -118,7 +116,7 @@ public static class ExecutorUtil
             case TaskStatus.Pending:
             case TaskStatus.Computing:
             default: {
-                throw new IllegalStateException("Task has not completed");
+                throw new InvalidOperationException("Task has not completed");
             }
         }
     }

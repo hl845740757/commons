@@ -158,7 +158,7 @@ public sealed class FutureCombiner
     private FutureListener CheckFinish() {
         FutureListener listener = this._listener;
         if (listener == null) {
-            throw new IllegalStateException("Already finished");
+            throw new InvalidOperationException("Already finished");
         }
         return listener;
     }
@@ -277,7 +277,8 @@ public sealed class FutureCombiner
                 if (cause != null) {
                     cause = CreateAggregateException();
                 } else {
-                    cause = new OperationCanceledException("FailFast"); // 改用系统库异常
+                    string message = $"FailFast, done: {doneCount}/{futureCount}, succ: {succeedCount}/{successRequire}";
+                    cause = new OperationCanceledException(message); // 改用系统库异常
                 }
                 return promise.TrySetException(cause);
             }

@@ -21,7 +21,6 @@ namespace Wjybxx.Commons
 /// <summary>
 /// 可变数字类型
 /// </summary>
-/// <typeparam name="T"></typeparam>
 public interface INumber
 {
     /** 将value转为int */

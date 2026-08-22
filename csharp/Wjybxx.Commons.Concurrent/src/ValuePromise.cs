@@ -196,9 +196,9 @@ public class ValuePromise<T> : IValuePromise<T>
         return state switch
         {
             ST_SUCCESS => _result,
-            ST_FAILED => throw new IllegalStateException("Task completed with exception"),
-            ST_CANCELLED => throw new IllegalStateException("Task was cancelled"),
-            _ => throw new IllegalStateException("Task has not completed")
+            ST_FAILED => throw new InvalidOperationException("Task completed with exception"),
+            ST_CANCELLED => throw new InvalidOperationException("Task was cancelled"),
+            _ => throw new InvalidOperationException("Task has not completed")
         };
     }
 
@@ -299,7 +299,7 @@ public class ValuePromise<T> : IValuePromise<T>
         ValidateReentryId(reentryId, ignoreReentrant);
         TaskStatus status = Status;
         if (!status.IsCompleted()) {
-            throw new IllegalStateException("Task has not completed");
+            throw new InvalidOperationException("Task has not completed");
         }
 
         Exception? ex = null;
@@ -320,7 +320,7 @@ public class ValuePromise<T> : IValuePromise<T>
         ValidateReentryId(reentryId, ignoreReentrant);
         TaskStatus status = Status;
         if (!status.IsCompleted()) {
-            throw new IllegalStateException("Task has not completed");
+            throw new InvalidOperationException("Task has not completed");
         }
 
         T r = default!;
@@ -482,7 +482,7 @@ public class ValuePromise<T> : IValuePromise<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ValidateReentryId(int reentryId, bool ignoreReentrant = false) {
         if (!ignoreReentrant && reentryId != this._reentryId) {
-            throw new IllegalStateException("promise has been reused");
+            throw new InvalidOperationException("promise has been reused");
         }
     }
 
@@ -503,7 +503,7 @@ public class ValuePromise<T> : IValuePromise<T>
     public void SetComputing(int reentryId) {
         ValidateReentryId(reentryId);
         if (!Internal_TrySetComputing()) {
-            throw new IllegalStateException("Already computing");
+            throw new InvalidOperationException("Already computing");
         }
     }
 
@@ -515,7 +515,7 @@ public class ValuePromise<T> : IValuePromise<T>
     public void SetResult(int reentryId, T result) {
         ValidateReentryId(reentryId);
         if (!Internal_TrySetResult(result)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -527,7 +527,7 @@ public class ValuePromise<T> : IValuePromise<T>
     public void SetException(int reentryId, Exception cause) {
         ValidateReentryId(reentryId);
         if (!Internal_TrySetException(cause)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -539,7 +539,7 @@ public class ValuePromise<T> : IValuePromise<T>
     public void SetException(int reentryId, ExceptionDispatchInfo dispatchInfo) {
         ValidateReentryId(reentryId);
         if (!Internal_TrySetException(dispatchInfo)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -551,7 +551,7 @@ public class ValuePromise<T> : IValuePromise<T>
     public void SetCancelled(int reentryId, CancellationToken cts = default) {
         ValidateReentryId(reentryId);
         if (!Internal_TrySetCancelled(cts)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -705,7 +705,7 @@ public class ValuePromise<T> : IValuePromise<T>
                         break;
                     }
                     default: {
-                        throw new IllegalStateException();
+                        throw new InvalidOperationException();
                     }
                 }
             }

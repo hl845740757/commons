@@ -284,9 +284,9 @@ public abstract class AbstractPromise
                 return ex2;
             }
             case ST_SUCCESS:
-                throw new IllegalStateException("Task completed with a result");
+                throw new InvalidOperationException("Task completed with a result");
             default:
-                throw new IllegalStateException("Task has not completed");
+                throw new InvalidOperationException("Task has not completed");
         }
     }
 
@@ -298,9 +298,9 @@ public abstract class AbstractPromise
                 return ex!;
             }
             case ST_SUCCESS:
-                throw new IllegalStateException("Task completed with a result");
+                throw new InvalidOperationException("Task completed with a result");
             default:
-                throw new IllegalStateException("Task has not completed");
+                throw new InvalidOperationException("Task has not completed");
         }
     }
 

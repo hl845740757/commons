@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,22 +18,20 @@
 
 using System;
 
-
-namespace Wjybxx.Commons
+namespace Wjybxx.Commons.Ex
 {
 /// <summary>
-/// 该异常表示对象的状态错误
-/// (C#直接使用<see cref="InvalidOperationException"/>更符合习惯)
+/// 快速失败异常
 /// </summary>
-public class IllegalStateException : InvalidOperationException
+public class FailFastException : Exception
 {
-    public IllegalStateException() {
+    public FailFastException() {
     }
 
-    public IllegalStateException(string? message) : base(message) {
+    public FailFastException(string? message) : base(message) {
     }
 
-    public IllegalStateException(string? message, Exception? innerException) : base(message, innerException) {
+    public FailFastException(string? message, Exception? innerException) : base(message, innerException) {
     }
 }
 }

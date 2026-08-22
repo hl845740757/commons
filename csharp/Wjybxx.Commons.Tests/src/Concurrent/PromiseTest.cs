@@ -73,8 +73,8 @@ public class PromiseTest
     [Test]
     public void TestSetResultThrowsIfAlreadyDone() {
         Promise<int> p = Promise<int>.FromResult(1);
-        Assert.Throws<IllegalStateException>(() => p.SetResult(2));
-        Assert.Throws<IllegalStateException>(() => p.SetException(new Exception("x")));
+        Assert.Throws<InvalidOperationException>(() => p.SetResult(2));
+        Assert.Throws<InvalidOperationException>(() => p.SetException(new Exception("x")));
     }
 
     [Test]
@@ -113,13 +113,13 @@ public class PromiseTest
     [Test]
     public void TestExceptionNowOnSucceededThrows() {
         Promise<int> p = Promise<int>.FromResult(1);
-        Assert.Throws<IllegalStateException>(() => p.ExceptionNow());
+        Assert.Throws<InvalidOperationException>(() => p.ExceptionNow());
     }
 
     [Test]
     public void TestResultNowOnFailedThrows() {
         Promise<int> p = Promise<int>.FromException(new Exception("err"));
-        Assert.Throws<IllegalStateException>(() => p.ResultNow());
+        Assert.Throws<InvalidOperationException>(() => p.ResultNow());
     }
 
     [Test]

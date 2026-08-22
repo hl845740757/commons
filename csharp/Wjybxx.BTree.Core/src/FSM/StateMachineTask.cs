@@ -283,7 +283,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
             }
             task = control;
         }
-        throw new IllegalStateException("cant find stateMachine from controls");
+        throw new InvalidOperationException("cant find stateMachine from controls");
     }
 
     /**
@@ -311,7 +311,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
             }
             task = control;
         }
-        throw new IllegalStateException("cant find stateMachine from controls and brothers");
+        throw new InvalidOperationException("cant find stateMachine from controls and brothers");
     }
 
     private static StateMachineTask<T>? CastAsStateMachine(Task<T> task, string name) {

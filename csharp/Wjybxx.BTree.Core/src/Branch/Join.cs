@@ -89,7 +89,7 @@ public class Join<T> : ParallelBranch<T> where T : class
             }
         }
         if (completedCount >= children.Count) { // child全部执行，但没得出结果
-            throw new IllegalStateException();
+            throw new InvalidOperationException();
         }
     }
 

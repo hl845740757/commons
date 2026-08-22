@@ -57,7 +57,7 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
 
     public void EndItr() {
         if (recursionDepth == 0) {
-            throw new IllegalStateException("begin must be called before end.");
+            throw new InvalidOperationException("begin must be called before end.");
         }
         recursionDepth--;
         if (recursionDepth == 0 && IsCompressionNeeded()) {
@@ -289,6 +289,8 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
         return result;
     }
 
+    public Span<E?> AsSpan() => new Span<E?>(elements, 0, len);
+
     #endregion
 
     #region internal
@@ -316,7 +318,7 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnsureNotIterating() {
         if (recursionDepth != 0) {
-            throw new IllegalStateException("Invalid between iterating.");
+            throw new InvalidOperationException("Invalid between iterating.");
         }
     }
 

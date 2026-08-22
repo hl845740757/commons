@@ -98,13 +98,11 @@ public class TaskEntry<T> : Task<T> where T : class
     /// 获取根状态机
     /// 状态机太重要了，值得我们为其提供各种快捷方法
     /// </summary>
-    /// <returns></returns>
-    /// <exception cref="IllegalStateException"></exception>
     public StateMachineTask<T> GetRootStateMachine() {
         if (rootTask is StateMachineTask<T> stateMachine) {
             return stateMachine;
         }
-        throw new IllegalStateException("rootTask is not state machine task");
+        throw new InvalidOperationException("rootTask is not state machine task");
     }
 
     /// <summary>
@@ -229,7 +227,7 @@ public class TaskEntry<T> : Task<T> where T : class
 
     protected override int AddChildImpl(Task<T> task) {
         if (rootTask != null) {
-            throw new IllegalStateException("Task entry cannot have more than one child");
+            throw new InvalidOperationException("Task entry cannot have more than one child");
         }
         rootTask = task;
         return 0;

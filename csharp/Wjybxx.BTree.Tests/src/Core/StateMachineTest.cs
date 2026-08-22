@@ -16,6 +16,7 @@
 
 #endregion
 
+using System;
 using NUnit.Framework;
 using Wjybxx.BTree;
 using Wjybxx.BTree.FSM;
@@ -306,7 +307,7 @@ public class StateMachineTest
         protected override void Execute() {
             TimingTaskEntry<T> taskEntry = (TimingTaskEntry<T>)this.taskEntry;
             if (taskEntry.frameCount != (enterFrame + 1)) {
-                throw new IllegalStateException();
+                throw new InvalidOperationException();
             }
             SetSuccess();
         }

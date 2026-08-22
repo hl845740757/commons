@@ -38,7 +38,7 @@ public interface IFuture<T> : IFuture
     /// <summary>
     /// 非阻塞方式获取Future的执行结果
     /// </summary>
-    /// <exception cref="IllegalStateException">如果任务不是成功完成状态</exception>
+    /// <exception cref="InvalidOperationException">如果任务不是成功完成状态</exception>
     /// <returns></returns>
     new T ResultNow();
 

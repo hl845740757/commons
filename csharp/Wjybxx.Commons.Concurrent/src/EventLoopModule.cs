@@ -46,7 +46,7 @@ public abstract class EventLoopModule : IEventLoopModule
     internal void SetEventLoop(IEventLoop eventLoop) {
         if (eventLoop == null) throw new ArgumentNullException(nameof(eventLoop));
         if (this._eventLoop != null) {
-            throw new IllegalStateException("already bind");
+            throw new InvalidOperationException("already bind");
         }
         this._eventLoop = eventLoop;
         this._status = ComponentStatus.Initialized;
@@ -103,7 +103,7 @@ public abstract class EventLoopModule : IEventLoopModule
         }
         set {
             if (_status != ComponentStatus.New) {
-                throw new IllegalStateException();
+                throw new InvalidOperationException();
             }
             _cid = value;
         }

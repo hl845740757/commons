@@ -16,7 +16,7 @@
 
 #endregion
 
-using Wjybxx.Commons;
+using System;
 
 namespace Wjybxx.BTree.Leaf
 {
@@ -44,7 +44,7 @@ public abstract class ConditionTask<T> : LeafTask<T> where T : class
         switch (status) {
             case TaskStatus.RUNNING:
             case TaskStatus.CANCELLED: {
-                throw new IllegalStateException("Illegal condition status: " + status);
+                throw new InvalidOperationException("Illegal condition status: " + status);
             }
             case TaskStatus.NEW:
             case TaskStatus.SUCCESS: {

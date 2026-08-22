@@ -913,7 +913,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 }
                 return false;
             }
-            throw new IllegalStateException($"Illegal guard status {task.status}. Guards must either succeed or fail in one step.");
+            throw new InvalidOperationException($"Illegal guard status {task.status}. Guards must either succeed or fail in one step.");
         }
         finally {
             task.UnsetControl(); // 条件类节点总是及时清理

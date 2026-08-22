@@ -153,9 +153,9 @@ public interface IValuePromise
     TaskStatus TrySetComputing2(int reentryId);
 
     /// <summary>
-    /// 将future置为计算中状态，如果future之前不处于pending状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为计算中状态，如果future之前不处于pending状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
-    /// <exception cref="IllegalStateException">如果future之前不处于pending状态</exception>
+    /// <exception cref="InvalidOperationException">如果future之前不处于pending状态</exception>
     void SetComputing(int reentryId);
 
     /// <summary>
@@ -164,9 +164,9 @@ public interface IValuePromise
     bool TrySetResult(int reentryId, object? result);
 
     /// <summary>
-    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
     void SetResult(int reentryId, object? result);
 
@@ -179,11 +179,11 @@ public interface IValuePromise
     bool TrySetException(int reentryId, Exception cause);
 
     /// <summary>
-    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
     /// <param name="reentryId">重入id</param>
     /// <param name="cause">任务失败的原因，如果为<see cref="OperationCanceledException"/>，则等同于取消</param>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     void SetException(int reentryId, Exception cause);
 
     /// <summary>
@@ -197,7 +197,7 @@ public interface IValuePromise
     bool TrySetException(int reentryId, ExceptionDispatchInfo dispatchInfo);
 
     /// <summary>
-    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>
     /// <param name="dispatchInfo">异常信息</param>
@@ -212,11 +212,11 @@ public interface IValuePromise
     bool TrySetCancelled(int reentryId, CancellationToken cts = default);
 
     /// <summary>
-    /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
     /// <param name="reentryId">重入id</param>
     /// <param name="cts">相关的取消令牌</param>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     void SetCancelled(int reentryId, CancellationToken cts = default);
 
     #endregion
@@ -262,9 +262,9 @@ public interface IValuePromise<T> : IValuePromise
     bool TrySetResult(int reentryId, T result);
 
     /// <summary>
-    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
     void SetResult(int reentryId, T result);
 

@@ -207,7 +207,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /** 该方法仅在任务出队列的时候调用 */
     public override void Run() {
         if (helper == null) {
-            throw new IllegalStateException("helper is uninitialized");
+            throw new InvalidOperationException("helper is uninitialized");
         }
         helper.DoSchedule(this);
     }

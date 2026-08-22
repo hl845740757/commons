@@ -338,7 +338,7 @@ public abstract class AbstractEventLoop : IEventLoop
         foreach (EventLoopModule module in moduleList) {
             EventLoopModule exist = result[module.Cid.cacheIndex];
             if (exist != null) {
-                throw new IllegalStateException("module is duplicate, cid: " + module.Cid);
+                throw new InvalidOperationException("module is duplicate, cid: " + module.Cid);
             }
             result[module.Cid.cacheIndex] = module;
         }

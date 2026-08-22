@@ -50,11 +50,11 @@ public abstract class LeafTask<T> : Task<T> where T : class
     }
 
     protected sealed override int AddChildImpl(Task<T> task) {
-        throw new IllegalStateException("Leaf task can not have any children");
+        throw new InvalidOperationException("Leaf task can not have any children");
     }
 
     protected sealed override Task<T> SetChildImpl(int index, Task<T> task) {
-        throw new IllegalStateException("Leaf task can not have any children");
+        throw new InvalidOperationException("Leaf task can not have any children");
     }
 
     protected sealed override Task<T> RemoveChildImpl(int index) {

@@ -128,7 +128,7 @@ Dson提供了`WriteObject`、`ReadObject`、`Constructor`、`AfterDecode`、`Bef
     }
     // 反序列化钩子
     public void AfterDecode(ConverterOptions options) {
-        if (age < 1) throw new IllegalStateException();
+        if (age < 1) throw new InvalidOperationException();
     }
     // 字段读写钩子
     public void WriteCustom(IDsonObjectWriter writer, String name) {

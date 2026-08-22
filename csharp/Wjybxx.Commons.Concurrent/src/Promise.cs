@@ -261,7 +261,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public void SetComputing() {
         if (!TrySetComputing()) {
-            throw new IllegalStateException("Already computing");
+            throw new InvalidOperationException("Already computing");
         }
     }
 
@@ -276,7 +276,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public void SetResult(T? result) {
         if (!TrySetResult(result)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -295,7 +295,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public void SetException(Exception cause) {
         if (!TrySetException(cause)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -311,7 +311,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public void SetException(ExceptionDispatchInfo dispatchInfo) {
         if (!TrySetException(dispatchInfo)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -327,7 +327,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public void SetCancelled(CancellationToken cts = default) {
         if (!TrySetCancelled(cts)) {
-            throw new IllegalStateException("Already complete");
+            throw new InvalidOperationException("Already complete");
         }
     }
 
@@ -343,9 +343,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return state switch
         {
             ST_SUCCESS => _result,
-            ST_FAILED => throw new IllegalStateException("Task completed with exception"),
-            ST_CANCELLED => throw new IllegalStateException("Task was cancelled"),
-            _ => throw new IllegalStateException("Task has not completed")
+            ST_FAILED => throw new InvalidOperationException("Task completed with exception"),
+            ST_CANCELLED => throw new InvalidOperationException("Task was cancelled"),
+            _ => throw new InvalidOperationException("Task has not completed")
         };
     }
 

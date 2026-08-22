@@ -84,7 +84,7 @@ public interface IFuture
     /// <summary>
     /// 非阻塞方式获取Future的执行结果
     /// </summary>
-    /// <exception cref="IllegalStateException">如果任务不是成功完成状态</exception>
+    /// <exception cref="InvalidOperationException">如果任务不是成功完成状态</exception>
     /// <returns>任务关联的结果</returns>
     object ResultNow();
 
@@ -93,7 +93,7 @@ public interface IFuture
     /// 
     /// </summary>
     /// <param name="throwIfCancelled">任务取消的状态下是否抛出状态异常</param>
-    /// <exception cref="IllegalStateException">如果任务不是失败完成状态</exception>
+    /// <exception cref="InvalidOperationException">如果任务不是失败完成状态</exception>
     /// <returns></returns>
     Exception ExceptionNow(bool throwIfCancelled = true);
 

@@ -48,9 +48,9 @@ public interface IPromise : IFuture
     TaskStatus TrySetComputing2();
 
     /// <summary>
-    /// 将future置为计算中状态，如果future之前不处于pending状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为计算中状态，如果future之前不处于pending状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
-    /// <exception cref="IllegalStateException">如果future之前不处于pending状态</exception>
+    /// <exception cref="InvalidOperationException">如果future之前不处于pending状态</exception>
     void SetComputing();
 
     /// <summary>
@@ -60,10 +60,10 @@ public interface IPromise : IFuture
     bool TrySetResult(object? result);
 
     /// <summary>
-    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
     /// <param name="result"></param>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
     void SetResult(object? result);
 
@@ -75,10 +75,10 @@ public interface IPromise : IFuture
     bool TrySetException(Exception cause);
 
     /// <summary>
-    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
     /// <param name="cause">任务失败的原因，如果为<see cref="OperationCanceledException"/>，则等同于取消</param>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     void SetException(Exception cause);
 
     /// <summary>
@@ -89,7 +89,7 @@ public interface IPromise : IFuture
     bool TrySetException(ExceptionDispatchInfo dispatchInfo);
 
     /// <summary>
-    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为失败状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
     /// <param name="dispatchInfo">异常信息</param>
     void SetException(ExceptionDispatchInfo dispatchInfo);
@@ -100,9 +100,9 @@ public interface IPromise : IFuture
     bool TrySetCancelled(CancellationToken cts = default);
 
     /// <summary>
-    /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     void SetCancelled(CancellationToken cts = default);
 }
 
@@ -118,10 +118,10 @@ public interface IPromise<T> : IFuture<T>, IPromise
     bool TrySetResult(T? result);
 
     /// <summary>
-    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="InvalidOperationException"/>
     /// </summary>
     /// <param name="result"></param>
-    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    /// <exception cref="InvalidOperationException">如果Future已完成</exception>
     void SetResult(T? result);
 
     #region 接口适配

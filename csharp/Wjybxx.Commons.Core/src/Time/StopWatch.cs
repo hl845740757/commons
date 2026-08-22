@@ -108,10 +108,10 @@ public sealed class StopWatch
     /// 重复调用start之前，必须调用{@link #reset()}
     /// </summary>
     /// <returns></returns>
-    /// <exception cref="IllegalStateException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     public void Start() {
         if (IsStarted) {
-            throw new IllegalStateException("Stopwatch is running. ");
+            throw new InvalidOperationException("Stopwatch is running. ");
         }
         _state = State.Running;
         _startTimeNanos = ObjectUtil.SystemTicks();
@@ -124,11 +124,11 @@ public sealed class StopWatch
     /// </summary>
     /// <param name="stepName">该步骤的名称</param>
     /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="IllegalStateException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     public void LogStep(string stepName) {
         if (stepName == null) throw new ArgumentNullException(nameof(stepName));
         if (_state != State.Running) {
-            throw new IllegalStateException("Stopwatch is not running. ");
+            throw new InvalidOperationException("Stopwatch is not running. ");
         }
         long delta = ObjectUtil.SystemTicks() - _startTimeNanos;
         _startTimeNanos += delta; // 避免再次读取时间戳
@@ -142,7 +142,7 @@ public sealed class StopWatch
     /** 暂停计时 */
     public void Suspend() {
         if (!IsStarted) {
-            throw new IllegalStateException("Stopwatch must be started to suspend. ");
+            throw new InvalidOperationException("Stopwatch must be started to suspend. ");
         }
         if (_state == State.Running) {
             long delta = ObjectUtil.SystemTicks() - _startTimeNanos;
@@ -155,7 +155,7 @@ public sealed class StopWatch
     /** 恢复计时 */
     public void Resume() {
         if (!IsStarted) {
-            throw new IllegalStateException("Stopwatch must be started to resume. ");
+            throw new InvalidOperationException("Stopwatch must be started to resume. ");
         }
         if (_state == State.Suspended) {
             _state = State.Running;

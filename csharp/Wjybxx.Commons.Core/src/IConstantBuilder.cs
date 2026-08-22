@@ -87,10 +87,9 @@ public partial interface IConstant
         /// </summary>
         /// <param name="poolId">声明常量的池</param>
         /// <param name="id">分配的常量id</param>
-        /// <exception cref="IllegalStateException"></exception>
         internal void SetId(string poolId, int id) {
             if (_id.HasValue) {
-                throw new IllegalStateException("id cannot be initialized repeatedly");
+                throw new InvalidOperationException("id cannot be initialized repeatedly");
             }
             _id = id;
             _poolId = poolId;
@@ -100,7 +99,7 @@ public partial interface IConstant
             if (_id.HasValue) {
                 return _id.Value;
             }
-            throw new IllegalStateException("id has not been initialized");
+            throw new InvalidOperationException("id has not been initialized");
         }
 
         /// <summary>

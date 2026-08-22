@@ -73,7 +73,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     public TConstant NewInstance(string name) {
         IConstant.CheckName(name);
         if (_factory == null) {
-            throw new IllegalStateException("builder required");
+            throw new InvalidOperationException("builder required");
         }
         return CreateOrThrow(new SimpleBuilder(name, _factory));
     }
@@ -236,7 +236,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         if (constant.Name != name
             || constant.Id != nextId
             || constant.PoolId != poolId) {
-            throw new IllegalStateException($"expected id: {nextId}, name: {name}, but found id: {constant.Id}, name: {constant.Name}");
+            throw new InvalidOperationException($"expected id: {nextId}, name: {name}, but found id: {constant.Id}, name: {constant.Name}");
         }
         return constant;
     }

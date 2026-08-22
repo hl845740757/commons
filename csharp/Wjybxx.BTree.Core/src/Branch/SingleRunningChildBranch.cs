@@ -129,7 +129,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
             runningIndex = nextIndex;
             return children[nextIndex];
         }
-        throw new IllegalStateException(IllegalStateMsg());
+        throw new InvalidOperationException(IllegalStateMsg());
     }
 
     /** 没有可继续运行的子节点 */

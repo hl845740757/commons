@@ -92,7 +92,7 @@ public abstract class AbstractConstant : IConstant
         if (_id > other.Id) {
             return 1;
         }
-        throw new IllegalStateException($"failed to compare two different constants, this: {Name}, that: {other.Name}");
+        throw new InvalidOperationException($"failed to compare two different constants, this: {Name}, that: {other.Name}");
     }
 
     #endregion

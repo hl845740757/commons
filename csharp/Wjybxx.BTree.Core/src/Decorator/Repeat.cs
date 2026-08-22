@@ -58,7 +58,7 @@ public class Repeat<T> : LoopDecorator<T> where T : class
     protected override void BeforeEnter() {
         base.BeforeEnter();
         if (required < -1) {
-            throw new IllegalStateException("required < -1");
+            throw new InvalidOperationException("required < -1");
         }
         count = 0;
     }
