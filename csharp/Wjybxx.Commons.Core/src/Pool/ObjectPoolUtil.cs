@@ -149,6 +149,7 @@ public static class ObjectPoolUtil
     public static ObjectPool<LinkedDictionary<K, V>> NewLinkedDictionaryPool<K, V>(int initCapacity, int poolSize) {
         return new ObjectPool<LinkedDictionary<K, V>>(() => new LinkedDictionary<K, V>(initCapacity), ObjectPoolUtil<K, V>.cleaner, poolSize);
     }
+
     #endregion
 
     #region 集合辅助方法

@@ -76,7 +76,7 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
             SetCancelled();
         }
     }
-    
+
     /// <summary>
     /// 是否将取消也视作运行
     /// </summary>

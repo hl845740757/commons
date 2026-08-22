@@ -31,8 +31,8 @@ public static class NumberStyles
     /// </summary>
     private const long DoubleMaxLong = (1L << 53) - 1;
 
-    internal static bool IsUnsafeLong(long value)  => value < -DoubleMaxLong || value > DoubleMaxLong;
-    
+    internal static bool IsUnsafeLong(long value) => value < -DoubleMaxLong || value > DoubleMaxLong;
+
     /// <summary>
     /// 注：支持16进制和2进制
     /// </summary>
@@ -158,7 +158,7 @@ public static class NumberStyles
             return new StyleOut(str, isTyped);
         }
     }
-    
+
     /// <summary>
     /// 转2进制，长度补全为8的倍数
     /// </summary>

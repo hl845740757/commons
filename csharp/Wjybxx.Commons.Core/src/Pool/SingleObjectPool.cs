@@ -47,7 +47,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
     /// <exception cref="ArgumentNullException"></exception>
     public SingleObjectPool(Func<T> factory, Action<T> cleaner, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));;
+        this._cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));
         this._filter = filter;
     }
 

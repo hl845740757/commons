@@ -54,7 +54,7 @@ public class ObjectPool<T> : IObjectPool<T>
     public ObjectPool(Func<T> factory, Action<T> cleaner, int poolSize = 64,
                       Func<T, bool>? filter = null, Action<T>? destroyer = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));;
+        this._cleaner = cleaner ?? throw new ArgumentNullException(nameof(cleaner));
         this._poolSize = poolSize;
         this._filter = filter;
         this._destroyer = destroyer;

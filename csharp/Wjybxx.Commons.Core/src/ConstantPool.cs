@@ -213,7 +213,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         }
         throw new ArgumentException($"'{name}' is already in use");
     }
-    
+
     private TConstant NewConstant(IConstant.Builder<TConstant> builder) {
         string name = builder.Name;
         int nextId = Interlocked.Increment(ref _idGenerator) - 1;

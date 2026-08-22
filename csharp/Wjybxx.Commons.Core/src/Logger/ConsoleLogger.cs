@@ -42,7 +42,7 @@ internal class ConsoleLogger : ILogger
     public bool IsEnabled(Level level) {
         return _factory.IsEnabled(level);
     }
-    
+
     public void Log(Level level, string format) {
         if (!IsEnabled(level)) {
             return;
@@ -67,7 +67,7 @@ internal class ConsoleLogger : ILogger
         Console.WriteLine($"[{FormatDateTime(DateTime.Now)}] [{level}] [{_name}]");
         Console.WriteLine(ex.ToString());
     }
-    
+
     public void Log(Level level, Exception? ex, string format) {
         if (!IsEnabled(level)) {
             return;

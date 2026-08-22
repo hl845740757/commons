@@ -192,13 +192,13 @@ public abstract class AbstractEventLoop : IEventLoop
         promiseTask.Id = helper.NextId();
         promiseTask.TriggerTime = helper.TriggerTime(delay);
     }
-    
+
     private void InitTriggerTime(IScheduledFutureTask promiseTask, TimeSpan delay, TimeSpan period, int scheduleType) {
         ISchedulerHelper helper = SchedulerHelper;
         promiseTask.Helper = helper;
         promiseTask.Id = helper.NextId();
         promiseTask.TriggerTime = helper.TriggerTime(delay);
-        
+
         promiseTask.ScheduleType = scheduleType;
         promiseTask.Period = helper.TriggerPeriod(period.Ticks, new TimeSpan(1));
     }

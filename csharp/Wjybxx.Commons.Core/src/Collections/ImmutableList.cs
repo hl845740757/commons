@@ -69,6 +69,7 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
     #endregion
 
     public ReadOnlySpan<T> AsSpan() => _elements;
+
     public bool IsReadOnly => true;
     public int Count => _elements.Length;
     public bool IsEmpty => _elements.Length == 0;

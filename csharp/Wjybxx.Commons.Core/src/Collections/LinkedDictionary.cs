@@ -462,22 +462,46 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     #endregion
 
     #region sp
-    
+
+    /// <summary>
+    /// 获取Key关联的Value的地址，key不存在时返回默认的无效值
+    /// 
+    /// 注：
+    /// 1.必须检查是否为空引用，否则可能导致进程崩溃，而不是简单的NPE。
+    /// 2.也可以通过<see cref="Unsafe.IsNullRef"/>返回值的有效性。
+    /// </summary>
+    /// <returns></returns>
+    public ref TValue GetValueRefOrNullRef(TKey key, out bool isNullRef) {
+        int hash = KeyHash(key, _keyComparer);
+        int pos = Find(key, hash);
+        if (pos < 0) {
+            isNullRef = true;
+            return ref Unsafe.NullRef<TValue>();
+        } else {
+            isNullRef = false;
+            ref Node node = ref _table[pos];
+            return ref node.value;
+        }
+    }
+
     /// <summary>
     /// 获取Key关联的Value的地址
     /// 注意：不可以长期持有Value的地址，字典结构变化时可能指向错误的地址。
     /// </summary>
-    public ref TValue TryGetValueRefOrAddDefault(TKey key) {
-        _table ??= new Node[_mask +2];
+    public ref TValue GetValueRefOrAddDefault(TKey key, out bool exists) {
+        _table ??= new Node[_mask + 2];
         int hash = KeyHash(key, _keyComparer);
         int pos = Find(key, hash);
         if (pos < 0) {
+            exists = false;
             pos = -pos - 1;
             Insert(pos, hash, key, default, InsertionOrder.Default);
+        } else {
+            exists = true;
         }
         return ref _table[pos].value;
     }
-    
+
     /// <summary>
     /// 获取元素，并将元素移动到首部
     /// （这几个接口不适合定义在接口中，因为只有查询效率高的有序字典才可以定义）

@@ -60,7 +60,7 @@ public class AlwaysSuccess<T> : Decorator<T> where T : class
             SetSuccess();
         }
     }
-    
+
     /// <summary>
     /// 是否将取消也视作成功
     /// </summary>

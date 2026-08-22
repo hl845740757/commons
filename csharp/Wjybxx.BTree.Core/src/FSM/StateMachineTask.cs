@@ -335,8 +335,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         set => handler = value ?? DefaultStateMachineHandler<T>.Inst; // null处理
     }
 
-    public StateMachineListener<T>? Listener
-    {
+    public StateMachineListener<T>? Listener {
         get => listener;
         set => listener = value;
     }

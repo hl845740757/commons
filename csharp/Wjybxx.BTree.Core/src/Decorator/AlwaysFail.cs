@@ -57,7 +57,7 @@ public class AlwaysFail<T> : Decorator<T> where T : class
         inlineHelper.StopInline();
         if (child.IsCancelled && !treatCancelAsFailure) {
             SetCancelled();
-        } else { 
+        } else {
             SetCompleted(TaskStatus.ToFailure(child.Status), true); // 错误码有传播的价值
         }
     }

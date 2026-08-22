@@ -59,7 +59,7 @@ public interface ILogger
     /// <param name="level">日志等级</param>
     /// <param name="ex">异常信息</param>
     void Log(Level level, Exception ex);
-    
+
     /// <summary>
     /// 
     /// </summary>
