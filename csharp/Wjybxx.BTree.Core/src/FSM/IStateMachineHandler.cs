@@ -16,8 +16,6 @@
 
 #endregion
 
-using Wjybxx.BTree.FSM.Handler;
-
 namespace Wjybxx.BTree.FSM
 {
 /// <summary>
@@ -82,15 +80,6 @@ public interface IStateMachineHandler<T> where T : class
     bool OnNextStateAbsent(StateMachineTask<T> stateMachineTask, Task<T> preState) {
         stateMachineTask.SetCompleted(preState.Status, true);
         return true;
-    }
-
-    /// <summary>
-    /// 适配监听器为Handler
-    /// </summary>
-    /// <param name="listener"></param>
-    /// <returns></returns>
-    public static IStateMachineHandler<T> OfListener(StateMachineListener<T> listener) {
-        return new ListenerWrapper<T>(listener);
     }
 }
 }

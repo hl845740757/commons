@@ -19,7 +19,7 @@
 namespace Wjybxx.BTree.Branch.Join
 {
 /// <summary>
-/// 等待所有任务完成后返回成功
+/// 等待所有任务完成后进入完成状态，如果存在失败子节点，则返回失败。
 /// 相当于并发编程中的WaitAll
 /// </summary>
 /// <typeparam name="T"></typeparam>
@@ -43,7 +43,12 @@ public class JoinWaitAll<T> : IJoinPolicy<T> where T : class
     }
 
     public void OnChildCompleted(Join<T> join, Task<T> child) {
-        if (join.CompletedCount >= join.ChildCount) {
+        if (join.CompletedCount < join.ChildCount) {
+            return;
+        }
+        if (join.SucceededCount < join.ChildCount) {
+            join.SetFailed(TaskStatus.ERROR);
+        } else {
             join.SetSuccess();
         }
     }

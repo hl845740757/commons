@@ -54,7 +54,7 @@ public class JoinSelectorN<T> : IJoinPolicy<T> where T : class
         } else if (join.ChildCount == 0) {
             join.SetFailed(TaskStatus.CHILDLESS);
         } else if (CheckFailFast(join)) {
-            join.SetFailed(TaskStatus.INSUFFICIENT_CHILD);
+            join.SetFailed(TaskStatus.INSUFF_CHILD);
         }
     }
 

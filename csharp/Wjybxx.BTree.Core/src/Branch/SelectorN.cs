@@ -55,7 +55,7 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
         } else if (ChildCount == 0) {
             SetFailed(TaskStatus.CHILDLESS);
         } else if (CheckFailFast()) {
-            SetFailed(TaskStatus.INSUFFICIENT_CHILD);
+            SetFailed(TaskStatus.INSUFF_CHILD);
         } else if (IsCheckingGuard()) {
             // 条件检测性能优化
             for (int i = 0; i < children.Count; i++) {

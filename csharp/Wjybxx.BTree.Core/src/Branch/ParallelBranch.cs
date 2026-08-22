@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.BTree.Branch
 {
@@ -53,6 +54,7 @@ public abstract class ParallelBranch<T> : BranchTask<T> where T : class
     }
 
 #nullable disable
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ParallelChildHelper<T> GetChildHelper(Task<T> child) {
         return (ParallelChildHelper<T>)child.ControlData;
     }

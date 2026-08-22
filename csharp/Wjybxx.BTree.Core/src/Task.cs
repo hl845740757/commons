@@ -993,6 +993,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
 #nullable disable
     public Task<T> this[int index] {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => GetChild(index);
         set => SetChild(index, value);
     }

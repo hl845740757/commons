@@ -42,7 +42,7 @@ public static class TaskStatus
     /** 没有子节点 */
     public const int CHILDLESS = 6;
     /** 子节点不足 */
-    public const int INSUFFICIENT_CHILD = 7;
+    public const int INSUFF_CHILD = 7;
     /** 执行超时 */
     public const int TIMEOUT = 8;
     /** 循环结束 */

@@ -60,7 +60,7 @@ public class JoinSelectorN<T> implements IJoinPolicy<T> {
         } else if (join.getChildCount() == 0) {
             join.setFailed(TaskStatus.CHILDLESS);
         } else if (checkFailFast(join)) {
-            join.setFailed(TaskStatus.INSUFFICIENT_CHILD);
+            join.setFailed(TaskStatus.INSUFF_CHILD);
         }
     }
 

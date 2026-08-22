@@ -19,6 +19,7 @@ import cn.wjybxx.btree.TaskEntry;
 import cn.wjybxx.btree.branch.*;
 import cn.wjybxx.btree.branch.join.*;
 import cn.wjybxx.btree.condition.ConditionAnd;
+import cn.wjybxx.btree.condition.ConditionCount;
 import cn.wjybxx.btree.condition.ConditionNot;
 import cn.wjybxx.btree.condition.ConditionOr;
 import cn.wjybxx.btree.decorator.*;
@@ -119,5 +120,6 @@ public class BtreeCodecLinker {
         private ConditionNot<?> _not;
         private ConditionOr<?> _or;
         private ConditionAnd<?> _and;
+        private ConditionCount<?> _count;
     }
 }

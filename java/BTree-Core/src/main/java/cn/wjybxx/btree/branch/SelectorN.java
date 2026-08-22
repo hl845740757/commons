@@ -73,7 +73,7 @@ public class SelectorN<T> extends SingleRunningChildBranch<T> {
         } else if (getChildCount() == 0) {
             setFailed(TaskStatus.CHILDLESS);
         } else if (checkFailFast()) {
-            setFailed(TaskStatus.INSUFFICIENT_CHILD);
+            setFailed(TaskStatus.INSUFF_CHILD);
         } else if (isCheckingGuard()) {
             // 条件检测性能优化
             for (int i = 0; i < children.size(); i++) {

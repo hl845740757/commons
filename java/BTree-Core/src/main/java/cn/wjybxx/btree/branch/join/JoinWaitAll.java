@@ -16,11 +16,12 @@
 package cn.wjybxx.btree.branch.join;
 
 import cn.wjybxx.btree.Task;
-import cn.wjybxx.btree.branch.Join;
+import cn.wjybxx.btree.TaskStatus;
 import cn.wjybxx.btree.branch.IJoinPolicy;
+import cn.wjybxx.btree.branch.Join;
 
 /**
- * 等待所有任务完成后返回成功
+ * 等待所有任务完成后进入完成状态，如果存在失败子节点，则返回失败
  * 相当于并发编程中的WaitAll
  *
  * @author wjybxx
@@ -54,7 +55,12 @@ public class JoinWaitAll<T> implements IJoinPolicy<T> {
 
     @Override
     public void onChildCompleted(Join<T> join, Task<T> child) {
-        if (join.getCompletedCount() >= join.getChildCount()) {
+        if (join.getCompletedCount() < join.getChildCount()) {
+            return;
+        }
+        if (join.getSucceededCount() < join.getChildCount()) {
+            join.setFailed(TaskStatus.ERROR);
+        } else {
             join.setSuccess();
         }
     }

@@ -56,10 +56,10 @@ public class StateMachineTest
     [Test]
     public void testCount() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        taskEntry.GetRootStateMachine().Handler = IStateMachineHandler<Blackboard>.OfListener((stateMachineTask, curState, nextState) => {
+        taskEntry.GetRootStateMachine().Listener = (stateMachineTask, curState, nextState) => {
             if (curState == null) return; // 首次切换
             Assert.IsTrue(curState.IsCancelled);
-        });
+        };
 
         taskEntry.GetRootStateMachine().ChangeState(new StateA<Blackboard>());
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -71,10 +71,10 @@ public class StateMachineTest
     public void testCountDelay() {
         delayChange = true;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        taskEntry.GetRootStateMachine().Handler = IStateMachineHandler<Blackboard>.OfListener((stateMachineTask, curState, nextState) => {
+        taskEntry.GetRootStateMachine().Listener = (stateMachineTask, curState, nextState) => {
             if (curState == null) return; // 首次切换
             Assert.IsTrue(curState.IsSucceeded);
-        });
+        };
 
         taskEntry.GetRootStateMachine().ChangeState(new StateA<Blackboard>());
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -353,13 +353,12 @@ public class StateMachineTest
         int runFrames = 10;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
         StateMachineTask<Blackboard> rootStateMachine = taskEntry.GetRootStateMachine();
-        rootStateMachine.Handler = IStateMachineHandler<Blackboard>.OfListener((stateMachineTask, curState, nextState) => {
-                if (curState != null && nextState != null) {
-                    WaitFrame<Blackboard> curState2 = (WaitFrame<Blackboard>)curState;
-                    Assert.AreEqual(runFrames, curState2.RunFrames);
-                }
+        rootStateMachine.Listener = (stateMachineTask, curState, nextState) => {
+            if (curState != null && nextState != null) {
+                WaitFrame<Blackboard> curState2 = (WaitFrame<Blackboard>)curState;
+                Assert.AreEqual(runFrames, curState2.RunFrames);
             }
-        );
+        };
         rootStateMachine.ChangeState(new WaitFrame<Blackboard>(runFrames));
         taskEntry.Update(); // 启动任务树，使行为树处于运行状态
 

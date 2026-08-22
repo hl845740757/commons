@@ -123,6 +123,7 @@ public class BtreeCodecLinker
         private ConditionNot<object> _conditionNot;
         private ConditionOr<object> _conditionOr;
         private ConditionAnd<object> _conditionAnd;
+        private ConditionCount<object> _conditionCount;
     }
 }
 }
