@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Wjybxx.Commons.Collections; // Unity下提供EnsureCapacity
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -29,11 +30,13 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public sealed class FutureCombiner
 {
-    private List<IFuture> _futures = new List<IFuture>();
-    private FutureListener _listener = new FutureListener();
-    private IPromise<object>? _aggregatePromise;
+    private List<IFuture> _futures;
+    private FutureListener _listener;
+    private IPromise<object>? _promise;
 
-    public FutureCombiner() {
+    public FutureCombiner(int expectedCount = 0) {
+        _futures = new List<IFuture>(expectedCount);
+        _listener = new FutureListener(_futures);
     }
 
     public FutureCombiner Add(IFuture future) {
@@ -49,7 +52,7 @@ public sealed class FutureCombiner
         _futures.EnsureCapacity(_futures.Count + futures.Length);
         foreach (IFuture future in futures) {
             if (future == null) {
-                throw new NullReferenceException("futures contains null element");
+                throw new ArgumentException("futures contains null element");
             }
             _futures.Add(future);
             future.OnCompleted(invoker, listener);
@@ -64,7 +67,7 @@ public sealed class FutureCombiner
         }
         foreach (IFuture future in futures) {
             if (future == null) {
-                throw new NullReferenceException("futures contains null element");
+                throw new ArgumentException("futures contains null element");
             }
             _futures.Add(future);
             future.OnCompleted(invoker, listener);
@@ -83,10 +86,10 @@ public sealed class FutureCombiner
     /// 设置接收结果的Promise
     /// 如果在执行操作前没有指定Promise，将创建<see cref="Promise{T}"/>实例。
     /// </summary>
-    /// <param name="aggregatePromise"></param>
+    /// <param name="promise">接收结果的Promise</param>
     /// <returns></returns>
-    public FutureCombiner SetAggregatePromise(IPromise<object> aggregatePromise) {
-        this._aggregatePromise = aggregatePromise;
+    public FutureCombiner SetPromise(IPromise<object>? promise) {
+        this._promise = promise;
         return this;
     }
 
@@ -95,8 +98,8 @@ public sealed class FutureCombiner
     /// </summary>
     public void Clear() {
         _futures = new List<IFuture>();
-        _listener = new FutureListener();
-        _aggregatePromise = null;
+        _listener = new FutureListener(_futures);
+        _promise = null;
     }
 
     // region select
@@ -124,15 +127,11 @@ public sealed class FutureCombiner
     /// <summary>
     /// 成功N个触发成功
     ///
-    /// 如果触发失败，只随机记录一个Future的异常信息，而不记录所有的异常信息。
+    /// 如果触发失败，则聚合所有异常信息为<see cref="AggregateException"/>。
     /// <p>
     /// 1.如果require等于【0】，则必定会成功。
     /// 2.如果require大于监听的future数量，必定会失败。
     /// 3.如果require小于监听的future数量，当成功任务数达到期望时触发成功。
-    /// </p>
-    /// <p>
-    /// 如果lazy为false，则满足成功/失败条件时立即触发完成；
-    /// 如果lazy为true，则等待所有任务完成之后才触发成功或失败。
     /// </p>
     /// </summary>
     /// <param name="required">期望成成功的任务数</param>
@@ -167,17 +166,17 @@ public sealed class FutureCombiner
         FutureListener listener = CheckFinish();
         this._listener = null!;
 
-        IPromise<object> aggregatePromise = this._aggregatePromise;
-        if (aggregatePromise == null) {
-            aggregatePromise = new Promise<object>();
+        IPromise<object> promise = this._promise;
+        if (promise == null) {
+            promise = new Promise<object>();
         }
 
-        // 数据存储在ChildListener上有助于扩展
-        listener.futures = _futures;
+        // 数据存储在Listener上有助于扩展
+        // listener.futures = _futures;
         listener.options = options;
-        listener.promise = aggregatePromise;
+        listener.promise = promise;
         listener.CheckComplete();
-        return aggregatePromise;
+        return promise;
     }
 
     /** 避免过多的闭包 */
@@ -196,10 +195,14 @@ public sealed class FutureCombiner
         private volatile object? result;
         private volatile Exception? cause;
 
-        /** 非volatile，其可见性由{@link #aggregatePromise}保证 */
-        internal List<IFuture> futures;
+        /** 非volatile，其可见性由<see cref="promise"/>保证 */
+        private readonly List<IFuture> futures;
         internal AggregateOptions options;
         internal volatile IPromise<object>? promise;
+
+        public FutureListener(List<IFuture> futures) {
+            this.futures = futures;
+        }
 
         public void Accept(IFuture future) {
             if (future.IsFailedOrCancelled) {
@@ -238,13 +241,10 @@ public sealed class FutureCombiner
             IPromise<object> promise = this.promise!;
             int futureCount = futures.Count;
             if (options.IsWhenAny) {
-                if (futureCount == 0) { // anyOf不能完成，考虑打印log
-                    return false;
-                }
                 if (doneCount == 0) {
                     return false;
                 }
-                if (result != null) { // anyOf下尽量返回成功
+                if (succeedCount > 0) { // anyOf下尽量返回成功
                     return promise.TrySetResult(DecodeValue(result));
                 } else {
                     return promise.TrySetException(cause);
@@ -278,19 +278,27 @@ public sealed class FutureCombiner
                     cause = CreateAggregateException();
                 } else {
                     string message = $"FailFast, done: {doneCount}/{futureCount}, succ: {succeedCount}/{successRequire}";
-                    cause = new OperationCanceledException(message); // 改用系统库异常
+                    cause = new AggregateException(message); // 统一返回聚合异常
                 }
                 return promise.TrySetException(cause);
             }
             return false;
         }
 
-        private AggregateException CreateAggregateException() {
-            List<Exception> exceptions = new List<Exception>();
+        private Exception CreateAggregateException() {
+            var exceptions = new List<Exception>(failedCount);
+            int cancelled = 0 ;
             foreach (IFuture upstream in futures) {
+                if (upstream.IsCancelled) {
+                    cancelled++;
+                }
                 if (upstream.IsFailedOrCancelled) {
                     exceptions.Add(upstream.ExceptionNow(false));
                 }
+            }
+
+            if (cancelled == exceptions.Count) {
+                return exceptions[0]; // 理论上可能仍存在成功的任务
             }
             return new AggregateException(exceptions);
         }

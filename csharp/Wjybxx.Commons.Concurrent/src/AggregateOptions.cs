@@ -67,7 +67,7 @@ internal readonly struct AggregateOptions
     /// <exception cref="ArgumentException"></exception>
     public static AggregateOptions SelectN(int required, bool failFast) {
         if (required < 0) {
-            throw new ArgumentException();
+            throw new ArgumentException("required cannot be negative");
         }
         return new AggregateOptions(TYPE_SELECT_MANY, required, failFast);
     }
