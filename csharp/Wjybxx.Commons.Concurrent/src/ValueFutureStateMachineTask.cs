@@ -17,12 +17,15 @@
 #endregion
 
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
+/// 0.由<see cref="TaskPoolSizeAttribute"/>在目标方法上配置对象池大小。
 /// 1.该类型由于要复用，不能继承Promise，否则可能导致用户使用到错误的接口。
 /// 2.用户在获取结果时触发回收。
 /// 3.该实现并不是严格线程安全的，用在非StateMachine场景可能导致错误。
@@ -70,11 +73,10 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
     private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>? POOL;
 
     static ValueFutureStateMachineTask() {
-        int poolSize = TaskPoolConfig.GetPoolSize<S, T>();
+        int poolSize = GetPoolSize();
         if (poolSize > 0) {
             POOL = new ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>(
-                () => new ValueFutureStateMachineTask<S, T>(),
-                task => task.Reset(), poolSize);
+                () => new ValueFutureStateMachineTask<S, T>(), task => task.Reset(), poolSize);
         }
     }
 
@@ -88,6 +90,53 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
 
         // copy struct... 从栈拷贝到堆，此后栈上的状态机将被丢弃
         result._stateMachine = stateMachine;
+    }
+
+    private static int GetPoolSize() {
+        string stateName = typeof(S).Name;
+        MethodInfo? methodInfo = GetAsyncMethod(typeof(S).DeclaringType!, stateName);
+        if (methodInfo == null) {
+            return 0;
+        }
+        TaskPoolSizeAttribute attribute = methodInfo.GetCustomAttribute<TaskPoolSizeAttribute>();
+        if (attribute == null) {
+            return 0;
+        }
+        if (methodInfo.IsGenericMethod) {
+            methodInfo = methodInfo.GetGenericMethodDefinition();
+            // 返回值是泛型时才使用两个参数 - ReturnType信息不全，无法直接==比较，由此直接比较简单名
+            if (methodInfo.ReturnType.Name == typeof(ValueFuture<>).Name) {
+                bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
+                return isIntOrObject ? attribute.poolSize : attribute.poolSize2;
+            }
+        }
+        return attribute.poolSize;
+    }
+
+    private static MethodInfo? GetAsyncMethod(Type declaredType, string stateName) {
+        string methodName = stateName.Substring2(1, stateName.IndexOf('>'));
+        const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+        try {
+            return declaredType.GetMethod(methodName, bindingFlags);
+        }
+        catch (AmbiguousMatchException) {
+            // 处理重载问题(成本较高)
+            int index = stateName.LastIndexOf('`');
+            int typeParameterCount = index > 0 ? int.Parse(stateName.AsSpan(index + 1)) : 0;
+            foreach (MethodInfo method in typeof(S).DeclaringType!.GetMethods(bindingFlags)) {
+                if (method.Name != methodName) {
+                    continue;
+                }
+                if ((typeParameterCount > 0) != method.IsGenericMethod) {
+                    continue;
+                }
+                if (typeParameterCount > 0 && (typeParameterCount != method.GetGenericArguments().Length)) {
+                    continue;
+                }
+                return method;
+            }
+        }
+        return null;
     }
 
     #endregion

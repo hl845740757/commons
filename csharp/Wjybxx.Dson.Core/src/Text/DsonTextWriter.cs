@@ -627,9 +627,8 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
 
     #region context
 
-    private static readonly ConcurrentObjectPool<Context> contextPool = new ConcurrentObjectPool<Context>(
-        () => new Context(), context => context.Reset(),
-        DsonInternals.CONTEXT_POOL_SIZE);
+    private static readonly ConcurrentObjectPool<Context> contextPool = new(
+        () => new Context(), context => context.Reset(), DsonInternals.CONTEXT_POOL_SIZE);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {

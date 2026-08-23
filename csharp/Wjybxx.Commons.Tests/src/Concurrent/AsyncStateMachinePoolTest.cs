@@ -26,16 +26,31 @@ public class AsyncStateMachinePoolTest
     [Test]
     public void Test() {
         int expected = 100;
-        TaskPoolConfig.AddPoolConfig<AsyncStateMachinePoolTest, int>(expected);
-        int poolSize = TaskPoolConfig.GetPoolSize<AsyncStateMachinePoolTest, int>();
-        Assert.AreEqual(expected, poolSize);
-
         TaskPoolConfig.AddPoolConfig<int>(TaskPoolType.ValuePromise, expected);
-        poolSize = TaskPoolConfig.GetPoolSize<int>(TaskPoolType.ValuePromise);
+        int poolSize = TaskPoolConfig.GetPoolSize<int>(TaskPoolType.ValuePromise);
         Assert.AreEqual(expected, poolSize);
+        //
+        AsyncMethod().Forget();
+        AsyncMethod("hello").Forget();
+        GenericAsyncMethod("world").Forget();
+    }
 
-        TaskPoolConfig.AddPoolConfig(TaskPoolType.Coroutine, 0);
-        poolSize = TaskPoolConfig.GetPoolSize<int>(TaskPoolType.Coroutine);
-        Assert.AreEqual(0, poolSize);
+    // 测试对象池是否生效
+    [TaskPoolSize(100)]
+    private static async ValueFuture AsyncMethod() {
+        await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
+    }
+
+    // 测试泛型方法
+    [TaskPoolSize(50)]
+    private static async ValueFuture AsyncMethod<T>(T input) {
+        await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
+    }
+
+    // 测试泛型方法
+    [TaskPoolSize(50)]
+    private static async ValueFuture<T> GenericAsyncMethod<T>(T input) {
+        await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
+        return input;
     }
 }
