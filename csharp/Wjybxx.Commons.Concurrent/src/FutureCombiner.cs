@@ -287,7 +287,7 @@ public sealed class FutureCombiner
 
         private Exception CreateAggregateException() {
             var exceptions = new List<Exception>(failedCount);
-            int cancelled = 0 ;
+            int cancelled = 0;
             foreach (IFuture upstream in futures) {
                 if (upstream.IsCancelled) {
                     cancelled++;
@@ -297,7 +297,7 @@ public sealed class FutureCombiner
                 }
             }
 
-            if (cancelled == exceptions.Count) {
+            if (cancelled > 0 && cancelled == exceptions.Count) {
                 return exceptions[0]; // 理论上可能仍存在成功的任务
             }
             return new AggregateException(exceptions);

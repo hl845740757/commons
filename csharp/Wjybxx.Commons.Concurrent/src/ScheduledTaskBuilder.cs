@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
@@ -137,8 +138,7 @@ public struct ScheduledTaskBuilder<T>
     /// <summary>
     /// 是否启用了某选项
     /// </summary>
-    /// <param name="optionMask"></param>
-    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsEnabled(int optionMask) {
         return _core.IsEnabled(optionMask);
     }
@@ -146,7 +146,7 @@ public struct ScheduledTaskBuilder<T>
     /// <summary>
     /// 启用特定任务选项
     /// </summary>
-    /// <param name="taskOption"></param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Enable(int taskOption) {
         _core.Enable(taskOption);
     }
@@ -154,9 +154,17 @@ public struct ScheduledTaskBuilder<T>
     /// <summary>
     /// 关闭特定任务选项
     /// </summary>
-    /// <param name="taskOption"></param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Disable(int taskOption) {
         _core.Disable(taskOption);
+    }
+
+    /// <summary>
+    /// 启用或禁用选项
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetEnable(int optionMask, bool enable) {
+        _core.SetEnable(optionMask, enable);
     }
 
     #endregion
@@ -290,12 +298,9 @@ public struct ScheduledTaskBuilder<T>
         if (count < 1) {
             throw new ArgumentException("invalid count: " + count);
         }
-        if (count == 1) {
-            this.timeout = Math.Max(0, initialDelay);
-        } else {
-            this.timeout = Math.Max(0, initialDelay + (count - 1) * Period);
-        }
-        Enable(TaskOptions.HAS_TIMEOUT);
+        this.Timeout = count == 1
+            ? Math.Max(0, initialDelay)
+            : Math.Max(0, initialDelay) + (count - 1) * Period;
     }
 
     /// <summary>

@@ -49,6 +49,7 @@ public readonly struct FutureAwaitable
 
     public IFuture Future => _future;
     public IExecutor? Executor => _executor;
+    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
     public FutureAwaiter GetAwaiter() => new FutureAwaiter(_future, _executor, _cancelToken, _options);
@@ -82,6 +83,7 @@ public readonly struct FutureAwaitable<T>
 
     public IFuture<T> Future => _future;
     public IExecutor? Executor => _executor;
+    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
     public FutureAwaiter<T> GetAwaiter() => new FutureAwaiter<T>(_future, _executor, _cancelToken, _options);

@@ -89,6 +89,27 @@ public abstract class AbstractPromise
         return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
     }
 
+    internal static int PollState(ref object? exAddr) {
+        object ex = Volatile.Read(ref exAddr);
+        if (ex == null) {
+            return ST_PENDING;
+        }
+        if (ex == EX_COMPUTING) {
+            return ST_COMPUTING;
+        }
+        if (ex == EX_PUBLISHING) {
+            // busy spin -- 该过程通常很快，因此自旋等待即可
+            while (Volatile.Read(ref exAddr) == EX_PUBLISHING) {
+                Thread.SpinWait(1);
+            }
+            return ST_SUCCESS;
+        }
+        if (ex == EX_SUCCESS) {
+            return ST_SUCCESS;
+        }
+        return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
+    }
+
     #endregion
 
     #region notify
@@ -270,16 +291,18 @@ public abstract class AbstractPromise
         return (Exception)ex; // 取消
     }
 
-    internal static Exception ExceptionNow(int state, object? ex, bool throwIfCancelled) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static Exception ExceptionNow(ref object? exAddr, bool throwIfCancelled = false) {
+        int state = PollState(ref exAddr); // 先读State才能保证ex的正确性
         switch (state) {
             case ST_FAILED: {
-                ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)ex!;
+                ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)Volatile.Read(ref exAddr)!;
                 return ExceptionUtil.RestoreStackTrace(dispatchInfo);
             }
             case ST_CANCELLED: {
-                OperationCanceledException ex2 = (OperationCanceledException)ex!;
+                OperationCanceledException ex2 = (OperationCanceledException)Volatile.Read(ref exAddr)!;
                 if (throwIfCancelled) {
-                    throw BetterCancellationException.Capture(ex2);
+                    throw ex2;
                 }
                 return ex2;
             }
@@ -291,11 +314,12 @@ public abstract class AbstractPromise
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static object ExceptionOrDispatchInfoNow(int state, object? ex) {
+    internal static object ExceptionOrDispatchInfoNow(ref object? exAddr) {
+        int state = PollState(ref exAddr); // 先读State才能保证ex的正确性
         switch (state) {
             case ST_FAILED:
             case ST_CANCELLED: {
-                return ex!;
+                return Volatile.Read(ref exAddr)!;
             }
             case ST_SUCCESS:
                 throw new InvalidOperationException("Task completed with a result");

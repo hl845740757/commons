@@ -71,7 +71,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             this._ex = EX_SUCCESS;
         } else {
             this._result = default;
-            this._ex = AbstractPromise.WrapException(ex);
+            this._ex = WrapException(ex);
         }
     }
 
@@ -114,19 +114,12 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     /// <summary>
-    /// Promise进入执行状态
-    ///
-    /// 注意：该方法不一定会被执行，取决于用户是否调用<see cref="TrySetComputing"/>方法，只在特定场景下有用。
-    /// </summary>
-    protected virtual void OnComputing() {
-    }
-
-    /// <summary>
     /// Promise进入了完成状态，子类可清理不再需要的数据，不可执行其它逻辑
     /// </summary>
     protected virtual void OnCompleted() {
     }
 
+#pragma warning disable CS0420
     private bool InternalSetResult(T? result) {
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
@@ -148,7 +141,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     private bool InternalSetException(object ex) {
-        object result = AbstractPromise.WrapException(ex);
+        object result = WrapException(ex);
         // Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object preEx = Interlocked.CompareExchange(ref _ex, result, null);
@@ -163,31 +156,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
         }
         return false;
-    }
-
-    /// <summary>
-    /// 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕
-    /// </summary>
-    /// <returns></returns>
-    private int PollState() {
-        object? ex = _ex;
-        if (ex == null) {
-            return ST_PENDING;
-        }
-        if (ex == EX_COMPUTING) {
-            return ST_COMPUTING;
-        }
-        if (ex == EX_PUBLISHING) {
-            // busy spin -- 该过程通常很快，因此自旋等待即可
-            while ((ex = _ex) == EX_PUBLISHING) {
-                Thread.SpinWait(1);
-            }
-            return ST_SUCCESS;
-        }
-        if (ex == EX_SUCCESS) {
-            return ST_SUCCESS;
-        }
-        return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
     }
 
     #endregion
@@ -244,7 +212,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public bool TrySetComputing() {
         object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
         if (preState == null) {
-            OnComputing();
             return true;
         }
         return false;
@@ -253,7 +220,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public TaskStatus TrySetComputing2() {
         object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
         if (preState == null) {
-            OnComputing();
             return TaskStatus.Pending;
         }
         return (TaskStatus)PeekState(preState);
@@ -339,7 +305,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         if (_ex == EX_SUCCESS) {
             return _result;
         }
-        int state = PollState();
+        int state = PollState(ref _ex);
         return state switch
         {
             ST_SUCCESS => _result,
@@ -350,27 +316,24 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     public Exception ExceptionNow(bool throwIfCancelled = true) {
-        return ExceptionNow(PollState(), _ex, throwIfCancelled);
+        return ExceptionNow(ref _ex, throwIfCancelled);
     }
 
     public object ExceptionOrDispatchInfoNow() {
-        return ExceptionOrDispatchInfoNow(PollState(), _ex);
+        return ExceptionOrDispatchInfoNow(ref _ex);
     }
 
-    /** 上报future的执行结果 -- 取消以外的异常都将被包装为<see cref="CompletionException"/> */
     private T ReportJoin(int state) {
         Debug.Assert(state > 0);
         if (state == ST_SUCCESS) {
             return _result;
         }
         if (state == ST_CANCELLED) {
-            throw BetterCancellationException.Capture((OperationCanceledException)_ex!);
+            throw (OperationCanceledException)_ex!;
         }
         ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex!;
-        if (dispatchInfo.SourceException is CompletionException) {
-            dispatchInfo.Throw();
-        }
-        throw new CompletionException(null, ExceptionUtil.RestoreStackTrace(dispatchInfo));
+        dispatchInfo.Throw(); // 不再封装异常
+        return default;
     }
 
     #endregion
@@ -384,32 +347,32 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     public T Get() {
-        int state = PollState();
+        int state = PollState(ref _ex);
         if (IsDone0(state)) {
             return ReportJoin(state);
         }
         Await();
-        return ReportJoin(PollState());
+        return ReportJoin(PollState(ref _ex));
     }
 
     public T Get(TimeSpan timeout) {
-        int state = PollState();
+        int state = PollState(ref _ex);
         if (IsDone0(state)) {
             return ReportJoin(state);
         }
         if (Await(timeout)) {
-            return ReportJoin(PollState());
+            return ReportJoin(PollState(ref _ex));
         }
         throw new TimeoutException();
     }
 
     public T Join() {
-        int state = PollState();
+        int state = PollState(ref _ex);
         if (IsDone0(state)) {
             return ReportJoin(state);
         }
         AwaitUninterruptibly();
-        return ReportJoin(PollState());
+        return ReportJoin(PollState(ref _ex));
     }
 
     private Awaiter? TryPushAwaiter() {
@@ -825,10 +788,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         if (x is not OperationCanceledException) {
             FutureLogger.LogCause(x);
         }
-        // 统一封装为CompletionException
-        if (x is not CompletionException) {
-            x = new CompletionException(null, x);
-        }
+        // C#不再封装异常，保留原始异常类型和堆栈
         return InternalSetException(x);
     }
 
@@ -1057,7 +1017,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 object rawEx = input._ex!;
-                X ex; // 这里暂不恢复堆栈
+                X ex; // 暂不恢复堆栈
                 if (IsSucceed(rawEx) || (ex = UnwrapException(rawEx, restore: false) as X) == null) {
                     setCompleted = output.CompleteRelay(input._result, rawEx);
                     goto outer;
@@ -1115,7 +1075,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                         return null; // 等待下次执行
                     }
                     object rawEx = input._ex!;
-                    Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx);
+                    Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx, restore: false);
                     IFuture<U> relay = fn(input._result, ex);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
@@ -1363,8 +1323,8 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     goto outer;
                 }
                 object rawEx = input._ex!;
-                X ex; // 这里暂不恢复堆栈
-                if (IsSucceed(rawEx) || (ex = UnwrapException(rawEx) as X) == null) {
+                X ex; // 暂不恢复堆栈
+                if (IsSucceed(rawEx) || (ex = UnwrapException(rawEx, restore: false) as X) == null) {
                     setCompleted = output.CompleteRelay(input._result, rawEx);
                     goto outer;
                 }

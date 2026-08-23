@@ -63,7 +63,7 @@ public class ScheduleCancelTest
     public void testTimeout() {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => { });
         builder.SetFixedDelay(0, 200);
-        builder.SetTimeoutByCount(1);
+        builder.Timeout = 1;
 
         IFuture<int> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
@@ -74,13 +74,12 @@ public class ScheduleCancelTest
     public void testCountLimit() {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => { });
         builder.SetFixedDelay(0, 200);
-        builder.SetTimeoutByCount(1);
+        builder.CountLimit = 1;
 
         IFuture<int> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
         Assert.IsTrue(future.ExceptionNow(false) is OperationCanceledException);
     }
-
 
     [Test]
     public void testErrorCode() {

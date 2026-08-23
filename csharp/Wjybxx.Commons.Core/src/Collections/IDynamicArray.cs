@@ -88,7 +88,7 @@ public interface IDynamicArray<E> where E : class
     /// 不论是否正在迭代，len一定会增加。
     /// </summary>
     /// <param name="e"></param>
-    /// <exception cref="NullReferenceException">如果e为null</exception>
+    /// <exception cref="ArgumentNullException">如果e为null</exception>
     void Add(E e);
 
     /// <summary>
@@ -97,7 +97,7 @@ public interface IDynamicArray<E> where E : class
     /// </summary>
     /// <param name="index">要插入的位置，小于等于length</param>
     /// <param name="e">要插入的元素</param>
-    /// <exception cref="NullReferenceException">如果e为null</exception>
+    /// <exception cref="ArgumentNullException">如果e为null</exception>
     /// <exception cref="InvalidOperationException">如果当前正在迭代</exception>
     void Insert(int index, E e);
 
@@ -228,6 +228,6 @@ public interface IDynamicArray<E> where E : class
     /// 转换为Span
     /// </summary>
     /// <returns></returns>
-    Span<E?> AsSpan();
+    ReadOnlySpan<E?> AsSpan();
 }
 }

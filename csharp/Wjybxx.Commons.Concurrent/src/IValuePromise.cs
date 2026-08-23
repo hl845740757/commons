@@ -27,18 +27,14 @@ public interface IValuePromise
 {
     /// <summary>
     /// Promise是否已回收
-    /// （限任务的调度者使用）
+    /// （限任务的调度者使用，否则可能有线程安全问题）
     /// </summary>
-    /// <param name="rid"></param>
-    /// <returns></returns>
     bool IsRecycled(int rid);
 
     /// <summary>
-    /// Promise是否已回收或已进入完成状态
-    /// (限任务的调度者使用)
+    /// Promise是否已回收或已完成
+    /// （限任务的调度者使用，否则可能有线程安全问题）
     /// </summary>
-    /// <param name="rid"></param>
-    /// <returns></returns>
     bool IsRecycledOrCompleted(int rid);
 
     #region future

@@ -42,6 +42,7 @@ public readonly struct ValueFutureAwaitable
 
     public ValueFuture Future => _future;
     public IExecutor? Executor => _executor;
+    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
     /// <summary>
@@ -86,6 +87,7 @@ public readonly struct ValueFutureAwaitable<T>
 
     public ValueFuture<T> Future => _future;
     public IExecutor? Executor => _executor;
+    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
     /// <summary>

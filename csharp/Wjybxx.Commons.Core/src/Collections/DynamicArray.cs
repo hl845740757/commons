@@ -26,6 +26,7 @@ namespace Wjybxx.Commons.Collections
 {
 /// <summary>
 /// 默认的动态数组
+/// TODO 由于存在Mask，所以其实是可以支持结构体Value的
 /// </summary>
 /// <typeparam name="E"></typeparam>
 public class DynamicArray<E> : IDynamicArray<E> where E : class
@@ -289,7 +290,7 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
         return result;
     }
 
-    public Span<E?> AsSpan() => new Span<E?>(elements, 0, len);
+    public ReadOnlySpan<E?> AsSpan() => new ReadOnlySpan<E?>(elements, 0, len);
 
     #endregion
 

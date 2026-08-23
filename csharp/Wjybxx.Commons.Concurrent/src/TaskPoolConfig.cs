@@ -27,12 +27,15 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class TaskPoolConfig
 {
-    private static volatile Func<TaskPoolType, Type, int>? poolSizeCalculator;
+    private static volatile Func<TaskPoolType, Type, int>? _handler;
     private static readonly ConcurrentDictionary<Key, Item> configDic = new();
 
-    public static Func<TaskPoolType, Type, int>? PoolSizeCalculator {
-        get => poolSizeCalculator;
-        set => poolSizeCalculator = value;
+    /// <summary>
+    /// Type为目标类型的泛型参数
+    /// </summary>
+    public static Func<TaskPoolType, Type, int>? Handler {
+        get => _handler;
+        set => _handler = value;
     }
 
     /// <summary>
@@ -98,7 +101,7 @@ public static class TaskPoolConfig
     /// <param name="poolType">对象池类型</param>
     /// <typeparam name="T">对象的泛型参数类型</typeparam>
     public static int GetPoolSize<T>(TaskPoolType poolType) {
-        Func<TaskPoolType, Type, int> func = poolSizeCalculator;
+        Func<TaskPoolType, Type, int> func = _handler;
         if (func != null) {
             return func.Invoke(poolType, typeof(T));
         }
@@ -108,16 +111,15 @@ public static class TaskPoolConfig
         if (GetItem(poolType, type, out Item item, out bool precise)) {
             return (precise || isIntOrObject) ? item.poolSize : item.poolSize2;
         }
-        // 保底方案
-        if (poolType == TaskPoolType.ValuePromise
-            || poolType == TaskPoolType.PromiseMoveNext) {
-            return isIntOrObject ? 1000 : 100;
-        }
-        if (poolType == TaskPoolType.CtsCompletion
-            || poolType == TaskPoolType.Coroutine) {
-            return 500; // 非泛型类
-        }
-        return isIntOrObject ? 200 : 50;
+        return poolType switch
+        {
+            // 保底方案
+            TaskPoolType.ValuePromise => isIntOrObject ? 1000 : 50,
+            TaskPoolType.PromiseMoveNext => isIntOrObject ? 1000 : 50,
+            TaskPoolType.ScheduledPromiseTask => isIntOrObject ? 1000 : 50,
+            TaskPoolType.Coroutine => 1000,
+            _ => isIntOrObject ? 200 : 50
+        };
     }
 
     /// <summary>
@@ -265,7 +267,7 @@ public enum TaskPoolType
     /// </summary>
     ManualResetPromise,
     /// <summary>
-    /// 取消令牌的监听器
+    /// 取消令牌的监听器(废弃)
     /// </summary>
     CtsCompletion,
 

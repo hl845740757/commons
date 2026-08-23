@@ -106,7 +106,7 @@ public sealed class ComponentIdPool
 
     #endregion
 
-    public delegate void Interceptor(ComponentId.IBuilder builder, ComponentDefineAttribute attribute);
+    public delegate void Interceptor(ComponentId.IBuilder builder, ComponentDefineAttribute? attribute);
 
     /// <summary>
     /// 获取类型关联的组件Id

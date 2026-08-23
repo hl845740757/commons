@@ -222,8 +222,10 @@ public abstract class AbstractEventLoop : IEventLoop
         if (builder.HasCountLimit) {
             promiseTask.Countdown = builder.CountLimit;
         }
-        Execute(promiseTask); // 可能会立即完成
-        return promise.Future;
+
+        long taskId = promiseTask.Id;
+        Execute(promiseTask); // task可能会立即完成(被回收)
+        return promise.Future.WithTaskId(taskId);
     }
 
     public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, CancellationToken cancelToken = default) {
@@ -231,8 +233,9 @@ public abstract class AbstractEventLoop : IEventLoop
         ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
-        Execute(promiseTask);
-        return promise.VoidFuture;
+        long taskId = promiseTask.Id;
+        Execute(promiseTask); // task可能会立即完成(被回收)
+        return promise.VoidFuture.WithTaskId(taskId);
     }
 
     public ValueFuture ScheduleAction(Action<object> action, object? state, TimeSpan delay, CancellationToken cancelToken = default) {
@@ -240,8 +243,9 @@ public abstract class AbstractEventLoop : IEventLoop
         ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, state, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
-        Execute(promiseTask);
-        return promise.VoidFuture;
+        long taskId = promiseTask.Id;
+        Execute(promiseTask); // task可能会立即完成(被回收)
+        return promise.VoidFuture.WithTaskId(taskId);
     }
 
     public virtual ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, CancellationToken cancelToken = default) {
@@ -249,8 +253,9 @@ public abstract class AbstractEventLoop : IEventLoop
         ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfFunction(promise, action, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
-        Execute(promiseTask);
-        return promise.Future;
+        long taskId = promiseTask.Id;
+        Execute(promiseTask); // task可能会立即完成(被回收)
+        return promise.Future.WithTaskId(taskId);
     }
 
     public ValueFuture<T> ScheduleFunc<T>(Func<object, T> action, object state, TimeSpan delay, CancellationToken cancelToken = default) {
@@ -258,8 +263,9 @@ public abstract class AbstractEventLoop : IEventLoop
         ScheduledPromiseTask<T> promiseTask = ScheduledPromiseTask.OfFunction(promise, action, state, cancelToken);
         InitTriggerTime(promiseTask, delay);
 
-        Execute(promiseTask);
-        return promise.Future;
+        long taskId = promiseTask.Id;
+        Execute(promiseTask); // task可能会立即完成(被回收)
+        return promise.Future.WithTaskId(taskId);
     }
 
     public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
@@ -267,8 +273,9 @@ public abstract class AbstractEventLoop : IEventLoop
         ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, cancelToken);
         InitTriggerTime(promiseTask, delay, period, ScheduledTaskBuilder.SCHEDULE_FIXED_DELAY);
 
-        Execute(promiseTask);
-        return promise.VoidFuture;
+        long taskId = promiseTask.Id;
+        Execute(promiseTask); // task可能会立即完成(被回收)
+        return promise.VoidFuture.WithTaskId(taskId);
     }
 
     public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, CancellationToken cancelToken = default) {
@@ -276,8 +283,9 @@ public abstract class AbstractEventLoop : IEventLoop
         ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(promise, action, cancelToken);
         InitTriggerTime(promiseTask, delay, period, ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
 
-        Execute(promiseTask);
-        return promise.VoidFuture;
+        long taskId = promiseTask.Id;
+        Execute(promiseTask); // task可能会立即完成(被回收)
+        return promise.VoidFuture.WithTaskId(taskId);
     }
 
     #endregion

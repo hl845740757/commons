@@ -291,7 +291,7 @@ public readonly struct ValueFuture
                 return;
             }
             if (_ex is OperationCanceledException canceledException) {
-                throw BetterCancellationException.Capture(canceledException);
+                throw canceledException;
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             dispatchInfo.Throw();
@@ -320,7 +320,7 @@ public readonly struct ValueFuture
                 if (ExecutorUtil.IsSuppressible(options, TaskStatus.Cancelled)) {
                     return TaskResult.FromException(canceledException);
                 }
-                throw BetterCancellationException.Capture(canceledException);
+                throw canceledException;
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             if (ExecutorUtil.IsSuppressible(options, TaskStatus.Failed)) {
@@ -652,7 +652,7 @@ public readonly struct ValueFuture<T>
                 return _result;
             }
             if (_ex is OperationCanceledException canceledException) {
-                throw BetterCancellationException.Capture(canceledException);
+                throw canceledException;
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             dispatchInfo.Throw();
@@ -683,7 +683,7 @@ public readonly struct ValueFuture<T>
                 if (ExecutorUtil.IsSuppressible(options, TaskStatus.Cancelled)) {
                     return TaskResult<T>.FromException(canceledException);
                 }
-                throw BetterCancellationException.Capture(canceledException);
+                throw canceledException;
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             if (ExecutorUtil.IsSuppressible(options, TaskStatus.Failed)) {

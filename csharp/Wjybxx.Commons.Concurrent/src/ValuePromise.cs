@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -57,10 +58,7 @@ public class ValuePromise<T> : IValuePromise<T>
     private int _reentryId;
     /// <summary>
     /// 回调
-    /// 
-    /// Q：为什么不能平铺放在Promise中？
-    /// A：由于我们的框架支持异步回调，因此需要实现<see cref="ITask"/>接口；而Promise不适合直接实现<see cref="ITask"/>，这会限制子类的扩展。
-    /// （回调实现为伴生对象）
+    /// TODO ValuePromise不再继承Promise的情况下，是可以实现<see cref="ITask"/>的，回调封装就可以使用值类型
     /// </summary>
     private readonly Completion _completion = new Completion();
     /// <summary>
@@ -79,12 +77,10 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     /// <summary>
-    /// Promise是否已回收或已进入完成状态
+    /// Promise是否已回收或已完成
     /// </summary>
-    /// <param name="rid"></param>
-    /// <returns></returns>
     public bool IsRecycledOrCompleted(int rid) {
-        return rid != _reentryId || Status >= TaskStatus.Success;
+        return rid != _reentryId || PeekState(_ex) >= ST_SUCCESS;
     }
 
     /// <summary>
@@ -122,6 +118,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     #region internal
 
+#pragma warning disable CS0420
     private bool InternalSetResult(T? result) {
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object? preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
@@ -143,7 +140,7 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     private bool InternalSetException(object ex) {
-        object result = AbstractPromise.WrapException(ex);
+        object result = WrapException(ex);
         // Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object? preEx = Interlocked.CompareExchange(ref _ex, result, null);
@@ -160,31 +157,6 @@ public class ValuePromise<T> : IValuePromise<T>
         return false;
     }
 
-    /// <summary>
-    /// 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕
-    /// </summary>
-    /// <returns></returns>
-    private int PollState() {
-        object? ex = _ex;
-        if (ex == null) {
-            return ST_PENDING;
-        }
-        if (ex == EX_COMPUTING) {
-            return ST_COMPUTING;
-        }
-        if (ex == EX_PUBLISHING) {
-            // busy spin -- 该过程通常很快，因此自旋等待即可
-            while ((ex = _ex) == EX_PUBLISHING) {
-                Thread.SpinWait(1);
-            }
-            return ST_SUCCESS;
-        }
-        if (ex == EX_SUCCESS) {
-            return ST_SUCCESS;
-        }
-        return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
-    }
-
     #endregion
 
     #region promise
@@ -192,7 +164,7 @@ public class ValuePromise<T> : IValuePromise<T>
     private TaskStatus Status => (TaskStatus)PeekState(_ex);
 
     private T ResultNow() {
-        int state = PollState();
+        int state = PollState(ref _ex);
         return state switch
         {
             ST_SUCCESS => _result,
@@ -200,11 +172,6 @@ public class ValuePromise<T> : IValuePromise<T>
             ST_CANCELLED => throw new InvalidOperationException("Task was cancelled"),
             _ => throw new InvalidOperationException("Task has not completed")
         };
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Exception ExceptionNow(bool throwIfCancelled) {
-        return AbstractPromise.ExceptionNow(PollState(), _ex, throwIfCancelled);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -232,7 +199,9 @@ public class ValuePromise<T> : IValuePromise<T>
     internal bool Internal_TrySetException(Exception cause) {
         if (cause == null) throw new ArgumentNullException(nameof(cause));
         if (InternalSetException(cause)) {
-            FutureLogger.LogCause(cause); // 记录日志
+            if (cause is not OperationCanceledException) {
+                FutureLogger.LogCause(cause); // 记录日志
+            }
             PostComplete();
             return true;
         }
@@ -272,12 +241,12 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public TaskStatus GetStatus(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        return Status;
+        return (TaskStatus)PeekState(_ex);
     }
 
     public Exception GetException(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        Exception ex = ExceptionNow(false);
+        Exception ex = ExceptionNow(ref _ex);
         // GetResult以后归还到池
         if (!ignoreReentrant) {
             PrepareToRecycle();
@@ -287,7 +256,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public object GetExceptionOrDispatchInfo(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        object ex = AbstractPromise.ExceptionOrDispatchInfoNow(PollState(), _ex);
+        object ex = ExceptionOrDispatchInfoNow(ref _ex);
         // GetResult以后归还到池
         if (!ignoreReentrant) {
             PrepareToRecycle();
@@ -297,14 +266,14 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public void GetVoidResult(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        TaskStatus status = Status;
+        TaskStatus status = (TaskStatus)PollState(ref _ex);
         if (!status.IsCompleted()) {
             throw new InvalidOperationException("Task has not completed");
         }
 
-        Exception? ex = null;
+        object? ex = null;
         if (status != TaskStatus.Success) {
-            ex = ExceptionNow(false);
+            ex = ExceptionOrDispatchInfoNow(ref _ex);
         }
         // GetResult以后归还到池
         if (!ignoreReentrant) {
@@ -312,23 +281,27 @@ public class ValuePromise<T> : IValuePromise<T>
         }
 
         if (ex != null) {
-            throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
+            if (ex is ExceptionDispatchInfo dispatchInfo) {
+                dispatchInfo.Throw();
+            } else {
+                throw (OperationCanceledException)ex;
+            }
         }
     }
 
     public T GetResult(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        TaskStatus status = Status;
+        TaskStatus status = (TaskStatus)PollState(ref _ex);
         if (!status.IsCompleted()) {
             throw new InvalidOperationException("Task has not completed");
         }
 
         T r = default!;
-        Exception? ex = null;
+        object? ex = null;
         if (status == TaskStatus.Success) {
             r = ResultNow();
         } else {
-            ex = ExceptionNow(false);
+            ex = ExceptionOrDispatchInfoNow(ref _ex);
         }
         // GetResult以后归还到池
         if (!ignoreReentrant) {
@@ -336,7 +309,11 @@ public class ValuePromise<T> : IValuePromise<T>
         }
 
         if (ex != null) {
-            throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
+            if (ex is ExceptionDispatchInfo dispatchInfo) {
+                dispatchInfo.Throw();
+            } else {
+                throw (OperationCanceledException)ex;
+            }
         }
         return r;
     }
@@ -344,11 +321,11 @@ public class ValuePromise<T> : IValuePromise<T>
     public IFuture<U> AsFuture<U>(int reentryId) {
         // 当前的T可能是超类型，如object，因此无法简单检测类型转换的安全性
         ValidateReentryId(reentryId);
-        TaskStatus status = Status;
+        TaskStatus status = (TaskStatus)PollState(ref _ex);
         switch (status) {
             case TaskStatus.Success: {
                 T result = GetResult(reentryId); // 触发回收
-                U? castR = (U?)(object?)result;
+                U castR = (U)(object)result; // 类型转换
                 return Promise<U>.FromResult(castR);
             }
             case TaskStatus.Cancelled: {
@@ -373,7 +350,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public IFuture<T> AsFuture(int reentryId) {
         ValidateReentryId(reentryId);
-        TaskStatus status = Status;
+        TaskStatus status = (TaskStatus)PollState(ref _ex);
         switch (status) {
             case TaskStatus.Success: {
                 T result = GetResult(reentryId); // 触发回收
@@ -430,31 +407,25 @@ public class ValuePromise<T> : IValuePromise<T>
         options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
-        // 先尝试锁定为发布状态，PostComplete会等待发布
         Completion completion = _completion;
         int oldCtl = Interlocked.CompareExchange(ref completion.ctl, MASK_PUBLISHING, 0);
-        if (oldCtl == 0) {
-            completion.input = this;
-            completion.executor = executor;
-            completion.cancelToken = cancelToken;
-            completion.options = options;
-            completion.action = action;
-            completion.state = state;
-            Volatile.Write(ref completion.ctl, MASK_PUBLISHED);
-            return;
+        if ((oldCtl & MASK_REGISTERED) != 0) {
+            throw new InvalidOperationException("Continuation registered, can not await twice or get result after await.");
         }
-        // 检测重复添加监听器(包含发布标记)
-        if (oldCtl != MASK_FIRED) {
-            throw new InvalidOperationException("Already continuation registered, can not await twice or get result after await.");
-        }
-        // Future已完成
         completion.input = this;
         completion.executor = executor;
         completion.cancelToken = cancelToken;
         completion.options = options;
         completion.action = action;
         completion.state = state;
-        completion.TryFire(SYNC);
+        if (oldCtl == 0) {
+            // Future未完成或正在通知，会等待监听器发布完成
+            Volatile.Write(ref completion.ctl, MASK_PUBLISHED);
+        } else {
+            // Future在注册监听器前已完成通知，立即补偿触发
+            Debug.Assert(oldCtl == MASK_FIRED);
+            completion.TryFire(SYNC);
+        }
     }
 
     // 用户不会在添加回调以后，通知之前还主动查询结果，因此不存在回收竞争
@@ -481,7 +452,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ValidateReentryId(int reentryId, bool ignoreReentrant = false) {
-        if (!ignoreReentrant && reentryId != this._reentryId) {
+        if (reentryId != this._reentryId && !ignoreReentrant) {
             throw new InvalidOperationException("promise has been reused");
         }
     }
@@ -575,6 +546,8 @@ public class ValuePromise<T> : IValuePromise<T>
     /** 已通知回调 */
     private const int MASK_FIRED = 0x40;
 
+    private const int MASK_REGISTERED = MASK_PUBLISHING | MASK_PUBLISHED;
+
     private class Completion : ITask
     {
 #nullable disable
@@ -657,60 +630,70 @@ public class ValuePromise<T> : IValuePromise<T>
             if (mode <= 0 && !Claim()) {
                 return;
             }
-            FireNow();
-            // 这里不能清理数据，由用户的Action调用GetResult触发回收时清理
+            try {
+                FireNow();
+            }
+            catch (Exception ex) {
+                FutureLogger.LogCause(ex, "Value promise fire caught exception");
+            }
+            // 由用户的Action调用GetResult触发回收时清理，否则可能清理到复用后的对象
         }
 
         private void FireNow() {
             int taskType = (options & MASK_TASK_TYPE);
-            try {
-                switch (taskType) {
-                    case TYPE_RUN: {
-                        Action action = (Action)this.action;
-                        action();
-                        break;
-                    }
-                    case TYPE_RUN_CTX: {
-                        Action<object> action = (Action<object>)this.action;
-                        action(state);
-                        break;
-                    }
-                    case TYPE_SET_PROMISE_U: {
-                        // 装箱
-                        IPromise output = (IPromise)this.state;
-                        if (input.Status == TaskStatus.Success) {
-                            output.TrySetResult(input.ResultNow());
-                        } else {
-                            output.TrySetException(input.ExceptionNow(false));
-                        }
-                        // 用户已获取结果
-                        input.PrepareToRecycle();
-                        break;
-                    }
-                    case TYPE_SET_PROMISE_T: {
-                        // 非装箱
-                        IPromise<T> output = (IPromise<T>)this.state;
-                        if (input.Status == TaskStatus.Success) {
-                            output.TrySetResult(input.ResultNow());
-                        } else {
-                            output.TrySetException(input.ExceptionNow(false));
-                        }
-                        // 用户已获取结果
-                        input.PrepareToRecycle();
-                        break;
-                    }
-                    case TYPE_FORGET: {
-                        // 用户不需要结果
-                        input.PrepareToRecycle();
-                        break;
-                    }
-                    default: {
-                        throw new InvalidOperationException();
-                    }
+            switch (taskType) {
+                case TYPE_RUN: {
+                    Action action = (Action)this.action;
+                    action();
+                    break;
                 }
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "Value promise fire caught exception");
+                case TYPE_RUN_CTX: {
+                    Action<object> action = (Action<object>)this.action;
+                    action(state);
+                    break;
+                }
+                case TYPE_SET_PROMISE_U: {
+                    // 装箱
+                    IPromise output = (IPromise)this.state;
+                    if (input.Status == TaskStatus.Success) {
+                        output.TrySetResult(input.ResultNow());
+                    } else {
+                        object ex = ExceptionOrDispatchInfoNow(ref input._ex);
+                        if (ex is ExceptionDispatchInfo dispatchInfo) {
+                            output.TrySetException(dispatchInfo);
+                        } else {
+                            output.TrySetException((Exception)ex);
+                        }
+                    }
+                    // 用户已获取结果
+                    input.PrepareToRecycle();
+                    break;
+                }
+                case TYPE_SET_PROMISE_T: {
+                    // 非装箱
+                    IPromise<T> output = (IPromise<T>)this.state;
+                    if (input.Status == TaskStatus.Success) {
+                        output.TrySetResult(input.ResultNow());
+                    } else {
+                        object ex = ExceptionOrDispatchInfoNow(ref input._ex);
+                        if (ex is ExceptionDispatchInfo dispatchInfo) {
+                            output.TrySetException(dispatchInfo);
+                        } else {
+                            output.TrySetException((Exception)ex);
+                        }
+                    }
+                    // 用户已获取结果
+                    input.PrepareToRecycle();
+                    break;
+                }
+                case TYPE_FORGET: {
+                    // 用户不需要结果
+                    input.PrepareToRecycle();
+                    break;
+                }
+                default: {
+                    throw new InvalidOperationException();
+                }
             }
         }
     }

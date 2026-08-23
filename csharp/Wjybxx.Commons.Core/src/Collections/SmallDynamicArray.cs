@@ -33,7 +33,6 @@ namespace Wjybxx.Commons.Collections
 public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
 {
     private const int MAX_CAPACITY = 64;
-
     private E?[] elements;
     private long elementsMask;
     private readonly float nullFactor;
@@ -288,7 +287,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
         return result;
     }
 
-    public Span<E?> AsSpan() => new Span<E?>(elements, 0, len);
+    public ReadOnlySpan<E?> AsSpan() => new ReadOnlySpan<E?>(elements, 0, len);
 
     #endregion
 

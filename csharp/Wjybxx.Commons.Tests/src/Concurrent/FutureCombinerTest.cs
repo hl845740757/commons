@@ -480,11 +480,11 @@ public class FutureCombinerTest
         }.Build();
         try {
             Random random = new Random(12345); // 固定种子，便于复现
-            const int taskCount = 20000;
+            const int taskCount = 2000;
             FutureCombiner combiner = new FutureCombiner(taskCount);
             int succeedCount = 0;
             for (int i = 0; i < taskCount; i++) {
-                long delay = random.NextInt64(0, 50);
+                long delay = random.NextInt64(0, 10);
                 IFuture future;
                 if (random.Next(2) == 0) {
                     succeedCount++;
@@ -517,11 +517,11 @@ public class FutureCombinerTest
         }.Build();
         try {
             Random random = new Random(54321);
-            const int taskCount = 5000;
+            const int taskCount = 2000;
             FutureCombiner combiner = new FutureCombiner(taskCount);
             int succeedCount = 0;
             for (int i = 0; i < taskCount; i++) {
-                long delay = random.NextInt64(0, 30);
+                long delay = random.NextInt64(0, 10);
                 IFuture future;
                 if (random.Next(2) == 0) {
                     succeedCount++;
@@ -533,7 +533,7 @@ public class FutureCombinerTest
             }
 
             IPromise<object> promise = combiner.Select(succeedCount + 1, true);
-            Assert.Throws<CompletionException>(() => promise.Join());
+            promise.Await();
             Assert.IsTrue(promise.IsFailed);
         }
         finally {

@@ -111,15 +111,16 @@ public interface IFuture
     #region 阻塞结果查询
 
     /// <summary>
+    /// 阻塞式获取计算结果（响应中断）
     /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态。
     /// 如果对应的计算失败，则抛出对应的异常。
     /// </summary>
-    /// <exception cref="CompletionException">计算失败</exception>
     /// <exception cref="OperationCanceledException">被取消</exception>
     /// <returns>任务关联的结果</returns>
     object Get();
 
     /// <summary>
+    /// 阻塞式获取计算结果（响应中断）
     /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态或超时。
     /// 如果对应的计算失败，则抛出对应的异常。
     /// </summary>
@@ -129,10 +130,10 @@ public interface IFuture
     object Get(TimeSpan timeout);
 
     /// <summary>
-    /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态 -- 不响应中断信号。
+    /// 阻塞式获取计算结果（不响应中断）
+    /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态。
     /// 如果对应的计算失败，则抛出对应的异常。
     /// </summary>
-    /// <exception cref="CompletionException">计算失败</exception>
     /// <exception cref="OperationCanceledException">被取消</exception>
     /// <returns>任务关联的结果</returns>
     object Join();

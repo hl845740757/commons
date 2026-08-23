@@ -43,17 +43,18 @@ public interface IFuture<T> : IFuture
     new T ResultNow();
 
     /// <summary>
-    /// 获取计算结果 
+    /// 阻塞式获取计算结果（响应中断）
     /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态。
     /// 如果对应的计算失败，则抛出对应的异常。
     /// 如果计算成功，则返回计算结果。
+    /// (C#保持和系统库一样总是抛出原始异常和原始堆栈，不再封装异常)
     /// </summary>
-    /// <exception cref="CompletionException">计算失败</exception>
     /// <exception cref="OperationCanceledException">被取消</exception>
     /// <exception cref="ThreadInterruptedException">线程被中断</exception>
     new T Get();
 
     /// <summary>
+    /// 阻塞式获取计算结果（响应中断）
     /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态或超时。
     /// 如果对应的计算失败，则抛出对应的异常。
     /// </summary>
@@ -63,11 +64,12 @@ public interface IFuture<T> : IFuture
     new T Get(TimeSpan timeout);
 
     /// <summary>
-    /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态 -- 不响应中断信号。
+    /// 阻塞式获取计算结果（不响应中断）
+    /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态。
     /// 如果对应的计算失败，则抛出对应的异常。
     /// 如果计算成功，则返回计算结果。
+    /// (C#保持和系统库一样总是抛出原始异常和原始堆栈，不再封装异常)
     /// </summary>
-    /// <exception cref="CompletionException">计算失败</exception>
     /// <exception cref="OperationCanceledException">被取消</exception>
     /// <returns></returns>
     new T Join();
