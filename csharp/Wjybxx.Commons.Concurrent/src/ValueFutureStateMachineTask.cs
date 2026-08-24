@@ -17,10 +17,9 @@
 #endregion
 
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons.Pool;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -43,6 +42,10 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
     /// 驱动状态机的委托
     /// </summary>
     private readonly Action _moveToNext;
+    /// <summary>
+    /// 池化对象的Next（非volatile，CAS保证可见性）
+    /// </summary>
+    private ValueFutureStateMachineTask<S, T>? _next;
 
     private ValueFutureStateMachineTask() {
         _moveToNext = Run;
@@ -63,25 +66,28 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
     }
 
     protected override void PrepareToRecycle() {
-        if (POOL != null) {
-            POOL.Release(this);
+        if (_poolSize > 0) {
+            Release(this);
         }
     }
 
     #region factory
 
-    private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>? POOL;
+    // ReSharper disable StaticMemberInGenericType
+    /// <summary>
+    /// 期望的池大小
+    /// 注：使用栈的方式可以避免分配过大的数组，使得池化所有状态机成为可能；极限情况下可能稍微超过大小限制，无伤大雅；
+    /// </summary>
+    private static readonly int _poolSize;
+    private static volatile int _count;
+    private static volatile ValueFutureStateMachineTask<S, T>? _stack;
 
     static ValueFutureStateMachineTask() {
-        int poolSize = GetPoolSize();
-        if (poolSize > 0) {
-            POOL = new ConcurrentObjectPool<ValueFutureStateMachineTask<S, T>>(
-                () => new ValueFutureStateMachineTask<S, T>(), task => task.Reset(), poolSize);
-        }
+        _poolSize = GetPoolSize();
     }
 
     public static void SetStateMachine(ref S stateMachine, out IValueFutureStateMachineTask<T> task, out int reentryId) {
-        ValueFutureStateMachineTask<S, T> result = POOL != null ? POOL.Acquire() : new ValueFutureStateMachineTask<S, T>();
+        ValueFutureStateMachineTask<S, T> result = Acquire();
 
         // task和reentryId是builder的属性，而builder是状态机的属性，需要在拷贝状态机之前完成初始化
         // init builder before copy state machine
@@ -90,6 +96,39 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
 
         // copy struct... 从栈拷贝到堆，此后栈上的状态机将被丢弃
         result._stateMachine = stateMachine;
+    }
+
+    private static ValueFutureStateMachineTask<S, T> Acquire() {
+        if (_poolSize == 0) {
+            return new ValueFutureStateMachineTask<S, T>();
+        }
+        ValueFutureStateMachineTask<S, T> stack;
+        while ((stack = _stack) != null) {
+            ValueFutureStateMachineTask<S, T> next = stack._next;
+            if (Interlocked.CompareExchange(ref _stack, stack, next) != next) {
+                continue;
+            }
+            stack._next = null;
+            Interlocked.Decrement(ref _count);
+            return stack;
+        }
+        return new ValueFutureStateMachineTask<S, T>();
+    }
+
+    private static void Release(ValueFutureStateMachineTask<S, T> obj) {
+        obj.Reset();
+        if (_poolSize == 0) {
+            return;
+        }
+        while (_count < _poolSize) {
+            ValueFutureStateMachineTask<S, T> stack = _stack;
+            obj._next = stack;
+            if (Interlocked.CompareExchange(ref _stack, obj, stack) != stack) {
+                continue;
+            }
+            Interlocked.Increment(ref _count);
+            return;
+        }
     }
 
     private static int GetPoolSize() {

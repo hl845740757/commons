@@ -39,6 +39,12 @@ public sealed class TaskPoolSizeAttribute : Attribute
     public readonly int poolSize;
     public readonly int poolSize2;
 
+    // 避免每一处都设置大小
+    public TaskPoolSizeAttribute() {
+        poolSize = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Concurrent.TaskPoolSize1", 200);
+        poolSize2 = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Concurrent.TaskPoolSize2", 50);
+    }
+
     public TaskPoolSizeAttribute(int poolSize, int poolSize2 = -1) {
         this.poolSize = poolSize;
         this.poolSize2 = poolSize2 == -1 ? poolSize / 4 : poolSize2;

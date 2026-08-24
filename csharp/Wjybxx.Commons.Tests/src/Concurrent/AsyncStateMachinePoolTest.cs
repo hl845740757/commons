@@ -31,8 +31,9 @@ public class AsyncStateMachinePoolTest
         Assert.AreEqual(expected, poolSize);
         //
         AsyncMethod().Forget();
-        AsyncMethod("hello").Forget();
-        GenericAsyncMethod("world").Forget();
+        AsyncMethod("").Forget();
+        GenericAsyncMethod1("hello").Forget();
+        GenericAsyncMethod2("world").Forget();
     }
 
     // 测试对象池是否生效
@@ -41,15 +42,21 @@ public class AsyncStateMachinePoolTest
         await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
     }
 
-    // 测试泛型方法
-    [TaskPoolSize(50)]
-    private static async ValueFuture AsyncMethod<T>(T input) {
+    // 测试重载
+    [TaskPoolSize]
+    private static async ValueFuture AsyncMethod(string input) {
         await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
     }
 
     // 测试泛型方法
     [TaskPoolSize(50)]
-    private static async ValueFuture<T> GenericAsyncMethod<T>(T input) {
+    private static async ValueFuture GenericAsyncMethod1<T>(T input) {
+        await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
+    }
+
+    // 测试泛型方法
+    [TaskPoolSize(50)]
+    private static async ValueFuture<T> GenericAsyncMethod2<T>(T input) {
         await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
         return input;
     }

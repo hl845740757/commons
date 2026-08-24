@@ -387,8 +387,7 @@ public abstract class AbstractPromise
     }
 
     /// <summary>
-    /// 状态机回调特殊优化，由于不依赖Promise的结果，
-    /// 因此不放入泛型类中，可全局缓存。
+    /// 状态机回调特殊优化，由于不依赖Promise的结果，因此不放入泛型类中（便于池化）
     /// </summary>
     internal class MoveNextCompletion : Completion
     {
@@ -400,11 +399,8 @@ public abstract class AbstractPromise
         private object state;
 #nullable restore
 
-        private MoveNextCompletion() {
-        }
-
-        public void Init(IExecutor? executor, CancellationToken cancelToken, int options,
-                         Action<object?> action, object? state) {
+        public MoveNextCompletion(IExecutor? executor, CancellationToken cancelToken, int options,
+                                  Action<object?> action, object? state) {
             this.executor = executor;
             this.cancelToken = cancelToken;
             this.options = options;
@@ -450,7 +446,6 @@ public abstract class AbstractPromise
                 }
             }
             outer:
-            POOL.Release(this);
             return null;
         }
 
@@ -467,13 +462,6 @@ public abstract class AbstractPromise
             }
             return true;
         }
-
-        /// <summary>
-        /// 放在类内部，避免随着Promise就初始化
-        /// </summary>
-        internal static readonly ConcurrentObjectPool<MoveNextCompletion> POOL =
-            new(() => new MoveNextCompletion(), task => task.Reset(),
-                TaskPoolConfig.GetPoolSize<int>(TaskPoolType.PromiseMoveNext));
     }
 
     /// <summary>

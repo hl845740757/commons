@@ -98,8 +98,8 @@ public static class TaskPoolConfig
         {
             // 保底方案
             TaskPoolType.ValuePromise => isIntOrObject ? 5000 : 200,
-            TaskPoolType.PromiseMoveNext => isIntOrObject ? 5000 : 200,
-            TaskPoolType.ScheduledPromiseTask => isIntOrObject ? 1000 : 50,
+            TaskPoolType.PromiseTask => isIntOrObject ? 2000 : 100,
+            TaskPoolType.ScheduledPromiseTask => isIntOrObject ? 2000 : 100,
             _ => isIntOrObject ? 200 : 50
         };
     }
@@ -176,10 +176,12 @@ public enum TaskPoolType
 {
     /// <summary>
     /// 普通Future的状态机await回调
+    /// 注：已不再使用，尽量使用<see cref="ValueFuture"/>。
     /// </summary>
     PromiseMoveNext,
     /// <summary>
     /// ValueFuture状态机任务
+    /// 注：已不再使用，改为通过<see cref="TaskPoolConfig"/>在异步方法上配置。
     /// </summary>
     StateMachineTask,
 

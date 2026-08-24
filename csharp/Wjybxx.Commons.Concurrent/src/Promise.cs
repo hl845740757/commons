@@ -490,8 +490,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                 MoveNextCompletion.FireNow(continuation, state, null);
             }
         } else {
-            MoveNextCompletion completion = MoveNextCompletion.POOL.Acquire();
-            completion.Init(executor, cancelToken, options, continuation, state);
+            MoveNextCompletion completion = new(executor, cancelToken, options, continuation, state);
             PushCompletion(completion);
         }
     }

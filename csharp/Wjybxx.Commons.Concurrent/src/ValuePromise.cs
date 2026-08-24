@@ -702,6 +702,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     #region factory
 
+    // 池化成本还是蛮高的，或许也可以考虑链表化
     private static readonly ConcurrentObjectPool<ValuePromise<T>> POOL =
         new(() => new ValuePromise<T>(), e => e.Reset(),
             TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValuePromise));

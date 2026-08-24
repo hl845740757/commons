@@ -141,6 +141,16 @@ public static class ExecutorUtil
         return state > TaskStatus.Success;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ValueFuture ToValueFuture(this IFuture future) {
+        return new ValueFuture(future);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ValueFuture<T> ToValueFuture<T>(this IFuture<T> future) {
+        return new ValueFuture<T>(future);
+    }
+
     #endregion
 
     #region exception
