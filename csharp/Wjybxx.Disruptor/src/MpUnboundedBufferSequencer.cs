@@ -132,34 +132,34 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
     }
 
     public long Next() {
-        return nextImpl(1);
+        return NextImpl(1);
     }
 
     public long Next(int n) {
-        return nextImpl(n);
+        return NextImpl(n);
     }
 
     public long NextInterruptibly() {
-        return nextImpl(1);
+        return NextImpl(1);
     }
 
     public long NextInterruptibly(int n) {
-        return nextImpl(n);
+        return NextImpl(n);
     }
 
     public long TryNext() {
-        return nextImpl(1);
+        return NextImpl(1);
     }
 
     public long TryNext(int n) {
-        return nextImpl(n);
+        return NextImpl(n);
     }
 
     public long TryNext(int n, TimeSpan timeout) {
-        return nextImpl(n);
+        return NextImpl(n);
     }
 
-    private long nextImpl(int n) {
+    private long NextImpl(int n) {
         if (n < 1) {
             throw new ArgumentException("n: " + n);
         }

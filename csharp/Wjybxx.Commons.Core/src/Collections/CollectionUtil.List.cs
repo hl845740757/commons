@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -278,6 +279,15 @@ public static partial class CollectionUtil
 
     #region misc
 
+    /// <summary>
+    /// 将List的有效载荷部分转换为Span
+    /// 注：还是应当慎重使用，否则可能破坏List的安全性。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Span<T> AsSpan<T>(this List<T>? list) {
+        return CollectionsMarshal.AsSpan(list);
+    }
+    
     /// <summary>
     /// 交换两个位置的元素
     /// </summary>

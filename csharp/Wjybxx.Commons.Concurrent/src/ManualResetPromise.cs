@@ -46,21 +46,26 @@ public sealed class ManualResetPromise<T> : Promise<T>, IManualResetPromise
     /// 将Promise归还到池中-用户手动调用
     /// </summary>
     public void Release() {
-        POOL.Release(this);
+        POOL?.Release(this);
     }
 
     #region factory
 
-    private static readonly ConcurrentObjectPool<ManualResetPromise<T>> POOL =
-        new(() => new ManualResetPromise<T>(), (f) => f.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ManualResetPromise));
+    private static readonly ConcurrentObjectPool<ManualResetPromise<T>>? POOL;
 
+    static ManualResetPromise() {
+        int poolSize = TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ManualResetPromise);
+        if (poolSize > 0) {
+            POOL = new ConcurrentObjectPool<ManualResetPromise<T>>(() => new ManualResetPromise<T>(), e => e.Reset(), poolSize);
+        }
+    }
+    
     /// <summary>
     /// 从对象池中申请一个Promise
     /// </summary>
     /// <returns></returns>
     public static ManualResetPromise<T> Acquire() {
-        return POOL.Acquire();
+        return POOL != null ? POOL.Acquire() : new ManualResetPromise<T>();
     }
 
     /// <summary>
@@ -69,7 +74,7 @@ public sealed class ManualResetPromise<T> : Promise<T>, IManualResetPromise
     /// <param name="e">任务绑定的线程</param>
     /// <returns></returns>
     public static ManualResetPromise<T> Acquire(IExecutor e) {
-        ManualResetPromise<T> promise = POOL.Acquire();
+        ManualResetPromise<T> promise = POOL != null ? POOL.Acquire() : new ManualResetPromise<T>();
         promise.SetExecutor(e);
         return promise;
     }

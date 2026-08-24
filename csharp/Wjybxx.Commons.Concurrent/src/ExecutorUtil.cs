@@ -141,6 +141,20 @@ public static class ExecutorUtil
         return state > TaskStatus.Success;
     }
 
+    /// <summary>
+    /// 测试目标状态是否在筛选范围
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsMatch(this TaskStatusFilters filters, TaskStatus status) {
+        return status switch
+        {
+            TaskStatus.Success => (filters & TaskStatusFilters.Success) != 0,
+            TaskStatus.Failed => (filters & TaskStatusFilters.Failed) != 0,
+            TaskStatus.Cancelled => (filters & TaskStatusFilters.Cancelled) != 0,
+            _ => false
+        };
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ValueFuture ToValueFuture(this IFuture future) {
         return new ValueFuture(future);
@@ -419,16 +433,16 @@ public static class ExecutorUtil
             .WhenAll();
     }
 
-    public static IFuture<object> Select(int required, params IFuture[] futures) {
+    public static IFuture<object> WhenNSuccess(int required, params IFuture[] futures) {
         return new FutureCombiner()
             .AddAll(futures)
-            .Select(required);
+            .WhenNSuccess(required);
     }
 
-    public static IFuture<object> Select(int required, IEnumerable<IFuture> futures) {
+    public static IFuture<object> WhenNSuccess(int required, IEnumerable<IFuture> futures) {
         return new FutureCombiner()
             .AddAll(futures)
-            .Select(required);
+            .WhenNSuccess(required);
     }
 
     #endregion

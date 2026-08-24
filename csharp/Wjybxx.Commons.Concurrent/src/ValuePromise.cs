@@ -33,7 +33,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 3.该实现并不是严格线程安全的，但在使用<see cref="ValueFuture{T}"/>的情况下是安全的。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class ValuePromise<T> : IValuePromise<T>
+public class ValuePromise<T> : IValuePromise<T>, ITask
 {
 #nullable disable
     /// <summary>
@@ -57,10 +57,10 @@ public class ValuePromise<T> : IValuePromise<T>
     /// </summary>
     private int _reentryId;
     /// <summary>
-    /// 回调
-    /// TODO ValuePromise不再继承Promise的情况下，是可以实现<see cref="ITask"/>的，回调封装就可以使用值类型
+    /// 回调数据
+    /// PS：ValuePromise自身实现<see cref="ITask"/>，因此回调数据可使用值类型管理。
     /// </summary>
-    private readonly Completion _completion = new Completion();
+    private Completion _completion;
     /// <summary>
     /// 任务绑定的Executor，用于检测死锁
     /// </summary>
@@ -100,11 +100,13 @@ public class ValuePromise<T> : IValuePromise<T>
     /// 重置数据
     /// </summary>
     protected virtual void Reset() {
+#pragma warning disable CS0420
         _reentryId++;
         _result = default!;
-        _completion.Reset();
+        _completion = default;
         _executor = null;
-        _ex = null; // store fence
+        ref object? exRef = ref _ex; // 去除volatile内存屏障，由对象池保证可见性
+        exRef = null;
     }
 
     /// <summary>
@@ -112,7 +114,7 @@ public class ValuePromise<T> : IValuePromise<T>
     /// </summary>
     protected virtual void PrepareToRecycle() {
         if (GetType() == typeof(ValuePromise<T>)) {
-            POOL.Release(this);
+            POOL?.Release(this);
         }
     }
 
@@ -397,9 +399,7 @@ public class ValuePromise<T> : IValuePromise<T>
         ValidateReentryId(reentryId);
         SetCompletion(TYPE_RUN_CTX, continuation, state, executor, cancelToken, options);
     }
-
-    #endregion
-
+    
     private void SetCompletion(int type, object? action, object? state,
                                IExecutor? executor, CancellationToken cancelToken, int options) {
         // if (action == null) throw new ArgumentNullException(nameof(action));
@@ -407,24 +407,23 @@ public class ValuePromise<T> : IValuePromise<T>
         options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
-        Completion completion = _completion;
-        int oldCtl = Interlocked.CompareExchange(ref completion.ctl, MASK_PUBLISHING, 0);
+        // 注意：_completion为值类型，必须直接通过字段访问，不可赋值给局部变量（否则将操作副本）
+        int oldCtl = Interlocked.CompareExchange(ref _completion.ctl, MASK_PUBLISHING, 0);
         if ((oldCtl & MASK_REGISTERED) != 0) {
             throw new InvalidOperationException("Continuation registered, can not await twice or get result after await.");
         }
-        completion.input = this;
-        completion.executor = executor;
-        completion.cancelToken = cancelToken;
-        completion.options = options;
-        completion.action = action;
-        completion.state = state;
+        _completion.executor = executor;
+        _completion.cancelToken = cancelToken;
+        _completion.options = options;
+        _completion.action = action;
+        _completion.state = state;
         if (oldCtl == 0) {
             // Future未完成或正在通知，会等待监听器发布完成
-            Volatile.Write(ref completion.ctl, MASK_PUBLISHED);
+            Volatile.Write(ref _completion.ctl, MASK_PUBLISHED);
         } else {
             // Future在注册监听器前已完成通知，立即补偿触发
             Debug.Assert(oldCtl == MASK_FIRED);
-            completion.TryFire(SYNC);
+            TryFire(SYNC);
         }
     }
 
@@ -444,7 +443,7 @@ public class ValuePromise<T> : IValuePromise<T>
                 continue;
             }
             if (ctl != 0) {
-                _completion.TryFire(SYNC);
+                TryFire(SYNC);
             }
             return;
         }
@@ -457,6 +456,8 @@ public class ValuePromise<T> : IValuePromise<T>
         }
     }
 
+    #endregion
+    
     #endregion
 
     #region api-promise
@@ -548,13 +549,110 @@ public class ValuePromise<T> : IValuePromise<T>
 
     private const int MASK_REGISTERED = MASK_PUBLISHING | MASK_PUBLISHED;
 
-    private class Completion : ITask
+    int ITask.Options => _completion.options;
+
+    void ITask.Run() {
+        TryFire(ASYNC);
+    }
+
+    private bool Claim() {
+        IExecutor? e = _completion.executor;
+        if (e == CLAIMED) {
+            return true;
+        }
+        _completion.executor = CLAIMED;
+        if (!ExecutorUtil.IsInlinable(e, _completion.options)) {
+            e.Execute(this); // ValuePromise自身即ITask，无需装箱
+            return false;
+        }
+        return true;
+    }
+
+    private void TryFire(int mode) {
+        if (_completion.cancelToken.IsCancellationRequested) {
+            if (_completion.state is IPromise output) { // 需要使下游Promise进入取消状态
+                output.TrySetCancelled(_completion.cancelToken);
+            }
+            PrepareToRecycle(); // 手动触发回收
+            return;
+        }
+        // 异步模式下已经claim
+        if (mode <= 0 && !Claim()) {
+            return;
+        }
+        try {
+            FireNow();
+        }
+        catch (Exception ex) {
+            FutureLogger.LogCause(ex, "Value promise fire caught exception");
+        }
+        // 由用户的Action调用GetResult触发回收时清理，否则可能清理到复用后的对象
+    }
+
+    private void FireNow() {
+        int taskType = (_completion.options & MASK_TASK_TYPE);
+        switch (taskType) {
+            case TYPE_RUN: {
+                Action action = (Action)_completion.action;
+                action();
+                break;
+            }
+            case TYPE_RUN_CTX: {
+                Action<object> action = (Action<object>)_completion.action;
+                action(_completion.state);
+                break;
+            }
+            case TYPE_SET_PROMISE_U: {
+                // 装箱
+                IPromise output = (IPromise)_completion.state;
+                if (Status == TaskStatus.Success) {
+                    output.TrySetResult(ResultNow());
+                } else {
+                    object ex = ExceptionOrDispatchInfoNow(ref _ex);
+                    if (ex is ExceptionDispatchInfo dispatchInfo) {
+                        output.TrySetException(dispatchInfo);
+                    } else {
+                        output.TrySetException((Exception)ex);
+                    }
+                }
+                // 用户已获取结果
+                PrepareToRecycle();
+                break;
+            }
+            case TYPE_SET_PROMISE_T: {
+                // 非装箱
+                IPromise<T> output = (IPromise<T>)_completion.state;
+                if (Status == TaskStatus.Success) {
+                    output.TrySetResult(ResultNow());
+                } else {
+                    object ex = ExceptionOrDispatchInfoNow(ref _ex);
+                    if (ex is ExceptionDispatchInfo dispatchInfo) {
+                        output.TrySetException(dispatchInfo);
+                    } else {
+                        output.TrySetException((Exception)ex);
+                    }
+                }
+                // 用户已获取结果
+                PrepareToRecycle();
+                break;
+            }
+            case TYPE_FORGET: {
+                // 用户不需要结果
+                PrepareToRecycle();
+                break;
+            }
+            default: {
+                throw new InvalidOperationException();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 回调数据 -- 值类型，内联在<see cref="ValuePromise{T}"/>中，避免额外的对象分配。
+    /// </summary>
+    private struct Completion
     {
 #nullable disable
-        /// <summary>
-        /// 部分回调依赖Promise的数据
-        /// </summary>
-        internal ValuePromise<T> input;
         /// <summary>
         /// 控制标识，用于保证可见性
         /// 1.如果为0表示尚未发布action。
@@ -588,114 +686,6 @@ public class ValuePromise<T> : IValuePromise<T>
         /// </summary>
         internal object state;
 #nullable restore
-
-        public void Reset() {
-            input = null;
-            ctl = 0;
-            executor = null;
-            cancelToken = default;
-            options = 0;
-            action = null;
-            state = null;
-        }
-
-        public int Options => options;
-
-        public void Run() {
-            TryFire(ASYNC);
-        }
-
-        private bool Claim() {
-            IExecutor? e = this.executor;
-            if (e == CLAIMED) {
-                return true;
-            }
-            this.executor = CLAIMED;
-            if (!ExecutorUtil.IsInlinable(e, options)) {
-                e.Execute(this);
-                return false;
-            }
-            return true;
-        }
-
-        public void TryFire(int mode) {
-            if (cancelToken.IsCancellationRequested) {
-                if (state is IPromise output) { // 需要使下游Promise进入取消状态
-                    output.TrySetCancelled(cancelToken);
-                }
-                input?.PrepareToRecycle(); // 手动触发回收
-                return;
-            }
-            // 异步模式下已经claim
-            if (mode <= 0 && !Claim()) {
-                return;
-            }
-            try {
-                FireNow();
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "Value promise fire caught exception");
-            }
-            // 由用户的Action调用GetResult触发回收时清理，否则可能清理到复用后的对象
-        }
-
-        private void FireNow() {
-            int taskType = (options & MASK_TASK_TYPE);
-            switch (taskType) {
-                case TYPE_RUN: {
-                    Action action = (Action)this.action;
-                    action();
-                    break;
-                }
-                case TYPE_RUN_CTX: {
-                    Action<object> action = (Action<object>)this.action;
-                    action(state);
-                    break;
-                }
-                case TYPE_SET_PROMISE_U: {
-                    // 装箱
-                    IPromise output = (IPromise)this.state;
-                    if (input.Status == TaskStatus.Success) {
-                        output.TrySetResult(input.ResultNow());
-                    } else {
-                        object ex = ExceptionOrDispatchInfoNow(ref input._ex);
-                        if (ex is ExceptionDispatchInfo dispatchInfo) {
-                            output.TrySetException(dispatchInfo);
-                        } else {
-                            output.TrySetException((Exception)ex);
-                        }
-                    }
-                    // 用户已获取结果
-                    input.PrepareToRecycle();
-                    break;
-                }
-                case TYPE_SET_PROMISE_T: {
-                    // 非装箱
-                    IPromise<T> output = (IPromise<T>)this.state;
-                    if (input.Status == TaskStatus.Success) {
-                        output.TrySetResult(input.ResultNow());
-                    } else {
-                        object ex = ExceptionOrDispatchInfoNow(ref input._ex);
-                        if (ex is ExceptionDispatchInfo dispatchInfo) {
-                            output.TrySetException(dispatchInfo);
-                        } else {
-                            output.TrySetException((Exception)ex);
-                        }
-                    }
-                    // 用户已获取结果
-                    input.PrepareToRecycle();
-                    break;
-                }
-                case TYPE_FORGET: {
-                    // 用户不需要结果
-                    input.PrepareToRecycle();
-                    break;
-                }
-                default: {
-                    throw new InvalidOperationException();
-                }
-            }
-        }
     }
 
     #endregion
@@ -703,9 +693,14 @@ public class ValuePromise<T> : IValuePromise<T>
     #region factory
 
     // 池化成本还是蛮高的，或许也可以考虑链表化
-    private static readonly ConcurrentObjectPool<ValuePromise<T>> POOL =
-        new(() => new ValuePromise<T>(), e => e.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValuePromise));
+    private static readonly ConcurrentObjectPool<ValuePromise<T>>? POOL;
+
+    static ValuePromise() {
+        int poolSize = TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValuePromise);
+        if (poolSize > 0) {
+            POOL = new ConcurrentObjectPool<ValuePromise<T>>(() => new ValuePromise<T>(), e => e.Reset(), poolSize);
+        }
+    }
 
     /// <summary>
     /// 申请一个Promise对象
@@ -716,7 +711,7 @@ public class ValuePromise<T> : IValuePromise<T>
     /// <param name="executor">任务关联的线程</param>
     /// <returns></returns>
     public static ValuePromise<T> Acquire(IExecutor? executor = null) {
-        ValuePromise<T> promise = POOL.Acquire();
+        ValuePromise<T> promise = POOL != null ? POOL.Acquire() : new ValuePromise<T>();
         promise.IncReentryId();
         promise._executor = executor;
         return promise;
@@ -732,7 +727,7 @@ public class ValuePromise<T> : IValuePromise<T>
     /// <param name="executor">任务关联的线程</param>
     /// <returns></returns>
     public static ValuePromise<T> Acquire(out int rid, IExecutor? executor = null) {
-        ValuePromise<T> promise = POOL.Acquire();
+        ValuePromise<T> promise = POOL != null ? POOL.Acquire() : new ValuePromise<T>();
         rid = promise.IncReentryId();
         promise._executor = executor;
         return promise;

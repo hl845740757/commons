@@ -27,6 +27,7 @@ namespace Wjybxx.Commons.Concurrent
 /// [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 /// public async ValueTask<int> ProcessAsync() {}
 /// ]]>
+/// PS：还可以考虑绑定到当前类的静态函数，动态计算Size。
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method, Inherited = false)]
 public sealed class TaskPoolSizeAttribute : Attribute

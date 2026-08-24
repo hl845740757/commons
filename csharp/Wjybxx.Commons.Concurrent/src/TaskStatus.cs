@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
@@ -37,5 +39,18 @@ public enum TaskStatus : byte
 
     /** 任务被取消 - 完成状态 */
     Cancelled = 4
+}
+
+/// <summary>
+/// 任务状态过滤器
+/// </summary>
+[Flags]
+public enum TaskStatusFilters : byte
+{
+    None = 0,
+    Success = 0x01,
+    Failed = 0x02,
+    Cancelled = 0x40,
+    All = Success | Failed | Cancelled,
 }
 }

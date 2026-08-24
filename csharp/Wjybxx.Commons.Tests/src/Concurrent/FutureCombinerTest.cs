@@ -357,7 +357,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         IPromise<object> promise = combiner
             .AddAll(Failed("e1"), Failed("e2"))
-            .Select(0);
+            .WhenNSuccess(0);
         Assert.IsTrue(promise.IsSucceeded);
     }
 
@@ -365,7 +365,7 @@ public class FutureCombinerTest
     public void TestSelectNegativeThrows() {
         FutureCombiner combiner = new FutureCombiner();
         combiner.Add(Succeeded());
-        Assert.Throws<ArgumentException>(() => combiner.Select(-1));
+        Assert.Throws<ArgumentException>(() => combiner.WhenNSuccess(-1));
     }
 
     [Test]
@@ -374,7 +374,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         IPromise<object> promise = combiner
             .AddAll(Succeeded(), Succeeded())
-            .Select(3);
+            .WhenNSuccess(3);
 
         Assert.IsTrue(promise.IsFailed);
         Assert.IsFalse(promise.IsCancelled, "任务数不足属于失败，不是取消");
@@ -386,7 +386,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         IPromise<object> promise = combiner
             .AddAll(Succeeded(), Succeeded(), pending)
-            .Select(2);
+            .WhenNSuccess(2);
 
         Assert.IsTrue(promise.IsSucceeded, "达到期望成功数即应立即完成，无需等待剩余任务");
         Assert.IsFalse(pending.IsCompleted, "聚合器不应影响上游future");
@@ -401,7 +401,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         IPromise<object> promise = combiner
             .AddAll(Failed("e1"), Failed("e2"), pending)
-            .Select(3, true);
+            .WhenNSuccess(3, true);
 
         // 3个任务要求全部成功，已有2个失败 -> 无论pending结果如何都不可能成功
         Assert.IsTrue(promise.IsFailed, "failFast应在无法达成目标时立即失败");
@@ -417,7 +417,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         IPromise<object> promise = combiner
             .AddAll(Failed("e1"), Failed("e2"), pending)
-            .Select(3, false);
+            .WhenNSuccess(3, false);
 
         Assert.IsFalse(promise.IsCompleted, "非快速失败模式应等待所有任务完成");
 
@@ -428,17 +428,17 @@ public class FutureCombinerTest
     [Test]
     public void TestSelectAllEmptySucceeds() {
         // SelectAll等价于Select(FutureCount)，0个future时require为0
-        IPromise<object> promise = new FutureCombiner().SelectAll();
+        IPromise<object> promise = new FutureCombiner().WhenAllSuccess();
         Assert.IsTrue(promise.IsSucceeded);
     }
 
     [Test]
     public void TestSelectAllRequiresEverySuccess() {
         FutureCombiner combiner = new FutureCombiner();
-        Assert.IsTrue(combiner.AddAll(Succeeded(), Succeeded()).SelectAll().IsSucceeded);
+        Assert.IsTrue(combiner.AddAll(Succeeded(), Succeeded()).WhenAllSuccess().IsSucceeded);
 
         FutureCombiner combiner2 = new FutureCombiner();
-        Assert.IsTrue(combiner2.AddAll(Succeeded(), Failed()).SelectAll().IsFailed);
+        Assert.IsTrue(combiner2.AddAll(Succeeded(), Failed()).WhenAllSuccess().IsFailed);
     }
 
     /// <summary>
@@ -449,7 +449,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         combiner.AddAll(Succeeded(), Succeeded(), Succeeded());
         Assert.AreEqual(3, combiner.FutureCount);
-        Assert.IsTrue(combiner.SelectAll().IsSucceeded);
+        Assert.IsTrue(combiner.WhenAllSuccess().IsSucceeded);
     }
 
     [Test]
@@ -457,7 +457,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         IPromise<object> promise = combiner
             .AddAll(Failed("e1"), Failed("e2"), Succeeded())
-            .Select(3);
+            .WhenNSuccess(3);
 
         AggregateException ex = (AggregateException)promise.ExceptionNow(false);
         Assert.AreEqual(2, ex.InnerExceptions.Count);
@@ -496,7 +496,7 @@ public class FutureCombinerTest
             }
 
             // 成功数恰好达标 -> 必须成功；任何竞争导致的计数错误都会使其失败
-            Assert.IsNull(combiner.Select(succeedCount, false).Join());
+            Assert.IsNull(combiner.WhenNSuccess(succeedCount, false).Join());
         }
         finally {
             consumer.Shutdown();
@@ -532,7 +532,7 @@ public class FutureCombinerTest
                 combiner.Add(future);
             }
 
-            IPromise<object> promise = combiner.Select(succeedCount + 1, true);
+            IPromise<object> promise = combiner.WhenNSuccess(succeedCount + 1, true);
             promise.Await();
             Assert.IsTrue(promise.IsFailed);
         }
@@ -632,7 +632,7 @@ public class FutureCombinerTest
         FutureCombiner combiner = new FutureCombiner();
         IPromise<object> promise = combiner
             .AddAll(Cancelled(), Cancelled())
-            .SelectAll();
+            .WhenAllSuccess();
 
         Assert.IsTrue(promise.IsCancelled);
     }

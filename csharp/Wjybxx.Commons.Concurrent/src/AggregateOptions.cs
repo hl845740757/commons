@@ -26,21 +26,27 @@ internal readonly struct AggregateOptions
     public readonly int required;
     public readonly bool failFast;
 
-    private AggregateOptions(byte type, int required, bool failFast) {
+    private AggregateOptions(byte type) {
         this.type = type;
+        this.required = 0;
+        this.failFast = false;
+    }
+
+    private AggregateOptions(int required, bool failFast) {
+        this.type = TYPE_WHEN_N;
         this.required = required;
         this.failFast = failFast;
     }
 
-    public bool IsWhenAny => type == TYPE_ANY;
+    public bool IsWhenAny => type == TYPE_WHEN_ANY;
     public bool IsWhenAll => type == TYPE_WHEN_ALL;
 
-    private const byte TYPE_ANY = 0;
+    private const byte TYPE_WHEN_ANY = 0;
     private const byte TYPE_WHEN_ALL = 1;
-    private const byte TYPE_SELECT_MANY = 2;
+    private const byte TYPE_WHEN_N = 2;
 
-    private static readonly AggregateOptions WHEN_ANY = new AggregateOptions(TYPE_ANY, 0, false);
-    private static readonly AggregateOptions WHEN_ALL = new AggregateOptions(TYPE_WHEN_ALL, 0, false);
+    private static readonly AggregateOptions WHEN_ANY = new AggregateOptions(TYPE_WHEN_ANY);
+    private static readonly AggregateOptions WHEN_ALL = new AggregateOptions(TYPE_WHEN_ALL);
 
     /// <summary>
     /// 任意一个完成
@@ -65,11 +71,11 @@ internal readonly struct AggregateOptions
     /// <param name="failFast">是否快速失败</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public static AggregateOptions SelectN(int required, bool failFast) {
+    public static AggregateOptions WhenNSuccess(int required, bool failFast) {
         if (required < 0) {
             throw new ArgumentException("required cannot be negative");
         }
-        return new AggregateOptions(TYPE_SELECT_MANY, required, failFast);
+        return new AggregateOptions(required, failFast);
     }
 }
 }

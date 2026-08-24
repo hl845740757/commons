@@ -41,6 +41,25 @@ public class FutureAwaitTest
         Console.WriteLine("TestFutureAwaitable: " + v);
     }
 
+    /// <summary>
+    /// 不启用<see cref="TaskOptions.STAGE_TRY_INLINE"/>，强制回调通过Executor调度；
+    /// 用于覆盖ValuePromise以自身作为ITask提交给Executor的分支。
+    /// </summary>
+    [Test]
+    public async Task TestValueFutureAwaitOnExecutor() {
+        {
+            ValueFuture<int> future = globalEventLoop.ScheduleFunc(() => 1, TimeSpan.FromMilliseconds(100));
+            int r = await future.GetAwaitable(globalEventLoop);
+            Assert.AreEqual(1, r);
+            Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
+        }
+        {
+            ValueFuture future = globalEventLoop.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(100));
+            await future.GetAwaitable(globalEventLoop);
+            Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
+        }
+    }
+
     private static async IFuture<int> CountAsync() {
         IFuture<int> future = ExecutorUtil.SubmitFunc(executor, () => 1).AsFuture();
         Assert.IsFalse(globalEventLoop.InEventLoop(), "0. before globalEventLoop.InEventLoop() == true");

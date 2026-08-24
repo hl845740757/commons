@@ -232,15 +232,20 @@ public class PromiseTask<T> : IFutureTask
     private void TryRelease() {
         // 要求外部已不持有该对象引用
         if ((options & TaskOptions.MANUAL_RELEASE) == 0 && GetType() == typeof(PromiseTask<T>)) {
-            POOL.Release(this);
+            POOL?.Release(this);
         }
     }
 
     #region factory
 
-    private static readonly ConcurrentObjectPool<PromiseTask<T>> POOL =
-        new(() => new PromiseTask<T>(), e => e.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.PromiseTask));
+    private static readonly ConcurrentObjectPool<PromiseTask<T>>? POOL;
+
+    static PromiseTask() {
+        int poolSize = TaskPoolConfig.GetPoolSize<T>(TaskPoolType.PromiseTask);
+        if (poolSize > 0) {
+            POOL = new ConcurrentObjectPool<PromiseTask<T>>(() => new PromiseTask<T>(), e => e.Reset(), poolSize);
+        }
+    }
 
     /// <summary>
     /// 申请一个PromiseTask对象，Task在进入完成状态后会自动回收。
@@ -256,7 +261,7 @@ public class PromiseTask<T> : IFutureTask
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static PromiseTask<T> Acquire(ValuePromise<T> promise, int taskType, object action, object? state,
                                            CancellationToken cancelToken, int options) {
-        PromiseTask<T> promiseTask = POOL.Acquire();
+        PromiseTask<T> promiseTask = POOL != null ? POOL.Acquire() : new PromiseTask<T>();
         promiseTask.Init(promise, taskType, action, state, cancelToken, options);
         return promiseTask;
     }
@@ -271,7 +276,7 @@ public class PromiseTask<T> : IFutureTask
         if (promiseTask.GetType() != typeof(PromiseTask<T>)) {
             throw new ArgumentException(null, nameof(promiseTask));
         }
-        POOL.Release(promiseTask);
+        POOL?.Release(promiseTask);
     }
 
     #endregion

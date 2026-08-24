@@ -43,7 +43,7 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
     /// </summary>
     private readonly Action _moveToNext;
     /// <summary>
-    /// 池化对象的Next（非volatile，CAS保证可见性）
+    /// 池化对象的Next（非volatile，由自旋锁保证可见性）
     /// </summary>
     private ValueFutureStateMachineTask<S, T>? _next;
 
@@ -76,11 +76,16 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
     // ReSharper disable StaticMemberInGenericType
     /// <summary>
     /// 期望的池大小
-    /// 注：使用栈的方式可以避免分配过大的数组，使得池化所有状态机成为可能；极限情况下可能稍微超过大小限制，无伤大雅；
+    /// 注：使用栈的方式可以避免分配过大的数组，使得池化所有状态机成为可能。
     /// </summary>
     private static readonly int _poolSize;
-    private static volatile int _count;
-    private static volatile ValueFutureStateMachineTask<S, T>? _stack;
+    /// <summary>
+    /// 保护_stack和_count的自旋锁：0-空闲，1-已加锁
+    /// 注：简单CAS置换栈顶可能出现ABA问题，导致栈顶的next指向错误的对象。
+    /// </summary>
+    private static int _spinLock;
+    private static int _count;
+    private static ValueFutureStateMachineTask<S, T>? _stack;
 
     static ValueFutureStateMachineTask() {
         _poolSize = GetPoolSize();
@@ -102,33 +107,51 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
         if (_poolSize == 0) {
             return new ValueFutureStateMachineTask<S, T>();
         }
-        ValueFutureStateMachineTask<S, T> stack;
-        while ((stack = _stack) != null) {
-            ValueFutureStateMachineTask<S, T> next = stack._next;
-            if (Interlocked.CompareExchange(ref _stack, stack, next) != next) {
-                continue;
+        Lock();
+        try {
+            ValueFutureStateMachineTask<S, T>? result = _stack;
+            if (result == null) {
+                return new ValueFutureStateMachineTask<S, T>();
             }
-            stack._next = null;
-            Interlocked.Decrement(ref _count);
-            return stack;
+            _stack = result._next;
+            result._next = null;
+            _count--;
+            return result;
         }
-        return new ValueFutureStateMachineTask<S, T>();
+        finally {
+            Unlock();
+        }
     }
 
     private static void Release(ValueFutureStateMachineTask<S, T> obj) {
         obj.Reset();
-        if (_poolSize == 0) {
+        if (_poolSize == 0 || Volatile.Read(ref _count) >= _poolSize) {
             return;
         }
-        while (_count < _poolSize) {
-            ValueFutureStateMachineTask<S, T> stack = _stack;
-            obj._next = stack;
-            if (Interlocked.CompareExchange(ref _stack, obj, stack) != stack) {
-                continue;
+        Lock();
+        try {
+            if (_count >= _poolSize) {
+                return;
             }
-            Interlocked.Increment(ref _count);
-            return;
+            obj._next = _stack;
+            _stack = obj;
+            _count++;
         }
+        finally {
+            Unlock();
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Lock() {
+        while (Interlocked.CompareExchange(ref _spinLock, 1, 0) != 0) {
+            Thread.SpinWait(1); // 也可以考虑尝试一定次数后放弃池化
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Unlock() {
+        Volatile.Write(ref _spinLock, 0);
     }
 
     private static int GetPoolSize() {
@@ -143,8 +166,8 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
         }
         if (methodInfo.IsGenericMethod) {
             methodInfo = methodInfo.GetGenericMethodDefinition();
-            // 返回值是泛型时才使用两个参数 - ReturnType信息不全，无法直接==比较，由此直接比较简单名
-            if (methodInfo.ReturnType.Name == typeof(ValueFuture<>).Name) {
+            // 返回值是泛型时才使用两个参数
+            if (methodInfo.ReturnType.IsGenericType && methodInfo.ReturnType != typeof(T)) {
                 bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
                 return isIntOrObject ? attribute.poolSize : attribute.poolSize2;
             }

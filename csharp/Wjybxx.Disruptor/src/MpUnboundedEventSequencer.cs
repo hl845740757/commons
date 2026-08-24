@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Disruptor
 {
@@ -39,46 +40,56 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
     public MpUnboundedBuffer<T> Buffer => buffer;
 
     /** 判断两个序号是否在同一个块 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool InSameChunk(long seq1, long seq2) {
         return buffer.InSameChunk(seq1, seq2);
     }
 
     /** 手动触发回收 -- 该方法可安全调用 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryMoveHeadToNext() {
         return buffer.TryMoveHeadToNext(_sequencer.MinimumSequence());
     }
 
     /** 手动触发回收，慎重调用该方法，序号错误将导致严重bug */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryMoveHeadToNext(long gatingSequence) {
         return buffer.TryMoveHeadToNext(gatingSequence);
     }
 
     #region buffer
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Get(long sequence) {
         return buffer.Get(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ProducerGet(long sequence) {
         return buffer.ProducerGet(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ConsumerGet(long sequence) {
         return buffer.ConsumerGet(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ProducerSet(long sequence, in T data) {
         buffer.ProducerSet(sequence, in data);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ConsumerSet(long sequence, in T data) {
         buffer.ConsumerSet(sequence, in data);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T ProducerGetRef(long sequence) {
         return ref buffer.ProducerGetRef(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T ConsumerGetRef(long sequence) {
         return ref buffer.ConsumerGetRef(sequence);
     }
@@ -93,6 +104,7 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
 
     public DataProvider<T> DataProvider => buffer;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence, in T evt) {
         _sequencer.Publish(sequence, in evt);
     }
@@ -101,42 +113,52 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
 
     #region producer
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasAvailableCapacity(int requiredCapacity) {
         return _sequencer.HasAvailableCapacity(requiredCapacity);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next() {
         return _sequencer.Next(1); // 传入1可减少调用
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next(int n) {
         return _sequencer.Next(n);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long TryNext() {
         return _sequencer.TryNext(1);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long TryNext(int n) {
         return _sequencer.TryNext(n);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextInterruptibly() {
         return _sequencer.NextInterruptibly(1);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextInterruptibly(int n) {
         return _sequencer.NextInterruptibly(n);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long TryNext(int n, TimeSpan timeout) {
         return _sequencer.TryNext(n, timeout);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence) {
         _sequencer.Publish(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long lo, long hi) {
         _sequencer.Publish(lo, hi);
     }

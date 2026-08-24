@@ -342,9 +342,14 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
 
     #region factory
 
-    private static readonly ConcurrentObjectPool<ScheduledPromiseTask<T>> POOL =
-        new(() => new ScheduledPromiseTask<T>(), task => task.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ScheduledPromiseTask));
+    private static readonly ConcurrentObjectPool<ScheduledPromiseTask<T>>? POOL;
+
+    static ScheduledPromiseTask() {
+        int poolSize = TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ScheduledPromiseTask);
+        if (poolSize > 0) {
+            POOL = new ConcurrentObjectPool<ScheduledPromiseTask<T>>(() => new ScheduledPromiseTask<T>(), task => task.Reset(), poolSize);
+        }
+    }
 
     /// <summary>
     /// 申请一个PromiseTask对象，Task在进入完成状态后会自动回收。
@@ -360,13 +365,13 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal new static ScheduledPromiseTask<T> Acquire(ValuePromise<T> promise, int taskType, object action, object? state,
                                                         CancellationToken cancelToken, int options) {
-        ScheduledPromiseTask<T> promiseTask = POOL.Acquire();
+        ScheduledPromiseTask<T> promiseTask = POOL != null ? POOL.Acquire() : new ScheduledPromiseTask<T>();
         promiseTask.Init(promise, taskType, action, state, cancelToken, options);
         return promiseTask;
     }
 
     public void Release() {
-        POOL.Release(this);
+        POOL?.Release(this);
     }
 
     #endregion

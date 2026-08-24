@@ -26,7 +26,7 @@ using Wjybxx.Commons.Collections; // Unity下提供EnsureCapacity
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// Future聚合器
+/// Future聚合器 TODO 可改为结构体
 /// </summary>
 public sealed class FutureCombiner
 {
@@ -126,10 +126,9 @@ public sealed class FutureCombiner
 
     /// <summary>
     /// 成功N个触发成功
-    ///
     /// 如果触发失败，则聚合所有异常信息为<see cref="AggregateException"/>。
     /// <p>
-    /// 1.如果require等于【0】，则必定会成功。
+    /// 1.如果require等于0，则必定会成功。
     /// 2.如果require大于监听的future数量，必定会失败。
     /// 3.如果require小于监听的future数量，当成功任务数达到期望时触发成功。
     /// </p>
@@ -137,8 +136,8 @@ public sealed class FutureCombiner
     /// <param name="required">期望成成功的任务数</param>
     /// <param name="failFast">是否在不满足条件时立即失败</param>
     /// <returns></returns>
-    public IPromise<object> Select(int required, bool failFast = true) {
-        return Finish(AggregateOptions.SelectN(required, failFast));
+    public IPromise<object> WhenNSuccess(int required, bool failFast = true) {
+        return Finish(AggregateOptions.WhenNSuccess(required, failFast));
     }
 
     /// <summary>
@@ -147,8 +146,8 @@ public sealed class FutureCombiner
     /// </summary>
     /// <param name="failFast">是否在不满足条件时立即失败</param>
     /// <returns></returns>
-    public IPromise<object> SelectAll(bool failFast = true) {
-        return Finish(AggregateOptions.SelectN(FutureCount, failFast));
+    public IPromise<object> WhenAllSuccess(bool failFast = true) {
+        return Finish(AggregateOptions.WhenNSuccess(FutureCount, failFast));
     }
 
     // region 内部实现
@@ -187,9 +186,9 @@ public sealed class FutureCombiner
 
     private class FutureListener
     {
-        private volatile int succeedCount;
-        private volatile int failedCount;
-        private volatile int doneCount;
+        private volatile int _succeedCount;
+        private volatile int _failedCount;
+        private volatile int _doneCount;
 
         /** 虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
         private volatile object? result;
@@ -217,12 +216,12 @@ public sealed class FutureCombiner
             // 就可以保证succeedCount是比doneCount更新的值，才可以提前判断是否立即失败
             if (ex == null) {
                 result = EncodeValue(r);
-                Interlocked.Increment(ref succeedCount);
+                Interlocked.Increment(ref _succeedCount);
             } else {
                 cause = ex;
-                Interlocked.Increment(ref failedCount);
+                Interlocked.Increment(ref _failedCount);
             }
-            Interlocked.Increment(ref doneCount);
+            Interlocked.Increment(ref _doneCount);
 
             IPromise<object> promise = this.promise;
             if (promise != null && !promise.IsCompleted && CheckComplete()) {
@@ -232,10 +231,11 @@ public sealed class FutureCombiner
         }
 
         internal bool CheckComplete() {
-            int doneCount = this.doneCount;
-            int succeedCount = this.succeedCount;
-            if (doneCount < succeedCount) { // 退出竞争，另一个线程来完成
-                return false;
+            int doneCount = this._doneCount;
+            int succeedCount = this._succeedCount;
+            int failedCount = this._failedCount;
+            if (doneCount < succeedCount + failedCount) {
+                return false; // 存在竞争，另一个线程来完成
             }
 
             IPromise<object> promise = this.promise!;
@@ -286,7 +286,7 @@ public sealed class FutureCombiner
         }
 
         private Exception CreateAggregateException() {
-            var exceptions = new List<Exception>(failedCount);
+            var exceptions = new List<Exception>(_failedCount);
             int cancelled = 0;
             foreach (IFuture upstream in futures) {
                 if (upstream.IsCancelled) {

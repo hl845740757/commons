@@ -94,13 +94,17 @@ public static class TaskPoolConfig
         if (GetItem(poolType, type, out Item item, out bool precise)) {
             return (precise || isIntOrObject) ? item.poolSize : item.poolSize2;
         }
-        return poolType switch
-        {
-            // 保底方案
-            TaskPoolType.ValuePromise => isIntOrObject ? 5000 : 200,
-            TaskPoolType.PromiseTask => isIntOrObject ? 2000 : 100,
-            TaskPoolType.ScheduledPromiseTask => isIntOrObject ? 2000 : 100,
-            _ => isIntOrObject ? 200 : 50
+        // 非int/object类型默认不再池化
+        if (!isIntOrObject) {
+            return 0;
+        }
+        // 保底方案
+        return poolType switch {
+            TaskPoolType.ValuePromise => 2000,
+            TaskPoolType.PromiseTask => 1000,
+            TaskPoolType.ScheduledPromiseTask => 1000,
+            TaskPoolType.ManualResetPromise => 200,
+            _ => 0
         };
     }
 
@@ -201,6 +205,7 @@ public enum TaskPoolType
     ScheduledPromiseTask,
 
     /// <summary>
+    /// 手动重置的Promise
     /// <see cref="ManualResetPromise{T}"/>
     /// </summary>
     ManualResetPromise,

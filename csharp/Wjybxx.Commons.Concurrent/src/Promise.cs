@@ -102,10 +102,12 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     #region internal
 
     internal void Reset() {
+#pragma warning disable CS0420        
         stack = null;
         _executor = null;
         _result = default;
-        _ex = null; // store fence
+        ref object? exRef = ref _ex; // 去除volatile内存屏障，由对象池保证可见性
+        exRef = null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

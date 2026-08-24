@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Disruptor
 {
@@ -47,30 +48,37 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
 
     #region buffer
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Get(long sequence) {
         return buffer.GetElement(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ProducerGet(long sequence) {
         return buffer.GetElement(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ConsumerGet(long sequence) {
         return buffer.GetElement(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ProducerSet(long sequence, in T data) {
         buffer.SetElement(sequence, in data);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ConsumerSet(long sequence, in T data) {
         buffer.SetElement(sequence, in data);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T ProducerGetRef(long sequence) {
         return ref buffer.GetElementRef(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T ConsumerGetRef(long sequence) {
         return ref buffer.GetElementRef(sequence);
     }
@@ -85,6 +93,7 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
 
     public DataProvider<T> DataProvider => buffer;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence, in T evt) {
         buffer.SetElement(sequence, in evt);
         _sequencer.Publish(sequence);
@@ -94,42 +103,52 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
 
     #region producer
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasAvailableCapacity(int requiredCapacity) {
         return _sequencer.HasAvailableCapacity(requiredCapacity);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next() {
         return _sequencer.Next(1); // 传入1可减少调用
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Next(int n) {
         return _sequencer.Next(n);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long TryNext() {
         return _sequencer.TryNext(1);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long TryNext(int n) {
         return _sequencer.TryNext(n);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextInterruptibly() {
         return _sequencer.NextInterruptibly(1);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextInterruptibly(int n) {
         return _sequencer.NextInterruptibly(n);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long TryNext(int n, TimeSpan timeout) {
         return _sequencer.TryNext(n, timeout);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence) {
         _sequencer.Publish(sequence);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long lo, long hi) {
         _sequencer.Publish(lo, hi);
     }

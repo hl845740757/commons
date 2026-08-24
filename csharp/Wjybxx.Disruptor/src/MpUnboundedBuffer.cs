@@ -78,52 +78,62 @@ public abstract class MpUnboundedBufferFields<E>
     // endregion
 
     /** loadVolatileProducerChunk */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal MpUnboundedBufferChunk<E> LvProducerChunk() {
         return this.producerChunk;
     }
 
     /** storeReleaseProducerChunk */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SoProducerChunk(MpUnboundedBufferChunk<E> chunk) {
         this.producerChunk = chunk;
     }
 
     /** cas更新生产者块 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool CasProducerChunk(MpUnboundedBufferChunk<E> current, MpUnboundedBufferChunk<E> newChunk) {
         Debug.Assert(current != ROTATION);
         return Interlocked.CompareExchange(ref producerChunk, newChunk, current) == current;
     }
 
     /** loadVolatileHeadChunk */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal MpUnboundedBufferChunk<E> LvHeadChunk() {
         return this.headChunk;
     }
 
     /** storeReleaseHeadChunk */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SoHeadChunk(MpUnboundedBufferChunk<E> chunk) {
         this.headChunk = chunk;
     }
 
     /** 尝试锁定head的更新权限 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryLockHead() {
         return Interlocked.CompareExchange(ref headLock, 1, 0) == 0;
     }
 
     /** 解除head的更新权限 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void UnlockHead() {
         this.headLock = 0;
     }
 
     /** loadVolatileTailChunk */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal MpUnboundedBufferChunk<E> LvTailChunk() {
         return this.tailChunk;
     }
 
     /** storeReleaseTailChunk */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SoTailChunk(MpUnboundedBufferChunk<E> chunk) {
         this.tailChunk = chunk;
     }
 
     /** cas更新Tail块 -- 注意！由生产者调用！ */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool CasTailChunk(MpUnboundedBufferChunk<E> current, MpUnboundedBufferChunk<E> newChunk) {
         Debug.Assert(current != ROTATION);
         return Interlocked.CompareExchange(ref tailChunk, newChunk, current) == current;
@@ -185,11 +195,13 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
     public int MaxPooledChunks => maxPooledChunks;
 
     /** 获取sequence对应的chunk的index */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long ChunkIndexForSequence(long sequence) {
         return sequence >> chunkShift;
     }
 
     /** 判断两个sequence是否落在同一个chunk */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool InSameChunk(long seq1, long seq2) {
         return (seq1 >> chunkShift) == (seq2 >> chunkShift);
     }
@@ -417,13 +429,12 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
 
     #region recycle
 
-    /**
-     * 尝试将head更新到下一个chunk
-     * (public以允许用户自行控制回收时机)
-     *
-     * @param gatingSequence 最慢的消费者进度(已消费)
-     * @return 是否成功触发回收
-     */
+    /// <summary>
+    /// 尝试将head更新到下一个chunk
+    /// (public以允许用户自行控制回收时机)
+    /// </summary>
+    /// <param name="gatingSequence">最慢的消费者进度(已消费)</param>
+    /// <returns>是否成功触发回收</returns>
     public bool TryMoveHeadToNext(long gatingSequence) {
         MpUnboundedBufferChunk<E> headChunk = LvHeadChunk();
         MpUnboundedBufferChunk<E> producerChunk = LvProducerChunkNotRotation();
@@ -441,15 +452,15 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
             return false;
         }
         // 注意：观察到的消费者序号可能跨越了多个块，因此可能需要回收多个块
-        MpUnboundedBufferChunk<E> nextChunk = headChunk.LvNext()!;
-        nextChunk.SoPrev(null);
-        while (IsRecyclable(nextChunk, gatingSequence, producerChunk)) {
-            nextChunk = nextChunk.LvNext()!;
-            nextChunk.SoPrev(null);
+        MpUnboundedBufferChunk<E> newHeadChunk = headChunk.LvNext()!;
+        newHeadChunk.SoPrev(null);
+        while (IsRecyclable(newHeadChunk, gatingSequence, producerChunk)) {
+            newHeadChunk = newHeadChunk.LvNext()!;
+            newHeadChunk.SoPrev(null);
         }
         // 我们立即发布新的head，以允许消费者获取最新的数据;但由于我们仍持有锁，nextChunk将始终有效
-        SoHeadChunk(nextChunk);
-        RecycleChunks(headChunk, nextChunk);
+        SoHeadChunk(newHeadChunk);
+        RecycleChunks(headChunk, newHeadChunk);
         UnlockHead();
         return true;
     }
@@ -463,6 +474,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
         return producerChunk;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsRecyclable(MpUnboundedBufferChunk<E> chunk, long gatingSequence,
                                      MpUnboundedBufferChunk<E> producerChunk) {
         // 不可以回收生产者当前块，否则会导致生产者append产生竞争
@@ -470,7 +482,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
                && chunk.LvChunkIndex() < producerChunk.LvChunkIndex();
     }
 
-    private void RecycleChunks(MpUnboundedBufferChunk<E> headChunk, MpUnboundedBufferChunk<E> nextChunk) {
+    private void RecycleChunks(MpUnboundedBufferChunk<E> headChunk, MpUnboundedBufferChunk<E> newHeadChunk) {
         MpUnboundedBufferChunk<E> freeChunk = headChunk;
         while (true) {
             MpUnboundedBufferChunk<E> tailChunk = LvTailChunk();
@@ -478,7 +490,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
                 Thread.SpinWait(1); // 生产者正在创建新的chunk
                 continue;
             }
-            long recyclable = maxPooledChunks - (tailChunk.LvChunkIndex() - nextChunk.LvChunkIndex()) - 1;
+            long recyclable = maxPooledChunks - (tailChunk.LvChunkIndex() - newHeadChunk.LvChunkIndex()) - 1;
             if (recyclable <= 0) { // 这期间chunk只会越来越多，因此无需重试
                 break;
             }
@@ -486,7 +498,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
                 Thread.SpinWait(1); // 生产者正在创建新的chunk
                 continue;
             }
-            for (long i = 0; (i < recyclable && freeChunk != nextChunk); i++) {
+            for (long i = 0; (i < recyclable && freeChunk != newHeadChunk); i++) {
                 MpUnboundedBufferChunk<E> tempNext = freeChunk.LvNext()!; // next在前面并未先断开
                 freeChunk.SoNext(null);
 
@@ -501,7 +513,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
             break;
         }
         // 清理剩余块
-        while (freeChunk != nextChunk) {
+        while (freeChunk != newHeadChunk) {
             MpUnboundedBufferChunk<E> tempNext = freeChunk.LvNext()!;
             freeChunk.SoNext(null); // 消费者需要感知到被清理
             freeChunk.Clear();
