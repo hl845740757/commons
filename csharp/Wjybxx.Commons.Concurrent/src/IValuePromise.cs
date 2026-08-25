@@ -88,26 +88,28 @@ public interface IValuePromise
 
     /// <summary>
     /// 添加一个完成回调
+    /// 注意：指定取消令牌的情况下，回调任务可能不被执行；正常await逻辑不应该传入取消令牌。
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     void OnCompleted(int reentryId, Action<object?> continuation, object? state,
-                     CancellationToken cancelToken = default, int options = 0);
+                     int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 添加一个完成回调
+    /// 注意：指定取消令牌的情况下，回调任务可能不被执行；正常await逻辑不应该传入取消令牌。
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state,
-                          CancellationToken cancelToken = default, int options = 0);
+                          int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 转换为普通的Future

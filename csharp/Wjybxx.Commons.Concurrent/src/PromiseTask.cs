@@ -59,38 +59,38 @@ public static class PromiseTask
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<int> OfTask(ValuePromise<int> promise, ITask task,
-                                          CancellationToken cancelToken = default, int options = 0) {
-        return PromiseTask<int>.Acquire(promise, TYPE_TASK, task, null, cancelToken, options);
+                                          int options = 0, CancellationToken cancelToken = default) {
+        return PromiseTask<int>.Acquire(promise, TYPE_TASK, task, null, options, cancelToken);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<int> OfAction(ValuePromise<int> promise, Action action,
-                                            CancellationToken cancelToken = default, int options = 0) {
-        return PromiseTask<int>.Acquire(promise, TYPE_ACTION, action, null, cancelToken, options);
+                                            int options = 0, CancellationToken cancelToken = default) {
+        return PromiseTask<int>.Acquire(promise, TYPE_ACTION, action, null, options, cancelToken);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<int> OfAction(ValuePromise<int> promise, Action<object> action, object? state,
-                                            CancellationToken cancelToken = default, int options = 0) {
-        return PromiseTask<int>.Acquire(promise, TYPE_ACTION_STATE, action, state, cancelToken, options);
+                                            int options = 0, CancellationToken cancelToken = default) {
+        return PromiseTask<int>.Acquire(promise, TYPE_ACTION_STATE, action, state, options, cancelToken);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<T> OfFunction<T>(ValuePromise<T> promise, Func<T> action,
-                                               CancellationToken cancelToken = default, int options = 0) {
-        return PromiseTask<T>.Acquire(promise, TYPE_FUNC, action, null, cancelToken, options);
+                                               int options = 0, CancellationToken cancelToken = default) {
+        return PromiseTask<T>.Acquire(promise, TYPE_FUNC, action, null, options, cancelToken);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<T> OfFunction<T>(ValuePromise<T> promise, Func<object, T> action, object? state,
-                                               CancellationToken cancelToken = default, int options = 0) {
-        return PromiseTask<T>.Acquire(promise, TYPE_FUNC_STATE, action, state, cancelToken, options);
+                                               int options = 0, CancellationToken cancelToken = default) {
+        return PromiseTask<T>.Acquire(promise, TYPE_FUNC_STATE, action, state, options, cancelToken);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<T> OfBuilder<T>(ValuePromise<T> promise, in TaskBuilder<T> builder) {
         return PromiseTask<T>.Acquire(promise, builder.Type, builder.Task, builder.State,
-            builder.CancelToken, builder.Options);
+            builder.Options, builder.CancelToken);
     }
 
     #endregion
@@ -126,7 +126,7 @@ public class PromiseTask<T> : IFutureTask
     }
 
     protected void Init(ValuePromise<T> promise, int taskType, object task, object? state,
-                        CancellationToken cancelToken, int options) {
+                        int options, CancellationToken cancelToken) {
         if (task == null && taskType != 0) throw new ArgumentNullException(nameof(task));
         this.task = task;
         this.state = state;
@@ -255,14 +255,14 @@ public class PromiseTask<T> : IFutureTask
     /// <param name="taskType">任务类型</param>
     /// <param name="action">任务</param>
     /// <param name="state">任务参数</param>
-    /// <param name="cancelToken">取消令牌+</param>
     /// <param name="options">任务调度选项</param>
+    /// <param name="cancelToken">取消令牌+</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static PromiseTask<T> Acquire(ValuePromise<T> promise, int taskType, object action, object? state,
-                                           CancellationToken cancelToken, int options) {
+                                           int options, CancellationToken cancelToken) {
         PromiseTask<T> promiseTask = POOL != null ? POOL.Acquire() : new PromiseTask<T>();
-        promiseTask.Init(promise, taskType, action, state, cancelToken, options);
+        promiseTask.Init(promise, taskType, action, state, options, cancelToken);
         return promiseTask;
     }
 

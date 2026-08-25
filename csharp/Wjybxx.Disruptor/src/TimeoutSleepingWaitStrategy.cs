@@ -39,7 +39,7 @@ public class TimeoutSleepingWaitStrategy : WaitStrategy
     private readonly int spinTries;
     private readonly int spinIterations;
     private readonly int yieldTries;
-    private readonly int sleepTries;
+    private readonly int sleepTries; // 由于C#最小睡眠时间单位为毫秒，因此重试次数也表示最大等待毫秒数
 
     public TimeoutSleepingWaitStrategy()
         : this(10, 1, 10) {

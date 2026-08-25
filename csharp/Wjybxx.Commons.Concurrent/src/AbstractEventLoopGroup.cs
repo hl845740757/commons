@@ -76,21 +76,21 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().Submit(in builder);
     }
 
-    public virtual ValueFuture SubmitAction(Action action, CancellationToken cancelToken = default, int options = 0) {
-        return Select().SubmitAction(action, cancelToken, options);
+    public virtual ValueFuture SubmitAction(Action action, int options = 0, CancellationToken cancelToken = default) {
+        return Select().SubmitAction(action, options, cancelToken);
     }
 
-    public virtual ValueFuture SubmitAction(Action<object> action, object? state, CancellationToken cancelToken = default, int options = 0) {
-        return Select().SubmitAction(action, state, cancelToken, options);
+    public virtual ValueFuture SubmitAction(Action<object> action, object? state, int options = 0, CancellationToken cancelToken = default) {
+        return Select().SubmitAction(action, state, options, cancelToken);
     }
 
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken = default, int options = 0) {
-        return Select().SubmitFunc(action, cancelToken, options);
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0, CancellationToken cancelToken = default) {
+        return Select().SubmitFunc(action, options, cancelToken);
     }
 
-    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object? state, CancellationToken cancelToken = default, int options = 0) {
-        return Select().SubmitFunc(action, state, cancelToken, options);
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object? state, int options = 0, CancellationToken cancelToken = default) {
+        return Select().SubmitFunc(action, state, options, cancelToken);
     }
 
     #endregion

@@ -29,7 +29,6 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <summary>
@@ -37,13 +36,10 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    public ValueFutureAwaiter2(ValueFuture future, IExecutor? executor = null,
-                               CancellationToken cancelToken = default, int options = 0) {
+    public ValueFutureAwaiter2(ValueFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
@@ -71,12 +67,12 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _options);
     }
 
     /// <summary>
@@ -86,13 +82,13 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action<object> continuation, object state) {
-        OnCompleted(continuation, state, _executor, _cancelToken, _options);
+        OnCompleted(continuation, state, _executor, _options);
     }
 
     private void OnCompleted(Action<object> continuation, object state,
-                             IExecutor? executor, CancellationToken cancelToken, int options) {
+                             IExecutor? executor, int options) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, state, executor, cancelToken, options);
+        _future.OnCompleted(continuation, state, executor, options);
     }
 }
 
@@ -100,14 +96,11 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
-    public ValueFutureAwaiter2(ValueFuture<T> future, IExecutor? executor = null,
-                               CancellationToken cancelToken = default, int options = 0) {
+    public ValueFutureAwaiter2(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
@@ -135,12 +128,12 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _executor, _options);
     }
 
     /// <summary>
@@ -150,13 +143,13 @@ public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
     /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action<object> continuation, object state) {
-        OnCompleted(continuation, state, _executor, _cancelToken, _options);
+        OnCompleted(continuation, state, _executor, _options);
     }
 
     private void OnCompleted(Action<object> continuation, object state,
-                             IExecutor? executor, CancellationToken cancelToken, int options) {
+                             IExecutor? executor, int options) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, state, executor, cancelToken, options);
+        _future.OnCompleted(continuation, state, executor, options);
     }
 }
 }

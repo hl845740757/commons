@@ -22,8 +22,6 @@ namespace Wjybxx.Disruptor
 {
 /// <summary>
 /// 56位填充
-///
-/// 应用于class类型时必须显式应用<see cref="LayoutKind.Sequential"/>值；如果不能指定内存布局（比如存在继承的时候），请封装额外的结构体来存储数据。
 /// 默认情况下，C#和C++编译器会将<see cref="LayoutKind.Sequential"/>布局值应用于结构。 对于类，必须显式应用<see cref="LayoutKind.Sequential"/>值.
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
@@ -35,8 +33,6 @@ internal readonly struct Padding56
 
 /// <summary>
 /// 64位填充
-///
-/// 应用于class类型时必须显式应用<see cref="LayoutKind.Sequential"/>值；如果不能指定内存布局（比如存在继承的时候），请封装额外的结构体来存储数据。
 /// 默认情况下，C#和C++编译器会将<see cref="LayoutKind.Sequential"/>布局值应用于结构。 对于类，必须显式应用<see cref="LayoutKind.Sequential"/>值.
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]

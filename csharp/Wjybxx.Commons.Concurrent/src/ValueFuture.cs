@@ -20,6 +20,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -76,36 +77,30 @@ public readonly struct ValueFuture
     public ValueFutureAwaiter GetAwaiter() => new(this);
 
     /// <summary>
-    /// 注；用于设置回调的执行环境
+    /// 设置回调的执行环境
+    /// 注意：指定取消令牌的情况下，回调任务可能不被执行；正常await逻辑不应该传入取消令牌。
     /// </summary>
     /// <param name="executor">回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable GetAwaitable(IExecutor? executor,
-                                             CancellationToken cancelToken = default, int options = 0)
-        => new(this, executor, cancelToken, options);
+    public ValueFutureAwaitable GetAwaitable(IExecutor? executor, int options = 0) => new(this, executor, options);
 
     /// <summary>
     /// 返回<see cref="TaskResult"/>形式的结果
     /// </summary>
     /// <param name="executor">回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable2 GetAwaitable2(IExecutor? executor,
-                                               CancellationToken cancelToken = default, int options = 0)
-        => new(this, executor, cancelToken, options);
+    public ValueFutureAwaitable2 GetAwaitable2(IExecutor? executor, int options = TaskOptions.SUPPRESS_ALL_THROW) => new(this, executor, options);
 
     /// <summary>
     /// 我们通常仅想禁用取消异常，因此提供快捷方法
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable2 GetAwaitable2(int options)
-        => new(this, null, default, options);
+    public ValueFutureAwaitable2 GetAwaitable2(int options = TaskOptions.SUPPRESS_ALL_THROW) => new(this, null, options);
 
     #region factory
 
@@ -158,6 +153,17 @@ public readonly struct ValueFuture
         return new ValueFuture(in this, taskId);
     }
 
+    /// <summary>
+    /// 获取任务的状态（Debug用）
+    /// </summary>
+    [VisibleForTesting]
+    public TaskStatus GetStatus(bool ignoreReentrant) {
+        if (_future is IValuePromise valuePromise) {
+            return valuePromise.GetStatus(_reentryId, ignoreReentrant);
+        }
+        return Status;
+    }
+    
     /// <summary>
     /// 关联的任务的状态
     /// </summary>
@@ -351,22 +357,21 @@ public readonly struct ValueFuture
         return default;
     }
 
-    internal void OnCompleted(Action<object> action, object state,
-                              IExecutor? executor, CancellationToken cancelToken, int options) {
+    internal void OnCompleted(Action<object> action, object state, IExecutor? executor, int options) {
         if (_future == null) throw new InvalidOperationException();
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise valuePromise) {
             if (executor != null) {
-                valuePromise.OnCompletedAsync(_reentryId, executor, action, state, cancelToken, options);
+                valuePromise.OnCompletedAsync(_reentryId, executor, action, state, options);
             } else {
-                valuePromise.OnCompleted(_reentryId, action, state, cancelToken, options);
+                valuePromise.OnCompleted(_reentryId, action, state, options);
             }
         } else {
             IFuture future = (IFuture)_future;
             if (executor != null) {
-                future.OnCompletedAsync(executor, action, state, cancelToken, options);
+                future.OnCompletedAsync(executor, action, state, options);
             } else {
-                future.OnCompleted(action, state, cancelToken, options);
+                future.OnCompleted(action, state, options);
             }
         }
     }
@@ -435,28 +440,23 @@ public readonly struct ValueFuture<T>
     public ValueFutureAwaiter<T> GetAwaiter() => new(this, null);
 
     /// <summary>
-    /// 注；用于设置回调的执行环境
+    /// 设置回调的执行环境
+    /// 注意：指定取消令牌的情况下，回调任务可能不被执行；正常await逻辑不应该传入取消令牌。
     /// </summary>
     /// <param name="executor">回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable<T> GetAwaitable(IExecutor? executor,
-                                                CancellationToken cancelToken = default, int options = 0)
-        => new(this, executor, cancelToken, options);
+    public ValueFutureAwaitable<T> GetAwaitable(IExecutor? executor, int options = 0) => new(this, executor, options);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable2<T> GetAwaitable2(IExecutor? executor,
-                                                  CancellationToken cancelToken = default, int options = 0)
-        => new(this, executor, cancelToken, options);
+    public ValueFutureAwaitable2<T> GetAwaitable2(IExecutor? executor, int options = TaskOptions.SUPPRESS_ALL_THROW) => new(this, executor, options);
 
     /// <summary>
     /// 我们在大量的场景仅仅想禁用取消异常，因此提供快捷方法
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable2<T> GetAwaitable2(int options)
-        => new(this, null, default, options);
+    public ValueFutureAwaitable2<T> GetAwaitable2(int options = TaskOptions.SUPPRESS_ALL_THROW) => new(this, null, options);
 
     #region factory
 
@@ -500,8 +500,8 @@ public readonly struct ValueFuture<T>
     ///
     /// Q：该方法的作用？
     /// A：虽然<see cref="IValuePromise{T}"/>是池化的对象，但如果每一个泛型类型都使用独立的对象池，那么内存空间的利用率是低效的；
-    /// 在CS的网络通信中，如RPC，结果类型通常是引用类型，为每个引用类型维护单独的对象池会造成大量不必要的浪费。
-    /// 在这类场景，我们可以在底层总是使用object类型，而返回给用户的<see cref="ValueFuture{T}"/>是具体类型，从而优化对象的利用效率。
+    /// 在结果类型几乎都是引用类型的情况下，如RPC调用，为每个引用类型维护单独的对象池会造成大量不必要的浪费。
+    /// 我们可以在底层总是使用object类型，而返回给用户具体的<see cref="ValueFuture{T}"/>类型，从而优化对象的利用效率。
     /// </summary>
     /// <param name="future"></param>
     /// <param name="reentryId"></param>
@@ -523,7 +523,18 @@ public readonly struct ValueFuture<T>
     public ValueFuture<T> WithTaskId(long taskId) {
         return new ValueFuture<T>(in this, taskId);
     }
-
+    
+    /// <summary>
+    /// 获取任务的状态（Debug用）
+    /// </summary>
+    [VisibleForTesting]
+    public TaskStatus GetStatus(bool ignoreReentrant) {
+        if (_future is IValuePromise valuePromise) {
+            return valuePromise.GetStatus(_reentryId, ignoreReentrant);
+        }
+        return Status;
+    }
+    
     /// <summary>
     /// 获取关联任务的状态
     /// </summary>
@@ -715,21 +726,21 @@ public readonly struct ValueFuture<T>
     }
 
     internal void OnCompleted(Action<object> action, object state,
-                              IExecutor? executor, CancellationToken cancelToken, int options) {
+                              IExecutor? executor, int options) {
         if (_future == null) throw new InvalidOperationException();
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise valuePromise) {
             if (executor != null) {
-                valuePromise.OnCompletedAsync(_reentryId, executor, action, state, cancelToken, options);
+                valuePromise.OnCompletedAsync(_reentryId, executor, action, state, options);
             } else {
-                valuePromise.OnCompleted(_reentryId, action, state, cancelToken, options);
+                valuePromise.OnCompleted(_reentryId, action, state, options);
             }
         } else {
             IFuture future = (IFuture)_future;
             if (executor != null) {
-                future.OnCompletedAsync(executor, action, state, cancelToken, options);
+                future.OnCompletedAsync(executor, action, state, options);
             } else {
-                future.OnCompleted(action, state, cancelToken, options);
+                future.OnCompleted(action, state, options);
             }
         }
     }

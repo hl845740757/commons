@@ -208,7 +208,7 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
                 // 获取最新的消费者进度并缓存起来 -- 如果缓存是有意义的
                 long gatingSequence = Util.GetMinimumSequence(gatingBarriers, current);
                 if (wrapPoint > gatingSequence) {
-                    if (spinIterations > 0) { // 大于0时自旋 -- 不同于Java实现
+                    if (spinIterations > 0) { // 大于0时自旋 -- 不同于Java实现 TODO 可能会导致无法响应中断
                         Thread.SpinWait(spinIterations);
                         continue;
                     }

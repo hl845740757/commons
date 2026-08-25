@@ -79,5 +79,9 @@ public enum TypeParameterConstraints
     /// 默认类型约束/无类型约束(default)
     /// </summary>
     DefaultTypeConstraint = 0x0200,
+    /// <summary>
+    /// 允许栈结构体(allows ref struct) 
+    /// </summary>
+    AllowsRefStructConstraint = 0x400,
 }
 }

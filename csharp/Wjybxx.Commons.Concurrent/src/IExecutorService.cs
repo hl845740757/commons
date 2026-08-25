@@ -120,39 +120,39 @@ public interface IExecutorService : IExecutor
     /// 提交一个任务
     /// </summary>
     /// <param name="action">待执行的函数</param>
+    /// <param name="options">调度选项</param>
     /// <param name="cancelToken"></param>
-    /// <param name="options">调度选项</param>
     /// <returns></returns>
-    ValueFuture SubmitAction(Action action, CancellationToken cancelToken = default, int options = 0);
+    ValueFuture SubmitAction(Action action, int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 提交一个任务
     /// </summary>
     /// <param name="action">待执行的函数</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture SubmitAction(Action<object> action, object? state, CancellationToken cancelToken = default, int options = 0);
+    ValueFuture SubmitAction(Action<object> action, object? state, int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 提交一个任务
     /// </summary>
     /// <param name="action">待执行的函数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture<T> SubmitFunc<T>(Func<T> action, CancellationToken cancelToken = default, int options = 0);
+    ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 提交一个任务
     /// </summary>
     /// <param name="action">待执行的函数</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object? state, CancellationToken cancelToken, int options = 0);
+    ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object? state, int options = 0, CancellationToken cancelToken = default);
 
     #endregion
 }

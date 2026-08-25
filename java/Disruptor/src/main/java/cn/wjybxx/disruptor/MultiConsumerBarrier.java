@@ -133,7 +133,7 @@ public class MultiConsumerBarrier implements ConsumerBarrier {
 
     @Override
     public long minimumSequence() {
-        return Util.getMinimumSequence(dependentBarriers, groupSequence.getVolatile());
+        return Util.getMinimumSequence(dependentBarriers, sequence());
     }
 
     @Override

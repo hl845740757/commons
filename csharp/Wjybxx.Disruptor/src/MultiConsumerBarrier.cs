@@ -122,7 +122,7 @@ public class MultiConsumerBarrier : ConsumerBarrier
     }
 
     public long MinimumSequence() {
-        return Util.GetMinimumSequence(dependentBarriers, _groupSequence.GetVolatile());
+        return Util.GetMinimumSequence(dependentBarriers, Sequence());
     }
 
     public void AddDependentBarriers(params SequenceBarrier[] barriersToTrack) {

@@ -117,7 +117,7 @@ public interface EventSequencer<T> : DataProvider<T>
     }
 
     long Next() {
-        return ProducerBarrier.Next();
+        return ProducerBarrier.Next(1);
     }
 
     long Next(int n) {

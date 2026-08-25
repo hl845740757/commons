@@ -41,7 +41,7 @@ public class BlockingWaitStrategy : WaitStrategy
         if (producerBarrier.Sequence() < sequence || !producerBarrier.IsPublished(sequence)) {
             blocker.Lock();
             try {
-                if (producerBarrier.Sequence() < sequence || !producerBarrier.IsPublished(sequence)) {
+                while (producerBarrier.Sequence() < sequence || !producerBarrier.IsPublished(sequence)) {
                     barrier.CheckAlert();
                     blocker.Await();
                 }

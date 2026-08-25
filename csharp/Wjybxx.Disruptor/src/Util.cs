@@ -134,6 +134,12 @@ internal static class Util
                 newBarriers[oldBarriers.Length + index] = barrier;
             }
         } while (Interlocked.CompareExchange(ref location, newBarriers, oldBarriers) != oldBarriers);
+        
+        // 在更新成功后，需要同步进度，这里的临时变量仅用于保证这些消费者同步
+        cursorSequence = current.Sequence();
+        foreach (SequenceBarrier barrier in barriersToAdd) {
+            barrier.Claim(cursorSequence);
+        }
     }
 
     /// <summary>

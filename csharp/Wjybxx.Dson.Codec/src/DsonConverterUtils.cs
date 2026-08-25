@@ -607,7 +607,7 @@ public static class DsonConverterUtils
         };
         if ((features & SerializeFeatures.Double4Len2) != 0) {
             style |= Double4Style.Len2;
-        } else if (features.HasFlag(SerializeFeatures.Double4Len3)) {
+        } else if ((features & SerializeFeatures.Double4Len3) != 0) {
             style |= Double4Style.Len3;
         }
         if ((features & SerializeFeatures.Double4AsInt) != 0) {

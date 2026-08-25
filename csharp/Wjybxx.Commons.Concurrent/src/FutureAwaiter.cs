@@ -30,7 +30,6 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
 {
     private readonly IFuture _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <summary>
@@ -38,13 +37,10 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    public FutureAwaiter(IFuture future, IExecutor? executor = null,
-                         CancellationToken cancelToken = default, int options = 0) {
+    public FutureAwaiter(IFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
@@ -77,12 +73,12 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _options);
     }
 
     /// <summary>
@@ -92,15 +88,15 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action<object> continuation, object state) {
-        OnCompleted(continuation, state, _cancelToken, _options);
+        OnCompleted(continuation, state, _options);
     }
 
-    private void OnCompleted(Action<object> continuation, object state, CancellationToken cancelToken, int options) {
+    private void OnCompleted(Action<object> continuation, object state, int options) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(continuation, state, cancelToken, options);
+            _future.OnCompleted(continuation, state, options);
         } else {
-            _future.OnCompletedAsync(_executor, continuation, state, cancelToken, options);
+            _future.OnCompletedAsync(_executor, continuation, state, options);
         }
     }
 }
@@ -113,7 +109,6 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
 {
     private readonly IFuture<T> _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <summary>
@@ -121,13 +116,10 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    public FutureAwaiter(IFuture<T> future, IExecutor? executor = null,
-                         CancellationToken cancelToken = default, int options = 0) {
+    public FutureAwaiter(IFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
@@ -158,12 +150,12 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _options);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UnsafeOnCompleted(Action continuation) {
-        OnCompleted(FutureAwaiter.invoker, continuation, _cancelToken, _options);
+        OnCompleted(FutureAwaiter.invoker, continuation, _options);
     }
 
     /// <summary>
@@ -173,15 +165,15 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="state">回调参数</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnCompleted(Action<object> continuation, object state) {
-        OnCompleted(continuation, state, _cancelToken, _options);
+        OnCompleted(continuation, state, _options);
     }
 
-    private void OnCompleted(Action<object> continuation, object state, CancellationToken cancelToken, int options) {
+    private void OnCompleted(Action<object> continuation, object state, int options) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(continuation, state, cancelToken, options);
+            _future.OnCompleted(continuation, state, options);
         } else {
-            _future.OnCompletedAsync(_executor, continuation, state, cancelToken, options);
+            _future.OnCompletedAsync(_executor, continuation, state, options);
         }
     }
 }

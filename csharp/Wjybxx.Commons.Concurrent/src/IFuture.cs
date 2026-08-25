@@ -96,10 +96,10 @@ public interface IFuture<T> : IFuture
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
+    /// <param name="options">调度选项，默认使用0即可，可参考<see cref="TaskOptions"/></param>
     /// <param name="cancelToken">取消令牌</param>
-    /// <param name="options">调度选项</param>
     void OnCompleted(Action<IFuture<T>, object?> continuation, object? state,
-                     CancellationToken cancelToken = default, int options = 0);
+                     int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 添加一个监听器 -- 接收future和state参数
@@ -107,10 +107,10 @@ public interface IFuture<T> : IFuture
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object?> continuation, object? state,
-                          CancellationToken cancelToken = default, int options = 0);
+                          int options = 0, CancellationToken cancelToken = default);
 
     #endregion
 
@@ -126,15 +126,15 @@ public interface IFuture<T> : IFuture
     /// (为了减少重载，没有定义不含ctx的方法)
     /// </summary>
     /// <param name="fn">回调函数，第一个参数是ctx，第二个参数是当前Future的结果</param>
+    /// <param name="options"></param>
     /// <param name="cancelToken"></param>
-    /// <param name="options">调度选项，默认使用0即可，可参考<see cref="TaskOptions"/></param>
     /// <typeparam name="U"></typeparam>
     /// <returns></returns>
     IFuture<U> ComposeApply<U>(Func<T, IFuture<U>> fn,
-                               CancellationToken cancelToken = default, int options = 0);
+                               int options = 0, CancellationToken cancelToken = default);
 
     IFuture<U> ComposeApplyAsync<U>(IExecutor executor, Func<T, IFuture<U>> fn,
-                                    CancellationToken cancelToken = default, int options = 0);
+                                    int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 该方法表示在当前Future与返回的Future中插入一个异步操作，构建异步管道。
@@ -144,78 +144,78 @@ public interface IFuture<T> : IFuture
     /// 如果当前Future执行成功，则当前Future的执行结果将作为指定操作的执行参数。
     /// </summary>
     IFuture<U> ComposeCall<U>(Func<IFuture<U>> fn,
-                              CancellationToken cancelToken = default, int options = 0);
+                              int options = 0, CancellationToken cancelToken = default);
 
     IFuture<U> ComposeCallAsync<U>(IExecutor executor, Func<IFuture<U>> fn,
-                                   CancellationToken cancelToken = default, int options = 0);
+                                   int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 从给定的异常中恢复
     /// </summary>
     /// <param name="fallback">异常恢复函数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <typeparam name="X">异常类型</typeparam>
     /// <returns></returns>
     IFuture<T> ComposeCatching<X>(Func<X, IFuture<T>> fallback,
-                                  CancellationToken cancelToken = default, int options = 0) where X : Exception;
+                                  int options = 0, CancellationToken cancelToken = default) where X : Exception;
 
     IFuture<T> ComposeCatchingAsync<X>(IExecutor executor, Func<X, IFuture<T>> fallback,
-                                       CancellationToken cancelToken = default, int options = 0) where X : Exception;
+                                       int options = 0, CancellationToken cancelToken = default) where X : Exception;
 
     /// <summary>
     /// 既可以处理正确结果，也可以处理异常结果
     /// </summary>
     /// <param name="fn">参数1为正常结果，参数2为ex</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <typeparam name="U"></typeparam>
     /// <returns></returns>
     IFuture<U> ComposeHandle<U>(Func<T, Exception, IFuture<U>> fn,
-                                CancellationToken cancelToken = default, int options = 0);
+                                int options = 0, CancellationToken cancelToken = default);
 
     IFuture<U> ComposeHandleAsync<U>(IExecutor executor, Func<T, Exception, IFuture<U>> fn,
-                                     CancellationToken cancelToken = default, int options = 0);
+                                     int options = 0, CancellationToken cancelToken = default);
 
     #endregion
 
     #region 普通管道
 
     IFuture<U> ThenApply<U>(Func<T, U> fn,
-                            CancellationToken cancelToken = default, int options = 0);
+                            int options = 0, CancellationToken cancelToken = default);
 
     IFuture<U> ThenApplyAsync<U>(IExecutor executor, Func<T, U> fn,
-                                 CancellationToken cancelToken = default, int options = 0);
+                                 int options = 0, CancellationToken cancelToken = default);
 
     IFuture ThenAccept(Action<T> fn,
-                       CancellationToken cancelToken = default, int options = 0);
+                       int options = 0, CancellationToken cancelToken = default);
 
     IFuture ThenAcceptAsync(IExecutor executor, Action<T> fn,
-                            CancellationToken cancelToken = default, int options = 0);
+                            int options = 0, CancellationToken cancelToken = default);
 
     IFuture<U> ThenCall<U>(Func<U> fn,
-                           CancellationToken cancelToken = default, int options = 0);
+                           int options = 0, CancellationToken cancelToken = default);
 
     IFuture<U> ThenCallAsync<U>(IExecutor executor, Func<U> fn,
-                                CancellationToken cancelToken = default, int options = 0);
+                                int options = 0, CancellationToken cancelToken = default);
 
     IFuture ThenRun(Action fn,
-                    CancellationToken cancelToken = default, int options = 0);
+                    int options = 0, CancellationToken cancelToken = default);
 
     IFuture ThenRunAsync(IExecutor executor, Action fn,
-                         CancellationToken cancelToken = default, int options = 0);
+                         int options = 0, CancellationToken cancelToken = default);
 
     IFuture<T> Catching<X>(Func<X, T> fallback,
-                           CancellationToken cancelToken = default, int options = 0) where X : Exception;
+                           int options = 0, CancellationToken cancelToken = default) where X : Exception;
 
     IFuture<T> CatchingAsync<X>(IExecutor executor, Func<X, T> fallback,
-                                CancellationToken cancelToken = default, int options = 0) where X : Exception;
+                                int options = 0, CancellationToken cancelToken = default) where X : Exception;
 
     IFuture<U> Handle<U>(Func<T, Exception, U> fn,
-                         CancellationToken cancelToken = default, int options = 0);
+                         int options = 0, CancellationToken cancelToken = default);
 
     IFuture<U> HandleAsync<U>(IExecutor executor, Func<T, Exception, U> fn,
-                              CancellationToken cancelToken = default, int options = 0);
+                              int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 该方法返回一个新的{@code Future}，无论当前{@code Future}执行成功还是失败，给定的操作都将执行，且返回的{@code Future}始终以相同的结果进入完成状态。
@@ -224,10 +224,10 @@ public interface IFuture<T> : IFuture
     /// 2.如果用户主动取消了返回的Future，或者用于异步执行的Executor已关闭，则不会以相同的结果进入完成状态。
     /// </summary>
     IFuture<T> WhenComplete(Action<T, Exception> fn,
-                            CancellationToken cancelToken = default, int options = 0);
+                            int options = 0, CancellationToken cancelToken = default);
 
     IFuture<T> WhenCompleteAsync(IExecutor executor, Action<T, Exception> fn,
-                                 CancellationToken cancelToken = default, int options = 0);
+                                 int options = 0, CancellationToken cancelToken = default);
 
     #endregion
 
@@ -253,14 +253,14 @@ public interface IFuture<T> : IFuture
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IFuture.OnCompleted(Action<IFuture, object?> continuation, object? state,
-                             CancellationToken cancelToken, int options) {
-        OnCompleted(continuation, state, cancelToken, options);
+                             int options, CancellationToken cancelToken) {
+        OnCompleted(continuation, state, options, cancelToken);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state,
-                                  CancellationToken cancelToken, int options) {
-        OnCompletedAsync(executor, continuation, state, cancelToken, options);
+                                  int options, CancellationToken cancelToken) {
+        OnCompletedAsync(executor, continuation, state, options, cancelToken);
     }
 
     #endregion

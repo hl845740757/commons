@@ -113,6 +113,7 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
     /// 用户已正常获取结果信息，可以尝试回收
     /// </summary>
     protected virtual void PrepareToRecycle() {
+        _reentryId++; // 即使没有对象池，也需要使用户token失效
         if (GetType() == typeof(ValuePromise<T>)) {
             POOL?.Release(this);
         }
@@ -344,7 +345,7 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
                 if (status == TaskStatus.Computing) {
                     promise.TrySetComputing();
                 }
-                SetCompletion(TYPE_SET_PROMISE_U, null, promise, null, default, 0);
+                SetCompletion(TYPE_SET_PROMISE_U, null, promise, null, 0, default);
                 return promise;
             }
         }
@@ -372,7 +373,7 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
                 if (status == TaskStatus.Computing) {
                     promise.TrySetComputing();
                 }
-                SetCompletion(TYPE_SET_PROMISE_T, null, promise, null, default, 0);
+                SetCompletion(TYPE_SET_PROMISE_T, null, promise, null, 0, default);
                 return promise;
             }
         }
@@ -380,7 +381,7 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
 
     public void Forget(int reentryId) {
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_FORGET, null, null, null, default, 0);
+        SetCompletion(TYPE_FORGET, null, null, null, 0, default);
     }
 
     #endregion
@@ -388,20 +389,20 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
     #region 回调
 
     public void OnCompleted(int reentryId, Action<object?> continuation, object? state,
-                            CancellationToken cancelToken = default, int options = 0) {
+                            int options = 0, CancellationToken cancelToken = default) {
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_RUN_CTX, continuation, state, null, cancelToken, options);
+        SetCompletion(TYPE_RUN_CTX, continuation, state, null, options, cancelToken);
     }
 
     public void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state,
-                                 CancellationToken cancelToken = default, int options = 0) {
+                                 int options = 0, CancellationToken cancelToken = default) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_RUN_CTX, continuation, state, executor, cancelToken, options);
+        SetCompletion(TYPE_RUN_CTX, continuation, state, executor, options, cancelToken);
     }
     
     private void SetCompletion(int type, object? action, object? state,
-                               IExecutor? executor, CancellationToken cancelToken, int options) {
+                               IExecutor? executor, int options, CancellationToken cancelToken) {
         // if (action == null) throw new ArgumentNullException(nameof(action));
         // 去除用户的低位，记录type
         options &= (~TaskOptions.MASK_CTL_RESERVED);
@@ -423,6 +424,7 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
         } else {
             // Future在注册监听器前已完成通知，立即补偿触发
             Debug.Assert(oldCtl == MASK_FIRED);
+            Volatile.Write(ref _completion.ctl, MASK_PUBLISHED | MASK_FIRED);
             TryFire(SYNC);
         }
     }
@@ -569,18 +571,17 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
     }
 
     private void TryFire(int mode) {
-        if (_completion.cancelToken.IsCancellationRequested) {
-            if (_completion.state is IPromise output) { // 需要使下游Promise进入取消状态
-                output.TrySetCancelled(_completion.cancelToken);
-            }
+        // 已去除await语法的取消令牌支持，用户显式传入清理令牌时已知晓回调可能不被执行
+        var cancelToken = _completion.cancelToken;
+        if (cancelToken.IsCancellationRequested) {
             PrepareToRecycle(); // 手动触发回收
             return;
         }
         // 异步模式下已经claim
-        if (mode <= 0 && !Claim()) {
-            return;
-        }
         try {
+            if (mode <= 0 && !Claim()) {
+                return;
+            }
             FireNow();
         }
         catch (Exception ex) {

@@ -177,10 +177,10 @@ public interface IFuture
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     void OnCompleted(Action<IFuture, object?> continuation, object? state,
-                     CancellationToken cancelToken = default, int options = 0);
+                     int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 添加一个监听器
@@ -188,10 +188,10 @@ public interface IFuture
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     void OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state,
-                          CancellationToken cancelToken = default, int options = 0);
+                          int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 添加一个监听器
@@ -199,10 +199,10 @@ public interface IFuture
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     void OnCompleted(Action<object?> continuation, object? state,
-                     CancellationToken cancelToken = default, int options = 0);
+                     int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
     /// 添加一个监听器
@@ -211,10 +211,10 @@ public interface IFuture
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
     void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state,
-                          CancellationToken cancelToken = default, int options = 0);
+                          int options = 0, CancellationToken cancelToken = default);
 
     #endregion
 }

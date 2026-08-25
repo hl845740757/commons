@@ -29,24 +29,19 @@ public readonly struct ValueFutureAwaitable2
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <param name="future">future</param>
     /// <param name="executor">回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
-    public ValueFutureAwaitable2(ValueFuture future, IExecutor? executor,
-                                 CancellationToken cancelToken = default, int options = 0) {
+    public ValueFutureAwaitable2(ValueFuture future, IExecutor? executor, int options = 0) {
         _future = future;
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
     public ValueFuture Future => _future;
     public IExecutor? Executor => _executor;
-    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
     /// <summary>
@@ -55,7 +50,7 @@ public readonly struct ValueFutureAwaitable2
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2 AddOptions(int options) {
-        return new ValueFutureAwaitable2(_future, _executor, _cancelToken, _options | options);
+        return new ValueFutureAwaitable2(_future, _executor, _options | options);
     }
 
     /// <summary>
@@ -64,10 +59,10 @@ public readonly struct ValueFutureAwaitable2
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2 WithOptions(int options) {
-        return new ValueFutureAwaitable2(_future, _executor, _cancelToken, options);
+        return new ValueFutureAwaitable2(_future, _executor, options);
     }
 
-    public ValueFutureAwaiter2 GetAwaiter() => new(_future, _executor, _cancelToken, _options);
+    public ValueFutureAwaiter2 GetAwaiter() => new(_future, _executor, _options);
 }
 
 /// <summary>
@@ -78,20 +73,16 @@ public readonly struct ValueFutureAwaitable2<T>
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
-    public ValueFutureAwaitable2(ValueFuture<T> future, IExecutor? executor,
-                                 CancellationToken cancelToken = default, int options = 0) {
+    public ValueFutureAwaitable2(ValueFuture<T> future, IExecutor? executor, int options = 0) {
         _future = future;
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
     public ValueFuture<T> Future => _future;
     public IExecutor? Executor => _executor;
-    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
     /// <summary>
@@ -100,7 +91,7 @@ public readonly struct ValueFutureAwaitable2<T>
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2<T> AddOptions(int options) {
-        return new ValueFutureAwaitable2<T>(_future, _executor, _cancelToken, _options | options);
+        return new ValueFutureAwaitable2<T>(_future, _executor, _options | options);
     }
 
     /// <summary>
@@ -109,9 +100,9 @@ public readonly struct ValueFutureAwaitable2<T>
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2<T> WithOptions(int options) {
-        return new ValueFutureAwaitable2<T>(_future, _executor, _cancelToken, options);
+        return new ValueFutureAwaitable2<T>(_future, _executor, options);
     }
 
-    public ValueFutureAwaiter2<T> GetAwaiter() => new(_future, _executor, _cancelToken, _options);
+    public ValueFutureAwaiter2<T> GetAwaiter() => new(_future, _executor, _options);
 }
 }

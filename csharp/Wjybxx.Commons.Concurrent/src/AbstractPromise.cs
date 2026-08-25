@@ -389,7 +389,7 @@ public abstract class AbstractPromise
     /// <summary>
     /// 状态机回调特殊优化，由于不依赖Promise的结果，因此不放入泛型类中（便于池化）
     /// </summary>
-    internal class MoveNextCompletion : Completion
+    internal class UniOnCompletedFsm : Completion
     {
 #nullable disable
         private IExecutor executor;
@@ -399,7 +399,7 @@ public abstract class AbstractPromise
         private object state;
 #nullable restore
 
-        public MoveNextCompletion(IExecutor? executor, CancellationToken cancelToken, int options,
+        public UniOnCompletedFsm(IExecutor? executor, int options, CancellationToken cancelToken,
                                   Action<object?> action, object? state) {
             this.executor = executor;
             this.cancelToken = cancelToken;
@@ -450,7 +450,7 @@ public abstract class AbstractPromise
         }
 
         public static bool FireNow(Action<object?> action, object? state,
-                                   MoveNextCompletion? c) {
+                                   UniOnCompletedFsm? c) {
             try {
                 if (c != null && !c.Claim()) {
                     return false;

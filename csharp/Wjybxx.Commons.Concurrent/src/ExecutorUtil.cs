@@ -54,15 +54,37 @@ public static class ExecutorUtil
     ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
     ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
     /// </code>
+    /// 注意：指定取消令牌的情况下，回调任务可能不被执行；正常await逻辑不应该传入取消令牌。
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     /// <returns></returns>
-    public static FutureAwaitable GetAwaitable(this IFuture future, IExecutor executor,
-                                               CancellationToken cancelToken = default, int options = 0) {
-        return new FutureAwaitable(future, executor, cancelToken, options);
+    public static FutureAwaitable GetAwaitable(this IFuture future, IExecutor executor, int options = 0) {
+        return new FutureAwaitable(future, executor, options);
+    }
+
+    /// <summary>
+    /// 返回<see cref="TaskResult"/>形式的结果，可禁止异常抛出
+    /// </summary>
+    /// <param name="future">future</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
+    /// <returns></returns>
+    public static FutureAwaitable2 GetAwaitable2(this IFuture future, IExecutor? executor,
+                                                 int options = TaskOptions.SUPPRESS_ALL_THROW) {
+        return new FutureAwaitable2(future, executor, options);
+    }
+
+    /// <summary>
+    /// 我们通常仅想禁用异常抛出，因此提供快捷方法
+    /// </summary>
+    /// <param name="future">future</param>
+    /// <param name="options">awaiter的调度选项</param>
+    /// <returns></returns>
+    public static FutureAwaitable2 GetAwaitable2(this IFuture future,
+                                                 int options = TaskOptions.SUPPRESS_ALL_THROW) {
+        return new FutureAwaitable2(future, null, options);
     }
 
     /// <summary>
@@ -91,12 +113,33 @@ public static class ExecutorUtil
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     /// <returns></returns>
-    public static FutureAwaitable<T> GetAwaitable<T>(this IFuture<T> future, IExecutor executor,
-                                                     CancellationToken cancelToken = default, int options = 0) {
-        return new FutureAwaitable<T>(future, executor, cancelToken, options);
+    public static FutureAwaitable<T> GetAwaitable<T>(this IFuture<T> future, IExecutor executor, int options = 0) {
+        return new FutureAwaitable<T>(future, executor, options);
+    }
+
+    /// <summary>
+    /// 返回<see cref="TaskResult{T}"/>形式的结果，可禁止异常抛出
+    /// </summary>
+    /// <param name="future">future</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
+    /// <returns></returns>
+    public static FutureAwaitable2<T> GetAwaitable2<T>(this IFuture<T> future, IExecutor? executor,
+                                                      int options = TaskOptions.SUPPRESS_ALL_THROW) {
+        return new FutureAwaitable2<T>(future, executor, options);
+    }
+
+    /// <summary>
+    /// 我们通常仅想禁用异常抛出，因此提供快捷方法
+    /// </summary>
+    /// <param name="future">future</param>
+    /// <param name="options">awaiter的调度选项</param>
+    /// <returns></returns>
+    public static FutureAwaitable2<T> GetAwaitable2<T>(this IFuture<T> future,
+                                                      int options = TaskOptions.SUPPRESS_ALL_THROW) {
+        return new FutureAwaitable2<T>(future, null, options);
     }
 
     /// <summary>
@@ -254,7 +297,6 @@ public static class ExecutorUtil
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaiter
-    ///
     /// <see cref="GetAwaitable(IFuture, IExecutor, CancellationToken, int)"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -264,7 +306,6 @@ public static class ExecutorUtil
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaiter
-    ///
     /// <see cref="GetAwaitable(IFuture, IExecutor, CancellationToken, int)"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -360,30 +401,30 @@ public static class ExecutorUtil
     #region submit
 
     public static ValueFuture SubmitAction(IExecutor executor, Action task,
-                                           CancellationToken cancelToken = default, int options = 0) {
+                                           int options = 0, CancellationToken cancelToken = default) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(executor);
-        executor.Execute(PromiseTask.OfAction(promise, task, cancelToken, options));
+        executor.Execute(PromiseTask.OfAction(promise, task, options, cancelToken));
         return promise.VoidFuture;
     }
 
     public static ValueFuture SubmitAction(IExecutor executor, Action<object> task, object? state,
-                                           CancellationToken cancelToken = default, int options = 0) {
+                                           int options = 0, CancellationToken cancelToken = default) {
         ValuePromise<int> promise = ValuePromise<int>.Acquire(executor);
-        executor.Execute(PromiseTask.OfAction(promise, task, state, cancelToken, options));
+        executor.Execute(PromiseTask.OfAction(promise, task, state, options, cancelToken));
         return promise.VoidFuture;
     }
 
     public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task,
-                                               CancellationToken cancelToken = default, int options = 0) {
+                                               int options = 0, CancellationToken cancelToken = default) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
-        executor.Execute(PromiseTask.OfFunction(promise, task, cancelToken, options));
+        executor.Execute(PromiseTask.OfFunction(promise, task, options, cancelToken));
         return promise.Future;
     }
 
     public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<object, T> task, object? state,
-                                               CancellationToken cancelToken = default, int options = 0) {
+                                               int options = 0, CancellationToken cancelToken = default) {
         ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
-        executor.Execute(PromiseTask.OfFunction(promise, task, state, cancelToken, options));
+        executor.Execute(PromiseTask.OfFunction(promise, task, state, options, cancelToken));
         return promise.Future;
     }
 
@@ -392,14 +433,14 @@ public static class ExecutorUtil
     #region execute
 
     public static void Execute(this IExecutor executor, Action action,
-                               CancellationToken cancelToken = default, int options = 0) {
-        ITask task = ToTask(action, cancelToken, options);
+                               int options = 0, CancellationToken cancelToken = default) {
+        ITask task = ToTask(action, options, cancelToken);
         executor.Execute(task);
     }
 
     public static void Execute(this IExecutor executor, Action<object> action, object? state,
-                               CancellationToken cancelToken = default, int options = 0) {
-        ITask task = ToTask(action, state, cancelToken, options);
+                               int options = 0, CancellationToken cancelToken = default) {
+        ITask task = ToTask(action, state, options, cancelToken);
         executor.Execute(task);
     }
 
@@ -477,24 +518,14 @@ public static class ExecutorUtil
 
     #region box
 
-    public static ITask ToTask(Action action, int options = 0) {
+    public static ITask ToTask(Action action, int options = 0, CancellationToken cancelToken = default) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper2(action, default, options);
+        return new ActionWrapper2(action, options, cancelToken);
     }
 
-    public static ITask ToTask(Action action, CancellationToken cancelToken, int options = 0) {
+    public static ITask ToTask(Action<object> action, object? state, int options = 0, CancellationToken cancelToken = default) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper2(action, cancelToken, options);
-    }
-
-    public static ITask ToTask(Action<object> action, object? state, int options = 0) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper3(action, state, default, options);
-    }
-
-    public static ITask ToTask(Action<object> action, object? state, CancellationToken cancelToken = default, int options = 0) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper3(action, state, cancelToken, options);
+        return new ActionWrapper3(action, state, options, cancelToken);
     }
 
     #endregion
@@ -507,7 +538,7 @@ public static class ExecutorUtil
         private readonly CancellationToken cancelToken;
         private readonly int options;
 
-        public ActionWrapper2(Action action, CancellationToken cancelToken, int options) {
+        public ActionWrapper2(Action action, int options, CancellationToken cancelToken) {
             this.action = action;
             this.cancelToken = cancelToken;
             this.options = options;
@@ -534,7 +565,7 @@ public static class ExecutorUtil
         private readonly CancellationToken cancelToken;
         private readonly int options;
 
-        public ActionWrapper3(Action<object> action, object? state, CancellationToken cancelToken, int options) {
+        public ActionWrapper3(Action<object> action, object? state, int options, CancellationToken cancelToken) {
             this.action = action;
             this.state = state;
             this.cancelToken = cancelToken;

@@ -26,8 +26,8 @@ namespace Wjybxx.Benchmarks;
 public class Bootstrap
 {
     public static void Main() {
-        if (File.Exists("D:\\Test.json")) {
-            BenchmarkRunner.Run<BigStringTest>();
-        }
+        // if (File.Exists("D:\\Test.json")) {
+        //     BenchmarkRunner.Run<BigStringTest>();
+        // }
     }
 }

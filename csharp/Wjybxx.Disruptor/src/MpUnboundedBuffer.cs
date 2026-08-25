@@ -147,6 +147,7 @@ public abstract class MpUnboundedBufferFields<E>
 /// 2. 该缓存不会自动回收和复用块，需要外部显式调用回收 -- Sequencer需要负责回收。
 /// </summary>
 /// <typeparam name="E"></typeparam>
+[StructLayout(LayoutKind.Sequential)]
 public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvider<E>
 {
     /** 事件工厂 */

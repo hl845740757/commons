@@ -67,7 +67,7 @@ public class FutureAwaitTest
         await future.GetAwaitable(globalEventLoop);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
 
-        await future.GetAwaitable(globalEventLoop, default, TaskOptions.STAGE_TRY_INLINE);
+        await future.GetAwaitable(globalEventLoop, TaskOptions.STAGE_TRY_INLINE);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
 
         return await future;
@@ -108,14 +108,14 @@ public class FutureAwaitTest
         {
             ValueFuture future = globalEventLoop.ScheduleAction(() => throw new OperationCanceledException(),
                 TimeSpan.FromSeconds(1));
-            TaskResult result = await future.GetAwaitable2(globalEventLoop, default,
+            TaskResult result = await future.GetAwaitable2(globalEventLoop,
                 TaskOptions.SUPPRESS_CANCELLATION_THROW | TaskOptions.STAGE_TRY_INLINE);
             Assert.IsTrue(result.IsCancelled);
         }
         {
             ValueFuture<string> future2 = globalEventLoop.ScheduleFunc<string>(() => throw new OperationCanceledException(),
                 TimeSpan.FromSeconds(1));
-            TaskResult<string> result2 = await future2.GetAwaitable2(globalEventLoop, default,
+            TaskResult<string> result2 = await future2.GetAwaitable2(globalEventLoop,
                 TaskOptions.SUPPRESS_CANCELLATION_THROW | TaskOptions.STAGE_TRY_INLINE);
             Assert.IsTrue(result2.IsCancelled);
         }
@@ -126,16 +126,44 @@ public class FutureAwaitTest
         {
             ValueFuture future = globalEventLoop.ScheduleAction(() => throw new Exception(),
                 TimeSpan.FromSeconds(1));
-            TaskResult result = await future.GetAwaitable2(globalEventLoop, default,
+            TaskResult result = await future.GetAwaitable2(globalEventLoop,
                 TaskOptions.SUPPRESS_ERROR_THROW | TaskOptions.STAGE_TRY_INLINE);
             Assert.IsTrue(result.IsFailed);
         }
         {
             ValueFuture<string> future2 = globalEventLoop.ScheduleFunc<string>(() => throw new Exception(),
                 TimeSpan.FromSeconds(1));
-            TaskResult<string> result2 = await future2.GetAwaitable2(globalEventLoop, default,
+            TaskResult<string> result2 = await future2.GetAwaitable2(globalEventLoop,
                 TaskOptions.SUPPRESS_ERROR_THROW | TaskOptions.STAGE_TRY_INLINE);
             Assert.IsTrue(result2.IsFailed);
+        }
+    }
+
+    /// <summary>
+    /// 测试<see cref="FutureAwaitable2"/>对异常抛出的压制
+    /// </summary>
+    [Test]
+    public async Task TestFutureSuppressThrow() {
+        {
+            IFuture future = globalEventLoop.ScheduleAction(() => throw new OperationCanceledException(),
+                TimeSpan.FromSeconds(1)).AsFuture();
+            TaskResult result = await future.GetAwaitable2(globalEventLoop,
+                TaskOptions.SUPPRESS_CANCELLATION_THROW | TaskOptions.STAGE_TRY_INLINE);
+            Assert.IsTrue(result.IsCancelled);
+        }
+        {
+            IFuture<string> future2 = globalEventLoop.ScheduleFunc<string>(() => throw new Exception(),
+                TimeSpan.FromSeconds(1)).AsFuture();
+            TaskResult<string> result2 = await future2.GetAwaitable2(globalEventLoop,
+                TaskOptions.SUPPRESS_ERROR_THROW | TaskOptions.STAGE_TRY_INLINE);
+            Assert.IsTrue(result2.IsFailed);
+        }
+        // 不指定executor的快捷方法
+        {
+            IFuture<int> future3 = globalEventLoop.ScheduleFunc(() => 1, TimeSpan.FromMilliseconds(100)).AsFuture();
+            TaskResult<int> result3 = await future3.GetAwaitable2(TaskOptions.SUPPRESS_ALL_THROW);
+            Assert.IsTrue(result3.IsSucceeded);
+            Assert.AreEqual(1, result3.Result);
         }
     }
 }

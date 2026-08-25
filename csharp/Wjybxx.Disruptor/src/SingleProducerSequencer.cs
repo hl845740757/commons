@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 #pragma warning disable CS0169
@@ -29,6 +30,7 @@ namespace Wjybxx.Disruptor
 /// （由用户保证不会并发的申请序号）
 /// （这里的内存填充其实未正确生效，但该实现极少使用）
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public sealed class SingleProducerSequencer : RingBufferSequencer
 {
     // region padding
@@ -145,7 +147,7 @@ public sealed class SingleProducerSequencer : RingBufferSequencer
             long minSequence;
             bool interrupted = false;
             while (wrapPoint > (minSequence = Util.GetMinimumSequence(gatingBarriers, produced))) {
-                if (spinIterations > 0) { // 大于0时自旋 -- 不同于Java实现
+                if (spinIterations > 0) { // 大于0时自旋 -- 不同于Java实现 TODO 可能会导致无法响应中断
                     Thread.SpinWait(spinIterations);
                     continue;
                 }

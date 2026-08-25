@@ -66,6 +66,7 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
     }
 
     protected override void PrepareToRecycle() {
+        IncReentryId();
         if (_poolSize > 0) {
             Release(this);
         }
@@ -166,8 +167,8 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
         }
         if (methodInfo.IsGenericMethod) {
             methodInfo = methodInfo.GetGenericMethodDefinition();
-            // 返回值是泛型时才使用两个参数
-            if (methodInfo.ReturnType.IsGenericType && methodInfo.ReturnType != typeof(T)) {
+            // 返回值包含运行时泛型时才使用两个参数
+            if (methodInfo.ReturnType.IsGenericType && methodInfo.ReturnType != typeof(ValueFuture<T>)) {
                 bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
                 return isIntOrObject ? attribute.poolSize : attribute.poolSize2;
             }

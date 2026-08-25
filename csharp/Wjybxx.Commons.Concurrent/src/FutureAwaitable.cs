@@ -29,7 +29,6 @@ public readonly struct FutureAwaitable
 {
     private readonly IFuture _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <summary>
@@ -37,22 +36,18 @@ public readonly struct FutureAwaitable
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    public FutureAwaitable(IFuture future, IExecutor? executor,
-                           CancellationToken cancelToken = default, int options = 0) {
+    public FutureAwaitable(IFuture future, IExecutor? executor, int options = 0) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
     public IFuture Future => _future;
     public IExecutor? Executor => _executor;
-    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
-    public FutureAwaiter GetAwaiter() => new FutureAwaiter(_future, _executor, _cancelToken, _options);
+    public FutureAwaiter GetAwaiter() => new FutureAwaiter(_future, _executor, _options);
 }
 
 /// <summary>
@@ -63,7 +58,6 @@ public readonly struct FutureAwaitable<T>
 {
     private readonly IFuture<T> _future;
     private readonly IExecutor? _executor;
-    private readonly CancellationToken _cancelToken;
     private readonly int _options;
 
     /// <summary>
@@ -71,21 +65,17 @@ public readonly struct FutureAwaitable<T>
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    public FutureAwaitable(IFuture<T> future, IExecutor? executor,
-                           CancellationToken cancelToken = default, int options = 0) {
+    public FutureAwaitable(IFuture<T> future, IExecutor? executor, int options = 0) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor;
-        _cancelToken = cancelToken;
         _options = options;
     }
 
     public IFuture<T> Future => _future;
     public IExecutor? Executor => _executor;
-    public CancellationToken CancelToken => _cancelToken;
     public int Options => _options;
 
-    public FutureAwaiter<T> GetAwaiter() => new FutureAwaiter<T>(_future, _executor, _cancelToken, _options);
+    public FutureAwaiter<T> GetAwaiter() => new FutureAwaiter<T>(_future, _executor, _options);
 }
 }

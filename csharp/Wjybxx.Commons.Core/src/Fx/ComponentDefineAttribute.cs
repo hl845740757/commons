@@ -58,6 +58,10 @@ public class ComponentDefineAttribute : Attribute
     public int CacheIndex { get; set; } = -1;
 
     /// <summary>
+    /// 更新组
+    /// </summary>
+    public int UpdateGroup { get; set; } = -1;
+    /// <summary>
     /// 更新顺序
     /// </summary>
     public int UpdateOrder { get; set; } = -1;

@@ -160,6 +160,7 @@ public sealed class ComponentIdPool
                 builder.Shared = componentDefine.Shared;
                 builder.MaxCount = componentDefine.MaxCount;
                 builder.CacheIndex = componentDefine.CacheIndex;
+                builder.UpdateGroup = componentDefine.UpdateGroup;
                 builder.UpdateOrder = componentDefine.UpdateOrder;
                 //
                 builder.Flags = componentDefine.Flags;
