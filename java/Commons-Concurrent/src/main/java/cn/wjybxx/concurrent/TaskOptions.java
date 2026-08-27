@@ -16,8 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.annotation.Beta;
-
 /**
  * 任务调度选项
  *
@@ -32,30 +30,18 @@ public final class TaskOptions {
      */
     public static final int MASK_CTL_RESERVED = 0xFF;
 
-    /** 优先级的存储偏移量 */
-    public static final int OFFSET_PRIORITY = 8;
-    /** 优先级的最大值 */
-    public static final int MAX_PRIORITY = 31;
-
-    /**
-     * 延时任务的优先级，取值[0, 31]
-     * 1. 当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
-     * 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
-     * 3. 优先级值的约定取决于各自的实现。
-     */
-    @Beta
-    public static final int MASK_PRIORITY = MAX_PRIORITY << OFFSET_PRIORITY;
-
     /** 延时任务：包含优先级 */
-    public static final int HAS_PRIORITY = 14; // 预留1位给优先级
+    public static final int HAS_PRIORITY = 1 << 14; // 预留1位给优先级
     /** 延时任务：包含调度阶段 */
-    public static final int HAS_SCHEDULE_PHASE = 15;
+    public static final int HAS_SCHEDULE_PHASE = 1 << 15;
     /** 延时任务：包含次数限制 */
-    public static final int HAS_COUNTDOWN = 1 << 16;
+    public static final int HAS_COUNT_LIMIT = 1 << 16;
     /** 延时任务：包含超时时间（执行时间限制） */
     public static final int HAS_TIMEOUT = 1 << 17;
-    /** 延时任务：包含额外延迟帧 */
+    /** 延时任务：包含额外延迟帧（游戏需求） */
     public static final int HAS_DELAY_FRAME = 1 << 18;
+    /** 延时任务：使用非缩放时间（游戏需求） */
+    public static final int USE_UNSCALED_TIME = 1 << 19;
     /**
      * 延时任务：在出现异常后继续执行。
      * 1.只适用无需结果的周期性任务 -- 分时任务会失败。
@@ -81,7 +67,10 @@ public final class TaskOptions {
     /**
      * 默认情况下，Stage会在触发回调之前检测ctx否为{@link IContext}或{@link ICancelToken}类型，并检测取消信号。
      * 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
+     *
+     * @deprecated 新版本切割用户上下文和调度上下文，不再使用该参数
      */
+    @Deprecated
     public static final int STAGE_UNCANCELLABLE_CTX = 1 << 24;
     /**
      * 监听用户上下文中包含的取消令牌
@@ -94,11 +83,15 @@ public final class TaskOptions {
     /**
      * C#：抑制await抛出取消异常(性能因素)
      */
-    private static final int SUPPRESS_CANCELLATION_THROW = 1 << 26;
+    public static final int SUPPRESS_CANCELLATION_THROW = 1 << 26;
     /**
      * C#：抑制await抛出失败异常(性能因素)
      */
-    private static final int SUPPRESS_ERROR_THROW = 1 << 27;
+    public static final int SUPPRESS_ERROR_THROW = 1 << 27;
+    /**
+     * C#：抑制await抛出异常(性能因素)
+     */
+    public static final int SUPPRESS_ALL_THROW = SUPPRESS_CANCELLATION_THROW | SUPPRESS_ERROR_THROW;
 
     /**
      * 任务不自动归还到对象池，手动释放
@@ -144,21 +137,6 @@ public final class TaskOptions {
         } else {
             return (flags & ~option);
         }
-    }
-
-    /** 获取任务的优先级 */
-    public static int getPriority(int options) {
-        return (options & MASK_PRIORITY) >> OFFSET_PRIORITY;
-    }
-
-    /** 设置优先级 */
-    public static int setPriority(int options, int priority) {
-        if (priority < 0 || priority > MAX_PRIORITY) {
-            throw new IllegalArgumentException("priority: " + priority);
-        }
-        options &= ~MASK_PRIORITY;
-        options |= (priority << OFFSET_PRIORITY);
-        return options;
     }
 
     // endregion

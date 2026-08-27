@@ -34,19 +34,6 @@ public static class TaskOptions
     /// </summary>
     public const int MASK_CTL_RESERVED = 0xFF;
 
-    /** 优先级的存储偏移量 */
-    public const int OFFSET_PRIORITY = 8;
-    /** 优先级的最大值 */
-    public const int MAX_PRIORITY = 31;
-
-    /// <summary>
-    /// 延时任务的优先级，取值[0, 31]。
-    /// 1. 当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
-    /// 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
-    /// 3. 优先级值的约定取决于各自的实现。
-    /// </summary>
-    public const int MASK_PRIORITY = MAX_PRIORITY << OFFSET_PRIORITY;
-
     /// <summary>
     /// 延时任务：包含优先级
     /// </summary>
@@ -65,9 +52,13 @@ public static class TaskOptions
     /// </summary>
     public const int HAS_TIMEOUT = 1 << 17;
     /// <summary>
-    /// 延时任务：包含额外延迟帧
+    /// 延时任务：包含额外延迟帧（游戏需求）
     /// </summary>
     public const int HAS_DELAY_FRAME = 1 << 18;
+    /// <summary>
+    /// 延时任务：使用非缩放时间（游戏需求）
+    /// </summary>
+    public const int USE_UNSCALED_TIME = 1 << 19;
     /// <summary>
     /// 延时任务：在出现异常后继续执行。
     /// 1. 只适用无需结果的周期性任务 -- 分时任务会失败。
@@ -185,33 +176,7 @@ public static class TaskOptions
             return (flags & ~option);
         }
     }
-
-    /// <summary>
-    /// 获取任务的优先级
-    /// </summary>
-    /// <param name="options"></param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetPriority(int options) {
-        return (options & MASK_PRIORITY) >> OFFSET_PRIORITY;
-    }
-
-    /// <summary>
-    /// 设置优先级
-    /// </summary>
-    /// <param name="options"></param>
-    /// <param name="priority"></param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int SetPriority(int options, int priority) {
-        if (priority < 0 || priority > MAX_PRIORITY) {
-            throw new ArgumentException("priority: " + priority);
-        }
-        options &= ~MASK_PRIORITY;
-        options |= (priority << OFFSET_PRIORITY);
-        return options;
-    }
-
+    
     #endregion
 }
 }

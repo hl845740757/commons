@@ -78,12 +78,25 @@ public static class EnumUtil
     /// 获取枚举对应的int值
     /// 注意：不适用long/ulong类型枚举
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetIntValue<T>(T value) where T : struct, Enum {
         // 奇技淫巧：int32/uint32/short/ushort/byte/sybte的hashcode是自身，可避免装箱。
         return value.GetHashCode();
+    }
+    
+    /// <summary>
+    /// 测试Flags是否包含指定枚举值
+    /// 注意：不适用long/ulong类型枚举，只适用于可转int32的枚举
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool HasFlag<T>(this int flags, T value) where T : struct, Enum {
+        int hashCode = value.GetHashCode();
+        return (flags & hashCode) == hashCode; //与系统库一致
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool HasFlag<T>(this T flags, int value) where T : struct, Enum {
+        return (flags.GetHashCode() & value) == value; // 与系统库一致
     }
 
     /// <summary>

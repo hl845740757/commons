@@ -107,6 +107,12 @@ internal static class Util
         return minimum;
     }
 
+    public static long GetMinimumSequence(SequenceBarrier[] barriers, Sequence[] sequences, long minimum) {
+        long r1 = GetMinimumSequence(barriers, minimum);
+        long r2 = GetMinimumSequence(sequences, minimum);
+        return r1 < r2 ? r1 : r2;
+    }
+
     /// <summary>
     /// 原子方式添加屏障
     /// </summary>

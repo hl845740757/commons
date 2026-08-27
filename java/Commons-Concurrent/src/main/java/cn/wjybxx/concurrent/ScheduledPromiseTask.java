@@ -389,7 +389,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     public static ScheduledPromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options,
                                                    IScheduledPromise<?> promise) {
-        return acquire(TaskBuilder.TYPE_ACTION_CTX, action, ctx, options, promise);
+        return acquire(TaskBuilder.TYPE_ACTION_STATE, action, ctx, options, promise);
     }
 
     public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options,
@@ -399,7 +399,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     public static <V> ScheduledPromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options,
                                                          IScheduledPromise<V> promise) {
-        return acquire(TaskBuilder.TYPE_FUNC_CTX, action, ctx, options, promise);
+        return acquire(TaskBuilder.TYPE_FUNC_STATE, action, ctx, options, promise);
     }
 
     public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {

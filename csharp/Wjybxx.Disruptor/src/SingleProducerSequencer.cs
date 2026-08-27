@@ -147,7 +147,12 @@ public sealed class SingleProducerSequencer : RingBufferSequencer
             long minSequence;
             bool interrupted = false;
             while (wrapPoint > (minSequence = Util.GetMinimumSequence(gatingBarriers, produced))) {
-                if (spinIterations > 0) { // 大于0时自旋 -- 不同于Java实现 TODO 可能会导致无法响应中断
+                if (interruptible) {
+                    Thread.Sleep(0); // Sleep0响应中断，SpinWait意义不大
+                    continue;
+                }
+
+                if (spinIterations > 0) {
                     Thread.SpinWait(spinIterations);
                     continue;
                 }
@@ -155,7 +160,6 @@ public sealed class SingleProducerSequencer : RingBufferSequencer
                     Thread.Sleep(1);
                 }
                 catch (ThreadInterruptedException) {
-                    if (interruptible) throw;
                     interrupted = true;
                 }
             }

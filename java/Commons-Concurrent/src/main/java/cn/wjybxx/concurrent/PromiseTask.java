@@ -140,7 +140,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
                 task.run();
                 return null;
             }
-            case TaskBuilder.TYPE_ACTION_CTX -> {
+            case TaskBuilder.TYPE_ACTION_STATE -> {
                 Consumer<Object> task = (Consumer<Object>) this.task;
                 task.accept(ctx);
                 return null;
@@ -149,7 +149,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
                 Callable<V> task = (Callable<V>) this.task;
                 return task.call();
             }
-            case TaskBuilder.TYPE_FUNC_CTX -> {
+            case TaskBuilder.TYPE_FUNC_STATE -> {
                 Function<Object, V> task = (Function<Object, V>) this.task;
                 return task.apply(ctx);
             }
@@ -218,7 +218,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     public static PromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options, IPromise<?> promise) {
-        return acquire(TaskBuilder.TYPE_ACTION_CTX, action, ctx, options, promise);
+        return acquire(TaskBuilder.TYPE_ACTION_STATE, action, ctx, options, promise);
     }
 
     public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options, IPromise<V> promise) {
@@ -226,7 +226,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     public static <V> PromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options, IPromise<V> promise) {
-        return acquire(TaskBuilder.TYPE_FUNC_CTX, action, ctx, options, promise);
+        return acquire(TaskBuilder.TYPE_FUNC_STATE, action, ctx, options, promise);
     }
 
     public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {

@@ -17,11 +17,13 @@
 #endregion
 
 using System;
+using System.Runtime.InteropServices;
 
 #pragma warning disable CS0420
 
 namespace Wjybxx.Disruptor
 {
+[StructLayout(LayoutKind.Sequential)]
 public abstract class RingBufferSequencer : ProducerBarrier, Sequencer
 {
     /** 生产者的序列，表示生产者的进度。 */
@@ -50,7 +52,7 @@ public abstract class RingBufferSequencer : ProducerBarrier, Sequencer
     /// 
     /// </summary>
     /// <param name="bufferSize">RingBuffer大小</param>
-    /// <param name="spinIterations">自旋参数，大于0表示自旋，否则表示Sleep 1毫秒</param>
+    /// <param name="spinIterations">自旋参数，大于0表示自旋，否则表示Sleep 1毫秒；仅作用于不可中断的申请方法</param>
     /// <param name="waitStrategy">默认等待策略</param>
     /// <param name="blocker">用于唤醒消费者的锁</param>
     /// <exception cref="ArgumentNullException"></exception>

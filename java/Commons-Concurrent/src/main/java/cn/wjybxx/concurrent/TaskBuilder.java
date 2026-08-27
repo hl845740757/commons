@@ -33,9 +33,9 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     public static final int TYPE_EMPTY = 0;
     public static final int TYPE_ACTION = 1;
-    public static final int TYPE_ACTION_CTX = 2;
+    public static final int TYPE_ACTION_STATE = 2;
     public static final int TYPE_FUNC = 3;
-    public static final int TYPE_FUNC_CTX = 4;
+    public static final int TYPE_FUNC_STATE = 4;
     @Deprecated
     private static final int TYPE_TASK = 5; // java端不使用，用于C#
 
@@ -90,7 +90,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     /** 是否启用了某选项 */
     public boolean isEnabled(int taskOption) {
-        return (options & taskOption) != 0;
+        return TaskOptions.isEnabled(options, taskOption);
     }
 
     /** 启用选项 */
@@ -128,7 +128,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     }
 
     public static TaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
-        return new TaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
+        return new TaskBuilder<>(TYPE_ACTION_STATE, task, ctx);
     }
 
     public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task) {
@@ -140,7 +140,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     }
 
     public static <V> TaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
-        return new TaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
+        return new TaskBuilder<>(TYPE_FUNC_STATE, task, ctx);
     }
 
     public ScheduledTaskBuilder<V> toScheduledBuilder() {

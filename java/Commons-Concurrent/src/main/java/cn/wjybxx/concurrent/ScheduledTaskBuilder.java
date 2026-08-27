@@ -49,6 +49,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     private long period;
     private long timeout;
     private int countLimit;
+    private int priority;
     private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
     private ScheduledTaskBuilder(int type, Object task) {
@@ -190,7 +191,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     /** 是否设置了次数限制 */
     public boolean hasCountLimit() {
-        return isEnabled(TaskOptions.HAS_COUNTDOWN);
+        return isEnabled(TaskOptions.HAS_COUNT_LIMIT);
     }
 
     public int getCountLimit() {
@@ -210,18 +211,18 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
             throw new IllegalArgumentException("invalid count " + countLimit);
         }
         this.countLimit = countLimit;
-        enable(TaskOptions.HAS_COUNTDOWN);
+        enable(TaskOptions.HAS_COUNT_LIMIT);
         return this;
     }
 
     /** 获取任务优先级 */
     public int getPriority() {
-        return TaskOptions.getPriority(options);
+        return priority;
     }
 
     /** 设置任务的优先级 */
-    public TaskBuilder<V> setPriority(int priority) {
-        options = TaskOptions.setPriority(options, priority);
+    public ScheduledTaskBuilder<V> setPriority(int priority) {
+        this.priority = priority;
         enable(TaskOptions.HAS_PRIORITY);
         return this;
     }
@@ -265,7 +266,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     public static ScheduledTaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
+        return new ScheduledTaskBuilder<>(TYPE_ACTION_STATE, task, ctx);
     }
 
     public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task) {
@@ -277,7 +278,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     public static <V> ScheduledTaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
+        return new ScheduledTaskBuilder<>(TYPE_FUNC_STATE, task, ctx);
     }
 
     /** 适用于禁止初始延迟小于0的情况 */

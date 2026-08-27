@@ -89,6 +89,12 @@ public final class Util {
         return minimum;
     }
 
+    public static long getMinimumSequence(final SequenceBarrier[] barriers, final Sequence[] sequences, long minimum) {
+        long r1 = getMinimumSequence(barriers, minimum);
+        long r2 = getMinimumSequence(sequences, minimum);
+        return Math.min(r1, r2);
+    }
+
     /**
      * 原子方式添加屏障
      *

@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Wjybxx.Disruptor
@@ -29,6 +30,7 @@ namespace Wjybxx.Disruptor
 /// 后必须调用{@link ProducerBarrier#getHighestPublishedSequence(long, long)}
 /// 确定真正可用的序号。因为多生产者模型下，生产者之间是无锁的，预分配序号，那么真正填充的数据可能是非连续的。
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public sealed class MultiProducerSequencer : RingBufferSequencer
 {
     /// <summary>
@@ -208,7 +210,12 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
                 // 获取最新的消费者进度并缓存起来 -- 如果缓存是有意义的
                 long gatingSequence = Util.GetMinimumSequence(gatingBarriers, current);
                 if (wrapPoint > gatingSequence) {
-                    if (spinIterations > 0) { // 大于0时自旋 -- 不同于Java实现 TODO 可能会导致无法响应中断
+                    if (interruptible) {
+                        Thread.Sleep(0); // Sleep0响应中断，SpinWait意义不大
+                        continue;
+                    }
+
+                    if (spinIterations > 0) {
                         Thread.SpinWait(spinIterations);
                         continue;
                     }
@@ -216,7 +223,6 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
                         Thread.Sleep(1);
                     }
                     catch (ThreadInterruptedException) {
-                        if (interruptible) throw;
                         interrupted = true;
                     }
                     continue;
