@@ -69,10 +69,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         SetContext(context);
     }
 
-    /**
-     * 用于动态指定成员数据类型
-     * 这对于精确解析数组元素和Object的字段十分有用 -- 比如解析一个{@code Vector3}的时候就可以指定字段的默认类型为float。
-     */
+    /// <summary>
+    /// 用于动态指定成员数据类型
+    /// 这对于精确解析数组元素和Object的字段十分有用 -- 比如解析一个<c>Vector3</c>的时候就可以指定字段的默认类型为float。
+    /// </summary>
     public void SetComponentType(DsonType componentType) {
         GetContext().componentType = componentType;
     }
@@ -1011,7 +1011,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         PushToken(endToken);
     }
 
-    /** @return 触发结束的token */
+    /// <returns>触发结束的token</returns>
     private DsonToken SkipStack(int stack) {
         while (stack > 0) {
             DsonToken token = _marking ? PopToken() : SkipToken();

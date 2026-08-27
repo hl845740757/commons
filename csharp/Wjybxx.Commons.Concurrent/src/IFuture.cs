@@ -218,8 +218,8 @@ public interface IFuture<T> : IFuture
                               int options = 0, CancellationToken cancelToken = default);
 
     /// <summary>
-    /// 该方法返回一个新的{@code Future}，无论当前{@code Future}执行成功还是失败，给定的操作都将执行，且返回的{@code Future}始终以相同的结果进入完成状态。
-    /// 与方法{@link #handle(TriFunction)}不同，此方法不是为转换完成结果而设计的，因此提供的操作不应引发异常。
+    /// 该方法返回一个新的<c>Future</c>，无论当前<c>Future</c>执行成功还是失败，给定的操作都将执行，且返回的<c>Future</c>始终以相同的结果进入完成状态。
+    /// 与方法<c>Handle</c>不同，此方法不是为转换完成结果而设计的，因此提供的操作不应引发异常。
     /// 1.如果action出现了异常，则仅仅记录一个日志，不向下传播(这里与JDK实现不同) -- 应当避免抛出异常。
     /// 2.如果用户主动取消了返回的Future，或者用于异步执行的Executor已关闭，则不会以相同的结果进入完成状态。
     /// </summary>

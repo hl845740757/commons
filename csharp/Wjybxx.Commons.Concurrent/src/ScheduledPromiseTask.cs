@@ -212,11 +212,10 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         helper.DoSchedule(this);
     }
 
-    /**
-     * 外部确定性触发，不需要回调的方式重新压入队列
-     *
-     * @return 如果需要再压入队列则返回true
-     */
+    /// <summary>
+    /// 外部确定性触发，不需要回调的方式重新压入队列
+    /// </summary>
+    /// <returns>如果需要再压入队列则返回true</returns>
     public bool Trigger(long tickTime) {
         if (Trigger0(tickTime)) {
             return true;

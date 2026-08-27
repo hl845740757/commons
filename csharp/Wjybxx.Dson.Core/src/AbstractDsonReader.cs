@@ -125,7 +125,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     /** 不直接返回值，而是存储在变量上可避免泛型问题 */
     protected abstract void DoReadName();
 
-    /** 检查是否可以执行{@link #readDsonType()} */
+    /** 检查是否可以执行<see cref="ReadDsonType"/> */
     protected void CheckReadDsonTypeState(Context context) {
         if (context.contextType == DsonContextType.TopLevel) {
             if (context.state != DsonReaderState.Initial && context.state != DsonReaderState.Type) {
@@ -491,7 +491,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     /** 创建新的context，保存信息，压入上下文 */
     protected abstract void DoReadStartContainer(DsonContextType contextType, DsonType dsonType);
 
-    /** 恢复到旧的上下文，恢复{@link #currentDsonType}，弹出上下文 */
+    /** 恢复到旧的上下文，恢复<c>currentDsonType</c>，弹出上下文 */
     protected abstract void DoReadEndContainer();
 
     #endregion

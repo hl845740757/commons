@@ -36,7 +36,7 @@ public abstract class AbstractPromise
 {
     /// <summary>
     /// 当前对象上的所有监听器，使用栈方式存储
-    /// 如果{@code stack}为{@link #TOMBSTONE}，表明当前Future已完成，且正在进行通知，或已通知完毕。
+    /// 如果<c>stack</c>为<c>TOMBSTONE</c>，表明当前Future已完成，且正在进行通知，或已通知完毕。
     /// </summary>
     internal volatile Completion? stack;
 
@@ -115,23 +115,23 @@ public abstract class AbstractPromise
     #region notify
 
     // Modes for Completion.tryFire. Signedness matters.
-    /**
-     * 同步调用模式，表示压栈过程中发现{@code Future}已进入完成状态，从而调用{@link Completion#tryFire(int)}。
-     * 1. 如果在该模式下使下一个{@code Future}进入完成状态，则直接触发目标{@code Future}的完成事件，即调用{@link #postComplete(Promise)}。
-     * 2. 在该模式，在执行前，可能需要抢占执行权限。
-     */
+    /// <summary>
+    /// 同步调用模式，表示压栈过程中发现<c>Future</c>已进入完成状态，从而调用<c>Completion.TryFire</c>。
+    /// 1. 如果在该模式下使下一个<c>Future</c>进入完成状态，则直接触发目标<c>Future</c>的完成事件，即调用<c>PostComplete</c>。
+    /// 2. 在该模式，在执行前，可能需要抢占执行权限。
+    /// </summary>
     internal const int SYNC = 0;
-    /**
-     * 异步调用模式，表示提交到{@link Executor}之后调用{@link Completion#tryFire(int)}
-     * 1. 如果在该模式下使下一个{@code Future}进入完成状态，则直接触发目标{@code Future}的完成事件，即调用{@link #postComplete(Promise)}。
-     * 2. 在该模式，表示已获得执行权限，可立即执行。
-     */
+    /// <summary>
+    /// 异步调用模式，表示提交到<see cref="IExecutor"/>之后调用<c>Completion.TryFire</c>
+    /// 1. 如果在该模式下使下一个<c>Future</c>进入完成状态，则直接触发目标<c>Future</c>的完成事件，即调用<c>PostComplete</c>。
+    /// 2. 在该模式，表示已获得执行权限，可立即执行。
+    /// </summary>
     internal const int ASYNC = 1;
-    /**
-     * 嵌套调用模式，表示由{@link #postComplete(Promise)}中触发调用。
-     * 1. 如果在该模式下使下一个{@code Future}进入完成状态，不触发目标{@code Future}的完成事件，而是返回目标{@code Future}，由当前{@code Future}代为推送。
-     * 2. 在该模式，在执行前，可能需要抢占执行权限。
-     */
+    /// <summary>
+    /// 嵌套调用模式，表示由<c>PostComplete</c>中触发调用。
+    /// 1. 如果在该模式下使下一个<c>Future</c>进入完成状态，不触发目标<c>Future</c>的完成事件，而是返回目标<c>Future</c>，由当前<c>Future</c>代为推送。
+    /// 2. 在该模式，在执行前，可能需要抢占执行权限。
+    /// </summary>
     internal const int NESTED = -1;
 
     /** 用于表示任务已申领权限 */
@@ -207,7 +207,7 @@ public abstract class AbstractPromise
     }
 
     /// <summary>
-    /// 清空当前{@code Future}上的监听器，并将当前{@code Future}上的监听器逆序方式插入到{@code onto}前面。
+    /// 清空当前<c>Future</c>上的监听器，并将当前<c>Future</c>上的监听器逆序方式插入到<c>onto</c>前面。
     /// 
     /// Q: 这步操作是要干什么？
     /// A: Future的监听器构成了一棵树，在不进行优化的情况下，遍历监听器是一个【前序遍历】过程，这会产生很深的方法栈，从而影响性能。
@@ -337,7 +337,7 @@ public abstract class AbstractPromise
     /// </summary>
     internal abstract class Completion : ITask
     {
-        /** 非volatile，通过{@link Promise#stack}的原子更新来保证可见性 */
+        /** 非volatile，通过<c>Promise.stack</c>的原子更新来保证可见性 */
         internal Completion? next;
 
         /// <summary>
@@ -360,10 +360,10 @@ public abstract class AbstractPromise
         public abstract int Options { get; set; }
 
         /// <summary>
-        /// 当依赖的某个{@code Future}进入完成状态时，该方法会被调用。
-        /// 如果tryFire使得另一个{@code Future}进入完成状态，分两种情况：
-        /// 1. mode指示不要调用{@link #postComplete(Promise)}方法时，则返回新进入完成状态的{@code Future}。
-        /// 2. mode指示可以调用{@link #postComplete(Promise)}方法时，则直接推送其进入完成状态的事件。
+        /// 当依赖的某个<c>Future</c>进入完成状态时，该方法会被调用。
+        /// 如果tryFire使得另一个<c>Future</c>进入完成状态，分两种情况：
+        /// 1. mode指示不要调用<c>PostComplete</c>方法时，则返回新进入完成状态的<c>Future</c>。
+        /// 2. mode指示可以调用<c>PostComplete</c>方法时，则直接推送其进入完成状态的事件。
         /// </summary>
         /// <param name="mode"></param>
         public abstract AbstractPromise? TryFire(int mode);

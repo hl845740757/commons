@@ -63,7 +63,7 @@ public abstract class EventSequencerBuilder<T>
 
     /// <summary>
     /// 启用序号阻塞器。
-    /// 1. 如果存在需要通过{@link Condition}等待生产者发布序号的消费者，则需要启用blocker。
+    /// 1. 如果存在需要通过条件变量等待生产者发布序号的消费者，则需要启用blocker。
     /// 2. 默认情况下不启用。
     /// </summary>
     public bool EnableBlocker {

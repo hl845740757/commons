@@ -92,7 +92,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         DoWriteName(name);
     }
 
-    /** 执行{@link #WriteName(String)}时调用 */
+    /** 执行<see cref="WriteName"/>时调用 */
     protected void DoWriteName(TName name) {
     }
 

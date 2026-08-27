@@ -26,7 +26,7 @@ namespace Wjybxx.Commons
 {
 /// <summary>
 /// 常量池快照字典。
-/// 由于<see cref="ConstantPool{T}"/>是可变的，这使得有些查询是高开销的，比如：{@link ConstantPool#values()}
+/// 由于<see cref="ConstantPool{T}"/>是可变的，这使得有些查询是高开销的，比如：<see cref="ConstantPool{T}.Values"/>
 /// </summary>
 [Immutable]
 public sealed class ConstantMap<T> where T : class, IConstant

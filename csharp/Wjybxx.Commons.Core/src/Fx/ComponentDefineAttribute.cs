@@ -32,7 +32,7 @@ public class ComponentDefineAttribute : Attribute
 {
     /// <summary>
     /// 组件的名字
-    /// 默认使用<see cref="Type.Name"/>
+    /// 默认使用<see cref="System.Reflection.MemberInfo.Name"/>
     /// </summary>
     public string? Name { get; set; }
 

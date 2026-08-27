@@ -71,18 +71,18 @@ public class DsonTextWriterSettings : DsonWriterSettings
         /** 行分隔符 */
         public string LineSeparator { get; set; } = Environment.NewLine;
 
-        /**
-         * 行长度，该值是一个换行参考值
-         * 精确控制行长度较为复杂，那样我们需要考虑每一种值toString后长度超出的问题；
-         * 另外在美观性上也不好，比如：一个integer写到一半换行。。。
-         * 另外，这个行长度是是码元计数，不是字符计数。
-         */
+        /// <summary>
+        /// 行长度，该值是一个换行参考值
+        /// 精确控制行长度较为复杂，那样我们需要考虑每一种值toString后长度超出的问题；
+        /// 另外在美观性上也不好，比如：一个integer写到一半换行。。。
+        /// 另外，这个行长度是是码元计数，不是字符计数。
+        /// </summary>
         public int SoftLineLength { get; set; } = 150;
 
-        /**
-         * 是否启用纯文本模式
-         * 如果{@link #unicodeChar}为true，该值通常需要关闭，text模式不会执行转义，也就不会处理unicode字符
-         */
+        /// <summary>
+        /// 是否启用纯文本模式
+        /// 如果<c>UnicodeChar</c>为true，该值通常需要关闭，text模式不会执行转义，也就不会处理unicode字符
+        /// </summary>
         public bool EnableText { get; set; } = true;
 
         /** 触发text模式的字符串长度 */
@@ -91,11 +91,11 @@ public class DsonTextWriterSettings : DsonWriterSettings
         /** 纯文本换行是否启用左对齐  */
         public bool TextAlignLeft { get; set; } = true;
 
-        /**
-         * 不可打印的ascii码字符是否转为unicode字符
-         * (ascii码32~126以外的字符)
-         * 通常用于非UTF8文本的移植
-         */
+        /// <summary>
+        /// 不可打印的ascii码字符是否转为unicode字符
+        /// (ascii码32~126以外的字符)
+        /// 通常用于非UTF8文本的移植
+        /// </summary>
         public bool UnicodeChar { get; set; } = false;
 
         /** 自动模式下无引号字符串的最大长度 -- 过大会降低序列化速度，也会影响换行的精确性 */

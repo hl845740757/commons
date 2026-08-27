@@ -50,7 +50,7 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     /// <summary>
     /// 读取下一个值的类型
-    /// 如果到达对象末尾，则返回{@link DsonType#END_OF_OBJECT}
+    /// 如果到达对象末尾，则返回<see cref="DsonType.EndOfObject"/>
     /// 
     /// 循环的基本写法：
     /// <code>
@@ -100,7 +100,7 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     /// <summary>
     /// 获取当前的数据类型
     /// 1.该值在调用任意的读方法后将变化
-    /// 2.如果尚未执行过{@link #ReadDsonType()}则抛出异常
+    /// 2.如果尚未执行过<see cref="ReadDsonType"/>则抛出异常
     /// </summary>
     /// <returns></returns>
     DsonType CurrentDsonType { get; }
@@ -208,7 +208,7 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     /// <summary>
     /// 跳过当前容器对象(Array、Object、Header)的剩余内容
-    /// 调用该方法后，{@link #getCurrentDsonType()}将返回{@link DsonType#END_OF_OBJECT}
+    /// 调用该方法后，<see cref="CurrentDsonType"/>将返回<see cref="DsonType.EndOfObject"/>
     /// 也就是说，调用该方法后应立即调用 ReadEnd 相关方法
     /// </summary>
     void SkipToEndOfObject();

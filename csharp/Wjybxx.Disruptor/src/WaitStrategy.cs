@@ -29,7 +29,7 @@ public interface WaitStrategy
 {
     /// <summary>
     /// 等待给定的序号可用
-    /// 实现类通过<see cref="ProducerBarrier.Sequence()"/>和<see cref="ConsumerBarrier.DependentSequence()"/>进行等待。
+    /// 实现类通过<see cref="SequenceBarrier.Sequence"/>和<see cref="SequenceBarrier.DependentSequence"/>进行等待。
     /// </summary>
     /// <param name="sequence">期望消费的序号</param>
     /// <param name="producerBarrier">用于条件等待策略依赖策略感知生产者进度</param>

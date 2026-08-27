@@ -195,10 +195,11 @@ public interface IDsonObjectWriter : IDisposable
     /// 2.不写入Header的类型不支持被其它对象引用。
     /// 3.Header不支持自定义内容，因为框架只能解析固定的Header字段。
     /// 4.集合类型注意去除<see cref="SerializeFeatures.WriteTypeName"/>属性。
+    /// </summary>
     /// <param name="encoderType">被编码的类型，不一定等于value的类型，可能是超类类型</param>
     /// <param name="declaredType">声明类型，用于判断是否写入类型信息</param>
     /// <param name="features">序列化特征值</param>
-    /// </summary>
+    /// <param name="header">对象头信息</param>
     void WriteHeader(Type encoderType, Type declaredType, SerializeFeatures features,
                      SerializeHeader header = default);
 

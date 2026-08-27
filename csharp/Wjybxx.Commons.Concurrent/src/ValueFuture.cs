@@ -25,7 +25,7 @@ using Wjybxx.Commons.Attributes;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 1.框架会默认不缓存await创建的状态机，以避免过多的对象池，可通过<see cref="TaskPoolConfig"/>调整池大小启用。
+/// 1.框架会默认不缓存await创建的状态机，以避免过多的对象池；可通过<see cref="TaskPoolSizeAttribute"/>为指定方法启用对象池。
 /// 2.状态机默认会在用户获取执行结果的时候回收，因此不可在await返回之后继续使用该Future对象 。
 /// 3.如果用户不需要任务的执行结果，需调用<see cref="Forget"/>告知Promise在任务完成后自动回收。
 /// 4.如果需要获取任务的执行结果，可通过拆箱为object泛型参数实现。
@@ -380,7 +380,7 @@ public readonly struct ValueFuture
 }
 
 /// <summary>
-/// 1.框架会默认缓存await创建的状态机，可通过<see cref="TaskPoolConfig"/>调整池大小。
+/// 1.框架会默认不缓存await创建的状态机，以避免过多的对象池；可通过<see cref="TaskPoolSizeAttribute"/>为指定方法启用对象池。
 /// 2.状态机默认会在用户获取执行结果的时候回收，因此不可在await返回之后继续使用该Future对象 。
 /// 3.如果用户不需要任务的执行结果，需调用<see cref="Forget"/>告知Promise在任务完成后自动回收。
 /// </summary>

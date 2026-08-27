@@ -23,16 +23,15 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public interface IEventLoopChooser
 {
-    /**
-     * 按默认规则分配一个{@link EventLoop}
-     */
+    /// <summary>
+    /// 按默认规则分配一个<see cref="IEventLoop"/>
+    /// </summary>
     IEventLoop Select();
 
-    /**
-     * 通过给定键选择一个{@link EventLoop}
-     *
-     * @apiNote 同一个key的选择结果必须是相同的
-     */
+    /// <summary>
+    /// 通过给定键选择一个<see cref="IEventLoop"/>
+    /// 注意：同一个key的选择结果必须是相同的
+    /// </summary>
     IEventLoop Select(int key);
 }
 }

@@ -71,10 +71,10 @@ public interface IFuture
     /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
     bool IsCompleted => Status >= TaskStatus.Success;
 
-    /**
-     * 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；
-     * 但有些时候，我们需要将取消也视为失败的一种，因此需要快捷的方法。
-     */
+    /// <summary>
+    /// 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；
+    /// 但有些时候，我们需要将取消也视为失败的一种，因此需要快捷的方法。
+    /// </summary>
     bool IsFailedOrCancelled => Status > TaskStatus.Success;
 
     #endregion

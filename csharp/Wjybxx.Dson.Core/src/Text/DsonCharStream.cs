@@ -85,7 +85,7 @@ public interface IDsonCharStream : IDisposable
     /// <summary>
     /// 丢弃指定位置之前的缓存
     /// 该接口用于外部告诉Buffer可以安全的丢弃不再读取字符位置
-    /// 注意：并不是只有调用该接口的时候才触发丢弃字符，Stream为了控制内存在{@link #read()}的时候是可能丢弃字符的。
+    /// 注意：并不是只有调用该接口的时候才触发丢弃字符，Stream为了控制内存在<see cref="Read"/>的时候是可能丢弃字符的。
     /// </summary>
     /// <param name="position">已读取位置，该位置的字符需要保留；position可能是一个估测值，因此position小于等于0则不处理</param>
     void ReadComplete(int position) {

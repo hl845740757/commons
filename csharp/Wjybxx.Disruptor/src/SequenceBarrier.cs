@@ -87,7 +87,7 @@ public interface SequenceBarrier
 
     /// <summary>
     /// 移除这些屏障，不再跟踪它们的进度信息；
-    /// 特殊用法：如果移除了所有的消费者，那么生产者便不会被阻塞，也就能{@link ProducerBarrier#next()} 死循环中醒来！
+    /// 特殊用法：如果移除了所有的消费者，那么生产者便不会被阻塞，也就能从<see cref="ProducerBarrier.Next()"/>死循环中醒来！
     /// </summary>
     /// <param name="barrier">要删除的屏障</param>
     /// <returns>如果给定barrier存在且删除成功则返回true，否则返回false</returns>

@@ -81,7 +81,7 @@ public static class TaskOptions
     ///</summary>
     public const int STAGE_TRY_INLINE = 1 << 23;
     /// <summary>
-    /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="CancellationToken"/>类型，并检测取消信号。
+    /// 默认情况下，Stage会在触发回调之前检测ctx否为IContext和<see cref="CancellationToken"/>类型，并检测取消信号。
     /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
     /// </summary>
     [Obsolete("新版本切割用户上下文和调度上下文，不再使用该参数")]
@@ -132,7 +132,7 @@ public static class TaskOptions
     /// <summary>
     /// 是否未启用选项。
     /// 1.禁用任意bit即为未启用；
-    /// 2.和{@link #isEnabled(int, int)}相反关系
+    /// 2.和<see cref="IsEnabled"/>相反关系
     ///</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsDisabled(int flags, int option) {

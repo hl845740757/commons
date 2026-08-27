@@ -20,7 +20,7 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// <see cref="IAgentEvent"/>的处理器
-/// 抽取该接口以允许{@link IEventLoopModule}注册监听器
+/// 抽取该接口以允许<see cref="IEventLoopModule"/>注册监听器
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public interface IAgentEventHandler<T> where T : IAgentEvent

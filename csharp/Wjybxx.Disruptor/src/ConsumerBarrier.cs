@@ -40,9 +40,9 @@ public interface ConsumerBarrier : SequenceBarrier
     /// <summary>
     /// 等待给定的序号可消费
     ///
-    /// 警告：多生产者模式下该操作十分消耗性能，如果在{@code waitFor}获取sequence之后不完全消费，
+    /// 警告：多生产者模式下该操作十分消耗性能，如果在<c>WaitFor</c>获取sequence之后不完全消费，
     /// 而是每次消费一点，再拉取一点，则会在该操作上形成巨大的开销 —— 极端情况是每次拉取1个，性能将差到极致。
-    /// 建议的的方式：先拉取到本地，然后在本地分批处理，避免频繁调用{@code waitFor}。
+    /// 建议的的方式：先拉取到本地，然后在本地分批处理，避免频繁调用<c>WaitFor</c>。
     /// </summary>
     /// <param name="sequence">期望消费的序号</param>
     /// <exception cref="AlertException">如果收到了Alert信号</exception>
@@ -69,7 +69,7 @@ public interface ConsumerBarrier : SequenceBarrier
     void ClearAlert();
 
     /// <summary>
-    /// 检查【屏障】的的alert状态，如果收到信号，则抛出{@link AlertException}。
+    /// 检查【屏障】的的alert状态，如果收到信号，则抛出<see cref="AlertException"/>。
     /// </summary>
     /// <exception cref="AlertException">如果收到了Alert信号</exception>
     void CheckAlert();

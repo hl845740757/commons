@@ -773,10 +773,10 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return InternalSetException(new OperationCanceledException(cancelToken));
     }
 
-    /**
-     * 如果一个{@link Completion}在计算中出现异常，则使用该方法使目标进入完成状态。
-     * (出现新的异常)
-     */
+    /// <summary>
+    /// 如果一个<c>Completion</c>在计算中出现异常，则使用该方法使目标进入完成状态。
+    /// (出现新的异常)
+    /// </summary>
     private bool CompleteThrowable(Exception x) {
         if (x is not OperationCanceledException) {
             FutureLogger.LogCause(x);
@@ -785,9 +785,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return InternalSetException(x);
     }
 
-    /**
-     * 使用依赖项的结果进入完成状态，通常表示当前{@link Completion}只是一个简单的中继。
-     */
+    /// <summary>
+    /// 使用依赖项的结果进入完成状态，通常表示当前<c>Completion</c>只是一个简单的中继。
+    /// </summary>
     private bool CompleteRelay(T? r, object ex) {
         if (ex == EX_SUCCESS) {
             return InternalSetResult(r);
@@ -796,12 +796,12 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
-    /**
-     * 使用依赖项的异常结果进入完成状态，通常表示当前{@link Completion}只是一个简单的中继。
-     * 在已知依赖项异常完成的时候可以调用该方法，减少开销。
-     * 这里实现和{@link CompletableFuture}不同，这里保留原始结果，不强制将异常转换为{@link CompletionException}。
-     * 这样有助与用户捕获正确的异常类型，而不是一个奇怪的CompletionException
-     */
+    /// <summary>
+    /// 使用依赖项的异常结果进入完成状态，通常表示当前<c>Completion</c>只是一个简单的中继。
+    /// 在已知依赖项异常完成的时候可以调用该方法，减少开销。
+    /// 这里实现和Task不同，这里保留原始结果，不强制将异常转换为<see cref="CompletionException"/>。
+    /// 这样有助与用户捕获正确的异常类型，而不是一个奇怪的CompletionException
+    /// </summary>
     private bool CompleteRelayThrowable(object r) {
         return InternalSetException(r);
     }

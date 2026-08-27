@@ -91,9 +91,9 @@ public class DsonPrinter : IDisposable
 
     #region 普通打印
 
-    /**
-     * @apiNote tab增加的列不是固定的...所以其它打印字符串的方法都必须调用该方法，一定程度上降低了性能，不能批量拷贝
-     */
+    /// <summary>
+    /// 注意：tab增加的列不是固定的...所以其它打印字符串的方法都必须调用该方法，一定程度上降低了性能，不能批量拷贝
+    /// </summary>
     public void Print(char c) {
         if (c == '\n') {
             Println();
@@ -165,35 +165,39 @@ public class DsonPrinter : IDisposable
         _column += _builder.Length - prevLen;
     }
 
-    /** @param cBuffer 内容中无tab字符 */
+    /// <param name="cBuffer">内容中无tab字符</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(ReadOnlySpan<char> cBuffer) {
         _builder.Append(cBuffer);
         _column += cBuffer.Length;
     }
 
-    /** @param cBuffer 内容中无tab字符 */
+    /// <param name="cBuffer">内容中无tab字符</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(char[] cBuffer) {
         _builder.Append(cBuffer);
         _column += cBuffer.Length;
     }
 
-    /** @param cBuffer 内容中无tab字符 */
+    /// <param name="cBuffer">内容中无tab字符</param>
+    /// <param name="offset">起始偏移</param>
+    /// <param name="count">字符数量</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(char[] cBuffer, int offset, int count) {
         _builder.Append(cBuffer, offset, count);
         _column += count; // c#是count...
     }
 
-    /** @param text 内容中无tab字符 */
+    /// <param name="text">内容中无tab字符</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(string text) {
         _builder.Append(text);
         _column += text.Length;
     }
 
-    /** @param text 内容中无tab字符 */
+    /// <param name="text">内容中无tab字符</param>
+    /// <param name="start">起始偏移</param>
+    /// <param name="count">字符数量</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrintRange(string text, int start, int count) {
         _builder.Append(text, start, count);

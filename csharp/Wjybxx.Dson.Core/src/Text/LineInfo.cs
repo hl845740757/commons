@@ -41,13 +41,13 @@ public struct LineInfo
     [FieldOffset(0)] public readonly int ln;
     /** 行全局起始位置， 0-based */
     [FieldOffset(4)] public readonly int startPos;
-    /**
-     * 行结束位置（全局），0-based
-     * 1.如果换行符是\r\n，则是\n的位置；
-     * 2.如果换行符是\n，则是\n的位置；
-     * 3.eof的情况下，是最后一个字符的位置 --换行结束的情况下，eof出现在读取下一行的时候
-     * 4.start和end相等时表示空行；start大于end时表示无效行。
-     */
+    /// <summary>
+    /// 行结束位置（全局），0-based
+    /// 1.如果换行符是\r\n，则是\n的位置；
+    /// 2.如果换行符是\n，则是\n的位置；
+    /// 3.eof的情况下，是最后一个字符的位置 --换行结束的情况下，eof出现在读取下一行的时候
+    /// 4.start和end相等时表示空行；start大于end时表示无效行。
+    /// </summary>
     [FieldOffset(8)] public int endPos;
     /** 行在字符流中的状态 -- endPos是否到达行尾 */
     [FieldOffset(12)] public int state;

@@ -24,16 +24,16 @@ namespace Wjybxx.Disruptor
 /// <summary>
 /// 生产者序号屏障
 /// 1. 生产者屏障负责的是生产者与生产者之间，生产者和消费者之间的协调。
-/// 2. 生产者与消费最慢的消费者之间进行协调 -- {@link #dependentSequence()}即为最慢的消费者进度，如果有消费者的话。
+/// 2. 生产者与消费最慢的消费者之间进行协调 -- <see cref="SequenceBarrier.DependentSequence"/>即为最慢的消费者进度，如果有消费者的话。
 /// 3. 生产者之间可能毫无关系，因此生产者之间的协调需要由屏障实现。
 /// 4. 生产者由于明确知道自己要生产的数据数量，因此tryNext(n)的接口更易于使用。
 ///
 /// Q: 生产者为什么没有等待策略？
-/// A：一开始我确实尝试添加等待策略，后来发现没有意义。我在{@link SequenceBlocker}中提到，生产者不能使用{@link Condition}等待消费者，
+/// A：一开始我确实尝试添加等待策略，后来发现没有意义。我在<see cref="SequenceBlocker"/>中提到，生产者不能使用Condition等待消费者，
 /// 因此等待策略的扩展性很有限，除了短暂的挂起线程外，没有好的替代方法。
 ///
-/// Q: 生产者为什么没有{@link ConsumerBarrier#alert()}信号？
-/// A：我们将生产者归属于外部系统，而将消费者归属于内部系统。生产者可能仅有部分逻辑与{@link Sequencer}相关，我们不能使用alert信号来中断或终止生产者。
+/// Q: 生产者为什么没有<see cref="ConsumerBarrier.Alert"/>信号？
+/// A：我们将生产者归属于外部系统，而将消费者归属于内部系统。生产者可能仅有部分逻辑与<see cref="Sequencer"/>相关，我们不能使用alert信号来中断或终止生产者。
 /// </summary>
 public interface ProducerBarrier : SequenceBarrier
 {

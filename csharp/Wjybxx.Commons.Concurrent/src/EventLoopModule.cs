@@ -42,7 +42,7 @@ public abstract class EventLoopModule : IEventLoopModule
         this._status = status;
     }
 
-    /** 设置EventLoop 会触发{@link #onAwake()}事件 */
+    /** 设置EventLoop 会触发<c>OnAwake</c>事件 */
     internal void SetEventLoop(IEventLoop eventLoop) {
         if (eventLoop == null) throw new ArgumentNullException(nameof(eventLoop));
         if (this._eventLoop != null) {

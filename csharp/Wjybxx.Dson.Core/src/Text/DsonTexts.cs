@@ -82,10 +82,10 @@ public static class DsonTexts
     /** 数字相关的字符 */
     private static readonly BitArray parseableCharSet = new BitArray(128);
 
-    /**
-     * 规定哪些不安全较为容易，规定哪些安全反而不容易
-     * 这些字符都是128内，使用bitset很快，还可以避免第三方依赖
-     */
+    /// <summary>
+    /// 规定哪些不安全较为容易，规定哪些安全反而不容易
+    /// 这些字符都是128内，使用bitset很快，还可以避免第三方依赖
+    /// </summary>
     private static readonly BitArray unsafeCharSet = new BitArray(128);
     /** print时的不安全字符 */
     private static readonly BitArray unsafePrintCharSet = new BitArray(128);
@@ -122,10 +122,10 @@ public static class DsonTexts
         return c == ' ' || c == '\t';
     }
 
-    /**
-     * 是否是不安全的字符，不能省略引号的字符
-     * 注意：safeChar也可能组合出不安全的无引号字符串，比如：123, 0.5, null,true,false，因此不能因为每个字符安全，就认为整个字符串安全
-     */
+    /// <summary>
+    /// 是否是不安全的字符，不能省略引号的字符
+    /// 注意：safeChar也可能组合出不安全的无引号字符串，比如：123, 0.5, null,true,false，因此不能因为每个字符安全，就认为整个字符串安全
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsUnsafeChar(int c) {
         if (c < 128) { // BitArray不能访问索引外的字符
@@ -142,11 +142,11 @@ public static class DsonTexts
         return char.IsWhiteSpace((char)c);
     }
 
-    /**
-     * 是否可省略字符串的引号
-     * 其实并不建议底层默认判断是否可以不加引号，用户可以根据自己的数据决定是否加引号，比如；guid可能就是可以不加引号的
-     * 这里的计算是保守的，保守一些不容易出错，因为情况太多，否则既难以保证正确性，性能也差。
-     */
+    /// <summary>
+    /// 是否可省略字符串的引号
+    /// 其实并不建议底层默认判断是否可以不加引号，用户可以根据自己的数据决定是否加引号，比如；guid可能就是可以不加引号的
+    /// 这里的计算是保守的，保守一些不容易出错，因为情况太多，否则既难以保证正确性，性能也差。
+    /// </summary>
     public static bool CanUnquoteString(string value, int maxLengthOfUnquoteString, bool isName = false) {
         if (value.Length == 0 || value.Length > maxLengthOfUnquoteString) {
             return false; // 长字符串都加引号，避免不必要的计算

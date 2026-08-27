@@ -264,11 +264,11 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     #region find
 
-    /**
-     * 查找task最近的状态机节点
-     * 1.仅递归查询父节点和长兄节点
-     * 2.优先测试父节点，然后测试长兄节点 - 状态机作为第一个节点的情况比较常见
-     */
+    /// <summary>
+    /// 查找task最近的状态机节点
+    /// 1.仅递归查询父节点和长兄节点
+    /// 2.优先测试父节点，然后测试长兄节点 - 状态机作为第一个节点的情况比较常见
+    /// </summary>
     public static StateMachineTask<T> FindStateMachine(Task<T> task) {
         Task<T> control;
         while ((control = task.Control) != null) {
@@ -286,11 +286,11 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         throw new InvalidOperationException("cant find stateMachine from controls");
     }
 
-    /**
-     * 查找task最近的状态机节点
-     * 1.名字不为空的情况下，支持从兄弟节点中查询
-     * 2.优先测试父节点，然后测试兄弟节点
-     */
+    /// <summary>
+    /// 查找task最近的状态机节点
+    /// 1.名字不为空的情况下，支持从兄弟节点中查询
+    /// 2.优先测试父节点，然后测试兄弟节点
+    /// </summary>
     public static StateMachineTask<T> FindStateMachine(Task<T> task, string? name) {
         if (string.IsNullOrWhiteSpace(name)) {
             return FindStateMachine(task);

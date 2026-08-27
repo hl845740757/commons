@@ -25,8 +25,8 @@ namespace Wjybxx.Commons.Concurrent
 /// 它的本质是容器，它主要负责管理持有的EventLoop的生命周期。
 ///
 /// <h1>时序约定</h1>
-/// 1.{@link EventLoopGroup}代表着一组线程，不对任务的执行时序提供任何保证，用户只能通过工具自行协调。
-/// 2.{@link #execute(Runnable)}{@link #submit(Callable)}系列方法的时序等同于{@code schedule(task, 0, TimeUnit.SECONDS)}
+/// 1.<see cref="IEventLoopGroup"/>代表着一组线程，不对任务的执行时序提供任何保证，用户只能通过工具自行协调。
+/// 2.<c>Execute</c><c>Submit</c>系列方法的时序等同于<c>Schedule(task, 0)</c>
 /// 
 /// Q: 为什么在接口层不提供严格的时序约定？
 /// A: 如果在接口层定义了严格的时序约定，实现类就会受到限制。
@@ -44,8 +44,8 @@ public interface IEventLoopGroup : IScheduledExecutorService, IEnumerable<IEvent
 
     /// <summary>
     /// 通过一个键选择一个<see cref="IEventLoop"/>用于接下来的任务调度。
-    /// 如果事件循环组的事件循环数量是动态的，那么同一个key可能返回不同的{@link IEventLoop}，也可能在事件循环销毁前总是返回同一个事件循环；
-    /// 如果事件循环组的事件循环数量是固定的，那么同一个key应当返回固定的{@link IEventLoop};
+    /// 如果事件循环组的事件循环数量是动态的，那么同一个key可能返回不同的<see cref="IEventLoop"/>，也可能在事件循环销毁前总是返回同一个事件循环；
+    /// 如果事件循环组的事件循环数量是固定的，那么同一个key应当返回固定的<see cref="IEventLoop"/>;
     ///
     /// 这提供了另一种绑定事件循环的方式，使得业务不必保存事件循环的引用。
     /// </summary>

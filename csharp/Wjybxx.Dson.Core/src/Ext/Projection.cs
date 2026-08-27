@@ -129,10 +129,10 @@ public class Projection
         return Project(new DsonTextReader(DsonTextReaderSettings.Default, dsonString));
     }
 
-    /**
-     * 1.如果投影为Array，则投可投影顶层的Header，返回值必定为{@link DsonArray}
-     * 2.如果投影为Object，则只返回第一个对象的投影，顶层Header被当做普通对象投影。
-     */
+    /// <summary>
+    /// 1.如果投影为Array，则投可投影顶层的Header，返回值必定为<see cref="DsonArray{T}"/>
+    /// 2.如果投影为Object，则只返回第一个对象的投影，顶层Header被当做普通对象投影。
+    /// </summary>
     public DsonValue? Project(IDsonReader<string> reader) {
         if (root is DefaultNode defaultNode && defaultNode.arrayLike) {
             return new Matcher(reader, root).ProjectTopArray();
@@ -333,13 +333,13 @@ public class Projection
     private static readonly Node DISCARD_NODE = new DiscardNode();
     private static readonly Node SELECT_NODE = new SelectNode();
 
-    /**
-     * Node表示预编译的节点
-     * 1.不能总是解析用户的文本，因此需要提前编译缓存
-     * 2.Node仅仅是保存编译后的数据，即包含Object的投影信息，也包含Array的投影信息。
-     * 3.只有在真正执行投影时才知道数据的类型，因此Node不能直接运行
-     * 4.node无需记录父子关系，Matcher记录即可。
-     */
+    /// <summary>
+    /// Node表示预编译的节点
+    /// 1.不能总是解析用户的文本，因此需要提前编译缓存
+    /// 2.Node仅仅是保存编译后的数据，即包含Object的投影信息，也包含Array的投影信息。
+    /// 3.只有在真正执行投影时才知道数据的类型，因此Node不能直接运行
+    /// 4.node无需记录父子关系，Matcher记录即可。
+    /// </summary>
     private abstract class Node
     {
         /** 是否是需要投影的节点 */

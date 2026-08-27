@@ -27,7 +27,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///
 /// <h3>注解处理器</h3>
 /// 对于带有该注解的类：
-/// 1. 对于普通类，必须提供<b>非私有无参构造方法</b>，或提供非私有的{@link DsonObjectReader}的单参构造方法。
+/// 1. 对于普通类，必须提供<b>非私有无参构造方法</b>，或提供非私有的<see cref="IDsonObjectReader"/>的单参构造方法。
 /// 2. 对于普通类，所有托管给生成代码读的字段，必须提供setter属性或直接写权限。
 /// 3. 对于普通类，所有托管给生成代码写的字段，必须提供getter属性或直接读权限。
 /// 4. 如果字段通过<see cref="DsonPropertyAttribute"/>指定了读代理，则不要求setter权限
@@ -85,7 +85,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 3. 由于属性较多，因此属性都是get/set，但只应该初始化一次。
 ///
 /// <h3>辅助类类名</h3>
-/// 生成的辅助类为{@code XXXCodec}
+/// 生成的辅助类为<c>XXXCodec</c>
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum, Inherited = false)]
 [Serializable]

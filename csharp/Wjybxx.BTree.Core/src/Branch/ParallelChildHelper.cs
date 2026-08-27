@@ -21,7 +21,7 @@ using System.Runtime.CompilerServices;
 namespace Wjybxx.BTree.Branch
 {
 /// <summary>
-/// Q：为什么不直接叫{@code ChildHelper}？
+/// Q：为什么不直接叫<c>ChildHelper</c>？
 /// A: 通常只应该在有多个运行中的子节点(含hook)的情况下才需要使用该工具类。
 /// </summary>
 /// <typeparam name="T"></typeparam>

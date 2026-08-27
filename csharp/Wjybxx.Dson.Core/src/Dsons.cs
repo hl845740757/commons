@@ -39,12 +39,12 @@ public static class Dsons
 {
     #region 基础常量
 
-    /** {@link DsonType}占用的比特位 */
+    /** <see cref="DsonType"/>占用的比特位 */
     public const int DsonTypeBites = 5;
-    /** {@link DsonType}的最大类型编号 */
+    /** <see cref="DsonType"/>的最大类型编号 */
     public const int DsonTypeMaxValue = 31;
 
-    /** {@link WireType}占位的比特位数 */
+    /** <see cref="WireType"/>占位的比特位数 */
     public const int WireTypeBits = 3;
     public const int WireTypeMask = (1 << WireTypeBits) - 1;
     /** wireType看做数值时的最大值 */
@@ -66,11 +66,11 @@ public static class Dsons
     /** 继承深度占用的比特位 */
     private const int IdepBits = 3;
     private const int IdepMask = (1 << IdepBits) - 1;
-    /**
-     * 支持的最大继承深度 - 7
-     * 1.idep的深度不包含Object，没有显式继承其它类的类，idep为0
-     * 2.超过7层我认为是你的代码有问题，而不是框架问题
-     */
+    /// <summary>
+    /// 支持的最大继承深度 - 7
+    /// 1.idep的深度不包含Object，没有显式继承其它类的类，idep为0
+    /// 2.超过7层我认为是你的代码有问题，而不是框架问题
+    /// </summary>
     public const int IdepMaxValue = IdepMask;
 
     /** 类字段最大number */
@@ -257,10 +257,10 @@ public static class Dsons
 
     #region Read/Write
 
-    /**
-     * 读取顶层集合
-     * 会将独立的header合并到容器中，会将分散的元素读取存入数组
-     */
+    /// <summary>
+    /// 读取顶层集合
+    /// 会将独立的header合并到容器中，会将分散的元素读取存入数组
+    /// </summary>
     public static DsonArray<TName> ReadCollection<TName>(IDsonReader<TName> reader) where TName : IEquatable<TName> {
         DsonArray<TName> collection = new DsonArray<TName>(4);
         DsonType dsonType;
@@ -278,10 +278,10 @@ public static class Dsons
         return collection;
     }
 
-    /**
-     * 写入顶层集合
-     * 顶层容器的header和元素将被展开，而不是嵌套在数组中
-     */
+    /// <summary>
+    /// 写入顶层集合
+    /// 顶层容器的header和元素将被展开，而不是嵌套在数组中
+    /// </summary>
     public static void WriteCollection<TName>(IDsonWriter<TName> writer,
                                               DsonArray<TName> collection) where TName : IEquatable<TName> {
         if (collection.Header.Count > 0) {
@@ -549,11 +549,11 @@ public static class Dsons
         return MutableDeepCopy<TName>(dsonValue, 0);
     }
 
-    /**
-     * 深度拷贝为可变对象
-     *
-     * @param stack 当前栈深度
-     */
+    /// <summary>
+    /// 深度拷贝为可变对象
+    /// </summary>
+    /// <param name="dsonValue">要拷贝的值</param>
+    /// <param name="stack">当前栈深度</param>
     private static DsonValue MutableDeepCopy<TName>(DsonValue dsonValue, int stack) {
         if (stack > 100) throw new InvalidOperationException("Check for circular references");
         switch (dsonValue.DsonType) {

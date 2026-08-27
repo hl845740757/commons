@@ -74,7 +74,7 @@ public interface IExecutorService : IExecutor
     /// 如果 ExecutorService 正在关闭，或已经关闭，则方法不产生任何效果。
     ///
     /// 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，
-    /// 可以使用{@link #awaitTermination(long, TimeUnit)}或{@link #terminationFuture()} 进行等待
+    /// 可以使用<c>AwaitTermination</c>或<c>TerminationFuture</c> 进行等待
     /// </summary>
     void Shutdown();
 
@@ -82,8 +82,8 @@ public interface IExecutorService : IExecutor
     /// 请求关闭 ExecutorService，<b>尝试取消所有正在执行的任务，停止所有待执行的任务，并不再接收新的任务。</b>
     /// 如果 ExecutorService 已经关闭，则方法不产生任何效果。
     ///
-    /// 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，可以使用{@link #awaitTermination(long, TimeUnit)}
-    /// 或{@link #terminationFuture()} 进行等待。
+    /// 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，可以使用<c>AwaitTermination</c>
+    /// 或<c>TerminationFuture</c> 进行等待。
     ///
     /// 注意：部分Executor实现可能无法返回被取消的任务，只是会尽快关闭。
     /// </summary>

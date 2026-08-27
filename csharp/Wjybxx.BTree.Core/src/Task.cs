@@ -920,7 +920,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 
-    /** @return 内部使用的mask */
+    /// <returns>内部使用的mask</returns>
     private int CaptureContext(Task<T> control) {
         this.taskEntry = control.taskEntry;
         this.control = control;
@@ -1059,7 +1059,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 
-    /** @return index or -1 */
+    /// <returns>index or -1</returns>
     public virtual int IndexChild(Task<T> task) {
         for (int idx = ChildCount - 1; idx >= 0; idx--) {
             if (GetChild(idx) == task) {
@@ -1075,13 +1075,13 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 获取指定索引的child */
     public abstract Task<T> GetChild(int index);
 
-    /** @return 为child分配的index */
+    /// <returns>为child分配的index</returns>
     protected abstract int AddChildImpl(Task<T> task);
 
-    /** @return 索引位置旧的child */
+    /// <returns>索引位置旧的child</returns>
     protected abstract Task<T> SetChildImpl(int index, Task<T> task);
 
-    /** @return index对应的child */
+    /// <returns>index对应的child</returns>
     protected abstract Task<T> RemoveChildImpl(int index);
 #nullable restore
 

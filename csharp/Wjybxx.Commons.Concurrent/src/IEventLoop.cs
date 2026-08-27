@@ -39,7 +39,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 如果你期望再次运行和新任务之间得到确定性时序，可以通过提交一个新任务代替自己实现。
 /// （简单说，允许降低周期性任务的再执行优先级）
 /// 
-/// 3. schedule系列方法的{@code initialDelay}和{@code delay}为负时，将转换为0。
+/// 3. schedule系列方法的<c>initialDelay</c>和<c>delay</c>为负时，将转换为0。
 /// fixedRate除外，fixedRate期望的是逻辑时间，总逻辑时间应当是可以根据次数计算的，转0会导致错误，因此禁止负数输入。
 /// 另外，fixedRate由于自身的特性，因此难以和非fixedRate类型的任务达成时序关系。
 ///
@@ -50,10 +50,10 @@ namespace Wjybxx.Commons.Concurrent
 /// 因此后续提交的任务必定在当前任务之后执行，也就是按照提交顺序执行，因此是合法的。
 ///
 /// <h3>警告</h3>
-/// 由于{@link EventLoop}都是单线程的，你需要避免死锁等问题。
-/// 1. 如果两个{@link EventLoop}存在交互，且其中一个使用有界任务队列，则有可能导致死锁，或大量任务超时。
-/// 2. 如果在{@link EventLoop}上执行阻塞或死循环操作，则可能导致死锁，或大量任务超时。
-/// 3. 如果{@link EventLoop}支持自定义等待策略，要小心选择或实现，可能导致定时任务不能被及时执行。 
+/// 由于<see cref="IEventLoop"/>都是单线程的，你需要避免死锁等问题。
+/// 1. 如果两个<see cref="IEventLoop"/>存在交互，且其中一个使用有界任务队列，则有可能导致死锁，或大量任务超时。
+/// 2. 如果在<see cref="IEventLoop"/>上执行阻塞或死循环操作，则可能导致死锁，或大量任务超时。
+/// 3. 如果<see cref="IEventLoop"/>支持自定义等待策略，要小心选择或实现，可能导致定时任务不能被及时执行。 
 /// </summary>
 public interface IEventLoop : IEventLoopGroup, ISingleThreadExecutor
 {

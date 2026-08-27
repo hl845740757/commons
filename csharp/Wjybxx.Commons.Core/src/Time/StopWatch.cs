@@ -68,7 +68,7 @@ public sealed class StopWatch
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="name">停表的名字；推荐命名格式{@code ClassName:MethodName}</param>
+    /// <param name="name">停表的名字；推荐命名格式<c>ClassName:MethodName</c></param>
     /// <exception cref="ArgumentNullException"></exception>
     public StopWatch(string name) {
         this._name = name ?? throw new ArgumentNullException(nameof(name));
@@ -105,7 +105,7 @@ public sealed class StopWatch
 
     /// <summary>
     /// 开始计时。
-    /// 重复调用start之前，必须调用{@link #reset()}
+    /// 重复调用start之前，必须调用<see cref="Reset"/>
     /// </summary>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
@@ -165,7 +165,7 @@ public sealed class StopWatch
 
     /// <summary>
     /// 停止计时。
-    /// 停止计时后，{@link #elapsed()}将获得一个稳定的时间值。
+    /// 停止计时后，<see cref="Elapsed"/>将获得一个稳定的时间值。
     /// </summary>
     /// <param name="stepName">最后一步的名字，为null则不记录</param>
     public void Stop(string? stepName = null) {
@@ -200,7 +200,7 @@ public sealed class StopWatch
 
     /// <summary>
     /// 重新启动停表
-    /// {@link #reset()}和{@link #start()}的快捷方法
+    /// <see cref="Reset"/>和<see cref="Start"/>的快捷方法
     /// </summary>
     public void Restart() {
         Reset();
@@ -245,7 +245,7 @@ public sealed class StopWatch
 
     /// <summary>
     /// 获取按照时间消耗排序后的log。
-    /// 注意：可以在不调用{@link #stop()}的情况下调用该方法。
+    /// 注意：可以在不调用<see cref="Stop"/>的情况下调用该方法。
     /// (获得了一个规律，也失去了一个规律，可能并不如未排序的log看着舒服)
     /// </summary>
     /// <returns></returns>
@@ -270,18 +270,18 @@ public sealed class StopWatch
     /// <summary>
     /// 格式: StopWatch[name={name}ms][a={a}ms,b={b}ms...]
     /// 1. StepWatch为标记，方便检索。
-    /// 2. {@code {x}}表示x的耗时。
+    /// 2. <c>{x}</c>表示x的耗时。
     /// 3. 前半部分为总耗时，后半部分为各步骤耗时。
     /// 
-    /// Q: 为什么重写{@code toString}？
-    /// A: 在输出日志的时候，我们可能常常使用占位符，那么延迟构建内容就是必须的，这要求我们实现{@code toString()}。
+    /// Q: 为什么重写<c>ToString</c>？
+    /// A: 在输出日志的时候，我们可能常常使用占位符，那么延迟构建内容就是必须的，这要求我们实现<c>ToString</c>。
     /// </summary>
     /// <returns></returns>
     public override string ToString() {
         return ToString(_itemList);
     }
 
-    /** @param itemList 避免排序修改数据 */
+    /// <param name="itemList">避免排序修改数据</param>
     private string ToString(List<Item> itemList) {
         StringBuilder sb = new StringBuilder(32);
         // 总耗时 - 此时可能正在运行

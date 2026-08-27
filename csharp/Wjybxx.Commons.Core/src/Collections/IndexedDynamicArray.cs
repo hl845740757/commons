@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Collections
 {
 /// <summary>
 /// 元素被索引的动态数组
-/// 注意：会在元素上缓存在数组中的下标，因此{@code index}{@code remove}系列方法总是使用引用相等查询。
+/// 注意：会在元素上缓存在数组中的下标，因此<c>Index</c>和<c>Remove</c>系列方法总是使用引用相等查询。
 /// </summary>
 /// <typeparam name="E"></typeparam>
 public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class

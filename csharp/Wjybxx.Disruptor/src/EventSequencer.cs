@@ -45,7 +45,7 @@ public interface EventSequencer<T> : DataProvider<T>
     /// <summary>
     /// 当前剩余容量
     /// 1.并不一定具有价值，因为多线程模型下查询容器的当前大小时，它反映的总是一个旧值。
-    /// 2.如果为【无界】数据结构，可能返回任意值（大于0），但建议返回{@link Integer#MAX_VALUE}。
+    /// 2.如果为【无界】数据结构，可能返回任意值（大于0），但建议返回<see cref="int.MaxValue"/>。
     /// 3.如果为【有界】数据结构，则返回真实的值。
     /// </summary>
     long RemainingCapacity { get; }

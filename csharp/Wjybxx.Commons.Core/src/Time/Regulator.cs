@@ -35,19 +35,19 @@ public sealed class Regulator
     /** 固定帧率 */
     private const byte FIX_RATE = 2;
 
-    /** 其实可以省略，根据{@link #period}的正负判断，但为了提高可读性，还是不那么做 */
+    /** 其实可以省略，根据<see cref="Period"/>的正负判断，但为了提高可读性，还是不那么做 */
     private readonly byte type;
     /** 首次执行延迟 */
     private long firstDelay;
     /** 后期执行延迟 */
     private long period;
 
-    /**
-     * 上次更新时间
-     * 它的真实含义取决于外部，可能是系统时间也可能不是，甚至可能是帧数
-     * 在存储已触发次数的情况下还使用上次更新的时间戳，这使得可以在运行的过程中修改间隔，该实现是有状态的。
-     * 注意：允许为负数，外部赋值什么就是什么。
-     */
+    /// <summary>
+    /// 上次更新时间
+    /// 它的真实含义取决于外部，可能是系统时间也可能不是，甚至可能是帧数
+    /// 在存储已触发次数的情况下还使用上次更新的时间戳，这使得可以在运行的过程中修改间隔，该实现是有状态的。
+    /// 注意：允许为负数，外部赋值什么就是什么。
+    /// </summary>
     private long triggerTime;
     /** 两次执行之间的间隔 */
     private long deltaTime;
@@ -200,14 +200,14 @@ public sealed class Regulator
 
     /// <summary>
     /// 上次成功更新的时间戳
-    /// 它的具体含义取悦于更新时使用的{@code curTime}的含义。
+    /// 它的具体含义取悦于更新时使用的<c>curTime</c>的含义。
     /// </summary>
     /// <value></value>
     public long TriggerTime => triggerTime;
 
     /// <summary>
     /// 如果是固定频率的调节器，应该使用<see cref="Period"/>获取更新间隔。
-    /// 另外，返回值可能大于{@link #getPeriod()}（其实可以设定最大返回值的，暂时没支持）
+    /// 另外，返回值可能大于<see cref="Period"/>（其实可以设定最大返回值的，暂时没支持）
     /// </summary>
     /// <value>两次逻辑帧之间的间隔</value>
     public long DeltaTime => deltaTime;

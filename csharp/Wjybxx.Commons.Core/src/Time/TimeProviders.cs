@@ -44,7 +44,7 @@ public static class TimeProviders
 
     /// <summary>
     /// 创建一个基于deltaTime更新的时间提供器，用在一些特殊的场合。
-    /// 你需要调用{@link Timepiece#update(long)}更新时间值。
+    /// 你需要调用<see cref="ITimepiece.Update"/>更新时间值。
     /// </summary>
     /// <returns></returns>
     public static ITimepiece NewTimepiece() {

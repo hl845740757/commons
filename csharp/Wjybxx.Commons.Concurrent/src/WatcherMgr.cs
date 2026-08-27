@@ -25,17 +25,17 @@ namespace Wjybxx.Commons.Concurrent
 /// 
 /// 监听器用于拦截插入到任务队列中的事件，在接收到一个事件时，将判断是否存在Watcher，
 /// 1.如果不存在Watcher，事件将被插入任务队列。
-/// 2.如果存在Watcher，事件将调用{@link Watcher#test(Object)}方法测试事件。
+/// 2.如果存在Watcher，事件将调用<c>Watcher.Test</c>方法测试事件。
 /// 2.1 如果不是Watcher等待的事件，事件将被插入任务队列。
-/// 2.2 如果是Watcher等待的事件，将删除Watcher，然后调用{@link Watcher#onEvent(Object)}方法处理事件 -- 即：Watcher是一次性的。
+/// 2.2 如果是Watcher等待的事件，将删除Watcher，然后调用<c>Watcher.OnEvent</c>方法处理事件 -- 即：Watcher是一次性的。
 /// 3.管理器中的watcher可能是多个，测试时将逐个测试
 /// 
 /// 一些指导：
 /// 1.监听器应该设定超时时间，不可无限阻塞，否则可能有死锁风险，或者总是超时失败 -- 如果任务队列是有界的。
 /// 2.应当先watch再执行阻塞等操作，否则可能丢失信号。
 /// 3.在不需要使用的时候及时取消watch -- 建议在try-finally块中执行。
-/// 4.实现必须是线程安全的，因为事件的发布者通常是另一个线程 -- 通常可以通过{@link Future}实现跨线程数据传输。
-/// 5.监听和取消监听都是低频操作，因此可以简单实现为{@code synchronized}写，{@code volatile}读。
+/// 4.实现必须是线程安全的，因为事件的发布者通常是另一个线程 -- 通常可以通过<see cref="IFuture"/>实现跨线程数据传输。
+/// 5.监听和取消监听都是低频操作，因此可以简单实现为<c>lock</c>写，<c>volatile</c>读。
 /// 6.为不同的入口分配不同的WatcherMgr有助于分散测试，提高性能。
 /// </summary>
 [ThreadSafe]

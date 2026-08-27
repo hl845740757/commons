@@ -26,11 +26,11 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class CancelCodes
 {
-    /**
-     * 原因的掩码
-     * 1.如果cancelCode不包含其它信息，就等于reason
-     * 2.设定为20位，可达到100W
-     */
+    /// <summary>
+    /// 原因的掩码
+    /// 1.如果cancelCode不包含其它信息，就等于reason
+    /// 2.设定为20位，可达到100W
+    /// </summary>
     public const int MASK_REASON = 0xFFFFF;
     /** 紧迫程度的掩码（4it）-- 0表示未指定 */
     public const int MASK_DEGREE = 0x00F0_0000;

@@ -85,7 +85,7 @@ public interface IEventLoopAgent<T> : IAgentEventHandler<T> where T : IAgentEven
     /// }
     /// </code>
     /// 1.该方法的调用时机和频率是不确定的，因此用户应该自行控制内部逻辑频率。
-    /// 2.该方法建议实现为无副作用的，更新时间请在{@link #beforeMainLoop(long)}执行
+    /// 2.该方法建议实现为无副作用的，更新时间请在<c>BeforeMainLoop</c>执行
     /// </summary>
     /// <param name="threadTime">线程时间(单位与具体时间循环有关)，不建议依赖该值</param>
     /// <returns></returns>

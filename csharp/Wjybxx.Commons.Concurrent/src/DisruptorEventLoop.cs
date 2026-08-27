@@ -211,17 +211,17 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     /// <summary>
     /// Q: 如何保证算法的安全性的？
-    /// A: 我们只需要保证申请到的sequence是有效的，且发布任务在{@link Worker#removeFromGatingBarriers()}之前即可。
-    /// 因为{@link Worker#removeFromGatingBarriers()}之前申请到的sequence一定是有效的，它考虑了EventLoop的消费进度。
+    /// A: 我们只需要保证申请到的sequence是有效的，且发布任务在<c>Worker.RemoveFromGatingBarriers</c>之前即可。
+    /// 因为<c>Worker.RemoveFromGatingBarriers</c>之前申请到的sequence一定是有效的，它考虑了EventLoop的消费进度。
     /// 
     /// 关键时序：
-    /// 1. {@link #isShuttingDown()}为true一定在{@link Worker#cleanBuffer()}之前。
-    /// 2. {@link Worker#cleanBuffer()}必须等待在这之前申请到的sequence发布。
-    /// 3. {@link Worker#cleanBuffer()}在所有生产者发布数据之后才{@link Worker#removeFromGatingBarriers()}
+    /// 1. <c>IsShuttingDown</c>为true一定在<c>Worker.CleanBuffer</c>之前。
+    /// 2. <c>Worker.CleanBuffer</c>必须等待在这之前申请到的sequence发布。
+    /// 3. <c>Worker.CleanBuffer</c>在所有生产者发布数据之后才<c>Worker.RemoveFromGatingBarriers</c>
     /// 
-    /// 因此，{@link Worker#cleanBuffer()}之前申请到的sequence是有效的；
-    /// 又因为{@link #isShuttingDown()}为true一定在{@link Worker#cleanBuffer()}之前，
-    /// 因此，如果sequence是在{@link #isShuttingDown()}为true之前申请到的，那么sequence一定是有效的，否则可能有效，也可能无效。
+    /// 因此，<c>Worker.CleanBuffer</c>之前申请到的sequence是有效的；
+    /// 又因为<c>IsShuttingDown</c>为true一定在<c>Worker.CleanBuffer</c>之前，
+    /// 因此，如果sequence是在<c>IsShuttingDown</c>为true之前申请到的，那么sequence一定是有效的，否则可能有效，也可能无效。
     ///
     /// sequence的处理见<see cref="NextSequence(int)"/>
     /// </summary>
@@ -757,7 +757,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     /// <summary>
     /// 将自己从网关序列中删除
-    /// 这是解决死锁问题的关键，如果不从gatingBarriers中移除，则生产者无法从{@link ProducerBarrier#next()}中退出，
+    /// 这是解决死锁问题的关键，如果不从gatingBarriers中移除，则生产者无法从<c>ProducerBarrier.Next</c>中退出，
     /// </summary>
     private void RemoveFromGatingBarriers() {
         eventSequencer.RemoveGatingBarrier(barrier);

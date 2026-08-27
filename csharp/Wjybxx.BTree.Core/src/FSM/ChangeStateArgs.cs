@@ -20,7 +20,7 @@ namespace Wjybxx.BTree.FSM
 {
 /// <summary>
 /// 状态切换参数
-/// 建议用户通过原型对象的{@link #withExtraInfo(object)}等方法创建
+/// 建议用户通过原型对象的<see cref="ChangeStateArgs.WithExtraInfo"/>等方法创建
 /// </summary>
 public class ChangeStateArgs
 {

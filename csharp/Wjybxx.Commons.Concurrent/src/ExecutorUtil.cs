@@ -297,7 +297,7 @@ public static class ExecutorUtil
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaiter
-    /// <see cref="GetAwaitable(IFuture, IExecutor, CancellationToken, int)"/>
+    /// <see cref="GetAwaitable(IFuture, IExecutor, int)"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TaskAwaitable GetAwaitable(this Task task, IExecutor executor, int options = 0) {
@@ -306,7 +306,7 @@ public static class ExecutorUtil
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaiter
-    /// <see cref="GetAwaitable(IFuture, IExecutor, CancellationToken, int)"/>
+    /// <see cref="GetAwaitable{T}(IFuture{T}, IExecutor, int)"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TaskAwaitable<T> GetAwaitable<T>(this Task<T> task, IExecutor executor, int options = 0) {
