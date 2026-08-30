@@ -463,6 +463,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     #region sp
 
+#if NET6_0_OR_GREATER
     /// <summary>
     /// 获取Key关联的Value的地址，key不存在时返回默认的无效值
     /// 
@@ -483,6 +484,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             return ref node.value;
         }
     }
+#endif
 
     /// <summary>
     /// 获取Key关联的Value的地址

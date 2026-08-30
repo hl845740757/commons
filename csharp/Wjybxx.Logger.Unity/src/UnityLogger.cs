@@ -40,26 +40,21 @@ internal class UnityLogger : ILogger
         return _factory.IsEnabled(level);
     }
 
-    public void Log(Level level, Exception? ex) {
-        if (!_factory.IsEnabled(level)) {
+    public void Log(Level level, string format) {
+        if (!IsEnabled(level)) {
             return;
         }
-        if (ex == null) {
-            return;
-        }
-        switch (level)
-        {
+        switch (level) {
             case Level.Warn:
-                Debug.LogWarningFormat($"[{_name}]", Array.Empty<object>());
+                Debug.LogWarningFormat($"[{_name}]");
                 break;
             case Level.Error:
-                Debug.LogErrorFormat($"[{_name}]", Array.Empty<object>());
+                Debug.LogErrorFormat($"[{_name}]");
                 break;
             default:
-                Debug.LogFormat($"[{_name}]", Array.Empty<object>());
+                Debug.LogFormat($"[{_name}]");
                 break;
         }
-        Debug.LogException(ex);
     }
 
     public void Log(Level level, string format, params object?[] args) {
@@ -79,19 +74,40 @@ internal class UnityLogger : ILogger
         }
     }
 
+    public void Log(Level level, Exception? ex) {
+        if (!_factory.IsEnabled(level)) {
+            return;
+        }
+        if (ex == null) {
+            return;
+        }
+        // switch (level) {
+        //     case Level.Warn:
+        //         Debug.LogWarningFormat($"[{_name}]");
+        //         break;
+        //     case Level.Error:
+        //         Debug.LogErrorFormat($"[{_name}]");
+        //         break;
+        //     default:
+        //         Debug.LogFormat($"[{_name}]");
+        //         break;
+        // }
+        Debug.LogException(ex);
+    }
+    
     public void Log(Level level, Exception? ex, string format) {
         if (!_factory.IsEnabled(level)) {
             return;
         }
         switch (level) {
             case Level.Warn:
-                Debug.LogWarningFormat($"[{_name}] {format}", Array.Empty<object>());
+                Debug.LogWarningFormat($"[{_name}] {format}");
                 break;
             case Level.Error:
-                Debug.LogErrorFormat($"[{_name}] {format}", Array.Empty<object>());
+                Debug.LogErrorFormat($"[{_name}] {format}");
                 break;
             default:
-                Debug.LogFormat($"[{_name}] {format}", Array.Empty<object>());
+                Debug.LogFormat($"[{_name}] {format}");
                 break;
         }
         if (ex != null) {

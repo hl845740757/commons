@@ -43,7 +43,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
 {
     private readonly IDisruptorEventLoop<T> _eventLoop;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> _taskQueue;
-    private readonly Action<object, CancellationToken> _onCancelRequested;
+    private readonly Action<object> _onCancelRequested; // 单参兼容Unity
 
     public DisruptorSchedulerHelper(IDisruptorEventLoop<T> eventLoop) {
         _eventLoop = eventLoop ?? throw new ArgumentNullException(nameof(eventLoop));
@@ -137,7 +137,8 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                || futureTask.Period > 5 * TimeSpan.TicksPerSecond;
     }
 
-    private void OnCancelRequested(object state, CancellationToken cancelToken) {
+
+    private void OnCancelRequested(object state) {
         Canceller canceller = (Canceller)state;
         if (canceller.futureTask.Id != canceller.taskId) {
             return;
@@ -212,7 +213,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     private class Canceller
     {
         public readonly IScheduledFutureTask futureTask;
-        public readonly long taskId; // 校验是否已回收，只能在EventLoop线程校验
+        public readonly long taskId; // 检查是否已回收
 
         public Canceller(IScheduledFutureTask futureTask, long taskId) {
             this.futureTask = futureTask;
