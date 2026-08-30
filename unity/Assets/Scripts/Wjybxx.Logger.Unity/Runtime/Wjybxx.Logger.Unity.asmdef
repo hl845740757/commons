@@ -1,0 +1,16 @@
+{
+    "name": "Wjybxx.Logger.Unity",
+    "rootNamespace": "Wjybxx.Commons.Logger",
+    "references": [
+        "Wjybxx.Commons.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

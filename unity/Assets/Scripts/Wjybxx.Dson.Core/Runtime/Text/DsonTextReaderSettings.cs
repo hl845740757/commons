@@ -1,0 +1,71 @@
+﻿#region LICENSE
+
+//  Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#endregion
+
+using System;
+
+namespace Wjybxx.Dson.Text
+{
+/// <summary>
+/// 文本解析器的设置
+/// </summary>
+public class DsonTextReaderSettings : DsonReaderSettings
+{
+    public new static DsonTextReaderSettings Default { get; } = (DsonTextReaderSettings)NewBuilder().Build();
+
+    public readonly DsonType localIdType;
+    public readonly DsonType countType;
+
+    public DsonTextReaderSettings(Builder builder) : base(builder) {
+        localIdType = builder.LocalIdType;
+        countType = builder.CountType;
+
+        if (localIdType != DsonType.Int32
+            && localIdType != DsonType.Int64
+            && localIdType != DsonType.String) {
+            throw new ArgumentException("invalid localIdType: " + localIdType);
+        }
+        if (countType != DsonType.Int32
+            && countType != DsonType.Int64) {
+            throw new ArgumentException("invalid countType: " + countType);
+        }
+    }
+
+    public new static Builder NewBuilder() {
+        return new Builder();
+    }
+
+    public new class Builder : DsonReaderSettings.Builder
+    {
+        /** localId的类型 -- 限制int32、int64 */
+        public DsonType LocalIdType { get; set; } = DsonType.Int64;
+        /** count的类型 -- 限制int32、int64 */
+        public DsonType CountType { get; set; } = DsonType.Int32;
+
+        public Builder() {
+        }
+
+#if NET6_0_OR_GREATER
+        public override DsonTextReaderSettings Build() {
+#else
+        public override DsonReaderSettings Build() {
+#endif
+            return new DsonTextReaderSettings(this);
+        }
+    }
+}
+}

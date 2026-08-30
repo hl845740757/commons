@@ -1,0 +1,156 @@
+#region LICENSE
+
+// Copyright 2025 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading;
+
+namespace Wjybxx.Commons.Concurrent
+{
+/// <summary>
+/// 用于多线程下
+/// </summary>
+[StructLayout(LayoutKind.Explicit)]
+public struct PaddedInt64
+{
+    [FieldOffset(0)]
+    private readonly long lhsPadding;
+
+    [FieldOffset(64 - 8)]
+    private long _value;
+
+    [FieldOffset(120 - 8)]
+    private readonly long rhsPadding;
+
+    public PaddedInt64(long value) {
+        _value = value;
+        lhsPadding = 0;
+        rhsPadding = 0;
+    }
+
+    /** volatile读 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long GetVolatile() {
+        return Volatile.Read(ref _value);
+    }
+
+    /** volatile写 - 会插入写屏障，且尝试刷新缓存 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetVolatile(long value) {
+        Volatile.Write(ref _value, value);
+    }
+
+    /** acquire模式读 - 会插入读屏障 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long GetAcquire() {
+        return Volatile.Read(ref _value); // C#暂无acquire和release内存语言支持
+    }
+
+    /** release模式写 - 会插入写屏障，但不立即刷新缓存 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetRelease(long value) {
+        Volatile.Write(ref _value, value); // C#暂无acquire和release内存语言支持
+    }
+
+    /** 无内存语义读 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long GetPlain() {
+        return _value;
+    }
+
+    /** 无内存语义写 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetPlain(long value) {
+        _value = value;
+    }
+
+    /** 原子+1 并返回+1 后的结果 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long IncrementAndGet() {
+        return AddAndGet(1L);
+    }
+
+    /** 原子+1 并返回+1 前的结果 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long GetAndIncrement() {
+        return GetAndAdd(1L);
+    }
+
+    /** 原子-1 并返回-1 后的结果 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long DecrementAndGet() {
+        return AddAndGet(-1L);
+    }
+
+    /** 原子-1 并返回-1 前的结果 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long GetAndDecrement() {
+        return GetAndAdd(-1L);
+    }
+
+    /** 原子加上给定数并返回增加后的值 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long AddAndGet(long increment) {
+        return Interlocked.Add(ref _value, increment);
+    }
+
+    /** 原子加上给定数并返回增加前的值 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long GetAndAdd(long increment) {
+        return Interlocked.Add(ref _value, increment) - increment;
+    }
+
+    /// <summary>
+    /// 交换内存地址的值
+    /// </summary>
+    /// <param name="value">新值</param>
+    /// <returns>地址上的旧值</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long Exchange(long value) {
+        return Interlocked.Exchange(ref _value, value);
+    }
+
+    /// <summary>
+    /// 原子比较更新
+    /// </summary>
+    /// <param name="expectedValue"></param>
+    /// <param name="newValue"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool CompareAndSet(long expectedValue, long newValue) {
+        return Interlocked.CompareExchange(ref _value, newValue, expectedValue) == expectedValue;
+    }
+
+    /// <summary>
+    /// 比较并交换
+    /// </summary>
+    /// <param name="expectedValue">期望值</param>
+    /// <param name="newValue">要设置的值</param>
+    /// <returns>地址上的旧值</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long CompareAndExchange(long expectedValue, long newValue) {
+        // 按照C#的编程习惯，比较数放在末；唯一的好处可能就是进行==比较时，两个值是挨着的。
+        // CompareAndExchange(newValue, expectedValue) == expectedValue
+        return Interlocked.CompareExchange(ref _value, newValue, expectedValue);
+    }
+
+    public override string ToString() {
+        return GetVolatile().ToString();
+    }
+}
+}

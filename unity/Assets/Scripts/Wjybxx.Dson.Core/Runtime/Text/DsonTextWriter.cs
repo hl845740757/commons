@@ -1,0 +1,673 @@
+﻿#region LICENSE
+
+//  Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#endregion
+
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.CompilerServices;
+using Wjybxx.Commons.Pool;
+using Wjybxx.Dson.Internal;
+using Wjybxx.Dson.Types;
+
+namespace Wjybxx.Dson.Text
+{
+/// <summary>
+/// 将输出写为文本的Writer
+/// </summary>
+public sealed class DsonTextWriter : AbstractDsonWriter<string>
+{
+#nullable disable
+    private DsonTextWriterSettings _settings;
+    private DsonPrinter _printer;
+
+    public DsonTextWriter(DsonTextWriterSettings settings, TextWriter writer, bool? autoClose = null)
+        : base(settings) {
+        this._settings = settings;
+        this._printer = new DsonPrinter(settings, writer, autoClose ?? settings.autoClose);
+
+        Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
+        SetContext(context);
+    }
+
+    /** 用于在Object或Array上下文中自行控制换行 */
+    public void Println() {
+        _printer.Println();
+    }
+
+    /** 在下次打印name之前打印该文本 */
+    public void PrintBeforeName(string text) {
+        GetContext().textBeforeName = text;
+    }
+
+    public new DsonTextWriterSettings Settings => _settings;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private new Context GetContext() {
+        return (Context)context;
+    }
+
+    public override void Flush() {
+        _printer?.Flush();
+    }
+
+    public override void Dispose() {
+        Context context = GetContext();
+        SetContext(null);
+        while (context != null) {
+            Context parent = context.Parent;
+            contextPool.Release(context);
+            context = parent;
+        }
+
+        if (_printer != null) {
+            _printer?.Dispose();
+            _printer = null!;
+        }
+        _settings = null;
+        base.Dispose();
+    }
+
+    #region state
+
+    private void WriteCurrentName(DsonPrinter printer, DsonType dsonType) {
+        Context context = GetContext();
+        // header与外层对象无缩进，且是匿名属性 -- 如果打印多个header，将保持连续
+        if (dsonType == DsonType.Header) {
+            Debug.Assert(context.count == 0);
+            context.headerCount++;
+            return;
+        }
+        // 处理value之间分隔符
+        if (context.contextType != DsonContextType.TopLevel && context.count > 0) {
+            printer.Print(',');
+        }
+        // 用于用户追加注释
+        if (context.textBeforeName != null) {
+            printer.Print(context.textBeforeName);
+            context.textBeforeName = null;
+        }
+        // 先处理长度超出，再处理缩进
+        if (printer.Column >= _settings.softLineLength) {
+            printer.Println();
+        }
+        bool newLine = printer.Column == 0;
+        if (context.style == ObjectStyle.Indent) {
+            if (newLine) {
+                // 新的一行，只需缩进
+                printer.PrintIndent();
+            } else if (context.count == 0 || printer.Column >= printer.PrettyBodyColum) {
+                // 第一个元素，或当前行超过缩进(含逗号)，需要换行
+                printer.Println();
+                printer.PrintIndent();
+            } else {
+                // 当前位置未达缩进位置，不换行
+                printer.PrintSpaces(printer.PrettyBodyColum - printer.Column);
+            }
+        } else if (!newLine && context.HasElement()) {
+            // 非缩进模式下，元素之间打印一个空格
+            printer.Print(' ');
+        }
+
+        if (context.contextType.IsObjectLike()) {
+            string curName = context.curName;
+            if (CanPrintAsUnquote(curName, _settings, true)) {
+                printer.FastPrint(curName);
+            } else {
+                PrintEscaped(curName);
+            }
+            printer.Print(": ");
+        }
+        context.count++;
+    }
+
+    private void PrintString(DsonPrinter printer, string value, StringStyle style) {
+        DsonTextWriterSettings settings = this._settings;
+        switch (style) {
+            case StringStyle.AutoQuote: {
+                if (CanPrintAsUnquote(value, settings, false)) {
+                    printer.FastPrint(value);
+                } else {
+                    PrintEscaped(value);
+                }
+                break;
+            }
+            case StringStyle.Quote: {
+                PrintEscaped(value);
+                break;
+            }
+            case StringStyle.Unquote: {
+                printer.FastPrint(value);
+                break;
+            }
+            case StringStyle.DsonText: {
+                if (settings.enableText) {
+                    PrintText(value);
+                } else {
+                    PrintEscaped(value);
+                }
+                break;
+            }
+            case StringStyle.SimpleText: {
+                PrintSimpleText(value);
+                break;
+            }
+            case StringStyle.SingleLine: {
+                if (value.LastIndexOf('\n') >= 0) {
+                    PrintEscaped(value);
+                } else {
+                    PrintStringLine(value);
+                }
+                break;
+            }
+            default: throw new InvalidOperationException(style.ToString());
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CanPrintAsUnquote(string str, DsonTextWriterSettings settings, bool isName) {
+        return DsonTexts.CanUnquoteString(str, settings.maxLengthOfUnquoteString, isName)
+               && (!settings.unicodeChar || DsonTexts.IsAsciiText(str));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CanPrintAsText(string str, DsonTextWriterSettings settings) {
+        return settings.enableText && (str.Length > settings.textStringLength);
+    }
+
+    /** 打印双引号String */
+    private void PrintEscaped(string text) {
+        bool unicodeChar = _settings.unicodeChar;
+        int softLineLength = _settings.softLineLength;
+        DsonPrinter printer = this._printer;
+        printer.Print('"');
+        for (int i = 0, length = text.Length; i < length; i++) {
+            char c = text[i];
+            if (char.IsSurrogate(c)) {
+                printer.PrintHpmCodePoint(c, text[++i]);
+            } else {
+                printer.PrintEscaped(c, unicodeChar);
+            }
+            if (printer.Column >= softLineLength && (i + 1 < length)) {
+                printer.Println(); // 双引号字符串换行不能缩进
+            }
+        }
+        printer.Print('"');
+    }
+
+    /** 纯文本模式打印，要执行换行符 */
+    private void PrintText(string text) {
+        int softLineLength = _settings.softLineLength;
+        DsonPrinter printer = this._printer;
+        int headIndent;
+        if (_settings.textAlignLeft) {
+            headIndent = printer.PrettyBodyColum;
+            printer.Println();
+            printer.PrintSpaces(headIndent);
+            printer.FastPrint("@\"\"\""); // 开始符
+            printer.Println();
+            printer.PrintSpaces(headIndent);
+            printer.FastPrint("@- "); // 首行-避免插入换行符
+        } else {
+            headIndent = 0;
+            printer.Println();
+            printer.FastPrint("@\"\"\""); // 开始符
+            printer.Println();
+            printer.FastPrint("@- "); // 首行-避免插入换行符
+        }
+        for (int i = 0, length = text.Length; i < length; i++) {
+            char c = text[i];
+            // 要执行文本中的换行符
+            if (c == '\n' || (c == '\r' && i + 1 < length && text[i + 1] == '\n')) {
+                printer.Println();
+                printer.PrintSpaces(headIndent);
+                printer.FastPrint("@| ");
+                continue;
+            }
+            if (char.IsSurrogate(c)) {
+                printer.PrintHpmCodePoint(c, text[++i]);
+            } else {
+                printer.Print(c);
+            }
+            if (printer.Column >= softLineLength && (i + 1 < length)) {
+                printer.Println();
+                printer.PrintSpaces(headIndent);
+                printer.FastPrint("@- ");
+            }
+        }
+        printer.Println();
+        printer.PrintSpaces(headIndent);
+        printer.FastPrint("@\"\"\""); // 结束符
+    }
+
+    private void PrintSimpleText(string text) {
+        DsonPrinter printer = this._printer;
+        int headIndent;
+        if (_settings.textAlignLeft) {
+            headIndent = printer.PrettyBodyColum;
+            printer.Println();
+            printer.PrintSpaces(headIndent);
+            printer.FastPrint("\"\"\""); // 开始符
+            printer.Println();
+            printer.PrintSpaces(headIndent);
+        } else {
+            headIndent = 0;
+            printer.Println();
+            printer.FastPrint("\"\"\""); // 开始符
+            printer.Println();
+        }
+        for (int i = 0, length = text.Length; i < length; i++) {
+            char c = text[i];
+            // 要执行文本中的换行符
+            if (c == '\n' || (c == '\r' && i + 1 < length && text[i + 1] == '\n')) {
+                printer.Println();
+                printer.PrintSpaces(headIndent);
+                continue;
+            }
+            if (char.IsSurrogate(c)) {
+                printer.PrintHpmCodePoint(c, text[++i]);
+            } else {
+                printer.Print(c);
+            }
+        }
+        printer.Println();
+        printer.PrintSpaces(headIndent);
+        printer.FastPrint("\"\"\""); // 结束符
+    }
+
+    private void PrintStringLine(String text) {
+        DsonPrinter printer = this._printer;
+        printer.FastPrint("@sL ");
+        printer.Print(text);
+        printer.Println(); // 换行表示结束
+    }
+
+    private void PrintBinary(byte[] buffer, int offset, int length) {
+        DsonPrinter printer = this._printer;
+        if (length == 0) {
+            printer.Print('"');
+            printer.Print('"');
+            return;
+        }
+        printer.Print('"');
+        int softLineLength = this._settings.softLineLength;
+        // 使用小buffer多次编码代替大的buffer，一方面节省内存，一方面控制行长度
+        const int segment = 16;
+        Span<char> cBuffer = stackalloc char[segment * 2];
+        int loop = length / segment;
+        for (int i = 0; i < loop; i++) {
+            printer.PrintlnIfExceed(softLineLength);
+            DsonInternals.EncodeHex(buffer, offset + i * segment, segment, cBuffer);
+            printer.FastPrint(cBuffer);
+        }
+        int remain = length - loop * segment;
+        if (remain > 0) {
+            printer.PrintlnIfExceed(softLineLength);
+            DsonInternals.EncodeHex(buffer, offset + loop * segment, remain, cBuffer);
+            printer.FastPrint(cBuffer.Slice(0, remain * 2));
+        }
+        printer.Print('"');
+    }
+
+    #endregion
+
+    #region 简单值
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrintInt32(DsonPrinter printer, int value, NumberStyle style) {
+        if (style == NumberStyle.Simple) {
+            printer.FastPrint(value);
+            return;
+        }
+        StyleOut styleOut = style.ToString(value);
+        if (styleOut.IsTyped) {
+            printer.FastPrint("@i ");
+        }
+        printer.FastPrint(styleOut.Value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrintInt64(DsonPrinter printer, long value, NumberStyle style) {
+        if (style == NumberStyle.Simple) {
+            printer.FastPrint(value);
+            return;
+        }
+        StyleOut styleOut = style.ToString(value);
+        if (styleOut.IsTyped) {
+            printer.FastPrint("@L ");
+        }
+        printer.FastPrint(styleOut.Value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrintFloat(DsonPrinter printer, float value, NumberStyle style) {
+        StyleOut styleOut = style.ToString(value);
+        if (styleOut.IsTyped) {
+            printer.FastPrint("@f ");
+        }
+        printer.FastPrint(styleOut.Value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrintDouble(DsonPrinter printer, double value, NumberStyle style) {
+        StyleOut styleOut = style.ToString(value);
+        if (styleOut.IsTyped) {
+            printer.FastPrint("@d ");
+        }
+        printer.FastPrint(styleOut.Value);
+    }
+
+    protected override void DoWriteInt32(int value, NumberStyle style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Int32);
+        PrintInt32(printer, value, style);
+    }
+
+    protected override void DoWriteInt64(long value, NumberStyle style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Int64);
+        PrintInt64(printer, value, style);
+    }
+
+    protected override void DoWriteFloat(float value, NumberStyle style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Float);
+        PrintFloat(printer, value, style);
+    }
+
+    protected override void DoWriteDouble(double value, NumberStyle style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Double);
+        PrintDouble(printer, value, style);
+    }
+
+    protected override void DoWriteBool(bool value) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Bool);
+        printer.FastPrint(value ? "true" : "false");
+    }
+
+    protected override void DoWriteString(string value, StringStyle style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.String);
+        PrintString(printer, value, style);
+    }
+
+    protected override void DoWriteNull() {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Null);
+        printer.FastPrint("null");
+    }
+
+    protected override void DoWriteBinary(Binary binary) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Binary);
+        printer.FastPrint("@bin ");
+        PrintBinary(binary.Unwrap(), 0, binary.Length);
+    }
+
+    protected override void DoWriteBinary(byte[] bytes, int offset, int len) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Binary);
+        printer.FastPrint("@bin ");
+        PrintBinary(bytes, offset, len);
+    }
+
+    protected override void DoWritePtr(ObjectPtr objectPtr) {
+        DsonPrinter printer = this._printer;
+        int softLineLength = this._settings.softLineLength;
+        WriteCurrentName(printer, DsonType.Pointer);
+        // 只有localId时简写
+        if (objectPtr.CanBeAbbreviated) {
+            printer.FastPrint("@ptr ");
+            printer.FastPrint(objectPtr.LocalId, true);
+            return;
+        }
+
+        printer.FastPrint("{@ptr ");
+        // 固定打印localId
+        {
+            printer.FastPrint(ObjectPtr.NamesLocalId);
+            printer.FastPrint(": ");
+            printer.FastPrint(objectPtr.LocalId, true);
+        }
+        if (objectPtr.HashLocalPath) {
+            printer.FastPrint(", ");
+            printer.PrintlnIfExceed(softLineLength);
+            printer.FastPrint(ObjectPtr.NamesLocalPath);
+            printer.FastPrint(": ");
+            PrintString(printer, objectPtr.LocalPath, StringStyle.AutoQuote);
+        }
+        if (objectPtr.HasCollection) {
+            printer.FastPrint(", ");
+            printer.PrintlnIfExceed(softLineLength);
+            printer.FastPrint(ObjectPtr.NamesCollection);
+            printer.FastPrint(": ");
+            PrintString(printer, objectPtr.Collection, StringStyle.AutoQuote);
+        }
+        if (objectPtr.Type != 0) {
+            printer.FastPrint(", ");
+            printer.PrintlnIfExceed(softLineLength);
+            printer.FastPrint(ObjectPtr.NamesType);
+            printer.FastPrint(": ");
+            printer.FastPrint(objectPtr.Type);
+        }
+        printer.Print('}');
+    }
+
+    protected override void DoWriteDateTime(ExtDateTime dateTime) {
+        DsonPrinter printer = this._printer;
+        int softLineLength = this._settings.softLineLength;
+        WriteCurrentName(printer, DsonType.DateTime);
+        if (dateTime.CanBeAbbreviated()) {
+            printer.FastPrint("@dt ");
+            printer.FastPrint(ExtDateTime.FormatDateTime(dateTime.Seconds));
+            return;
+        }
+
+        printer.FastPrint("{@dt ");
+        if (dateTime.HasDate) {
+            printer.FastPrint(ExtDateTime.NamesDate);
+            printer.FastPrint(": ");
+            printer.FastPrint(ExtDateTime.FormatDate(dateTime.Seconds));
+        }
+        if (dateTime.HasTime) {
+            if (dateTime.HasDate) {
+                printer.FastPrint(", ");
+            }
+            printer.PrintlnIfExceed(softLineLength);
+            printer.FastPrint(ExtDateTime.NamesTime);
+            printer.FastPrint(": ");
+            printer.FastPrint(ExtDateTime.FormatTime(dateTime.Seconds));
+            // nanos跟随time
+            if (dateTime.Nanos > 0) {
+                printer.FastPrint(", ");
+                printer.PrintlnIfExceed(softLineLength);
+                if (dateTime.CanConvertNanosToMillis()) {
+                    printer.FastPrint(ExtDateTime.NamesMillis);
+                    printer.FastPrint(": ");
+                    printer.FastPrint(dateTime.ConvertNanosToMillis());
+                } else {
+                    printer.FastPrint(ExtDateTime.NamesNanos);
+                    printer.FastPrint(": ");
+                    printer.FastPrint(dateTime.Nanos);
+                }
+            }
+        }
+        if (dateTime.HasOffset) {
+            if (dateTime.HasDate || dateTime.HasTime) {
+                printer.FastPrint(", ");
+            }
+            printer.PrintlnIfExceed(softLineLength);
+            printer.FastPrint(ExtDateTime.NamesOffset);
+            printer.FastPrint(": ");
+            printer.FastPrint(ExtDateTime.FormatOffset(dateTime.Offset));
+        }
+        printer.Print('}');
+    }
+
+    protected override void DoWriteTimestamp(Timestamp timestamp) {
+        DsonPrinter printer = this._printer;
+        int softLineLength = this._settings.softLineLength;
+        WriteCurrentName(printer, DsonType.Timestamp);
+        if (timestamp.Nanos == 0) { // 打印为缩写
+            printer.FastPrint("@ts ");
+            printer.FastPrint(timestamp.Seconds, true);
+        } else if (timestamp.CanConvertNanosToMillis()) {
+            printer.FastPrint("@ts ");
+            printer.FastPrint(timestamp.ToEpochMillis(), true);
+            printer.FastPrint("ms");
+        } else {
+            printer.FastPrint("{@ts ");
+            printer.FastPrint(Timestamp.NamesSeconds);
+            printer.FastPrint(": ");
+            printer.FastPrint(timestamp.Seconds, true);
+            printer.FastPrint(", ");
+
+            printer.FastPrint(Timestamp.NamesNanos);
+            printer.FastPrint(": ");
+            printer.FastPrint(timestamp.Nanos);
+            printer.Print('}');
+        }
+    }
+
+    protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Double4);
+        Double4Styles.Print(printer, double4, style);
+    }
+
+    #endregion
+
+    #region 容器
+
+    protected override void DoWriteStartContainer(DsonContextType contextType, DsonType dsonType, ObjectStyle style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, dsonType);
+
+        Context context = GetContext();
+        if (context.style == ObjectStyle.Flow) {
+            style = ObjectStyle.Flow;
+        }
+        Context newContext = NewContext(context, contextType, dsonType);
+        newContext.style = style;
+
+        printer.FastPrint(contextType.GetStartSymbol()!);
+        if (style == ObjectStyle.Indent) {
+            printer.Indent(); // 调整缩进
+        }
+
+        SetContext(newContext);
+        this.recursionDepth++;
+    }
+
+    protected override void DoWriteEndContainer() {
+        Context context = GetContext();
+        DsonPrinter printer = this._printer;
+
+        if (context.style == ObjectStyle.Indent) {
+            printer.Retract(); // 恢复缩进
+            // 打印了内容的情况下才换行结束
+            if (context.count > 0 && (printer.Column > printer.PrettyBodyColum)) {
+                printer.Println();
+                printer.PrintIndent();
+            }
+        }
+        printer.FastPrint(context.contextType.GetEndSymbol()!);
+
+        this.recursionDepth--;
+        SetContext(context.Parent);
+        ReturnContext(context);
+    }
+
+    #endregion
+
+    #region 特殊
+
+    /// <summary>
+    /// 写入一个简单对象头（只包含className的对象头）
+    /// </summary>
+    public void WriteSimpleHeader(string clsName) {
+        if (clsName == null) throw new ArgumentNullException(nameof(clsName));
+        Context context = GetContext();
+        if (context.contextType == DsonContextType.Object && context.state == DsonWriterState.Name) {
+            context.SetState(DsonWriterState.Value);
+        }
+        AutoStartTopLevel(context);
+        EnsureValueState(context);
+
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Header);
+        // header总是使用 @{} 包起来，提高辨识度 -- Dson2.1支持无引号
+        printer.Print("@{");
+        PrintString(printer, clsName, StringStyle.Unquote);
+        printer.Print('}');
+        SetNextState();
+    }
+
+    protected override void DoWriteValueBytes(DsonType type, byte[] data) {
+        throw new InvalidOperationException("UnsupportedOperation");
+    }
+
+    #endregion
+
+    #region context
+
+    private static readonly ConcurrentObjectPool<Context> contextPool = new(
+        () => new Context(), context => context.Reset(), DsonInternals.CONTEXT_POOL_SIZE);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
+        Context context = contextPool.Acquire();
+        context.Init(parent, contextType, dsonType);
+        return context;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ReturnContext(Context context) {
+        contextPool.Release(context);
+    }
+
+#pragma warning disable CS0628
+    protected new class Context : AbstractDsonWriter<string>.Context
+    {
+        internal ObjectStyle style = ObjectStyle.Indent;
+        internal int headerCount = 0;
+        internal int count = 0;
+        internal string textBeforeName;
+
+        public Context() {
+        }
+
+        internal bool HasElement() {
+            return headerCount > 0 || count > 0;
+        }
+
+        public new Context Parent => (Context)parent;
+
+        public override void Reset() {
+            base.Reset();
+            style = ObjectStyle.Indent;
+            headerCount = 0;
+            count = 0;
+            textBeforeName = null;
+        }
+    }
+
+    #endregion
+}
+}

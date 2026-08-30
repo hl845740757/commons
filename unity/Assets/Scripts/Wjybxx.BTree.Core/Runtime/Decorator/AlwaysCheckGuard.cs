@@ -1,0 +1,60 @@
+﻿#region LICENSE
+
+// Copyright 2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+namespace Wjybxx.BTree.Decorator
+{
+/// <summary>
+/// 每一帧都检查子节点的前置条件，如果前置条件失败，则取消child执行并返回失败。
+/// 注：由于需要保持心跳，因此不可以被内联。
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class AlwaysCheckGuard<T> : Decorator<T> where T : class
+{
+    public AlwaysCheckGuard() {
+    }
+
+    public AlwaysCheckGuard(Task<T> child) : base(child) {
+    }
+
+    protected override void Execute() {
+        if (Template_CheckGuard(child.Guard)) {
+            Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.Template_ExecuteInlined(ref inlineHelper, child);
+            } else if (child.IsRunning) {
+                child.Template_Execute(true);
+            } else {
+                Template_StartChild(child, false);
+            }
+        } else {
+            child.Stop();
+            inlineHelper.StopInline(); // help gc
+            SetFailed(TaskStatus.ERROR);
+        }
+    }
+
+    protected override void OnChildRunning(Task<T> child, bool starting) {
+        inlineHelper.InlineChild(child);
+    }
+
+    protected override void OnChildCompleted(Task<T> child) {
+        inlineHelper.StopInline();
+        SetCompleted(child.Status, true);
+    }
+}
+}

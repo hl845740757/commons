@@ -1,0 +1,500 @@
+#region LICENSE
+
+// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Text;
+
+namespace Wjybxx.Commons
+{
+/// <summary>
+/// 一些基础工具方法
+/// </summary>
+public static class ObjectUtil
+{
+    /// <summary>
+    /// 如果参数为null，则抛出异常
+    /// </summary>
+    /// <exception cref="ArgumentNullException"></exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T RequireNonNull<T>(T obj, string? message = null) {
+        if (obj == null) throw new ArgumentNullException(nameof(obj), message);
+        return obj;
+    }
+
+    /// <summary>
+    /// C#默认的bool的ToString是大写开头....
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static string ToString2(this bool value) => value ? "true" : "false";
+
+    /// <summary>
+    /// 如果参数为null，则转为给定的默认值
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T NullToDef<T>(T? obj, T? def) {
+        return obj == null ? def : obj;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int ZeroToDef(int value, int def) {
+        return value == 0 ? def : value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long ZeroToDef(long value, long def) {
+        return value == 0 ? def : value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsIntersect(this int value, int other) {
+        return (value & other) != 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsIntersect(this long value, long other) {
+        return (value & other) != 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool NextBool(this Random rnd) {
+        return rnd.Next(0, 2) == 1;
+    }
+
+    /// <summary>
+    /// 获取系统的tick数
+    /// (稳定值与平台无关 --- ElapsedDateTimeTicks)
+    ///
+    /// 参考：<see cref="Stopwatch"/>
+    /// </summary>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long SystemTicks() => (long)(Stopwatch.GetTimestamp() * _tickFrequency);
+
+    /// <summary>
+    /// 系统tick对应的毫秒时间戳
+    /// 注意：不是Unix时间戳！不是Unix时间戳！不是Unix时间戳！
+    /// </summary>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long SystemTickMillis() => (long)(Stopwatch.GetTimestamp() * _tickFrequency / 10000d);
+
+    /// <summary>
+    /// 'Frequency'存储的是在当前平台上，1秒对应多少个原始tick -- 依赖平台。
+    /// </summary>
+    private static readonly double _tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
+
+    #region type
+
+    /// <summary>
+    /// 是否是可空类型（引用类型或<see cref="Nullable{T}"/>）
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullableType(Type type) {
+        if (!type.IsValueType) return true;
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullableType<T>() {
+        Type type = typeof(T);
+        if (!type.IsValueType) return true;
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string GetSimpleName(Type namedType) {
+        string name = namedType.Name;
+        int index = name.LastIndexOf('`');
+        return index > 0 ? name.Substring2(0, index) : name;
+    }
+
+    #endregion
+
+    #region string
+
+    /// <summary>
+    /// 通过索引区间获取子字符串。
+    /// C#的字符串接口和Java差异较大，这里提供一个适配方法。
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="start">开始索引 inclusive</param>
+    /// <param name="end">结束索引 exclusive</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string Substring2(this string value, int start, int end) {
+        return value.Substring(start, end - start);
+    }
+
+    /// <summary>
+    /// 通过索引区间获取子字符串。
+    /// C#的字符串接口和Java差异较大，这里提供一个适配方法。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string Substring2(this string value, int start, int end, RangeMode mode) {
+        return mode switch
+        {
+            RangeMode.Closed => value.Substring(start, end - start + 1),
+            RangeMode.Open => value.Substring(start + 1, end - start),
+            RangeMode.LeftClosed => value.Substring(start, end - start),
+            RangeMode.LeftOpen => value.Substring(start + 1, end - start + 1),
+            _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+        };
+    }
+
+    /// <summary>
+    /// 使用java风格追加字符串
+    /// </summary>
+    /// <param name="sb">sb</param>
+    /// <param name="value">要追加的字符串</param>
+    /// <param name="start">开始索引 inclusive</param>
+    /// <param name="end">结束索引 exclusive</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static StringBuilder Append2(this StringBuilder sb, string value, int start, int end) {
+        sb.Append(value, start, end - start);
+        return sb;
+    }
+
+    /// <summary>
+    /// 通过索引区间追加子字符串
+    /// </summary>
+    public static StringBuilder Append2(this StringBuilder sb, string value, int start, int end, RangeMode mode) {
+        switch (mode) {
+            case RangeMode.Closed: sb.Append(value, start, end - start + 1); break;
+            case RangeMode.Open: sb.Append(value, start + 1, end - start); break;
+            case RangeMode.LeftClosed: sb.Append(value, start, end - start); break;
+            case RangeMode.LeftOpen: sb.Append(value, start + 1, end - start + 1); break;
+            default: throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
+        }
+        return sb;
+    }
+
+    /// <summary>
+    /// 追加unicode码点
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="codePoint">unicode码点</param>
+    public static StringBuilder AppendCodePoint(this StringBuilder sb, int codePoint) {
+        if (codePoint < 65536) {
+            sb.Append((char)codePoint);
+        } else {
+            sb.Append(char.ConvertFromUtf32(codePoint));
+        }
+        return sb;
+    }
+
+    public static int IndexOf(this StringBuilder sb, char c, int index = 0) {
+        for (; index < sb.Length; index++) {
+            if (sb[index] == c) return index;
+        }
+        return -1;
+    }
+
+    public static int LastIndexOf(this StringBuilder sb, char c, int index = -1) {
+        if (index == -1 || index >= sb.Length) {
+            index = sb.Length - 1;
+        }
+        for (; index >= 0; index--) {
+            if (sb[index] == c) return index;
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 获取字符串的长度，如果字符为null，则返回0
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Length(string? value) {
+        return value == null ? 0 : value.Length;
+    }
+#nullable disable
+    /// <summary>
+    /// 如果字符串为null或空字符串，则转为默认字符串
+    /// </summary>
+    /// <param name="value">value</param>
+    /// <param name="def">默认值</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string EmptyToDef(string value, string def) {
+        return string.IsNullOrEmpty(value) ? def : value;
+    }
+
+    /// <summary>
+    /// 如果字符串为全空白字符串，则转为默认字符串
+    /// </summary>
+    /// <param name="value">value</param>
+    /// <param name="def">默认值</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string BlankToDef(string value, string def) {
+        return string.IsNullOrWhiteSpace(value) ? def : value;
+    }
+#nullable restore
+    /// <summary>
+    /// 首字母大写
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static string FirstCharToUpperCase(string str) {
+        int length = Length(str);
+        if (length == 0) {
+            return str;
+        }
+        char firstChar = str[0];
+        if (char.IsLower(firstChar)) { // 可拦截非英文字符
+            StringBuilder sb = new StringBuilder(str);
+            sb[0] = char.ToUpper(firstChar);
+            return sb.ToString();
+        }
+        return str;
+    }
+
+    /// <summary>
+    /// 首字母小写
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static string FirstCharToLowerCase(string str) {
+        int length = Length(str);
+        if (length == 0) {
+            return str;
+        }
+        char firstChar = str[0];
+        if (char.IsUpper(firstChar)) { // 可拦截非英文字符
+            StringBuilder sb = new StringBuilder(str);
+            sb[0] = char.ToLower(firstChar);
+            return sb.ToString();
+        }
+        return str;
+    }
+
+    /// <summary>
+    /// 字符串是否包含空白字符
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static bool ContainsWhitespace(string str) {
+        int strLen = Length(str);
+        if (strLen == 0) {
+            return false;
+        }
+        for (int i = 0; i < strLen; i++) {
+            if (char.IsWhiteSpace(str[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 索引首个空白字符
+    /// </summary>
+    public static int IndexOfWhitespace(string cs, int startIndex = 0) {
+        if (startIndex < 0) throw new ArgumentException("startIndex " + startIndex);
+        int length = Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        for (int i = startIndex; i < length; i++) {
+            if (char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 反向索引首个空白字符
+    /// </summary>
+    public static int LastIndexOfWhitespace(string cs, int startIndex = -1) {
+        if (startIndex < -1) throw new ArgumentException("startIndex " + startIndex);
+        int length = Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        if (startIndex == -1 || startIndex >= length) {
+            startIndex = length - 1;
+        }
+        for (int i = startIndex; i >= 0; i--) {
+            if (char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 索引首个非空白字符
+    /// </summary>
+    public static int IndexOfNonWhitespace(string cs, int startIndex = 0) {
+        if (startIndex < 0) throw new ArgumentException("startIndex " + startIndex);
+        int length = ObjectUtil.Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        for (int i = startIndex; i < length; i++) {
+            if (!char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 反向索引首个非空白字符
+    /// </summary>
+    public static int LastIndexOfNonWhitespace(string cs, int startIndex = -1) {
+        if (startIndex < -1) throw new ArgumentException("startIndex " + startIndex);
+        int length = ObjectUtil.Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        if (startIndex == -1 || startIndex >= length) {
+            startIndex = length - 1;
+        }
+        for (int i = startIndex; i >= 0; i--) {
+            if (!char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 删除字符串中的空白字符
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static string DeleteWhitespace(string str) {
+        int startIndex = IndexOfWhitespace(str);
+        if (startIndex < 0) {
+            return str;
+        }
+        int len = str.Length;
+        StringBuilder sb = new StringBuilder(len);
+        sb.Append(str, 0, startIndex);
+        //
+        for (int idx = startIndex + 1; idx < len; idx++) {
+            char c = str[idx];
+            if (char.IsWhiteSpace(c)) {
+                continue;
+            }
+            sb.Append(c);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// 反转大小写模式
+    /// </summary>
+    /// <param name="caseMode"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static CaseMode Invert(this CaseMode caseMode) {
+        return caseMode switch
+        {
+            CaseMode.UpperCase => CaseMode.LowerCase,
+            CaseMode.LowerCase => CaseMode.UpperCase,
+            _ => throw new AssertionError()
+        };
+    }
+
+    /// <summary>
+    /// 获取字符串的UTF-8编码结果
+    /// (经常找不到地方...)
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte[] GetUtf8Bytes(string value) {
+        return Encoding.UTF8.GetBytes(value);
+    }
+
+    /// <summary>
+    /// 将utf8字节数组转为字符串
+    /// </summary>
+    /// <param name="data">utf8字节</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string GetUtf8String(byte[] data) {
+        return Encoding.UTF8.GetString(data);
+    }
+
+    /// <summary>
+    /// 获取字符串的所有行，仅支持 \n 和 \r\n
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static List<string> Lines(string str) {
+        List<string> result = new List<string>();
+        using (StringReader reader = new StringReader(str)) {
+            string? line;
+            while ((line = reader.ReadLine()) != null) {
+                result.Add(line);
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 拆分字符串，并对返回的结果进行Trim
+    /// </summary>
+    /// <param name="str"></param>
+    /// <param name="c"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string[] SplitAndTrim(string str, char c) {
+#if NET6_0_OR_GREATER
+        return str.Split(c, StringSplitOptions.TrimEntries);
+#else
+        int count = 1;
+        for (int i = 0; i < str.Length; i++) {
+            if (str[i] == c) count++;
+        }
+        string[] result = new string[count];
+        //
+        int start = 0;
+        int idx = 0;
+        for (int i = 0; i <= str.Length; i++) {
+            if (i == str.Length || str[i] == c) {
+                int s = start;
+                int e = i - 1;
+                // Trim
+                while (s <= e && char.IsWhiteSpace(str[s])) s++;
+                while (e >= s && char.IsWhiteSpace(str[e])) e--;
+                //
+                result[idx++] = (s <= e) ? str.Substring(s, e - s + 1) : string.Empty;
+                start = i + 1;
+            }
+        }
+        return result;
+#endif
+    }
+
+    #endregion
+}
+}

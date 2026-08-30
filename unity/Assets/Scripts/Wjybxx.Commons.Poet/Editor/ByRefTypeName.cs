@@ -1,0 +1,100 @@
+#region LICENSE
+
+// Copyright 2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System;
+
+namespace Wjybxx.Commons.Poet
+{
+/// <summary>
+/// 传递对象的引用
+/// <code>ref int, ref int* , in int, out int</code>
+///
+/// 反射有ByRefType，编译API里又不是通过TypeSymbol实现的....
+/// </summary>
+public class ByRefTypeName : TypeName
+{
+    /// <summary>
+    /// 原始类型
+    /// </summary>
+    public readonly TypeName targetType;
+    /// <summary>
+    /// 引用的修饰符
+    /// </summary>
+    public readonly Kind kind;
+
+    private ByRefTypeName(TypeName targetType, Kind kind, TypeNameAttributes attributes)
+        : base(attributes) {
+        // 引用不能出现嵌套，但引用的目标类型可能是指针
+        if (targetType is ByRefTypeName) throw new ArgumentException("targetType cant be ref");
+        this.targetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
+        this.kind = kind;
+    }
+
+    public enum Kind
+    {
+        Ref = 1,
+        In = 2,
+        Out = 3,
+        RefReadOnly = 4
+    }
+
+    #region overrides
+
+    /// <summary>
+    /// 反射名追加与符号
+    /// </summary>
+    /// <returns></returns>
+    public override string ReflectionName() => targetType.ReflectionName() + "&";
+
+    protected override string ToStringImpl() {
+        return $"{GetType().Name}, {nameof(targetType)}: {targetType}";
+    }
+
+#if NET6_0_OR_GREATER
+    public override ByRefTypeName WithAttributes(TypeNameAttributes attributes) {
+#else
+    public override TypeName WithAttributes(TypeNameAttributes attributes) {
+#endif
+        if (this.attributes == attributes) return this;
+        return new ByRefTypeName(targetType, kind, attributes);
+    }
+
+#if NET6_0_OR_GREATER
+    public override ByRefTypeName RemoveAllNullableAttribute() {
+#else
+    public override TypeName RemoveAllNullableAttribute() {
+#endif
+        TypeName tempElementType = targetType.RemoveAllNullableAttribute();
+        if (ReferenceEquals(tempElementType, targetType)
+            && !attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) {
+            return this;
+        }
+        return Get(tempElementType, kind, attributes.Unset(TypeNameAttributes.NullableReferenceType));
+    }
+
+    #endregion
+
+    public static ByRefTypeName Get(TypeName targetType, Kind kind = Kind.Ref, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new ByRefTypeName(targetType, kind, attributes);
+    }
+
+    public static ByRefTypeName Get(Type targetType, Kind kind = Kind.Ref, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new ByRefTypeName(TypeName.Get(targetType), kind, attributes);
+    }
+}
+}

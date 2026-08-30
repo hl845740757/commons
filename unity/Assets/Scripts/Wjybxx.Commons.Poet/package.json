@@ -1,0 +1,17 @@
+{
+  "name" : "wjybxx.commons.poet",
+  "version" : "1.0.0-prev",
+  "displayName" : "Wjybxx.Commons.Poet",
+  "description" : "代码生成器",
+  "documentationUrl": "",
+  "license": "Apache-2.0",
+  
+  "unity": "2021.3",
+  "keywords": ["Wjybxx", "Commons", "Poet"],
+  
+  "author": {
+    "name": "wjybxx",
+    "email": "845740757@qq.com",
+    "url": "https://github.com/hl845740757"
+  }
+}

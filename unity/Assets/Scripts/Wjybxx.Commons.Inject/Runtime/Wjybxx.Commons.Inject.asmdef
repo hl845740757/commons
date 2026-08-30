@@ -1,0 +1,16 @@
+{
+    "name": "Wjybxx.Commons.Inject",
+    "rootNamespace": "Wjybxx.Commons.Inject",
+    "references": [
+        "Wjybxx.Commons.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

@@ -1,0 +1,17 @@
+{
+    "name": "Wjybxx.Commons.Concurrent",
+    "rootNamespace": "Wjybxx.Commons.Concurrent",
+    "references": [
+        "Wjybxx.Commons.Core",
+        "Wjybxx.Disruptor"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

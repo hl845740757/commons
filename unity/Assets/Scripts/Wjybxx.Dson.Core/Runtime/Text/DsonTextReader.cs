@@ -1,0 +1,1093 @@
+﻿#region LICENSE
+
+//  Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Text;
+using Wjybxx.Commons;
+using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Pool;
+using Wjybxx.Dson.Internal;
+using Wjybxx.Dson.IO;
+using Wjybxx.Dson.Types;
+
+namespace Wjybxx.Dson.Text
+{
+/// <summary>
+/// 从文本读取Dson对象的Reader
+/// </summary>
+public sealed class DsonTextReader : AbstractDsonReader<string>
+{
+    private static readonly List<DsonTokenType> VALUE_SEPARATOR_TOKENS =
+        CollectionUtil.NewList(DsonTokenType.Comma, DsonTokenType.EndObject, DsonTokenType.EndArray);
+
+    private static readonly DsonToken TOKEN_BEGIN_HEADER = new DsonToken(DsonTokenType.BeginHeader, "@{", -1);
+    private static readonly DsonToken TOKEN_CLASSNAME = new DsonToken(DsonTokenType.UnquoteString, DsonHeader.Names_ClassName, -1);
+    private static readonly DsonToken TOKEN_COLON = new DsonToken(DsonTokenType.Colon, ":", -1);
+    private static readonly DsonToken TOKEN_END_OBJECT = new DsonToken(DsonTokenType.EndObject, "}", -1);
+
+#nullable disable
+    private DsonScanner _scanner;
+    private string _nextName;
+    private UnionValue _nextValue;
+
+    private bool _marking;
+    private readonly Stack<DsonToken> _pushedTokenQueue = new Stack<DsonToken>(6); // 缓存的Token
+    private readonly List<DsonToken> _markedTokenQueue = new List<DsonToken>(6); // C#没有现成的Deque，我们拿List实现
+    private StringBuilder _sb; // 日期扫描缓存
+
+    public DsonTextReader(DsonTextReaderSettings settings, string dsonString)
+        : this(settings, new DsonScanner(dsonString)) {
+    }
+
+    public DsonTextReader(DsonTextReaderSettings settings, TextReader reader, bool? autoClose = null)
+        : this(settings, new DsonScanner(IDsonCharStream.NewBufferedCharStream(reader, autoClose ?? settings.autoClose))) {
+    }
+
+    public DsonTextReader(DsonTextReaderSettings settings, DsonScanner scanner)
+        : base(settings) {
+        this._scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
+
+        Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
+        SetContext(context);
+    }
+
+    /// <summary>
+    /// 用于动态指定成员数据类型
+    /// 这对于精确解析数组元素和Object的字段十分有用 -- 比如解析一个<c>Vector3</c>的时候就可以指定字段的默认类型为float。
+    /// </summary>
+    public void SetComponentType(DsonType componentType) {
+        GetContext().componentType = componentType;
+    }
+
+    public new DsonTextReaderSettings Settings => (DsonTextReaderSettings)settings;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private new Context GetContext() {
+        return (Context)context;
+    }
+
+    public override void Dispose() {
+        Context context = GetContext();
+        SetContext(null);
+        while (context != null) {
+            Context parent = context.Parent;
+            contextPool.Release(context);
+            context = parent;
+        }
+        if (_scanner != null) {
+            _scanner.Dispose();
+            _scanner = null;
+        }
+        _pushedTokenQueue.Clear();
+        _nextName = null;
+        _nextValue = default;
+        _marking = false;
+        _markedTokenQueue.Clear();
+        base.Dispose();
+    }
+
+    #region token
+
+    /// <summary>
+    /// 保存Stack的原始快照
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void InitMarkQueue() {
+        if (_pushedTokenQueue.Count <= 0) {
+            return;
+        }
+        foreach (var dsonToken in _pushedTokenQueue) {
+            _markedTokenQueue.Add(dsonToken);
+        }
+    }
+
+    /// <summary>
+    /// 通过快照恢复Stack
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ResetPushedQueue() {
+        _pushedTokenQueue.Clear();
+        for (int i = _markedTokenQueue.Count - 1; i >= 0; i--) {
+            _pushedTokenQueue.Push(_markedTokenQueue[i]);
+        }
+        _markedTokenQueue.Clear();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private DsonToken PopToken() {
+        if (_pushedTokenQueue.Count == 0) {
+            DsonToken dsonToken = _scanner.NextToken();
+            if (_marking) {
+                _markedTokenQueue.Add(dsonToken);
+            }
+            return dsonToken;
+        } else {
+            return _pushedTokenQueue.Pop();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private DsonToken SkipToken() {
+        if (_pushedTokenQueue.Count == 0) {
+            return _scanner.NextToken(skipValue: true);
+        }
+        return _pushedTokenQueue.Pop();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PushToken(DsonToken token) {
+        // if (token == null) throw new ArgumentNullException(nameof(token));
+        _pushedTokenQueue.Push(token);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PushNextValue(UnionValue nextValue) {
+        this._nextValue = nextValue;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private UnionValue PopNextValue() {
+        UnionValue r = this._nextValue!;
+        this._nextValue = default;
+        return r;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PushNextName(string nextName) {
+        this._nextName = nextName ?? throw new ArgumentNullException(nameof(nextName));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private string PopNextName() {
+        string r = this._nextName;
+        this._nextName = null;
+        return r;
+    }
+
+    #endregion
+
+    #region state
+
+    public override DsonType ReadDsonType() {
+        Context context = GetContext();
+        CheckReadDsonTypeState(context);
+
+        DsonType dsonType = ReadDsonTypeOfToken();
+        this.currentDsonType = dsonType;
+        this.currentWireType = WireType.Uint;
+        this.currentName = default!;
+
+        OnReadDsonType(context, dsonType);
+        if (dsonType == DsonType.Header) {
+            context.headerCount++;
+        } else {
+            context.count++;
+        }
+        return dsonType;
+    }
+
+    public override DsonType PeekDsonType() {
+        Context context = GetContext();
+        CheckReadDsonTypeState(context);
+
+        _marking = true;
+        InitMarkQueue(); // 保存Stack
+
+        DsonType dsonType = ReadDsonTypeOfToken();
+        _nextName = null; // 丢弃临时数据
+        _nextValue = default;
+
+        ResetPushedQueue(); // 恢复Stack
+        _marking = false;
+        return dsonType;
+    }
+
+    private DsonType ReadDsonTypeOfToken() {
+        // 丢弃旧值
+        _nextName = null;
+        _nextValue = default;
+
+        Context context = GetContext();
+        // 统一处理逗号分隔符，顶层对象之间可不写分隔符
+        if (context.count > 0) {
+            DsonToken nextToken = PopToken();
+            if (context.contextType != DsonContextType.TopLevel) {
+                VerifyTokenType(context, nextToken, VALUE_SEPARATOR_TOKENS);
+            }
+            if (nextToken.type == DsonTokenType.Comma) {
+                // 禁止末尾逗号 -- 会导致手写体验变差
+                // DsonToken nnToken = PopToken();
+                // PushToken(nnToken);
+                // if (nnToken.type == DsonTokenType.EndObject || nnToken.type == DsonTokenType.EndArray) {
+                //     throw DsonIOException.InvalidTokenType(context.contextType, nextToken);
+                // }
+            } else {
+                PushToken(nextToken);
+            }
+        }
+
+        // object/header 需要先读取 name和冒号，但object可能出现header
+        if (context.contextType == DsonContextType.Object || context.contextType == DsonContextType.Header) {
+            DsonToken nameToken = PopToken();
+            switch (nameToken.type) {
+                case DsonTokenType.String:
+                case DsonTokenType.UnquoteString: {
+                    PushNextName(nameToken.StringValue());
+                    break;
+                }
+                case DsonTokenType.BeginHeader: {
+                    if (context.contextType == DsonContextType.Header) {
+                        throw DsonIOException.ContainsHeaderDirectly(nameToken);
+                    }
+                    EnsureCountIsZero(context, nameToken);
+                    return DsonType.Header;
+                }
+                case DsonTokenType.EndObject: {
+                    return DsonType.EndOfObject;
+                }
+                default: {
+                    throw DsonIOException.InvalidTokenType(context.contextType, nameToken,
+                        CollectionUtil.NewList(DsonTokenType.String, DsonTokenType.UnquoteString, DsonTokenType.EndObject));
+                }
+            }
+            // 下一个应该是冒号
+            DsonToken colonToken = PopToken();
+            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
+        }
+
+        // 走到这里，表示 top/object/header/array 读值
+        DsonToken valueToken = PopToken();
+        switch (valueToken.type) {
+            case DsonTokenType.Int32: {
+                PushNextValue(valueToken.value);
+                return DsonType.Int32;
+            }
+            case DsonTokenType.Int64: {
+                PushNextValue(valueToken.value);
+                return DsonType.Int64;
+            }
+            case DsonTokenType.Float: {
+                PushNextValue(valueToken.value);
+                return DsonType.Float;
+            }
+            case DsonTokenType.Double: {
+                PushNextValue(valueToken.value);
+                return DsonType.Double;
+            }
+            case DsonTokenType.Bool: {
+                PushNextValue(valueToken.value);
+                return DsonType.Bool;
+            }
+            case DsonTokenType.String: {
+                PushNextValue(new UnionValue(DsonType.String, valueToken.StringValue()));
+                return DsonType.String;
+            }
+            case DsonTokenType.Null: {
+                PushNextValue(new UnionValue(DsonType.Null));
+                return DsonType.Null;
+            }
+            case DsonTokenType.Binary: {
+                PushNextValue(valueToken.value);
+                return DsonType.Binary;
+            }
+            case DsonTokenType.BuiltinStruct: return ParseAbbreviatedStruct(context, valueToken);
+            case DsonTokenType.UnquoteString: return ParseUnquoteStringToken(context, valueToken);
+            case DsonTokenType.BeginObject: return ParseBeginObjectToken(context, valueToken);
+            case DsonTokenType.BeginArray: return ParseBeginArrayToken(context, valueToken);
+            case DsonTokenType.BeginHeader: {
+                // object的header已经处理，这里只有topLevel和array可以再出现header
+                if (context.contextType.IsObjectLike()) {
+                    throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
+                }
+                EnsureCountIsZero(context, valueToken);
+                return DsonType.Header;
+            }
+            case DsonTokenType.EndArray: {
+                // endArray 只能在数组上下文出现；Array是在读取下一个值的时候结束；而Object必须在读取下一个name的时候结束
+                if (context.contextType == DsonContextType.Array) {
+                    return DsonType.EndOfObject;
+                }
+                throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
+            }
+            case DsonTokenType.Eof: {
+                // eof 只能在顶层上下文出现
+                if (context.contextType == DsonContextType.TopLevel) {
+                    return DsonType.EndOfObject;
+                }
+                throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
+            }
+            default: {
+                throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
+            }
+        }
+    }
+
+    /** 字符串默认解析规则 */
+    private DsonType ParseUnquoteStringToken(Context context, DsonToken valueToken) {
+        string unquotedString = valueToken.StringValue();
+        // 处理header的特殊属性依赖
+        if (context.contextType == DsonContextType.Header) {
+            switch (_nextName) {
+                case DsonHeader.Names_ClassName:
+                case DsonHeader.Names_Collection:
+                case DsonHeader.Names_LocalPath:
+                case DsonHeader.Names_Name:
+                    PushNextValue(new UnionValue(DsonType.String, unquotedString));
+                    return DsonType.String;
+                case DsonHeader.Names_LocalId: {
+                    return ParseUnquoteString(Settings.localIdType, valueToken.StringValue());
+                }
+                case DsonHeader.Names_Count: {
+                    return ParseUnquoteString(Settings.countType, valueToken.StringValue());
+                }
+            }
+        }
+        // 处理类型传递
+        if (context.componentType != DsonType.EndOfObject) {
+            return ParseUnquoteString(context.componentType, valueToken.StringValue());
+        }
+        // 处理特殊值解析
+        bool isTrueString = "true" == unquotedString;
+        if (isTrueString || "false" == unquotedString) {
+            PushNextValue(UnionValue.OfBool(isTrueString));
+            return DsonType.Bool;
+        }
+        if ("null" == unquotedString) {
+            PushNextValue(new UnionValue(DsonType.Null));
+            return DsonType.Null;
+        }
+        if (DsonTexts.IsParsable(unquotedString)) {
+            PushNextValue(UnionValue.OfDouble(DsonTexts.ParseDouble(unquotedString)));
+            return DsonType.Double;
+        }
+        PushNextValue(new UnionValue(DsonType.String, unquotedString));
+        return DsonType.String;
+    }
+
+    private DsonType ParseUnquoteString(DsonType dsonType, string unquotedString) {
+        switch (dsonType) {
+            case DsonType.Int32: {
+                PushNextValue(UnionValue.OfInt32(DsonTexts.ParseInt32(unquotedString)));
+                break;
+            }
+            case DsonType.Int64: {
+                PushNextValue(UnionValue.OfInt64(DsonTexts.ParseInt64(unquotedString)));
+                break;
+            }
+            case DsonType.Float: {
+                PushNextValue(UnionValue.OfFloat(DsonTexts.ParseFloat(unquotedString)));
+                break;
+            }
+            case DsonType.Double: {
+                PushNextValue(UnionValue.OfDouble(DsonTexts.ParseDouble(unquotedString)));
+                break;
+            }
+            case DsonType.Bool: {
+                PushNextValue(UnionValue.OfBool(DsonTexts.ParseBool(unquotedString)));
+                break;
+            }
+            case DsonType.String: {
+                PushNextValue(new UnionValue(DsonType.String, unquotedString));
+                break;
+            }
+            case DsonType.Binary: {
+                Binary binary = Binary.FromHexString(unquotedString);
+                PushNextValue(UnionValue.OfBinary(binary));
+                break;
+            }
+            case DsonType.Pointer: {
+                long localId = DsonTexts.ParseInt64(unquotedString);
+                PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
+                break;
+            }
+            case DsonType.DateTime: {
+                DateTime dateTime = ExtDateTime.ParseDateTime(unquotedString); // 这里其实不应该走到
+                PushNextValue(UnionValue.OfDateTime(ExtDateTime.OfDateTime(in dateTime)));
+                break;
+            }
+            case DsonType.Timestamp: {
+                Timestamp timestamp = Timestamp.Parse(unquotedString);
+                PushNextValue(UnionValue.OfTimestamp(in timestamp));
+                break;
+            }
+            default: throw DsonIOException.InvalidDsonType(context.contextType, dsonType);
+        }
+        return dsonType;
+    }
+
+    /** 处理内置结构体的单值语法糖 */
+    private DsonType ParseAbbreviatedStruct(Context context, in DsonToken valueToken) {
+        // 1.className不能出现在topLevel，topLevel只能出现header结构体 @{}
+        if (context.contextType == DsonContextType.TopLevel) {
+            throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
+        }
+        // 2.object和array的className会在beginObject和beginArray的时候转换为结构体 @{}
+        // 因此这里只能出现内置结构体的简写形式
+        string clsName = valueToken.StringValue();
+        if (DsonTexts.LabelPtr == clsName) { // @ptr localId
+            DsonToken nextToken = PopToken();
+            EnsureStringsToken(context, nextToken);
+            long localId = DsonTexts.ParseInt64(nextToken.StringValue());
+            PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
+            return DsonType.Pointer;
+        }
+        if (DsonTexts.LabelDateTime == clsName) { // @dt uuuu-MM-dd'T'HH:mm:ss
+            DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUtilComma());
+            PushNextValue(UnionValue.OfDateTime(ExtDateTime.OfDateTime(in dateTime)));
+            return DsonType.DateTime;
+        }
+        if (DsonTexts.LabelTimestamp == clsName) { // @ts seconds
+            DsonToken nextToken = PopToken();
+            EnsureStringsToken(context, nextToken);
+            Timestamp timestamp = Timestamp.Parse(nextToken.StringValue());
+            PushNextValue(UnionValue.OfTimestamp(in timestamp));
+            return DsonType.Timestamp;
+        }
+        throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
+    }
+
+    /** 处理内置结构体 */
+    private DsonType ParseBeginObjectToken(Context context, in DsonToken beginToken) {
+        DsonToken headerToken = PopToken();
+        if (!IsHeaderOrBuiltStruct(headerToken)) {
+            PushToken(headerToken);
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
+            return DsonType.Object;
+        }
+        if (headerToken.type != DsonTokenType.BuiltinStruct) {
+            // 转换SimpleHeader为标准Header，token需要push以供context保存
+            EscapeHeaderAndPush(headerToken);
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
+            return DsonType.Object;
+        }
+        // 内置结构体
+        string clsName = headerToken.StringValue();
+        switch (clsName) {
+            case DsonTexts.LabelPtr: {
+                PushNextValue(UnionValue.OfObjectPtr(ScanPtr(context)));
+                return DsonType.Pointer;
+            }
+            case DsonTexts.LabelDateTime: {
+                PushNextValue(UnionValue.OfDateTime(ScanDateTime(context)));
+                return DsonType.DateTime;
+            }
+            case DsonTexts.LabelTimestamp: {
+                PushNextValue(UnionValue.OfTimestamp(ScanTimestamp(context)));
+                return DsonType.Timestamp;
+            }
+            case DsonTexts.LabelDouble4: {
+                PushNextValue(UnionValue.OfDouble4(ScanDouble4FromObject(context)));
+                return DsonType.Double4;
+            }
+            default: {
+                PushToken(headerToken); // 非Object形式内置结构体
+                return DsonType.Object;
+            }
+        }
+    }
+
+    /** 处理内置元组 */
+    private DsonType ParseBeginArrayToken(Context context, in DsonToken beginToken) {
+        DsonToken headerToken = PopToken();
+        if (!IsHeaderOrBuiltStruct(headerToken)) {
+            PushToken(headerToken);
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
+            return DsonType.Array;
+        }
+        if (headerToken.type != DsonTokenType.BuiltinStruct) {
+            // 转换SimpleHeader为标准Header，token需要push以供context保存
+            EscapeHeaderAndPush(headerToken);
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
+            return DsonType.Array;
+        }
+        // 内置元组
+        string clsName = headerToken.StringValue();
+        switch (clsName) {
+            case DsonTexts.LabelDouble4: {
+                PushNextValue(UnionValue.OfDouble4(ScanDouble4FromArray(context)));
+                return DsonType.Double4;
+            }
+            default: {
+                PushToken(headerToken);
+                return DsonType.Array;
+            }
+        }
+    }
+
+    private void EscapeHeaderAndPush(DsonToken headerToken) {
+        // 如果header不是结构体，则封装为结构体，注意...要反序压栈
+        if (headerToken.type == DsonTokenType.BeginHeader) {
+            PushToken(headerToken);
+        } else {
+            PushToken(TOKEN_END_OBJECT);
+            PushToken(new DsonToken(DsonTokenType.String, headerToken.StringValue(), -1));
+            PushToken(TOKEN_COLON);
+            PushToken(TOKEN_CLASSNAME);
+            PushToken(TOKEN_BEGIN_HEADER);
+        }
+    }
+
+    #region 内置结构体语法
+
+    private ObjectPtr ScanPtr(Context context) {
+        string collection = null;
+        string localPath = null;
+        long localId = 0;
+        int type = 0;
+        DsonToken keyToken;
+        while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
+            // key必须是字符串
+            EnsureStringsToken(context, keyToken);
+            // 下一个应该是冒号
+            DsonToken colonToken = PopToken();
+            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
+            // 根据name校验
+            DsonToken valueToken = PopToken();
+            switch (keyToken.StringValue()) {
+                case ObjectPtr.NamesCollection: {
+                    EnsureStringsToken(context, valueToken);
+                    collection = valueToken.StringValue();
+                    break;
+                }
+                case ObjectPtr.NamesLocalPath: {
+                    EnsureStringsToken(context, valueToken);
+                    localPath = valueToken.StringValue();
+                    break;
+                }
+                case ObjectPtr.NamesLocalId: {
+                    VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
+                    localId = DsonTexts.ParseInt64(valueToken.StringValue());
+                    break;
+                }
+                case ObjectPtr.NamesType: {
+                    VerifyTokenType(context, valueToken, DsonTokenType.UnquoteString);
+                    type = DsonTexts.ParseInt32(valueToken.StringValue());
+                    break;
+                }
+                default: {
+                    throw new DsonIOException("invalid ptr fieldName: " + keyToken.StringValue());
+                }
+            }
+            CheckSeparator(context);
+        }
+        return new ObjectPtr(collection, localPath, localId, type);
+    }
+
+    private Timestamp ScanTimestamp(Context context) {
+        long seconds = 0;
+        int nanos = 0;
+        DsonToken keyToken;
+        while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
+            // key必须是字符串
+            EnsureStringsToken(context, keyToken);
+            // 下一个应该是冒号
+            DsonToken colonToken = PopToken();
+            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
+            // 根据name校验
+            switch (keyToken.StringValue()) {
+                case Timestamp.NamesSeconds: {
+                    DsonToken valueToken = PopToken();
+                    EnsureStringsToken(context, valueToken);
+                    seconds = DsonTexts.ParseInt64(valueToken.StringValue());
+                    break;
+                }
+                case Timestamp.NamesNanos: {
+                    DsonToken valueToken = PopToken();
+                    EnsureStringsToken(context, valueToken);
+                    nanos = DsonTexts.ParseInt32(valueToken.StringValue());
+                    break;
+                }
+                case Timestamp.NamesMillis: {
+                    DsonToken valueToken = PopToken();
+                    EnsureStringsToken(context, valueToken);
+                    int millis = DsonTexts.ParseInt32(valueToken.StringValue());
+                    Timestamp.ValidateMillis(millis);
+                    nanos = millis * (int)DatetimeUtil.NanosPerMilli;
+                    break;
+                }
+                default: {
+                    throw new DsonIOException("invalid datetime fieldName: " + keyToken.StringValue());
+                }
+            }
+            CheckSeparator(context);
+        }
+        return new Timestamp(seconds, nanos);
+    }
+
+    private ExtDateTime ScanDateTime(Context context) {
+        DateTime date = DateTime.UnixEpoch;
+        int time = 0;
+
+        int nanos = 0;
+        int offset = 0;
+        byte enables = 0;
+        DsonToken keyToken;
+        while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
+            // key必须是字符串
+            EnsureStringsToken(context, keyToken);
+            // 下一个应该是冒号
+            DsonToken colonToken = PopToken();
+            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
+            // 根据name校验
+            switch (keyToken.StringValue()) {
+                case ExtDateTime.NamesDate: {
+                    string dateString = ScanStringUtilComma();
+                    date = ExtDateTime.ParseDate(dateString);
+                    enables |= ExtDateTime.MaskDate;
+                    break;
+                }
+                case ExtDateTime.NamesTime: {
+                    string timeString = ScanStringUtilComma();
+                    time = ExtDateTime.ParseTime(timeString);
+                    enables |= ExtDateTime.MaskTime;
+                    break;
+                }
+                case ExtDateTime.NamesOffset: {
+                    string offsetString = ScanStringUtilComma();
+                    offset = ExtDateTime.ParseOffset(offsetString);
+                    enables |= ExtDateTime.MaskOffset;
+                    break;
+                }
+                case ExtDateTime.NamesNanos: {
+                    DsonToken valueToken = PopToken();
+                    EnsureStringsToken(context, valueToken);
+                    nanos = DsonTexts.ParseInt32(valueToken.StringValue());
+                    break;
+                }
+                case ExtDateTime.NamesMillis: {
+                    DsonToken valueToken = PopToken();
+                    EnsureStringsToken(context, valueToken);
+                    int millis = DsonTexts.ParseInt32(valueToken.StringValue());
+                    Timestamp.ValidateMillis(millis);
+                    nanos = millis * (int)DatetimeUtil.NanosPerMilli;
+                    break;
+                }
+                default: {
+                    throw new DsonIOException("invalid datetime fieldName: " + keyToken.StringValue());
+                }
+            }
+            CheckSeparator(context);
+        }
+        long seconds = DatetimeUtil.ToEpochSeconds(date) + time;
+        return new ExtDateTime(seconds, nanos, offset, enables);
+    }
+
+    private Double4 ScanDouble4FromArray(Context context) {
+        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
+        int index = 0;
+        DsonToken valueToken;
+        while ((valueToken = PopToken()).type != DsonTokenType.EndArray) {
+            if (valueToken.type == DsonTokenType.Comma) {
+                index++;
+                continue;
+            }
+            EnsureStringsToken(context, valueToken);
+            double value = DsonTexts.ParseDouble(valueToken.StringValue());
+            switch (index) {
+                case 0: v0 = value; break;
+                case 1: v1 = value; break;
+                case 2: v2 = value; break;
+                case 3: v3 = value; break;
+                default: throw new DsonIOException("IndexOutOfRange");
+            }
+        }
+        return new Double4(v0, v1, v2, v3);
+    }
+
+    private Double4 ScanDouble4FromObject(Context context) {
+        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
+        int index = 0;
+        DsonToken keyToken;
+        while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
+            if (keyToken.type == DsonTokenType.Comma) {
+                index++;
+                continue;
+            }
+            // key必须是字符串 - 必须顺序输入
+            EnsureStringsToken(context, keyToken);
+            // 下一个应该是冒号
+            DsonToken colonToken = PopToken();
+            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
+            // 下一个是无引号字符串(double)
+            DsonToken valueToken = PopToken();
+            EnsureStringsToken(context, valueToken);
+            //
+            double value = DsonTexts.ParseDouble(valueToken.StringValue());
+            switch (index) {
+                case 0: v0 = value; break;
+                case 1: v1 = value; break;
+                case 2: v2 = value; break;
+                case 3: v3 = value; break;
+                default: throw new DsonIOException("IndexOutOfRange");
+            }
+        }
+        return new Double4(v0, v1, v2, v3);
+    }
+
+    /** 扫描string，直到遇见逗号或结束符 */
+    private string ScanStringUtilComma() {
+        if (_sb == null) {
+            _sb = new StringBuilder();
+        } else {
+            _sb.Clear();
+        }
+        StringBuilder sb = _sb;
+        while (true) {
+            DsonToken valueToken = PopToken();
+            switch (valueToken.type) {
+                case DsonTokenType.Comma:
+                case DsonTokenType.EndObject:
+                case DsonTokenType.EndArray: {
+                    PushToken(valueToken);
+                    return sb.ToString();
+                }
+                case DsonTokenType.String:
+                case DsonTokenType.UnquoteString:
+                case DsonTokenType.Colon: {
+                    sb.Append(valueToken.StringValue());
+                    break;
+                }
+                default: {
+                    throw DsonIOException.InvalidTokenType(ContextType, valueToken);
+                }
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void CheckSeparator(Context context) {
+        // 每读取一个值，判断下分隔符，尾部最多只允许一个逗号 -- 这里在尾部更容易处理
+        DsonToken keyToken;
+        if ((keyToken = PopToken()).type == DsonTokenType.Comma
+            && (keyToken = PopToken()).type == DsonTokenType.Comma) {
+            throw DsonIOException.InvalidTokenType(context.contextType, keyToken);
+        } else {
+            PushToken(keyToken);
+        }
+    }
+
+    #endregion
+
+    /** header不可以在中途出现 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void EnsureCountIsZero(Context context, DsonToken headerToken) {
+        if (context.count > 0) {
+            throw DsonIOException.InvalidTokenType(context.contextType, headerToken,
+                CollectionUtil.NewList(DsonTokenType.String, DsonTokenType.UnquoteString, DsonTokenType.EndObject));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void EnsureStringsToken(Context context, DsonToken token) {
+        if (token.type != DsonTokenType.String && token.type != DsonTokenType.UnquoteString) {
+            throw DsonIOException.InvalidTokenType(context.contextType, token,
+                CollectionUtil.NewList(DsonTokenType.String, DsonTokenType.UnquoteString));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsHeaderOrBuiltStruct(DsonToken token) {
+        return token.type == DsonTokenType.BuiltinStruct
+               || token.type == DsonTokenType.BeginHeader
+               || token.type == DsonTokenType.SimpleHeader;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void VerifyTokenType(Context context, DsonToken token, DsonTokenType expected) {
+        if (token.type != expected) {
+            throw DsonIOException.InvalidTokenType(context.contextType, token, expected);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void VerifyTokenType(Context context, DsonToken token, List<DsonTokenType> expected) {
+        if (!expected.Contains(token.type)) {
+            throw DsonIOException.InvalidTokenType(context.contextType, token, expected);
+        }
+    }
+
+    protected override void DoReadName() {
+        if (context.enableNameIntern) {
+            currentName = Dsons.InternField(PopNextName());
+        } else {
+            currentName = PopNextName() ?? throw new NullReferenceException();
+        }
+    }
+
+    #endregion
+
+    #region 简单值
+
+    protected override int DoReadInt32() {
+        UnionValue unionValue = PopNextValue();
+        return unionValue.type switch
+        {
+            DsonType.Int32 => unionValue.iValue,
+            DsonType.Int64 => (int)unionValue.lValue,
+            DsonType.Float => (int)unionValue.fValue,
+            DsonType.Double => (int)unionValue.dValue,
+            _ => throw new InvalidOperationException($"cant cast {unionValue.type} to int32")
+        };
+    }
+
+    protected override long DoReadInt64() {
+        UnionValue unionValue = PopNextValue();
+        return unionValue.type switch
+        {
+            DsonType.Int32 => unionValue.iValue,
+            DsonType.Int64 => unionValue.lValue,
+            DsonType.Float => (long)unionValue.fValue,
+            DsonType.Double => (long)unionValue.dValue,
+            _ => throw new InvalidOperationException($"cant cast {unionValue.type} to int64")
+        };
+    }
+
+    protected override float DoReadFloat() {
+        UnionValue unionValue = PopNextValue();
+        return unionValue.type switch
+        {
+            DsonType.Int32 => unionValue.iValue,
+            DsonType.Int64 => unionValue.lValue,
+            DsonType.Float => unionValue.fValue,
+            DsonType.Double => (float)unionValue.dValue,
+            _ => throw new InvalidOperationException($"cant cast {unionValue.type} to float")
+        };
+    }
+
+    protected override double DoReadDouble() {
+        UnionValue unionValue = PopNextValue();
+        return unionValue.type switch
+        {
+            DsonType.Int32 => unionValue.iValue,
+            DsonType.Int64 => unionValue.lValue,
+            DsonType.Float => unionValue.fValue,
+            DsonType.Double => unionValue.dValue,
+            _ => throw new InvalidOperationException($"cant cast {unionValue.type} to double")
+        };
+    }
+
+    protected override bool DoReadBool() {
+        UnionValue unionValue = PopNextValue();
+        if (unionValue.type != DsonType.Bool) {
+            throw new InvalidOperationException();
+        }
+        return unionValue.iValue != 0;
+    }
+
+    protected override string DoReadString() {
+        UnionValue unionValue = PopNextValue();
+        if (unionValue.type != DsonType.String) {
+            throw new InvalidOperationException();
+        }
+        return (string)unionValue.objValue1;
+    }
+
+    protected override void DoReadNull() {
+        PopNextValue();
+    }
+
+    protected override Binary DoReadBinary() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.Binary) {
+            throw new InvalidOperationException();
+        }
+        return (Binary)value.objValue1;
+    }
+
+    protected override ObjectPtr DoReadPtr() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.Pointer) {
+            throw new InvalidOperationException();
+        }
+        return value.ObjectPtr;
+    }
+
+    protected override ExtDateTime DoReadDateTime() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.DateTime) {
+            throw new InvalidOperationException();
+        }
+        return value.DateTime;
+    }
+
+    protected override Timestamp DoReadTimestamp() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.Timestamp) {
+            throw new InvalidOperationException();
+        }
+        return value.Timestamp;
+    }
+
+    protected override Double4 DoReadDouble4() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.Double4) {
+            throw new InvalidOperationException();
+        }
+        return value.Double4;
+    }
+
+    #endregion
+
+    #region 容器
+
+    protected override void DoReadStartContainer(DsonContextType contextType, DsonType dsonType) {
+        Context newContext = NewContext(GetContext(), contextType, dsonType);
+        // newContext.beginToken = PopNextValue();
+        newContext.name = currentName;
+
+        this.recursionDepth++;
+        SetContext(newContext);
+    }
+
+    protected override void DoReadEndContainer() {
+        Context context = GetContext();
+        // 恢复上下文
+        RecoverDsonType(context);
+        this.recursionDepth--;
+        SetContext(context.parent);
+        ReturnContext(context);
+    }
+
+    #endregion
+
+    #region 特殊
+
+    protected override void DoSkipName() {
+        // 名字早已读取
+        PopNextName();
+    }
+
+    protected override void DoSkipValue() {
+        PopNextValue();
+        ClearWaitStartContext();
+        switch (currentDsonType) {
+            case DsonType.Header:
+            case DsonType.Object:
+            case DsonType.Array: {
+                SkipStack(1);
+                break;
+            }
+        }
+    }
+
+    protected override void DoSkipToEndOfObject() {
+        ClearWaitStartContext();
+        DsonToken endToken;
+        if (IsAtType) {
+            endToken = SkipStack(1);
+        } else {
+            SkipName();
+            switch (currentDsonType) {
+                case DsonType.Header:
+                case DsonType.Object:
+                case DsonType.Array: { // 嵌套对象
+                    endToken = SkipStack(2);
+                    break;
+                }
+                default: {
+                    endToken = SkipStack(1);
+                    break;
+                }
+            }
+        }
+        PushToken(endToken);
+    }
+
+    /// <returns>触发结束的token</returns>
+    private DsonToken SkipStack(int stack) {
+        while (stack > 0) {
+            DsonToken token = _marking ? PopToken() : SkipToken();
+            switch (token.type) {
+                case DsonTokenType.BeginArray:
+                case DsonTokenType.BeginObject:
+                case DsonTokenType.BeginHeader: {
+                    stack++;
+                    break;
+                }
+                case DsonTokenType.EndArray:
+                case DsonTokenType.EndObject: {
+                    if (--stack == 0) {
+                        return token;
+                    }
+                    break;
+                }
+                case DsonTokenType.Eof: {
+                    throw DsonIOException.InvalidTokenType(ContextType, token);
+                }
+            }
+        }
+        throw new InvalidOperationException("Assert Exception");
+    }
+
+    protected override byte[] DoReadValueAsBytes() {
+        // Text的Reader和Writer实现最好相同，要么都不支持，要么都支持
+        throw new DsonIOException("UnsupportedOperation");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearWaitStartContext() {
+    }
+
+    #endregion
+
+    #region context
+
+    private static readonly ConcurrentObjectPool<Context> contextPool = new(
+        () => new Context(), context => context.Reset(), DsonInternals.CONTEXT_POOL_SIZE);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
+        Context context = contextPool.Acquire();
+        context.Init(parent, contextType, dsonType);
+        return context;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ReturnContext(Context context) {
+        contextPool.Release(context);
+    }
+
+#pragma warning disable CS0628
+    protected new class Context : AbstractDsonReader<string>.Context
+    {
+        /** header只可触发一次流程 */
+        internal int headerCount;
+        /** 元素计数，判断冒号 */
+        internal int count;
+        /** 数组/Object成员的类型 - token类型可直接复用；header的该属性是用于注释外层对象的 */
+        internal DsonType componentType = DsonType.EndOfObject;
+
+        public Context() {
+        }
+
+        public new Context Parent => (Context)parent;
+
+        public override void Reset() {
+            base.Reset();
+            headerCount = 0;
+            count = 0;
+            componentType = DsonType.EndOfObject;
+        }
+    }
+
+    #endregion
+}
+}

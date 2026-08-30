@@ -1,0 +1,159 @@
+﻿#region LICENSE
+
+// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace Wjybxx.Commons.Concurrent
+{
+/// <summary>
+///
+/// </summary>
+public interface IExecutorService : IExecutor
+{
+    #region lifecycle
+
+    /// <summary>
+    /// 查询<see cref="IExecutorService"/>是否处于正在关闭状态。
+    /// 正在关闭状态下，拒绝接收新任务，当执行完所有任务后，进入关闭状态。
+    /// </summary>
+    bool IsShuttingDown { get; }
+
+    /// <summary>
+    ///  查询<see cref="IExecutorService"/>是否处于关闭状态。
+    /// 关闭状态下，拒绝接收新任务，执行退出前的清理操作，执行完清理操作后，进入终止状态。
+    /// </summary>
+    bool IsShutdown { get; }
+
+    /// <summary>
+    /// 是否已进入终止状态，一旦进入终止状态，表示生命周期真正结束。
+    /// </summary>
+    bool IsTerminated { get; }
+
+    /// <summary>
+    /// 返回Future将在Executor终止时进入完成状态
+    /// 1. 返回Future应当是只读的，避免转换Promise
+    /// 2. 用户可以在该Future上等待
+    /// 3. 不保证回调线程，建议监听时指定回调线程
+    /// </summary>
+    /// <returns></returns>
+    IFuture<int> TerminationFuture { get; }
+
+    //
+    /// <summary>
+    /// 等待EventLoopGroup进入终止状态
+    /// 等同于在<see cref="TerminationFuture"/>上进行阻塞操作。
+    /// 
+    /// </summary>
+    /// <param name="timeout">超时时间</param>
+    /// <exception cref="ThreadInterruptedException">如果等待期间被中断</exception>
+    /// <returns>在方法返回前是否已进入终止状态</returns>
+    bool AwaitTermination(TimeSpan timeout) {
+        return TerminationFuture.Await(timeout);
+    }
+
+    /// <summary>
+    /// 请求关闭 ExecutorService，不再接收新的任务。
+    /// ExecutorService在执行完现有任务后，进入关闭状态。
+    /// 如果 ExecutorService 正在关闭，或已经关闭，则方法不产生任何效果。
+    ///
+    /// 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，
+    /// 可以使用<c>AwaitTermination</c>或<c>TerminationFuture</c> 进行等待
+    /// </summary>
+    void Shutdown();
+
+    /// <summary>
+    /// 请求关闭 ExecutorService，<b>尝试取消所有正在执行的任务，停止所有待执行的任务，并不再接收新的任务。</b>
+    /// 如果 ExecutorService 已经关闭，则方法不产生任何效果。
+    ///
+    /// 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，可以使用<c>AwaitTermination</c>
+    /// 或<c>TerminationFuture</c> 进行等待。
+    ///
+    /// 注意：部分Executor实现可能无法返回被取消的任务，只是会尽快关闭。
+    /// </summary>
+    /// <returns>被取消的任务</returns>
+    List<ITask> ShutdownNow();
+
+    #endregion
+
+    #region submit
+
+    /// <summary>
+    /// 创建一个与当前Executor绑定的Promise
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns>Promise</returns>
+    IPromise<T> NewPromise<T>();
+
+    /// <summary>
+    /// 创建一个与当前Executor绑定的Promise
+    ///
+    /// 注意：我们统一使用int代替void，业务不应该使用该Promise的结果。
+    /// </summary>
+    /// <returns>Promise</returns>
+    IPromise<int> NewPromise();
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="builder">任务构建器</param>
+    /// <returns></returns>
+    ValueFuture<T> Submit<T>(in TaskBuilder<T> builder);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="options">调度选项</param>
+    /// <param name="cancelToken"></param>
+    /// <returns></returns>
+    ValueFuture SubmitAction(Action action, int options = 0, CancellationToken cancelToken = default);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="state">回调参数</param>
+    /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <returns></returns>
+    ValueFuture SubmitAction(Action<object> action, object? state, int options = 0, CancellationToken cancelToken = default);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <returns></returns>
+    ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0, CancellationToken cancelToken = default);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="state">回调参数</param>
+    /// <param name="options">调度选项</param>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <returns></returns>
+    ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object? state, int options = 0, CancellationToken cancelToken = default);
+
+    #endregion
+}
+}

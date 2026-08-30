@@ -1,0 +1,14 @@
+{
+    "name": "Wjybxx.Commons.Core",
+    "rootNamespace": "Wjybxx.Commons",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

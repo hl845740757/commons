@@ -1,0 +1,178 @@
+#region LICENSE
+
+// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System.Text;
+using Wjybxx.Commons.Attributes;
+using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Pool;
+using Wjybxx.Dson.Text;
+
+namespace Wjybxx.Dson.Codec
+{
+/// <summary>
+/// 序列化选项
+/// </summary>
+[Immutable]
+public class ConverterOptions
+{
+    /// <summary>
+    /// classId的写入策略
+    /// </summary>
+    public readonly TypeWritePolicy typeWritePolicy;
+    /// <summary>
+    /// 全局序列化特征值
+    /// </summary>
+    public readonly SerializeFeatures encodeFeatures;
+    /// <summary>
+    /// 全局反序列化特征值
+    /// </summary>
+    public readonly DeserializeFeatures decodeFeatures;
+
+    /// <summary>
+    /// 是否启用BeforeEncode钩子方法。
+    /// 默认不启用！因为启用该特性要求同一个Bean不能被多线程同时序列化 -- 只适用单线程序列化场景，
+    /// <code>
+    /// public void BeforeEncode(ConverterOptions) {}
+    /// </code>
+    /// </summary>
+    public readonly bool enableBeforeEncode;
+    /// <summary>
+    /// 是否启用AfterDecode钩子方法。
+    /// 默认启用！因为我们假设afterDecode仅依赖自身数据。
+    /// <code>
+    /// public void AfterDecode(ConverterOptions) {}
+    /// </code>
+    /// </summary>
+    public readonly bool enableAfterDecode;
+
+    /** protoBuf对应的二进制子类型 -- 其它模块依赖 */
+    public readonly int pbBinaryType;
+    /** converter的用途 -- 用于判断是临时序列化，还是持久化入库等 */
+    public readonly int usage;
+
+    /** 序列化申请的字节数组大小 */
+    public readonly int bufferLength;
+    /** 序列化申请的最大字节数组大小 */
+    public readonly int maxBufferLength;
+    /** 字节数组缓存池 -- 多线程下需要注意线程安全问题 */
+    public readonly IArrayPool<byte> bufferPool;
+    /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
+    public readonly IObjectPool<StringBuilder> stringBuilderPool;
+    /** reader缓存池 */
+    public readonly IObjectPool<DsonCollectionReader<string>> readerPool;
+
+    /** 二进制解码设置 */
+    public readonly DsonReaderSettings binReaderSettings;
+    /** 二进制编码设置 */
+    public readonly DsonWriterSettings binWriterSettings;
+    /** 文本解码设置 */
+    public readonly DsonTextReaderSettings textReaderSettings;
+    /** 文本编码设置 */
+    public readonly DsonTextWriterSettings textWriterSettings;
+
+    public ConverterOptions(Builder builder) {
+        this.typeWritePolicy = builder.TypeWritePolicy;
+        this.encodeFeatures = builder.EncodeFeatures;
+        this.decodeFeatures = builder.DecodeFeatures;
+        this.enableBeforeEncode = builder.EnableBeforeEncode;
+        this.enableAfterDecode = builder.EnableAfterDecode;
+
+        this.pbBinaryType = builder.PbBinaryType;
+        this.usage = builder.Usage;
+
+        this.bufferLength = builder.BufferLength;
+        this.maxBufferLength = builder.MaxBufferLength;
+        this.bufferPool = builder.BufferPool;
+        this.stringBuilderPool = builder.StringBuilderPool;
+        this.readerPool = builder.ReaderPool;
+
+        this.binReaderSettings = builder.BinReaderSettings;
+        this.binWriterSettings = builder.BinWriterSettings;
+        this.textReaderSettings = builder.TextReaderSettings;
+        this.textWriterSettings = builder.TextWriterSettings;
+    }
+
+    public Builder ToBuilder() {
+        Builder builder = new Builder();
+        AssignToBuilder(builder);
+        return builder;
+    }
+
+    /** 允许子类重写 */
+    public virtual void AssignToBuilder(Builder builder) {
+        builder.TypeWritePolicy = typeWritePolicy;
+        builder.EncodeFeatures = encodeFeatures;
+        builder.DecodeFeatures = decodeFeatures;
+        builder.EnableBeforeEncode = enableBeforeEncode;
+        builder.EnableAfterDecode = enableAfterDecode;
+
+        builder.PbBinaryType = pbBinaryType;
+        builder.Usage = usage;
+
+        builder.BufferLength = bufferLength;
+        builder.MaxBufferLength = maxBufferLength;
+        builder.BufferPool = bufferPool;
+        builder.StringBuilderPool = stringBuilderPool;
+        builder.ReaderPool = readerPool;
+
+        builder.BinReaderSettings = binReaderSettings;
+        builder.BinWriterSettings = binWriterSettings;
+        builder.TextReaderSettings = textReaderSettings;
+        builder.TextWriterSettings = textWriterSettings;
+    }
+
+    /// <summary>
+    /// 共享Reader池，注意初始化顺序
+    /// </summary>
+    private static readonly ConcurrentObjectPool<DsonCollectionReader<string>> SHARED_READER_POOL = new(
+        DsonCollectionReader<string>.UnsafeCreate, e => e.Dispose());
+    /// <summary>
+    /// 默认的Options
+    /// </summary>
+    public static readonly ConverterOptions DEFAULT = NewBuilder().Build();
+
+    public static Builder NewBuilder() {
+        return new Builder();
+    }
+
+    public class Builder
+    {
+        public TypeWritePolicy TypeWritePolicy { get; set; } = TypeWritePolicy.Optimized;
+        public SerializeFeatures EncodeFeatures { get; set; }
+        public DeserializeFeatures DecodeFeatures { get; set; }
+        public bool EnableBeforeEncode { get; set; } = false;
+        public bool EnableAfterDecode { get; set; } = true;
+
+        public int PbBinaryType { get; set; } = 127;
+        public int Usage { get; set; } = 0;
+
+        public int BufferLength { get; set; } = 8192;
+        public int MaxBufferLength { get; set; } = 1024 * 1024;
+        public IArrayPool<byte> BufferPool { get; set; } = IArrayPool<byte>.Shared;
+        public IObjectPool<StringBuilder> StringBuilderPool { get; set; } = ConcurrentObjectPool.SharedStringBuilderPool;
+        public IObjectPool<DsonCollectionReader<string>> ReaderPool { get; set; } = SHARED_READER_POOL;
+
+        public DsonReaderSettings BinReaderSettings { get; set; } = DsonReaderSettings.Default;
+        public DsonWriterSettings BinWriterSettings { get; set; } = DsonWriterSettings.Default;
+        public DsonTextReaderSettings TextReaderSettings { get; set; } = DsonTextReaderSettings.Default;
+        public DsonTextWriterSettings TextWriterSettings { get; set; } = DsonTextWriterSettings.Default;
+
+        public virtual ConverterOptions Build() => new ConverterOptions(this);
+    }
+}
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Wjybxx.Dson.Core",
+    "rootNamespace": "Wjybxx.Dson",
+    "references": [
+        "Wjybxx.Commons.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

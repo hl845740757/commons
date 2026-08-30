@@ -1,0 +1,217 @@
+﻿#region LICENSE
+
+//  Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#endregion
+
+using System;
+using System.Runtime.CompilerServices;
+using Wjybxx.Dson.Text;
+using Wjybxx.Dson.Types;
+
+namespace Wjybxx.Dson
+{
+/// <summary>
+/// 1. Object/Header先写入name再写入value，数组直接写入value。
+/// 2. 已写入name的情况下，调用包含name的写入value方法时，name将被忽略。
+/// 3. double、bool、null由于可以从无符号字符串精确解析得出，因此可以总是不输出类型标签；
+/// 4. 内置结构体总是输出类型标签，且总是Flow模式，可以降低使用复杂度；
+/// </summary>
+/// <typeparam name="TName">name的类型，string或<see cref="int"/></typeparam>
+public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName>
+{
+    /** 刷新写缓冲区 */
+    void Flush();
+
+    /// <summary>
+    /// 获取当前上下文的类型
+    /// </summary>
+    DsonContextType ContextType { get; }
+
+    /// <summary>
+    /// 当前的上下文深度
+    /// </summary>
+    int ContextDepth { get; }
+
+    /// <summary>
+    /// 获取当前写入的name -- 如果先调用WriteName
+    /// </summary>
+    TName CurrentName { get; }
+
+    /// <summary>
+    /// 当前是否处于等待写入name的状态
+    /// </summary>
+    bool IsAtName { get; }
+
+    /// <summary>
+    /// 编码的时候，用户总是习惯 name和value 同时写入，
+    /// 但在写Array或Object容器的时候，不能同时完成，需要先写入name再开始写值。
+    /// </summary>
+    /// <param name="name"></param>
+    void WriteName(TName name);
+
+    #region 简单值(name版)
+
+    /// <summary>
+    /// 写入一个int值
+    ///
+    /// 注：默认为Typed模式，因为需要能够精确恢复。
+    /// </summary>
+    /// <param name="name">字段的名字</param>
+    /// <param name="value">要写入的值</param>
+    /// <param name="style">数字的文本编码类型</param>
+    void WriteInt32(TName name, int value, NumberStyle style = NumberStyle.Typed);
+
+    void WriteInt64(TName name, long value, NumberStyle style = NumberStyle.Typed);
+
+    void WriteFloat(TName name, float value, NumberStyle style = NumberStyle.Typed);
+
+    void WriteDouble(TName name, double value, NumberStyle style = NumberStyle.Simple);
+
+    void WriteBool(TName name, bool value);
+
+    void WriteString(TName name, string value, StringStyle style = StringStyle.AutoQuote);
+
+    void WriteNull(TName name);
+
+    void WriteBinary(TName name, Binary binary);
+
+    void WriteBinary(TName name, byte[] bytes, int offset, int len);
+
+    void WritePtr(TName name, ObjectPtr objectPtr);
+
+    void WriteDateTime(TName name, ExtDateTime dateTime);
+
+    void WriteTimestamp(TName name, Timestamp timestamp);
+
+    void WriteDouble4(TName name, Double4 double4, Double4Style style = default);
+
+    #endregion
+
+    #region 简单值(无Name版)
+
+    /// <summary>
+    /// 写入一个int值
+    /// </summary>
+    /// <param name="value">要写入的值</param>
+    /// <param name="style">数字的文本编码类型</param>
+    void WriteInt32(int value, NumberStyle style = NumberStyle.Typed);
+
+    void WriteInt64(long value, NumberStyle style = NumberStyle.Typed);
+
+    void WriteFloat(float value, NumberStyle style = NumberStyle.Typed);
+
+    void WriteDouble(double value, NumberStyle style = NumberStyle.Simple);
+
+    void WriteBool(bool value);
+
+    void WriteString(string value, StringStyle style = StringStyle.AutoQuote);
+
+    void WriteNull();
+
+    void WriteBinary(Binary binary);
+
+    void WriteBinary(byte[] bytes, int offset, int len);
+
+    void WritePtr(ObjectPtr objectPtr);
+
+    void WriteDateTime(ExtDateTime dateTime);
+
+    void WriteTimestamp(Timestamp timestamp);
+
+    void WriteDouble4(Double4 double4, Double4Style style = default);
+
+    #endregion
+
+    #region 容器
+
+    // 定义为扩展方法会导致Unity项目下IDE提示错误，但又能编译通过
+    void WriteStartArray(TName name, ObjectStyle style = ObjectStyle.Indent);
+
+    void WriteStartObject(TName name, ObjectStyle style = ObjectStyle.Indent);
+
+    /// <summary>
+    /// 开始写一个数组
+    /// 1.数组内元素没有名字，因此name传 null、空字符串、0 即可
+    /// <code>
+    ///    writer.WriteStartArray(name, ObjectStyle.INDENT);
+    ///    for (String coderName: coderNames) {
+    ///        writer.WriteString(null, coderName);
+    ///    }
+    ///    writer.WriteEndArray();
+    /// </code>
+    /// </summary>
+    void WriteStartArray(ObjectStyle style = ObjectStyle.Indent);
+
+    void WriteEndArray();
+
+    /// <summary>
+    /// 开始写一个普通对象
+    /// <code>
+    ///    writer.WriteStartObject(name, ObjectStyle.INDENT);
+    ///    writer.WriteString("name", "wjybxx")
+    ///    writer.WriteInt32("age", 28)
+    ///    writer.WriteEndObject();
+    /// </code>
+    /// </summary>
+    void WriteStartObject(ObjectStyle style = ObjectStyle.Indent);
+
+    void WriteEndObject();
+
+    /// <summary>
+    /// Header应该保持简单，因此通常应该使用Flow模式
+    /// </summary>
+    /// <param name="style">文本格式</param>
+    void WriteStartHeader(ObjectStyle style = ObjectStyle.Flow);
+
+    void WriteEndHeader();
+
+    #endregion
+
+    #region 特殊接口
+
+    /// <summary>
+    /// 直接写入一个已编码的字节数组
+    /// 1.请确保合法性
+    /// 2.支持的类型与读方法相同
+    /// 
+    /// </summary>
+    /// <param name="name">字段名字</param>
+    /// <param name="type">DsonType</param>
+    /// <param name="data">DsonReader.ReadValueAsBytes 读取的数据</param>
+    void WriteValueBytes(TName name, DsonType type, byte[] data);
+
+#nullable disable
+    /// <summary>
+    /// 附近一个数据到当前上下文
+    /// </summary>
+    /// <param name="userData">用户自定义数据</param>
+    /// <returns>旧值</returns>
+    object Attach(object userData);
+
+    /// <summary>
+    /// 获取附加到当前上下文的数据
+    /// </summary>
+    /// <returns></returns>
+    object Attachment();
+
+    /// <summary>
+    /// 关联的配置
+    /// </summary>
+    DsonWriterSettings Settings { get; }
+
+    #endregion
+}
+}

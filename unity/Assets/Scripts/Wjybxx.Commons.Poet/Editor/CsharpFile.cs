@@ -1,0 +1,73 @@
+#region LICENSE
+
+// Copyright 2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System;
+using System.Collections.Generic;
+
+namespace Wjybxx.Commons.Poet
+{
+/// <summary>
+/// 表示一个C#文件
+/// （暂时不实现<see cref="ISpecification"/>接口）
+/// </summary>
+public class CsharpFile
+{
+    public readonly string name;
+    public readonly IList<ISpecification> nestedSpecs;
+
+    private CsharpFile(Builder builder) {
+        this.name = builder.name;
+        this.nestedSpecs = Util.ToImmutableList(builder.nestedSpecs);
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="name">文件名，不含cs后缀</param>
+    /// <returns></returns>
+    public static Builder NewBuilder(string name) => new Builder(name);
+
+    public class Builder
+    {
+        public readonly string name;
+        public readonly List<ISpecification> nestedSpecs = new List<ISpecification>();
+
+        internal Builder(string name) {
+            this.name = name ?? throw new ArgumentNullException(nameof(name));
+        }
+
+        public CsharpFile Build() {
+            return new CsharpFile(this);
+        }
+
+        public Builder AddSpecs(IEnumerable<ISpecification> specs) {
+            if (specs == null) throw new ArgumentNullException(nameof(specs));
+            foreach (ISpecification spec in specs) {
+                if (spec == null) throw new ArgumentException("spec == null");
+                this.nestedSpecs.Add(spec);
+            }
+            return this;
+        }
+
+        public Builder AddSpec(ISpecification spec) {
+            if (spec == null) throw new ArgumentNullException(nameof(spec));
+            this.nestedSpecs.Add(spec);
+            return this;
+        }
+    }
+}
+}

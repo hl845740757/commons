@@ -1,0 +1,20 @@
+{
+    "name": "Wjybxx.BTree.Codec",
+    "rootNamespace": "Wjybxx.BTree.Codec",
+    "references": [
+        "Wjybxx.BTree.Core",
+        "Wjybxx.Commons.Core",
+        "Wjybxx.Commons.Concurrent",
+        "Wjybxx.Dson.Core",
+        "Wjybxx.Dson.Codec"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

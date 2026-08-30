@@ -1,0 +1,17 @@
+{
+    "name": "Wjybxx.BTree.Core",
+    "rootNamespace": "Wjybxx.BTree",
+    "references": [
+        "Wjybxx.Commons.Core",
+        "Wjybxx.Commons.Concurrent"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
