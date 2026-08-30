@@ -37,25 +37,25 @@ public class AsyncStateMachinePoolTest
     }
 
     // 测试对象池是否生效
-    [TaskPoolSize(100)]
+    [PooledTask(100)]
     private static async ValueFuture AsyncMethod() {
         await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
     }
 
     // 测试重载
-    [TaskPoolSize]
+    [PooledTask]
     private static async ValueFuture AsyncMethod(string input) {
         await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
     }
 
     // 测试泛型方法
-    [TaskPoolSize(50)]
+    [PooledTask(50)]
     private static async ValueFuture GenericAsyncMethod1<T>(T input) {
         await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
     }
 
     // 测试泛型方法
-    [TaskPoolSize(50)]
+    [PooledTask(50)]
     private static async ValueFuture<T> GenericAsyncMethod2<T>(T input) {
         await GlobalEventLoop.Inst.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(10));
         return input;

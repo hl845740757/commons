@@ -30,7 +30,7 @@ namespace Wjybxx.Commons.Concurrent
 /// PS：还可以考虑绑定到当前类的静态函数，动态计算Size。
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method, Inherited = false)]
-public sealed class TaskPoolSizeAttribute : Attribute
+public sealed class PooledTaskAttribute : Attribute
 {
     /// <summary>
     /// 如果异步方法的返回值是编译时确定类型，则该值就是最终池大小；
@@ -41,12 +41,12 @@ public sealed class TaskPoolSizeAttribute : Attribute
     public readonly int poolSize2;
 
     // 避免每一处都设置大小
-    public TaskPoolSizeAttribute() {
+    public PooledTaskAttribute() {
         poolSize = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Concurrent.TaskPoolSize1", 200);
         poolSize2 = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Concurrent.TaskPoolSize2", 50);
     }
 
-    public TaskPoolSizeAttribute(int poolSize, int poolSize2 = -1) {
+    public PooledTaskAttribute(int poolSize, int poolSize2 = -1) {
         this.poolSize = poolSize;
         this.poolSize2 = poolSize2 == -1 ? poolSize / 4 : poolSize2;
     }

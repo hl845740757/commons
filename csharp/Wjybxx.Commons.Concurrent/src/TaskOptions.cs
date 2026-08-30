@@ -37,7 +37,7 @@ public static class TaskOptions
     /// <summary>
     /// 延时任务：包含优先级
     /// </summary>
-    public const int HAS_PRIORITY = 1 << 14; // 预留1位给优先级
+    public const int HAS_PRIORITY = 1 << 14;
     /// <summary>
     /// 延时任务：包含调度阶段
     /// </summary>
@@ -65,35 +65,34 @@ public static class TaskOptions
     /// 2. 如果需要取消任务，需通过取消令牌实现。
     ///</summary>
     public const int CAUGHT_EXCEPTION = 1 << 20;
-
     /// <summary>
-    /// 本地序（可以与其它线程无序）
-    /// 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
-    ///</summary>
-    public const int LOCAL_ORDER = 1 << 21;
-    /// <summary>
-    /// 唤醒事件循环线程
-    /// 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
-    ///</summary>
-    public const int WAKEUP_THREAD = 1 << 22;
-    /// <summary>
-    /// 如果一个异步任务当前已在目标<see cref="ISingleThreadExecutor"/>线程，则立即执行，而不提交任务。
-    ///</summary>
-    public const int STAGE_TRY_INLINE = 1 << 23;
-    /// <summary>
-    /// 默认情况下，Stage会在触发回调之前检测ctx否为IContext和<see cref="CancellationToken"/>类型，并检测取消信号。
-    /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
-    /// </summary>
-    [Obsolete("新版本切割用户上下文和调度上下文，不再使用该参数")]
-    public const int STAGE_UNCANCELLABLE_CTX = 1 << 24;
-    /// <summary>
-    /// 监听用户上下文中包含的取消令牌
+    /// 延时任务：监听用户上下文中包含的取消令牌
     /// 
     /// 1.该选项用于延时任务或监听器列表管理。
     /// 2.如果调度器默认不会监听CTX中的取消令牌，那么应当响应用户的该选项。
     /// </summary>
-    public const int LISTEN_CANCEL_TOKEN = 1 << 25;
+    public const int LISTEN_CANCEL_TOKEN = 1 << 21;
 
+    /// <summary>
+    /// 任务本地序（可以与其它线程无序）
+    /// 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
+    ///</summary>
+    public const int LOCAL_ORDER = 1 << 22;
+    /// <summary>
+    /// 唤醒事件循环线程
+    /// 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
+    ///</summary>
+    public const int WAKEUP_THREAD = 1 << 23;
+    /// <summary>
+    /// 如果一个异步任务当前已在目标<see cref="ISingleThreadExecutor"/>线程，则立即执行，而不提交任务。
+    ///</summary>
+    public const int STAGE_TRY_INLINE = 1 << 24;
+
+    /// <summary>
+    /// 用于告知Future是否需要返回结果（可能装箱）
+    /// 相关方法：<see cref="ValueFuture.GetAwaitable2(int)"/>
+    /// </summary>
+    public const int REQUIRE_RESULT = 1 << 25;
     /// <summary>
     /// 抑制await抛出取消异常(性能因素)
     /// </summary>
@@ -176,7 +175,7 @@ public static class TaskOptions
             return (flags & ~option);
         }
     }
-    
+
     #endregion
 }
 }

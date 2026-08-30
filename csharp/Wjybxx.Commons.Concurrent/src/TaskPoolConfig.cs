@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 用于配置并发库中的对象池
-/// 注：异步状态机方法使用<see cref="TaskPoolSizeAttribute"/>进行配置。
+/// 注：异步状态机方法使用<see cref="PooledTaskAttribute"/>进行配置。
 /// </summary>
 public static class TaskPoolConfig
 {

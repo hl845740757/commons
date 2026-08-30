@@ -292,13 +292,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             return -1;
         }
         if (IsShuttingDown) {
-            // 申请序号期间收到关闭序号
-            if (size == 1) {
-                eventSequencer.Publish(sequence);
-            } else {
-                long lo = sequence - (size - 1);
-                eventSequencer.Publish(lo, sequence);
-            }
+            // 申请序号期间收到关闭序号 - 低频逻辑无需优化
+            long lo = sequence - (size - 1);
+            eventSequencer.Publish(lo, sequence);
             return -1;
         }
         return sequence;
@@ -340,13 +336,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             sequence = eventSequencer.Next(size);
         }
         if (IsShuttingDown) {
-            // 申请序号期间收到关闭序号
-            if (size == 1) {
-                eventSequencer.Publish(sequence);
-            } else {
-                long lo = sequence - (size - 1);
-                eventSequencer.Publish(lo, sequence);
-            }
+            // 申请序号期间收到关闭序号 - 低频逻辑无需优化
+            long lo = sequence - (size - 1);
+            eventSequencer.Publish(lo, sequence);
             return -1;
         }
         return sequence;

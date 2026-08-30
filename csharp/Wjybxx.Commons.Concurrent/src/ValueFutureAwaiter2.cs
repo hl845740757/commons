@@ -56,7 +56,7 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TaskResult GetResult() {
-        return _future.GetResult(_options);
+        return _future.GetResult(_options, (_options & TaskOptions.REQUIRE_RESULT) != 0);
     }
 
     // 3. OnCompleted

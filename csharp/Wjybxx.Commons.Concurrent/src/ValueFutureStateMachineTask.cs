@@ -24,7 +24,7 @@ using System.Threading;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 0.由<see cref="TaskPoolSizeAttribute"/>在目标方法上配置对象池大小。
+/// 0.由<see cref="PooledTaskAttribute"/>在目标方法上配置对象池大小。
 /// 1.该类型由于要复用，不能继承Promise，否则可能导致用户使用到错误的接口。
 /// 2.用户在获取结果时触发回收。
 /// 3.该实现并不是严格线程安全的，用在非StateMachine场景可能导致错误。
@@ -161,7 +161,7 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
         if (methodInfo == null) {
             return 0;
         }
-        TaskPoolSizeAttribute attribute = methodInfo.GetCustomAttribute<TaskPoolSizeAttribute>();
+        PooledTaskAttribute attribute = methodInfo.GetCustomAttribute<PooledTaskAttribute>();
         if (attribute == null) {
             return 0;
         }
