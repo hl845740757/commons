@@ -152,6 +152,13 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         throw new DsonCodecException("unexpected ToNumber method call");
     }
 
+    public bool IsWriteAsString(SerializeFeatures features) {
+        if (_codec is IEnumCodec<T> enumCodec) {
+            return enumCodec.IsWriteAsString(features);
+        }
+        throw new DsonCodecException("unexpected IsWriteAsString method call");
+    }
+
     #endregion
 
     #region 字典特殊支持

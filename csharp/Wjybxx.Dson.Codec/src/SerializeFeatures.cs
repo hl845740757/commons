@@ -23,13 +23,6 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// 序列化特征值
 ///
-/// <h3>Style弱化</h3>
-/// 序列化框架支持Style会导致较大的复杂度，因此框架层仅挑选部分常用数字+字符串的Style合并到该枚举，以简化复杂度；
-/// 如果用户需要更好的控制Style，可通过字段编解码代理自行编码。
-///
-/// Q：为什么Enum、Null、Zero仅支持字段加全局配置？为什么不支持类型作用域？
-/// A：如果我们需要写入Null或者零值，通常是特殊领域的业务，该领域Null值和零值的处理通常一致，因此为该领域定制一个Converter即可。
-/// （主要是因为支持类型作用域会导致较大的上下文查询开销）
 /// </summary>
 [Flags]
 public enum SerializeFeatures : uint
@@ -93,7 +86,7 @@ public enum SerializeFeatures : uint
     /// [[K1, V1], [K2, V2], [K3, V3]]
     /// </code>
     /// </summary>
-    PairAsArray = 0x40,
+    PairAsArray = 0x30,
     /// <summary>
     /// 将Pair写为子文档
     /// 
@@ -101,7 +94,7 @@ public enum SerializeFeatures : uint
     /// [{K1: V1}, {K2: V2}, {K3: V3}]
     /// </code>
     /// </summary>
-    PairAsDocument = 0x80,
+    PairAsDocument = 0x40,
 #pragma warning restore CA1069
 
     /// <summary>
@@ -136,10 +129,11 @@ public enum SerializeFeatures : uint
     /// </summary>
     EnumAsNumber = 0x10 << 8,
     /// <summary>
-    /// 将枚举值序列化为字符串
+    /// 将枚举值序列化为字符串（默认int）
     ///
     /// 1.作用于List/Map时表示将其Value序列化为字符串。
-    /// 2.由于枚举名的稳定性较差，通常不建议开启，因此建议尽量使用字段作用域。
+    /// 2.由于枚举名的稳定性较差，因此只可用于字段或枚举定义，用在它处无效。
+    /// 3.字典的key需要单独标记，未标记的情况下区域枚举定义上的特征值。
     /// </summary>
     EnumAsString = 0x20 << 8,
     /// <summary>
@@ -154,14 +148,16 @@ public enum SerializeFeatures : uint
     /// <summary>
     /// 将Null值保持为Null值，禁用转换
     ///
-    /// Q：为什么序列化需要支持Null值转为非Null值(默认值)，而反序列化不需要？
-    /// A：因为程序可以主动处理null和默认值以实现安全性，而序列化得到的数据可能需要更严格的规范以保证安全性。
+    /// 注：禁用转换后如果想写入null值，需启用<see cref="WriteNullValue"/>。
     /// </summary>
     NullStringAsNull = 0x10 << 8,
     /// <summary>
     /// 将Null字符串值写为空字符串。
+    /// 
+    /// 注：虽然字典的Key也可能为字符串，但字典的Key通常不应该为null。
     /// </summary>
     NullStringAsEmpty = 0x20 << 8,
+#pragma warning restore CA1069
 
 #pragma warning disable CA1069
     /// <summary>

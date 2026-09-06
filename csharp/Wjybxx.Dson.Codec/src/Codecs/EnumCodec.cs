@@ -49,6 +49,8 @@ internal interface IEnumCodec<T>
     T ToObject(int value);
 
     int ToNumber(T value);
+
+    bool IsWriteAsString(SerializeFeatures features);
 }
 
 /// <summary>
@@ -105,9 +107,7 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IEnumCodec<T>, IKeyCodec<T> wh
     public string EncodeKey(T value, SerializeFeatures features) {
         // 枚举Key必须存在对应的名字
         if (_value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)) {
-            return (features & SerializeFeatures.EnumKeyAsString) != 0
-                ? valueInfo.name
-                : valueInfo.numberString;
+            return IsWriteAsString(features) ? valueInfo.name : valueInfo.numberString;
         }
         throw new DsonCodecException($"invalid enum key: {value}, type: {typeof(T)}");
     }
@@ -136,7 +136,7 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IEnumCodec<T>, IKeyCodec<T> wh
             writer.WriteInt(EnumUtil.GetIntValue(inst)); // 可能是default或flags
             return;
         }
-        bool isWriteAsString = _isWriteAsString || IsWriteAsString(features, writer);
+        bool isWriteAsString = IsWriteAsString(features);
         if (isWriteAsString) {
             writer.WriteString(valueInfo.name, SerializeFeatures.StringUnquote);
         } else {
@@ -198,17 +198,15 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IEnumCodec<T>, IKeyCodec<T> wh
         return (features & DeserializeFeatures.EnumIgnoreCase) != 0;
     }
 
-    private bool IsWriteAsString(SerializeFeatures features, IDsonObjectWriter writer) {
+    /// <summary>
+    /// 枚举是否序列化为字符串
+    /// 注：枚举只查询字段和枚举自身的注解，不查询字段所属的类型和全局属性
+    /// </summary>
+    /// <param name="features">字段序列化特征值</param>
+    public bool IsWriteAsString(SerializeFeatures features) {
         if ((features & SerializeFeatures.EnumAsString) != 0) return true;
         if ((features & SerializeFeatures.EnumAsNumber) != 0) return false;
-        TypeMeta typeMeta = writer.ContainerTypeMeta;
-        if (typeMeta != null) {
-            features = typeMeta.encodeFeatures;
-            if ((features & SerializeFeatures.EnumAsString) != 0) return true;
-            if ((features & SerializeFeatures.EnumAsNumber) != 0) return false;
-        }
-        features = writer.Options.encodeFeatures;
-        return (features & SerializeFeatures.EnumAsString) != 0;
+        return _isWriteAsString;
     }
 }
 }

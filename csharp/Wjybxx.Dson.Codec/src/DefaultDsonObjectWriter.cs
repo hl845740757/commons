@@ -508,42 +508,44 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     #region util
 
     private bool IsWriteZeroValue(SerializeFeatures features) {
-        if ((features & SerializeFeatures.WriteZeroValue) != 0) return true;
+        // 默认情况下写入0值，只有开启忽略0值的情况下才跳过0值
         if ((features & SerializeFeatures.SkipZeroValue) != 0) return false;
+        if ((features & SerializeFeatures.WriteZeroValue) != 0) return true;
         TypeMeta typeMeta = ContainerTypeMeta;
         if (typeMeta != null) {
             features = typeMeta.encodeFeatures;
-            if ((features & SerializeFeatures.WriteZeroValue) != 0) return true;
             if ((features & SerializeFeatures.SkipZeroValue) != 0) return false;
+            if ((features & SerializeFeatures.WriteZeroValue) != 0) return true;
         }
         features = converter.Options.encodeFeatures;
-        return (features & SerializeFeatures.WriteZeroValue) != 0;
+        return (features & SerializeFeatures.SkipZeroValue) == 0;
     }
 
     private bool IsWriteNullValue(SerializeFeatures features) {
-        if ((features & SerializeFeatures.WriteNullValue) != 0) return true;
+        // 默认情况下写入null值，只有开启忽略null值的情况下才跳过null值
         if ((features & SerializeFeatures.SkipNullValue) != 0) return false;
+        if ((features & SerializeFeatures.WriteNullValue) != 0) return true;
         TypeMeta typeMeta = ContainerTypeMeta;
         if (typeMeta != null) {
             features = typeMeta.encodeFeatures;
-            if ((features & SerializeFeatures.WriteNullValue) != 0) return true;
             if ((features & SerializeFeatures.SkipNullValue) != 0) return false;
+            if ((features & SerializeFeatures.WriteNullValue) != 0) return true;
         }
         features = converter.Options.encodeFeatures;
-        return (features & SerializeFeatures.WriteNullValue) != 0;
+        return (features & SerializeFeatures.SkipNullValue) == 0;
     }
 
     private bool IsWriteNullStringAsEmpty(SerializeFeatures features) {
-        if (((features & SerializeFeatures.NullStringAsNull) != 0)) return false;
+        // null字符串字段默认不特殊对待，只有开启特性的情况下才写为空字符串
         if ((features & SerializeFeatures.NullStringAsEmpty) != 0) return true;
+        if (((features & SerializeFeatures.NullStringAsNull) != 0)) return false;
         TypeMeta typeMeta = ContainerTypeMeta;
         if (typeMeta != null) {
             features = typeMeta.encodeFeatures;
-            if (((features & SerializeFeatures.NullStringAsNull) != 0)) return false;
             if ((features & SerializeFeatures.NullStringAsEmpty) != 0) return true;
+            if (((features & SerializeFeatures.NullStringAsNull) != 0)) return false;
         }
         features = converter.Options.encodeFeatures;
-        if (((features & SerializeFeatures.NullStringAsNull) != 0)) return false;
         return (features & SerializeFeatures.NullStringAsEmpty) != 0;
     }
 

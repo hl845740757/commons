@@ -163,7 +163,7 @@ public readonly struct ValueFuture
         }
         return Status;
     }
-    
+
     /// <summary>
     /// 关联的任务的状态
     /// </summary>
@@ -246,6 +246,11 @@ public readonly struct ValueFuture
         taskResult.Deconstruct(out object? result, out object? ex);
         return new ValueFuture(result, ex);
     }
+
+    /// <summary>
+    /// 是否已持久化结果
+    /// </summary>
+    public bool IsMemorized => _future == null;
 
     /// <summary>
     /// 如果用户不需要结果，可以调用该函数，告知Promise在任务完成后自动回收。
@@ -523,7 +528,7 @@ public readonly struct ValueFuture<T>
     public ValueFuture<T> WithTaskId(long taskId) {
         return new ValueFuture<T>(in this, taskId);
     }
-    
+
     /// <summary>
     /// 获取任务的状态（Debug用）
     /// </summary>
@@ -534,7 +539,7 @@ public readonly struct ValueFuture<T>
         }
         return Status;
     }
-    
+
     /// <summary>
     /// 获取关联任务的状态
     /// </summary>
@@ -618,6 +623,11 @@ public readonly struct ValueFuture<T>
         taskResult.Deconstruct(out T result, out object? ex);
         return new ValueFuture<T>(result, ex);
     }
+
+    /// <summary>
+    /// 是否已持久化结果
+    /// </summary>
+    public bool IsMemorized => _future == null;
 
     /// <summary>
     /// 1.忽略执行结果
