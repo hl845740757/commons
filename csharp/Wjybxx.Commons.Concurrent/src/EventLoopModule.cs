@@ -71,16 +71,10 @@ public abstract class EventLoopModule : IEventLoopModule
 
     internal void InvokeStop() {
         Debug.Assert(IsScript());
-        _status = ComponentStatus.Shutdown;
-        try {
-            Stop();
-        }
-        finally {
-            _status = ComponentStatus.Terminated;
-        }
+        _status = ComponentStatus.Stopped;
+        Stop();
     }
 
-    /** 是否是脚本组件 */
     private bool IsScript() {
         return Cid.kind == ComponentKind.Script;
     }
