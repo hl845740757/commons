@@ -98,6 +98,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Time\ITimepiece.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\ConstantPool.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\CollectionUtil.Dic.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Ex\FailFastException.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\IUnsafeIterator.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Time\ITimeProvider.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\DynamicArrayHelper.cs" />
@@ -140,6 +141,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Pool\ConcurrentArrayPool.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Time\Timepiece.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\MultiChunkDeque.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Ex\AssertionError.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\IIndexedElement.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\INumber.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\IIndexedCollection.cs" />
@@ -194,8 +196,6 @@
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\ISequencedCollection.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Mutable\IMutable.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Fx\ComponentDefineAttribute.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Ex\AssertionError.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Ex\FailFastException.cs" />
     <None Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Wjybxx.Commons.Core.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>

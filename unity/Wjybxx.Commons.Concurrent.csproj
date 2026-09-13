@@ -50,7 +50,9 @@
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\DisruptorSchedulerHelper.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\TaskAwaitable.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\ITask.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\PooledTaskAttribute.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\FutureCombiner.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\FutureAwaitable2.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\FutureAwaiter.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\IAgentEventHandler.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\ExecutorUtil.cs" />
@@ -114,6 +116,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\CompletionException.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\EventLoopChooserFactory.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\ManualResetPromise.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\FutureAwaiter2.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\AbstractEventLoopGroup.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\AsyncValueFutureMethodBuilder.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\ValueFuture.cs" />
@@ -123,9 +126,6 @@
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\TaskStatus.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\EmptyAgent.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\IEventLoopGroup.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\PooledTaskAttribute.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\FutureAwaitable2.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\FutureAwaiter2.cs" />
     <None Include="Assets\Scripts\Wjybxx.Commons.Concurrent\Runtime\Wjybxx.Commons.Concurrent.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
