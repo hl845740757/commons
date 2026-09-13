@@ -148,7 +148,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                                  DsonCodecImpl<K> keyEncoder) {
         SerializeFeatures selfFeatures = features.ErasureElementFeatures();
         SerializeFeatures elementFeatures = features.GetElementFeatures();
-        SerializeFeatures keyFeatures = GetKeyFeatures(features, writer);
+        SerializeFeatures keyFeatures = GetKeyFeatures(features);
         MapStyle style = GetMapStyle(features, writer, MapStyle.Document);
         switch (style) {
             case MapStyle.Document: {
@@ -293,26 +293,12 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         return def;
     }
 
-    private SerializeFeatures GetKeyFeatures(SerializeFeatures features, IDsonObjectWriter writer) {
+    private SerializeFeatures GetKeyFeatures(SerializeFeatures features) {
         if (typeof(K).IsEnum) {
-            return IsWriteEnumKeyAsString(features, writer)
-                ? SerializeFeatures.EnumKeyAsString
-                : SerializeFeatures.EnumKeyAsNumber;
+            if ((features & SerializeFeatures.EnumKeyAsString) != 0) return SerializeFeatures.EnumAsString;
+            if ((features & SerializeFeatures.EnumKeyAsNumber) != 0) return SerializeFeatures.EnumAsNumber;
         }
-        return default; // 需要为数字支持额外格式吗？
-    }
-
-    private bool IsWriteEnumKeyAsString(SerializeFeatures features, IDsonObjectWriter writer) {
-        if ((features & SerializeFeatures.EnumKeyAsString) != 0) return true;
-        if ((features & SerializeFeatures.EnumKeyAsNumber) != 0) return false;
-        TypeMeta typeMeta = writer.ContainerTypeMeta;
-        if (typeMeta != null) {
-            features = typeMeta.encodeFeatures;
-            if ((features & SerializeFeatures.EnumKeyAsString) != 0) return true;
-            if ((features & SerializeFeatures.EnumKeyAsNumber) != 0) return false;
-        }
-        features = writer.Options.encodeFeatures;
-        return (features & SerializeFeatures.EnumKeyAsString) != 0;
+        return default;
     }
 }
 }

@@ -33,26 +33,30 @@ public enum ComponentStatus
     Initialized = 1,
 
     /// <summary>
+    /// 启动中（慎用）
+    /// </summary>
+    Starting = 2,
+    /// <summary>
     /// 运行状态，脚本组件在调用Start成功后会进入该状态。
     /// </summary>
-    Running = 2,
+    Running = 3,
     /// <summary>
     /// 挂起状态，挂起状态下不会被Update
     /// (是否支持取决于实体对组件的调度策略)
     /// </summary>
-    Suspended = 3,
+    Suspended = 4,
     /// <summary>
-    /// 关闭中，正在执行关闭前的清工作
+    /// 停止中（慎用）
     /// </summary>
-    Shutdown = 4,
+    Stopping = 5,
     /// <summary>
     /// 运行结束
     /// </summary>
-    Terminated = 5,
+    Stopped = 6,
 
     /// <summary>
     /// 已销毁，即已从实体上删除
     /// </summary>
-    Destroyed = 6
+    Destroyed = 7
 }
 }
