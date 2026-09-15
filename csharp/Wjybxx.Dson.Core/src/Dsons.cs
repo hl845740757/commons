@@ -480,6 +480,10 @@ public static class Dsons
             case DsonType.Binary:
                 writer.WriteBinary(dsonValue.AsBinary());
                 break;
+            case DsonType.FixedPoint4: {
+                writer.WriteFx4(dsonValue.AsFx4());
+                break;
+            }
             case DsonType.Pointer:
                 writer.WritePtr(dsonValue.AsPointer());
                 break;
@@ -492,6 +496,10 @@ public static class Dsons
             }
             case DsonType.Double4: {
                 writer.WriteDouble4(dsonValue.AsDouble4());
+                break;
+            }
+            case DsonType.FixedVector4: {
+                writer.WriteFv4(dsonValue.AsFv4());
                 break;
             }
             case DsonType.Header:
@@ -524,10 +532,12 @@ public static class Dsons
                 return DsonNull.NULL;
             }
             case DsonType.Binary: return new DsonBinary(reader.ReadBinary());
+            case DsonType.FixedPoint4: return new DsonFx4(reader.ReadFx4());
             case DsonType.Pointer: return new DsonPointer(reader.ReadPtr());
             case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
             case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());
             case DsonType.Double4: return new DsonDouble4(reader.ReadDouble4());
+            case DsonType.FixedVector4: return new DsonFv4(reader.ReadFv4());
             case DsonType.Header: {
                 DsonHeader<TName> header = new DsonHeader<TName>();
                 ReadHeader(reader, header);

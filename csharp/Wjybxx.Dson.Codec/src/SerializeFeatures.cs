@@ -217,17 +217,17 @@ public enum SerializeFeatures : uint
     NumberFixed = 0x80 << 20,
 
     /// <summary>
-    /// 将Double4编码为向量(1)
+    /// 将Double4编码为数组(1)
     /// </summary>
-    Double4AsVector = 0x10 << 20,
+    Double4AsArray = 0x10 << 20,
     /// <summary>
-    /// 将Double4编码为RGBA(2)
+    /// 将Double4编码为向量(2)
     /// </summary>
-    Double4AsRgba = 0x20 << 20,
+    Double4AsVector = 0x20 << 20,
     /// <summary>
-    /// 将Double4编码为数组(3)
+    /// 将Double4编码为RGBA(3)
     /// </summary>
-    Double4AsArray = 0x30 << 20,
+    Double4AsRgba = 0x30 << 20,
     /// <summary>
     /// 限定Double4长度为2
     /// </summary>
@@ -236,6 +236,23 @@ public enum SerializeFeatures : uint
     /// 限定Double4长度为3
     /// </summary>
     Double4Len3 = 0x80 << 20,
+
+    /// <summary>
+    /// 将FixedVector4编码为数组(3)
+    /// </summary>
+    Fv4AsArray = 0x10 << 20,
+    /// <summary>
+    /// 将FixedVector4编码为向量(1)
+    /// </summary>
+    Fv4AsVector = 0x20 << 20,
+    /// <summary>
+    /// 限定FixedVector4长度为2
+    /// </summary>
+    Fv4Len2 = 0x40 << 20,
+    /// <summary>
+    /// 限定FixedVector4长度为3
+    /// </summary>
+    Fv4Len3 = 0x80 << 20,
 
     /// <summary>
     /// 限定浮点数保留小数点后3位，适用普通浮点数和Double4
@@ -264,6 +281,15 @@ public enum SerializeFeatures : uint
     Double4AsVector3 = Double4AsVector | Double4Len3,
 
     /// <summary>
+    /// FixedVector4序列化为Vector2
+    /// </summary>
+    Fv4AsVector2 = Fv4AsVector | Fv4Len2,
+    /// <summary>
+    /// FixedVector4序列化为Vector3
+    /// </summary>
+    Fv4AsVector3 = Fv4AsVector | Fv4Len3,
+
+    /// <summary>
     /// Map编码样式的掩码
     /// </summary>
     MaskMapStyles = MapAsArray | MapAsDocument | PairAsArray | PairAsDocument,
@@ -284,11 +310,15 @@ public enum SerializeFeatures : uint
                         | NumberNoExponent3 | NumberNoExponent7
                         | Double4AsInt,
     /// <summary>
+    /// FixedVector4编码样式的掩码
+    /// </summary>
+    MaskFv4Styles = Fv4AsVector | Fv4AsArray | Fv4Len2 | Fv4Len3,
+    /// <summary>
     /// List/Map元素的序列化特征值掩码（还有部分需要手动转换）
     /// </summary>
     MaskElementFeatures = SerializeReference | SerializeInline | WriteTypeName
                           | EnumAsNumber | EnumAsString
                           | NullStringAsNull | NullStringAsEmpty
-                          | MaskStringStyles | MaskNumberStyles | MaskDouble4Styles
+                          | MaskStringStyles | MaskNumberStyles | MaskDouble4Styles | MaskFv4Styles
 }
 }

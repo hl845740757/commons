@@ -289,6 +289,10 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         return PopNextValue().AsBinary().DeepCopy(); // 需要拷贝
     }
 
+    protected override FixedPoint4 DoReadFx4() {
+        return PopNextValue().AsFx4();
+    }
+
     protected override ObjectPtr DoReadPtr() {
         return PopNextValue().AsPointer();
     }
@@ -303,6 +307,10 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     protected override Double4 DoReadDouble4() {
         return PopNextValue().AsDouble4();
+    }
+
+    protected override FixedVector4 DoReadFv4() {
+        return PopNextValue().AsFv4();
     }
 
     #endregion

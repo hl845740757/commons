@@ -115,6 +115,10 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
         GetContext().Add(new DsonBinary(Binary.CopyFrom(bytes, offset, len)));
     }
 
+    protected override void DoWriteFx4(FixedPoint4 fx4) {
+        GetContext().Add(new DsonFx4(fx4));
+    }
+
     protected override void DoWritePtr(ObjectPtr objectPtr) {
         GetContext().Add(new DsonPointer(objectPtr));
     }
@@ -129,6 +133,10 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
 
     protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
         GetContext().Add(new DsonDouble4(double4));
+    }
+
+    protected override void DoWriteFv4(FixedVector4 fv4, FixedVector4Style style) {
+        GetContext().Add(new DsonFv4(fv4));
     }
 
     #endregion

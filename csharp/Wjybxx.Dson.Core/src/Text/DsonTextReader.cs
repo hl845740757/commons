@@ -292,6 +292,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 PushNextValue(valueToken.value);
                 return DsonType.Double;
             }
+            case DsonTokenType.FixedPoint4: {
+                PushNextValue(valueToken.value);
+                return DsonType.FixedPoint4;
+            }
             case DsonTokenType.Bool: {
                 PushNextValue(valueToken.value);
                 return DsonType.Bool;
@@ -400,6 +404,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 PushNextValue(UnionValue.OfDouble(DsonTexts.ParseDouble(unquotedString)));
                 break;
             }
+            case DsonType.FixedPoint4: {
+                PushNextValue(UnionValue.OfFixedPoint4(DsonTexts.ParseFx4(unquotedString)));
+                break;
+            }
             case DsonType.Bool: {
                 PushNextValue(UnionValue.OfBool(DsonTexts.ParseBool(unquotedString)));
                 break;
@@ -442,7 +450,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // 2.object和array的className会在beginObject和beginArray的时候转换为结构体 @{}
         // 因此这里只能出现内置结构体的简写形式
         string clsName = valueToken.StringValue();
-        if (DsonTexts.LabelPtr == clsName) { // @ptr localId
+        if (DsonTexts.LabelPtr == clsName || DsonTexts.LabelRef == clsName) { // @ptr localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
             long localId = DsonTexts.ParseInt64(nextToken.StringValue());
@@ -481,7 +489,8 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // 内置结构体
         string clsName = headerToken.StringValue();
         switch (clsName) {
-            case DsonTexts.LabelPtr: {
+            case DsonTexts.LabelPtr:
+            case DsonTexts.LabelRef: {
                 PushNextValue(UnionValue.OfObjectPtr(ScanPtr(context)));
                 return DsonType.Pointer;
             }
@@ -496,6 +505,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             case DsonTexts.LabelDouble4: {
                 PushNextValue(UnionValue.OfDouble4(ScanDouble4FromObject(context)));
                 return DsonType.Double4;
+            }
+            case DsonTexts.LabelFixedVector4: {
+                PushNextValue(UnionValue.OfFixedVector4(ScanFv4FromObject(context)));
+                return DsonType.FixedVector4;
             }
             default: {
                 PushToken(headerToken); // 非Object形式内置结构体
@@ -524,6 +537,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             case DsonTexts.LabelDouble4: {
                 PushNextValue(UnionValue.OfDouble4(ScanDouble4FromArray(context)));
                 return DsonType.Double4;
+            }
+            case DsonTexts.LabelFixedVector4: {
+                PushNextValue(UnionValue.OfFixedVector4(ScanFv4FromArray(context)));
+                return DsonType.FixedVector4;
             }
             default: {
                 PushToken(headerToken);
@@ -691,7 +708,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     private Double4 ScanDouble4FromArray(Context context) {
-        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
+        Double4 result = default;
         int index = 0;
         DsonToken valueToken;
         while ((valueToken = PopToken()).type != DsonTokenType.EndArray) {
@@ -701,19 +718,13 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             }
             EnsureStringsToken(context, valueToken);
             double value = DsonTexts.ParseDouble(valueToken.StringValue());
-            switch (index) {
-                case 0: v0 = value; break;
-                case 1: v1 = value; break;
-                case 2: v2 = value; break;
-                case 3: v3 = value; break;
-                default: throw new DsonIOException("IndexOutOfRange");
-            }
+            result[index] = value;
         }
-        return new Double4(v0, v1, v2, v3);
+        return result;
     }
 
     private Double4 ScanDouble4FromObject(Context context) {
-        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
+        Double4 result = default;
         int index = 0;
         DsonToken keyToken;
         while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
@@ -721,7 +732,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 index++;
                 continue;
             }
-            // key必须是字符串 - 必须顺序输入
             EnsureStringsToken(context, keyToken);
             // 下一个应该是冒号
             DsonToken colonToken = PopToken();
@@ -731,15 +741,48 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             EnsureStringsToken(context, valueToken);
             //
             double value = DsonTexts.ParseDouble(valueToken.StringValue());
-            switch (index) {
-                case 0: v0 = value; break;
-                case 1: v1 = value; break;
-                case 2: v2 = value; break;
-                case 3: v3 = value; break;
-                default: throw new DsonIOException("IndexOutOfRange");
-            }
+            result[index] = value;
         }
-        return new Double4(v0, v1, v2, v3);
+        return result;
+    }
+
+    private FixedVector4 ScanFv4FromArray(Context context) {
+        FixedVector4 result = default;
+        int index = 0;
+        DsonToken valueToken;
+        while ((valueToken = PopToken()).type != DsonTokenType.EndArray) {
+            if (valueToken.type == DsonTokenType.Comma) {
+                index++;
+                continue;
+            }
+            EnsureStringsToken(context, valueToken);
+            FixedPoint4 value = DsonTexts.ParseFx4(valueToken.StringValue());
+            result[index] = value;
+        }
+        return result;
+    }
+
+    private FixedVector4 ScanFv4FromObject(Context context) {
+        FixedVector4 result = default;
+        int index = 0;
+        DsonToken keyToken;
+        while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
+            if (keyToken.type == DsonTokenType.Comma) {
+                index++;
+                continue;
+            }
+            EnsureStringsToken(context, keyToken);
+            // 下一个应该是冒号
+            DsonToken colonToken = PopToken();
+            VerifyTokenType(context, colonToken, DsonTokenType.Colon);
+            // 下一个是无引号字符串(fx4)
+            DsonToken valueToken = PopToken();
+            EnsureStringsToken(context, valueToken);
+            //
+            FixedPoint4 value = DsonTexts.ParseFx4(valueToken.StringValue());
+            result[index] = value;
+        }
+        return result;
     }
 
     /** 扫描string，直到遇见逗号或结束符 */
@@ -912,6 +955,14 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         return (Binary)value.objValue1;
     }
 
+    protected override FixedPoint4 DoReadFx4() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.FixedPoint4) {
+            throw new InvalidOperationException();
+        }
+        return value.FixedPoint4;
+    }
+
     protected override ObjectPtr DoReadPtr() {
         UnionValue value = PopNextValue();
         if (value.type != DsonType.Pointer) {
@@ -942,6 +993,14 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             throw new InvalidOperationException();
         }
         return value.Double4;
+    }
+
+    protected override FixedVector4 DoReadFv4() {
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.FixedVector4) {
+            throw new InvalidOperationException();
+        }
+        return value.FixedVector4;
     }
 
     #endregion

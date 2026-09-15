@@ -52,6 +52,9 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_Binary = "Wjybxx.Dson.Types.Binary";
     private const string CNAME_ObjectPtr = "Wjybxx.Dson.Types.ObjectPtr";
     private const string CNAME_Timestamp = "Wjybxx.Dson.Types.Timestamp";
+    private const string CNAME_FixedPoint4 = "Wjybxx.Dson.Types.FixedPoint4";
+    private const string CNAME_FixedVector4 = "Wjybxx.Dson.Types.FixedVector4";
+
     private const string CNAME_NumberStyles = "Wjybxx.Dson.Text.NumberStyles"; // 生成器直接指向工具类
     private const string CNAME_ContextType = "Wjybxx.Dson.DsonContextType"; // 生成器直接指向工具类
 
@@ -128,6 +131,8 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_Ptr;
     internal INamedTypeSymbol type_LocalDateTime;
     internal INamedTypeSymbol type_Timestamp;
+    internal INamedTypeSymbol type_FixedPoint4;
+    internal INamedTypeSymbol type_FixedVector4;
 
     internal INamedTypeSymbol type_ILIST;
     internal INamedTypeSymbol type_ISET;
@@ -178,6 +183,8 @@ public class CodecProcessor : ISourceGenerator
         type_Binary = compilation.GetTypeByMetadataName(CNAME_Binary);
         type_Ptr = compilation.GetTypeByMetadataName(CNAME_ObjectPtr);
         type_Timestamp = compilation.GetTypeByMetadataName(CNAME_Timestamp);
+        type_FixedPoint4 = compilation.GetTypeByMetadataName(CNAME_FixedPoint4);
+        type_FixedVector4 = compilation.GetTypeByMetadataName(CNAME_FixedVector4);
 
         type_ILIST = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IList_T);
         type_ISET = compilation.GetTypeByMetadataName(CNAME_ISet);

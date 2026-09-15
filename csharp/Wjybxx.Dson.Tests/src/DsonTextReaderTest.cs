@@ -47,11 +47,28 @@ public class DsonTextReaderTest
               ptr1: @ptr 10001,
               ptr2: {@ptr coll: 16148b3b4e7b8923d398, localId: 10001},
               ptr: @ptr 0,
+              intDecimal: @i 10001,
+              intHex: @i 0xFF,
+              intBinary: @i 0b10010001,
+              intUnderscore: @i 100_000_000,
+              intFlags: @i "0x01 | 0x02 | 0x10 | 0x20",
+              longValue: @L 987654321,
+              floatValue: @f 1.05,
+              fx4Value: @fx4 -0.5,
+              boolTrue: @b true,
+              boolNumeric: @b 1,
+              nullValue: @N null,
+              timestampSimple: @ts 1715659200,
+              timestampObject: {@ts seconds: 1715659200, millis: 100},
+              dateTimeSimple: @dt 2023-06-17T18:37:00,
+              dateTimeObject: {@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100},
               dq1: [@D4 1, 1, 1, 0],
-              dq2: {@D4 x: 1, y: 1, z: 1, w: 1}
+              dq2: {@D4 x: 1, y: 1, z: 1, w: 1},
+              fv1: [@fv4 1.2345, -1.2345, 0.0001, 0],
+              fv2: {@fv4 x: 1.2345, y: -1.2345, z: 0.0001, w: 0}
             },
             [@{localId: 10001}
-              @bin "FFFE",
+              @bin "FFFA",
               @bin ""
             ],
             [@{localId: 10001}]
@@ -114,6 +131,7 @@ public class DsonTextReaderTest
             }
             using (IDsonReader<string> reader = new DsonTextReader(DsonTextReaderSettings.Default, stringWriter.ToString())) {
                 DsonArray<string> collection4 = Dsons.ReadCollection(reader);
+                Assert.That(collection4, Is.EqualTo(collection1));
 
                 string dsonString4 = collection4.ToFlatDson();
                 Assert.IsTrue(dsonString1 == dsonString4, "TextReader/TextWriter");

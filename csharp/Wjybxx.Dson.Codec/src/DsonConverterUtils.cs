@@ -622,6 +622,24 @@ public static class DsonConverterUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FixedVector4Style ToFv4Style(this SerializeFeatures features) {
+        FixedVector4Style style = FixedVector4Style.Array;
+        if ((features & SerializeFeatures.MaskFv4Styles) == 0) {
+            return style;
+        }
+        SerializeFeatures basicStyle = features & SerializeFeatures.Fv4AsArray;
+        if (basicStyle == SerializeFeatures.Fv4AsVector) {
+            style = FixedVector4Style.Vector;
+        }
+        if ((features & SerializeFeatures.Fv4Len3) != 0) {
+            style |= FixedVector4Style.Len3;
+        } else if ((features & SerializeFeatures.Fv4Len2) != 0) {
+            style |= FixedVector4Style.Len2;
+        }
+        return style;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static StringStyle ToStringStyle(this SerializeFeatures features) {
         features &= SerializeFeatures.MaskStringStyles;
         return features switch

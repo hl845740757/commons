@@ -208,10 +208,12 @@ public class PeekTypeTest {
                 yield DsonNull.NULL;
             }
             case BINARY -> new DsonBinary(reader.readBinary(name));
+            case FIXED_POINT4 -> new DsonFx4(reader.readFx4(name));
             case POINTER -> new DsonPointer(reader.readPtr(name));
             case DATETIME -> new DsonDateTime(reader.readDateTime(name));
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp(name));
             case DOUBLE4 -> new DsonDouble4(reader.readDouble4(name));
+            case FIXED_VECTOR4 -> new DsonFv4(reader.readFv4(name));
             default -> throw new AssertionError();
         };
     }

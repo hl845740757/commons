@@ -160,6 +160,13 @@ public class DsonLiteBinaryWriter extends AbstractDsonLiteWriter {
         DsonReaderUtils.writeBinary(output, bytes, offset, len);
     }
 
+    protected void doWriteFx4(FixedPoint4 value) {
+        WireType wireType = WireType.bestOfInt64(value.rawValue);
+        DsonOutput output = this.output;
+        writeFullTypeAndCurrentName(output, DsonType.FIXED_POINT4, wireType.getNumber());
+        wireType.writeInt64(output, value.rawValue);
+    }
+
     @Override
     protected void doWritePtr(ObjectPtr objectPtr) {
         DsonOutput output = this.output;
@@ -187,6 +194,13 @@ public class DsonLiteBinaryWriter extends AbstractDsonLiteWriter {
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.DOUBLE4, wireTypeBits);
         DsonReaderUtils.writeDouble4(output, double4, wireTypeBits);
+    }
+
+    @Override
+    protected void doWriteFv4(FixedVector4 fv4) {
+        DsonOutput output = this.output;
+        writeFullTypeAndCurrentName(output, DsonType.FIXED_VECTOR4, 0);
+        DsonReaderUtils.writeFv4(output, fv4);
     }
     // endregion
 

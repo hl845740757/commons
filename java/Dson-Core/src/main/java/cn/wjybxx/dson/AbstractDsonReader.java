@@ -283,6 +283,13 @@ public abstract class AbstractDsonReader implements DsonReader {
         return value;
     }
 
+    public FixedPoint4 readFx4(String name) {
+        advanceToValueState(name, DsonType.FIXED_POINT4);
+        FixedPoint4 value = doReadFx4();
+        setNextState();
+        return value;
+    }
+
     @Override
     public ObjectPtr readPtr(String name) {
         advanceToValueState(name, DsonType.POINTER);
@@ -311,6 +318,14 @@ public abstract class AbstractDsonReader implements DsonReader {
     public Double4 readDouble4(String name) {
         advanceToValueState(name, DsonType.DOUBLE4);
         Double4 value = doReadDouble4();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public FixedVector4 readFv4(String name) {
+        advanceToValueState(name, DsonType.FIXED_VECTOR4);
+        FixedVector4 value = doReadFv4();
         setNextState();
         return value;
     }
@@ -380,6 +395,13 @@ public abstract class AbstractDsonReader implements DsonReader {
         return value;
     }
 
+    public FixedPoint4 readFx4() {
+        ensureValueState(context, DsonType.FIXED_POINT4);
+        FixedPoint4 value = doReadFx4();
+        setNextState();
+        return value;
+    }
+
     @Override
     public ObjectPtr readPtr() {
         ensureValueState(context, DsonType.POINTER);
@@ -411,6 +433,14 @@ public abstract class AbstractDsonReader implements DsonReader {
         setNextState();
         return value;
     }
+
+    @Override
+    public FixedVector4 readFv4() {
+        ensureValueState(context, DsonType.FIXED_VECTOR4);
+        FixedVector4 value = doReadFv4();
+        setNextState();
+        return value;
+    }
     // endregion
 
     protected abstract int doReadInt32();
@@ -429,6 +459,8 @@ public abstract class AbstractDsonReader implements DsonReader {
 
     protected abstract Binary doReadBinary();
 
+    protected abstract FixedPoint4 doReadFx4();
+
     protected abstract ObjectPtr doReadPtr();
 
     protected abstract ExtDateTime doReadDateTime();
@@ -436,6 +468,8 @@ public abstract class AbstractDsonReader implements DsonReader {
     protected abstract Timestamp doReadTimestamp();
 
     protected abstract Double4 doReadDouble4();
+
+    protected abstract FixedVector4 doReadFv4();
     // endregion
 
     // region 容器

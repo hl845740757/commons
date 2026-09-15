@@ -16,11 +16,12 @@
 
 #endregion
 
+using System;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson
 {
-public class DsonDouble4 : DsonValue
+public class DsonDouble4 : DsonValue, IEquatable<DsonDouble4>
 {
     public static readonly DsonDouble4 EMPTY = new DsonDouble4(default);
     private readonly Double4 _value;

@@ -74,6 +74,14 @@ public abstract class DsonValue {
         return ((DsonDouble4) this).getValue();
     }
 
+    public FixedPoint4 asFx4() {
+        return ((DsonFx4) this).getValue();
+    }
+
+    public FixedVector4 asFv4() {
+        return ((DsonFv4) this).getValue();
+    }
+
     // endregion
 
     // region number

@@ -105,7 +105,7 @@ public final class Dsons {
     }
 
     public static void checkBinaryLength(int length) {
-        if (length > MAX_BINARY_LENGTH) {
+        if (length < 0 || length > MAX_BINARY_LENGTH) {
             throw new IllegalArgumentException("the length of data must between[0, %d], but found: %d"
                     .formatted(MAX_BINARY_LENGTH, length));
         }
@@ -321,6 +321,8 @@ public final class Dsons {
             case DATETIME -> writer.writeDateTime(dsonValue.asDateTime());
             case TIMESTAMP -> writer.writeTimestamp(dsonValue.asTimestamp());
             case DOUBLE4 -> writer.writeDouble4(dsonValue.asDouble4());
+            case FIXED_POINT4 -> writer.writeFx4(dsonValue.asFx4());
+            case FIXED_VECTOR4 -> writer.writeFv4(dsonValue.asFv4());
             case HEADER -> writeHeader(writer, dsonValue.asHeader());
             case ARRAY -> writeArray(writer, dsonValue.asArray(), ObjectStyle.INDENT);
             case OBJECT -> writeObject(writer, dsonValue.asObject(), ObjectStyle.INDENT);
@@ -347,6 +349,8 @@ public final class Dsons {
             case DATETIME -> new DsonDateTime(reader.readDateTime());
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp());
             case DOUBLE4 -> new DsonDouble4(reader.readDouble4());
+            case FIXED_POINT4 -> new DsonFx4(reader.readFx4());
+            case FIXED_VECTOR4 -> new DsonFv4(reader.readFv4());
             case HEADER -> {
                 DsonHeader<String> header = new DsonHeader<>();
                 readHeader(reader, header);

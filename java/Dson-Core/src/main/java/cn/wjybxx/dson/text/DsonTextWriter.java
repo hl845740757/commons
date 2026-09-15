@@ -443,6 +443,13 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         printBinary(bytes, offset, len);
     }
 
+    protected void doWriteFx4(FixedPoint4 value) {
+        DsonPrinter printer = this.printer;
+        writeCurrentName(printer, DsonType.FIXED_POINT4);
+        printer.fastPrint("@fx4 ");
+        printer.fastPrint(value);
+    }
+
     @Override
     protected void doWritePtr(ObjectPtr objectPtr) {
         DsonPrinter printer = this.printer;
@@ -569,6 +576,13 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.DOUBLE4);
         style.print(printer, double4, styleOut);
+    }
+
+    @Override
+    protected void doWriteFv4(FixedVector4 fv4, FixedVector4Style style) {
+        DsonPrinter printer = this.printer;
+        writeCurrentName(printer, DsonType.FIXED_VECTOR4);
+        style.print(printer, fv4);
     }
 
     // endregion

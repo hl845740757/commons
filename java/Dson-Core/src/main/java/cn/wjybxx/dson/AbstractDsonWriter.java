@@ -18,10 +18,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.dson.io.DsonIOException;
-import cn.wjybxx.dson.text.Double4Style;
-import cn.wjybxx.dson.text.NumberStyle;
-import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.text.StringStyle;
+import cn.wjybxx.dson.text.*;
 import cn.wjybxx.dson.types.*;
 
 import java.util.List;
@@ -200,6 +197,13 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
+    public void writeFx4(String name, FixedPoint4 value) {
+        Objects.requireNonNull(value);
+        advanceToValueState(name);
+        doWriteFx4(value);
+        setNextState();
+    }
+
     @Override
     public void writePtr(String name, ObjectPtr objectPtr) {
         Objects.requireNonNull(objectPtr);
@@ -229,6 +233,15 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         Objects.requireNonNull(double4);
         advanceToValueState(name);
         doWriteDouble4(double4, style);
+        setNextState();
+    }
+
+    @Override
+    public void writeFv4(String name, FixedVector4 fv4, FixedVector4Style style) {
+        Objects.requireNonNull(fv4);
+        Objects.requireNonNull(style);
+        advanceToValueState(name);
+        doWriteFv4(fv4, style);
         setNextState();
     }
 
@@ -299,6 +312,13 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
+    public void writeFx4(FixedPoint4 value) {
+        Objects.requireNonNull(value);
+        ensureValueState(context);
+        doWriteFx4(value);
+        setNextState();
+    }
+
     @Override
     public void writePtr(ObjectPtr objectPtr) {
         Objects.requireNonNull(objectPtr);
@@ -331,6 +351,15 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
+    @Override
+    public void writeFv4(FixedVector4 fv4, FixedVector4Style style) {
+        Objects.requireNonNull(fv4);
+        Objects.requireNonNull(style);
+        ensureValueState(context);
+        doWriteFv4(fv4, style);
+        setNextState();
+    }
+
     // endregion
 
     protected abstract void doWriteInt32(int value, NumberStyle style);
@@ -351,6 +380,8 @@ public abstract class AbstractDsonWriter implements DsonWriter {
 
     protected abstract void doWriteBinary(byte[] bytes, int offset, int len);
 
+    protected abstract void doWriteFx4(FixedPoint4 value);
+
     protected abstract void doWritePtr(ObjectPtr objectPtr);
 
     protected abstract void doWriteDateTime(ExtDateTime dateTime);
@@ -358,6 +389,8 @@ public abstract class AbstractDsonWriter implements DsonWriter {
     protected abstract void doWriteTimestamp(Timestamp timestamp);
 
     protected abstract void doWriteDouble4(Double4 double4, Double4Style style);
+
+    protected abstract void doWriteFv4(FixedVector4 value, FixedVector4Style style);
     // endregion
 
     // region 容器

@@ -313,6 +313,14 @@ public final class DsonScanner implements AutoCloseable {
                 }
                 return new DsonToken(DsonTokenType.DOUBLE, DsonTexts.parseDouble(nextToken.stringValue()), getPosition());
             }
+            case DsonTexts.LABEL_FX4 -> {
+                DsonToken nextToken = nextToken(skipValue);
+                ensureStringToken(nextToken.type, position);
+                if (skipValue) {
+                    return new DsonToken(DsonTokenType.FIXED_POINT4, null, getPosition());
+                }
+                return new DsonToken(DsonTokenType.FIXED_POINT4, DsonTexts.parseFx4(nextToken.stringValue()), getPosition());
+            }
             case DsonTexts.LABEL_BOOL -> {
                 DsonToken nextToken = nextToken(skipValue);
                 ensureStringToken(nextToken.type, position);

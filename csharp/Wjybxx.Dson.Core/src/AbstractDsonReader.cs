@@ -265,6 +265,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public FixedPoint4 ReadFx4(TName name) {
+        AdvanceToValueState(name, DsonType.FixedPoint4);
+        FixedPoint4 value = DoReadFx4();
+        SetNextState();
+        return value;
+    }
+
     public ObjectPtr ReadPtr(TName name) {
         AdvanceToValueState(name, DsonType.Pointer);
         ObjectPtr value = DoReadPtr();
@@ -289,6 +296,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     public Double4 ReadDouble4(TName name) {
         AdvanceToValueState(name, DsonType.Double4);
         Double4 value = DoReadDouble4();
+        SetNextState();
+        return value;
+    }
+
+    public FixedVector4 ReadFv4(TName name) {
+        AdvanceToValueState(name, DsonType.FixedVector4);
+        FixedVector4 value = DoReadFv4();
         SetNextState();
         return value;
     }
@@ -350,6 +364,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public FixedPoint4 ReadFx4() {
+        EnsureValueState(context, DsonType.FixedPoint4);
+        FixedPoint4 value = DoReadFx4();
+        SetNextState();
+        return value;
+    }
+
     public ObjectPtr ReadPtr() {
         EnsureValueState(context, DsonType.Pointer);
         ObjectPtr value = DoReadPtr();
@@ -378,6 +399,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public FixedVector4 ReadFv4() {
+        EnsureValueState(context, DsonType.FixedVector4);
+        FixedVector4 value = DoReadFv4();
+        SetNextState();
+        return value;
+    }
+
     #endregion
 
     protected abstract int DoReadInt32();
@@ -396,6 +424,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     protected abstract Binary DoReadBinary();
 
+    protected abstract FixedPoint4 DoReadFx4();
+
     protected abstract ObjectPtr DoReadPtr();
 
     protected abstract ExtDateTime DoReadDateTime();
@@ -403,6 +433,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected abstract Timestamp DoReadTimestamp();
 
     protected abstract Double4 DoReadDouble4();
+
+    protected abstract FixedVector4 DoReadFv4();
 
     #endregion
 

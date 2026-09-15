@@ -174,6 +174,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
+    public void WriteFx4(string name, FixedPoint4 fx4) {
+        writer.WriteFx4(name, fx4);
+    }
+
     public void WritePtr(string name, ObjectPtr objectPtr) {
         writer.WritePtr(name, objectPtr);
     }
@@ -192,6 +196,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteDouble4(string name, Double4 double4, SerializeFeatures features = default) {
         writer.WriteDouble4(name, double4, _isTextWriter ? features.ToDouble4Style() : default);
+    }
+
+    public void WriteFv4(string name, FixedVector4 fv4, SerializeFeatures features = default) {
+        writer.WriteFv4(name, fv4, _isTextWriter ? features.ToFv4Style() : default);
     }
 
     public void WriteEnum<T>(string name, T value, SerializeFeatures features = default) {
@@ -267,6 +275,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
+    public void WriteFx4(FixedPoint4 fx4) {
+        writer.WriteFx4(fx4);
+    }
+
     public void WritePtr(ObjectPtr objectPtr) {
         writer.WritePtr(objectPtr);
     }
@@ -285,6 +297,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteDouble4(Double4 double4, SerializeFeatures features = default) {
         writer.WriteDouble4(double4, _isTextWriter ? features.ToDouble4Style() : default);
+    }
+
+    public void WriteFv4(FixedVector4 fv4, SerializeFeatures features = default) {
+        writer.WriteFv4(fv4, _isTextWriter ? features.ToFv4Style() : default);
     }
 
     public void WriteEnum<T>(T value, SerializeFeatures features = default) {

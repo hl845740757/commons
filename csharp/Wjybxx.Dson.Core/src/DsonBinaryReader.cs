@@ -150,6 +150,10 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         return DsonReaderUtils.ReadBinary(_input);
     }
 
+    protected override FixedPoint4 DoReadFx4() {
+        return new FixedPoint4(currentWireType.ReadInt64(_input));
+    }
+
     protected override ObjectPtr DoReadPtr() {
         return DsonReaderUtils.ReadPtr(_input, currentWireTypeBits);
     }
@@ -164,6 +168,10 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
 
     protected override Double4 DoReadDouble4() {
         return DsonReaderUtils.ReadDouble4(_input, currentWireTypeBits);
+    }
+
+    protected override FixedVector4 DoReadFv4() {
+        return DsonReaderUtils.ReadFixedVector4(_input, currentWireTypeBits);
     }
 
     #endregion

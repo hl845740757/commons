@@ -104,6 +104,21 @@ public class DsonReaderUtils {
         return new ObjectPtr(colletion, localPath, localId, type);
     }
 
+    private static void skipPtr(DsonInput input, int wireTypeBits) {
+        input.readUInt64();
+        if ((wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0) {
+            int skip = input.readUInt32(); // collection长度
+            input.skipRawBytes(skip);
+        }
+        if ((wireTypeBits & ObjectPtr.MASK_LOCAL_PATH) != 0) {
+            int skip = input.readUInt32(); // localPath长度
+            input.skipRawBytes(skip);
+        }
+        if ((wireTypeBits & ObjectPtr.MASK_TYPE) != 0) {
+            input.readUInt32();
+        }
+    }
+
     public static void writeDateTime(DsonOutput output, ExtDateTime dateTime) {
         output.writeUInt64(dateTime.getSeconds());
         output.writeUInt32(dateTime.getNanos());
@@ -119,6 +134,12 @@ public class DsonReaderUtils {
                 (byte) wireTypeBits);
     }
 
+    private static void skipDateTime(DsonInput input) {
+        input.readUInt64();
+        input.readUInt32();
+        input.readSInt32();
+    }
+
     public static void writeTimestamp(DsonOutput output, Timestamp Timestamp) {
         output.writeUInt64(Timestamp.getSeconds());
         output.writeUInt32(Timestamp.getNanos());
@@ -128,6 +149,11 @@ public class DsonReaderUtils {
         return new Timestamp(
                 input.readUInt64(),
                 input.readUInt32());
+    }
+
+    private static void skipTimestamp(DsonInput input) {
+        input.readUInt64();
+        input.readUInt32();
     }
 
     public static int wireTypeOfDouble4(Double4 double4) {
@@ -163,6 +189,58 @@ public class DsonReaderUtils {
         double v2 = (wireTypeBits & 0x04) != 0 ? input.readVarDouble() : input.readDouble();
         double v3 = input.readVarDouble();
         return new Double4(v0, v1, v2, v3);
+    }
+
+    private static void skipDouble4(DsonInput input, int wireTypeBits) {
+        double v0 = (wireTypeBits & 0x01) != 0 ? input.readVarDouble() : input.readDouble();
+        double v1 = (wireTypeBits & 0x02) != 0 ? input.readVarDouble() : input.readDouble();
+        double v2 = (wireTypeBits & 0x04) != 0 ? input.readVarDouble() : input.readDouble();
+        double v3 = input.readVarDouble();
+    }
+
+    /** 写入分量编码掩码及四个原始定点值，v0占掩码最低两位。 */
+    public static void writeFv4(DsonOutput output, FixedVector4 fv4) {
+        WireType w0 = WireType.bestOfInt64(fv4.get(0).rawValue);
+        WireType w1 = WireType.bestOfInt64(fv4.get(1).rawValue);
+        WireType w2 = WireType.bestOfInt64(fv4.get(2).rawValue);
+        WireType w3 = WireType.bestOfInt64(fv4.get(3).rawValue);
+        int mask = w0.getNumber() | (w1.getNumber() << 2) | (w2.getNumber() << 4) | (w3.getNumber() << 6);
+        //
+        output.writeRawByte((byte) mask);
+        w0.writeInt64(output, fv4.get(0).rawValue);
+        w1.writeInt64(output, fv4.get(1).rawValue);
+        w2.writeInt64(output, fv4.get(2).rawValue);
+        w3.writeInt64(output, fv4.get(3).rawValue);
+    }
+
+    public static FixedVector4 readFv4(DsonInput input, int wireTypeBits) {
+        if (wireTypeBits != 0) {
+            throw new DsonIOException("invalid wireType for fv4, bits: " + wireTypeBits);
+        }
+        int mask = Byte.toUnsignedInt(input.readRawByte());
+        WireType w0 = WireType.forNumber(mask & 3);
+        WireType w1 = WireType.forNumber((mask >>> 2) & 3);
+        WireType w2 = WireType.forNumber((mask >>> 4) & 3);
+        WireType w3 = WireType.forNumber((mask >>> 6) & 3);
+        //
+        FixedPoint4 v0 = FixedPoint4.fromRaw(w0.readInt64(input));
+        FixedPoint4 v1 = FixedPoint4.fromRaw(w1.readInt64(input));
+        FixedPoint4 v2 = FixedPoint4.fromRaw(w2.readInt64(input));
+        FixedPoint4 v3 = FixedPoint4.fromRaw(w3.readInt64(input));
+        return new FixedVector4(v0, v1, v2, v3);
+    }
+
+    private static void skipFv4(DsonInput input, int wireTypeBits) {
+        int mask = Byte.toUnsignedInt(input.readRawByte());
+        WireType w0 = WireType.forNumber(mask & 3);
+        WireType w1 = WireType.forNumber((mask >>> 2) & 3);
+        WireType w2 = WireType.forNumber((mask >>> 4) & 3);
+        WireType w3 = WireType.forNumber((mask >>> 6) & 3);
+        //
+        w0.readInt64(input);
+        w1.readInt64(input);
+        w2.readInt64(input);
+        w3.readInt64(input);
     }
 
     // endregion
@@ -215,7 +293,7 @@ public class DsonReaderUtils {
                 wireType.readInt32(input);
                 return;
             }
-            case INT64 -> {
+            case INT64, FIXED_POINT4 -> {
                 wireType.readInt64(input);
                 return;
             }
@@ -237,49 +315,23 @@ public class DsonReaderUtils {
                 skip = input.readUInt32(); // length(data)
             }
             case POINTER -> {
-                input.readUInt64(); // localId
-                if ((wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0) {
-                    skip = input.readUInt32(); // collection长度
-                    input.skipRawBytes(skip);
-                }
-                if ((wireTypeBits & ObjectPtr.MASK_LOCAL_PATH) != 0) {
-                    skip = input.readUInt32(); // localPath长度
-                    input.skipRawBytes(skip);
-                }
-                if ((wireTypeBits & ObjectPtr.MASK_TYPE) != 0) {
-                    input.readUInt32();
-                }
+                skipPtr(input, wireTypeBits);
                 return;
             }
             case DATETIME -> {
-                input.readUInt64();
-                input.readUInt32();
-                input.readSInt32();
-//                input.readRawByte(); // 已转移到wireTypeBits
+                skipDateTime(input);
                 return;
             }
             case TIMESTAMP -> {
-                input.readUInt64();
-                input.readUInt32();
+                skipTimestamp(input);
                 return;
             }
             case DOUBLE4 -> {
-                if ((wireTypeBits & 0x01) != 0) {
-                    input.readVarDouble();
-                } else {
-                    input.readDouble();
-                }
-                if ((wireTypeBits & 0x02) != 0) {
-                    input.readVarDouble();
-                } else {
-                    input.readDouble();
-                }
-                if ((wireTypeBits & 0x04) != 0) {
-                    input.readVarDouble();
-                } else {
-                    input.readDouble();
-                }
-                input.readVarDouble();
+                skipDouble4(input, wireTypeBits);
+                return;
+            }
+            case FIXED_VECTOR4 -> {
+                skipFv4(input, wireTypeBits);
                 return;
             }
             case HEADER -> {

@@ -198,6 +198,12 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
+    public void WriteFx4(TName name, FixedPoint4 fx4) {
+        AdvanceToValueState(name);
+        DoWriteFx4(fx4);
+        SetNextState();
+    }
+
     public void WritePtr(TName name, ObjectPtr objectPtr) {
         AdvanceToValueState(name);
         DoWritePtr(objectPtr);
@@ -219,6 +225,12 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     public void WriteDouble4(TName name, Double4 double4, Double4Style style = default) {
         AdvanceToValueState(name);
         DoWriteDouble4(double4, style);
+        SetNextState();
+    }
+
+    public void WriteFv4(TName name, FixedVector4 value, FixedVector4Style style = default) {
+        AdvanceToValueState(name);
+        DoWriteFv4(value, style);
         SetNextState();
     }
 
@@ -283,6 +295,12 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
+    public void WriteFx4(FixedPoint4 fx4) {
+        EnsureValueState(context);
+        DoWriteFx4(fx4);
+        SetNextState();
+    }
+
     public void WritePtr(ObjectPtr objectPtr) {
         EnsureValueState(context);
         DoWritePtr(objectPtr);
@@ -307,6 +325,12 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
+    public void WriteFv4(FixedVector4 fv4, FixedVector4Style style = default) {
+        EnsureValueState(context);
+        DoWriteFv4(fv4, style);
+        SetNextState();
+    }
+
     #endregion
 
     protected abstract void DoWriteInt32(int value, NumberStyle style);
@@ -327,6 +351,8 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     protected abstract void DoWriteBinary(byte[] bytes, int offset, int len);
 
+    protected abstract void DoWriteFx4(FixedPoint4 fx4);
+
     protected abstract void DoWritePtr(ObjectPtr objectPtr);
 
     protected abstract void DoWriteDateTime(ExtDateTime dateTime);
@@ -334,6 +360,8 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     protected abstract void DoWriteTimestamp(Timestamp timestamp);
 
     protected abstract void DoWriteDouble4(Double4 double4, Double4Style style);
+
+    protected abstract void DoWriteFv4(FixedVector4 fv4, FixedVector4Style style);
 
     #endregion
 

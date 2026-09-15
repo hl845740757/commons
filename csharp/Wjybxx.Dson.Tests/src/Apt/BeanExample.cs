@@ -21,6 +21,7 @@ using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Tests.Apt;
 
@@ -145,6 +146,12 @@ public class BeanExample : BaseTypeExample
     [NonSerialized]
     public HashSet<string>? ignoreSet2;
 
+    /// <summary>
+    /// 测试新结构
+    /// </summary>
+    public FixedPoint4 fx4;
+    public FixedVector4 fv4;
+    
     public void WriteType(IDsonObjectWriter writer, string dsonName) {
         writer.WriteInt(dsonName, Type);
     }

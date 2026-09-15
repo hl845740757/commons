@@ -56,6 +56,7 @@ internal static class DsonCodecHelper
             case DsonType.Int64: return reader.ReadInt64(name);
             case DsonType.Float: return (long)reader.ReadFloat(name);
             case DsonType.Double: return (long)reader.ReadDouble(name);
+            case DsonType.FixedPoint4: return reader.ReadFx4(name).rawValue;
             case DsonType.Bool: return reader.ReadBool(name) ? 1 : 0;
             case DsonType.Null: {
                 reader.ReadNull(name);
@@ -156,6 +157,21 @@ internal static class DsonCodecHelper
         }
     }
 
+    public static FixedPoint4 ReadFx4(IDsonReader<string> reader, string? name) {
+        DsonType dsonType = ReadOrGetDsonType(reader);
+        switch (dsonType) {
+            case DsonType.FixedPoint4: return reader.ReadFx4(name);
+            case DsonType.Int64: return FixedPoint4.FromRaw(reader.ReadInt64(name));
+            case DsonType.String: return FixedPoint4.Parse(reader.ReadString(name));
+            case DsonType.Null: {
+                reader.ReadNull(name);
+                return default;
+            }
+            default:
+                throw DsonCodecException.Incompatible(typeof(FixedPoint4), dsonType);
+        }
+    }
+
     public static ObjectPtr ReadPtr(IDsonReader<string> reader, string? name) {
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
@@ -213,6 +229,19 @@ internal static class DsonCodecHelper
         }
     }
 
+    public static FixedVector4 ReadFv4(IDsonReader<string> reader, string? name) {
+        DsonType dsonType = ReadOrGetDsonType(reader);
+        switch (dsonType) {
+            case DsonType.FixedVector4: return reader.ReadFv4(name);
+            case DsonType.Null: {
+                reader.ReadNull(name);
+                return default;
+            }
+            default:
+                throw DsonCodecException.Incompatible(typeof(FixedVector4), dsonType);
+        }
+    }
+
     public static object? ReadDsonValueValue(IDsonReader<string> reader, string? name) {
         DsonType dsonType = reader.CurrentDsonType;
         switch (dsonType) {
@@ -223,10 +252,12 @@ internal static class DsonCodecHelper
             case DsonType.Bool: return reader.ReadBool(name);
             case DsonType.String: return reader.ReadString(name);
             case DsonType.Binary: return reader.ReadBinary(name);
+            case DsonType.FixedPoint4: return reader.ReadFx4(name);
             case DsonType.Pointer: return reader.ReadPtr(name);
             case DsonType.DateTime: return reader.ReadDateTime(name);
             case DsonType.Timestamp: return reader.ReadTimestamp(name);
             case DsonType.Double4: return reader.ReadDouble4(name);
+            case DsonType.FixedVector4: return reader.ReadFv4(name);
             case DsonType.Null: {
                 reader.ReadNull(name);
                 return null;

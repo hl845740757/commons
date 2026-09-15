@@ -189,10 +189,12 @@ public sealed class TypeMetaConfig
         config.Add(typeof(bool), DsonTexts.LabelBool, "bool", "boolean");
         config.Add(typeof(string), DsonTexts.LabelString, "string");
         config.Add(typeof(Binary), DsonTexts.LabelBinary, "bytes");
-        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, "Pointer");
+        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, DsonTexts.LabelRef, "Pointer");
         config.Add(typeof(ExtDateTime), DsonTexts.LabelDateTime, "DateTime");
         config.Add(typeof(Timestamp), DsonTexts.LabelTimestamp, "Timestamp");
         config.Add(typeof(Double4), DsonTexts.LabelDouble4, "Double4");
+        config.Add(typeof(FixedPoint4), DsonTexts.LabelFx4, "FixedPoint4");
+        config.Add(typeof(FixedVector4), "fv4", "FixedVector4");
         // 基础类型
         config.Add(typeof(uint), DsonTexts.LabelUInt32, "uint32", "uint");
         config.Add(typeof(ulong), DsonTexts.LabelUInt64, "uint64", "ulong");

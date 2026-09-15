@@ -527,6 +527,8 @@ internal class PojoCodecGenerator
         if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_WRITE_PTR;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_WRITE_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_WRITE_TIMESTAMP;
+        if (fieldType.IsSameType(processor.type_FixedPoint4)) return MNAME_WRITE_FX4;
+        if (fieldType.IsSameType(processor.type_FixedVector4)) return MNAME_WRITE_FV4;
         return MNAME_WRITE_OBJECT;
     }
 
@@ -543,6 +545,8 @@ internal class PojoCodecGenerator
         if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_READ_PTR;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_READ_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_READ_TIMESTAMP;
+        if (fieldType.IsSameType(processor.type_FixedPoint4)) return MNAME_READ_FX4;
+        if (fieldType.IsSameType(processor.type_FixedVector4)) return MNAME_READ_Fv4;
         return MNAME_READ_OBJECT;
     }
 
@@ -552,6 +556,8 @@ internal class PojoCodecGenerator
     private const string MNAME_READ_BINARY = "ReadBinary";
     private const string MNAME_READ_OBJECT = "ReadObject";
 
+    private const string MNAME_READ_FX4 = "ReadFx4";
+    private const string MNAME_READ_Fv4 = "ReadFv4";
     private const string MNAME_READ_PTR = "ReadPtr";
     private const string MNAME_READ_DATETIME = "ReadDateTime";
     private const string MNAME_READ_TIMESTAMP = "ReadTimestamp";
@@ -563,6 +569,8 @@ internal class PojoCodecGenerator
     private const string MNAME_WRITE_BINARY = "WriteBinary";
     private const string MNAME_WRITE_OBJECT = "WriteObject";
 
+    private const string MNAME_WRITE_FX4 = "WriteFx4";
+    private const string MNAME_WRITE_FV4 = "WriteFv4";
     private const string MNAME_WRITE_PTR = "WritePtr";
     private const string MNAME_WRITE_DATETIME = "WriteDateTime";
     private const string MNAME_WRITE_TIMESTAMP = "WriteTimestamp";

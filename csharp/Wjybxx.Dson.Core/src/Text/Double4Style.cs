@@ -45,9 +45,9 @@ public enum Double4Style
     /// 打印为向量格式(1)
     ///
     /// <![CDATA[
-    /// {@D4 X: 1, Y: 1, z: 1, w: 1}
-    /// {@D4 X: 1, Y: 1, z: 1}
-    /// {@D4 X: 1, Y: 1}
+    /// {@D4 x: 1, y: 1, z: 1, w: 1}
+    /// {@D4 x: 1, y: 1, z: 1}
+    /// {@D4 x: 1, y: 1}
     /// ]]>
     /// </summary>
     Vector = 0x01,
@@ -69,6 +69,7 @@ public enum Double4Style
     /// 注：最大基础样式，不再扩展。
     /// </summary>
     Rect = 0x03,
+
     /// <summary>
     /// 限定Double4的长度为2，即只打印前两个数
     /// </summary>

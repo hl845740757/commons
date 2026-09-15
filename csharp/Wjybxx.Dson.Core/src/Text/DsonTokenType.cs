@@ -62,6 +62,8 @@ public enum DsonTokenType
     Null,
     /** 显式声明 '@bin' */
     Binary,
+    /** 显式声明 '@fx4' */
+    FixedPoint4,
 
     /** 内建结构体 */
     BuiltinStruct,

@@ -36,7 +36,6 @@ public static class DsonReaderUtils
         DsonType.String, DsonType.Binary, DsonType.Array, DsonType.Object, DsonType.Header
     }.ToImmutableList2();
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool ReadBool(IDsonInput input, int wireTypeBits) {
         if (wireTypeBits == 1) {
@@ -184,6 +183,37 @@ public static class DsonReaderUtils
         return new Double4(v0, v1, v2, v3);
     }
 
+    /// <summary>
+    /// 写入分量编码掩码及四个原始定点值，v0占掩码最低两位。
+    /// </summary>
+    public static void WriteFv4(IDsonOutput output, FixedVector4 value) {
+        WireType w0 = WireTypes.BestOfInt64(value.v0.rawValue);
+        WireType w1 = WireTypes.BestOfInt64(value.v1.rawValue);
+        WireType w2 = WireTypes.BestOfInt64(value.v2.rawValue);
+        WireType w3 = WireTypes.BestOfInt64(value.v3.rawValue);
+        int mask = (int)w0 | ((int)w1 << 2) | ((int)w2 << 4) | ((int)w3 << 6);
+        //
+        output.WriteRawByte((byte)mask);
+        w0.WriteInt64(output, value.v0.rawValue);
+        w1.WriteInt64(output, value.v1.rawValue);
+        w2.WriteInt64(output, value.v2.rawValue);
+        w3.WriteInt64(output, value.v3.rawValue);
+    }
+
+    public static FixedVector4 ReadFixedVector4(IDsonInput input, int wireTypeBits) {
+        int mask = input.ReadRawByte();
+        WireType w0 = (WireType)(mask & 3);
+        WireType w1 = (WireType)((mask >> 2) & 3);
+        WireType w2 = (WireType)((mask >> 4) & 3);
+        WireType w3 = (WireType)((mask >> 6) & 3);
+        //
+        FixedPoint4 v0 = new FixedPoint4(w0.ReadInt64(input));
+        FixedPoint4 v1 = new FixedPoint4(w1.ReadInt64(input));
+        FixedPoint4 v2 = new FixedPoint4(w2.ReadInt64(input));
+        FixedPoint4 v3 = new FixedPoint4(w3.ReadInt64(input));
+        return new FixedVector4(v0, v1, v2, v3);
+    }
+
     #endregion
 
     #region 特殊
@@ -235,13 +265,14 @@ public static class DsonReaderUtils
 
     public static void SkipValue(IDsonInput input, DsonContextType contextType,
                                  DsonType dsonType, WireType wireType, int wireTypeBits) {
-        int skip;
+        int skip; // 不构建引用的类型可以直接调用对应的Read方法
         switch (dsonType) {
             case DsonType.Int32: {
                 wireType.ReadInt32(input);
                 return;
             }
-            case DsonType.Int64: {
+            case DsonType.Int64:
+            case DsonType.FixedPoint4: {
                 wireType.ReadInt64(input);
                 return;
             }
@@ -266,49 +297,23 @@ public static class DsonReaderUtils
                 break;
             }
             case DsonType.Pointer: {
-                input.ReadUInt64(); // localId;
-                if ((wireTypeBits & ObjectPtr.MaskCollection) != 0) {
-                    skip = input.ReadUInt32(); // collection长度
-                    input.SkipRawBytes(skip);
-                }
-                if ((wireTypeBits & ObjectPtr.MaskLocalPath) != 0) {
-                    skip = input.ReadUInt32(); // localPath长度
-                    input.SkipRawBytes(skip);
-                }
-                if ((wireTypeBits & ObjectPtr.MaskType) != 0) {
-                    input.ReadUInt32();
-                }
+                ReadPtr(input, wireTypeBits);
                 return;
             }
             case DsonType.DateTime: {
-                input.ReadUInt64();
-                input.ReadUInt32();
-                input.ReadSInt32();
-                // input.ReadRawByte(); // 已转移到 wireTypeBits
+                ReadDateTime(input, wireTypeBits);
                 return;
             }
             case DsonType.Timestamp: {
-                input.ReadUInt64();
-                input.ReadUInt32();
+                ReadTimestamp(input);
+                return;
+            }
+            case DsonType.FixedVector4: {
+                ReadFixedVector4(input, wireTypeBits);
                 return;
             }
             case DsonType.Double4: {
-                if ((wireTypeBits & 0x01) != 0) {
-                    input.ReadVarDouble();
-                } else {
-                    input.ReadDouble();
-                }
-                if ((wireTypeBits & 0x02) != 0) {
-                    input.ReadVarDouble();
-                } else {
-                    input.ReadDouble();
-                }
-                if ((wireTypeBits & 0x04) != 0) {
-                    input.ReadVarDouble();
-                } else {
-                    input.ReadDouble();
-                }
-                input.ReadVarDouble();
+                ReadDouble4(input, wireTypeBits);
                 return;
             }
             case DsonType.Header: {

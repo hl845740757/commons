@@ -20,10 +20,7 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonOutput;
-import cn.wjybxx.dson.text.Double4Style;
-import cn.wjybxx.dson.text.NumberStyle;
-import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.text.StringStyle;
+import cn.wjybxx.dson.text.*;
 import cn.wjybxx.dson.types.*;
 
 import java.util.Objects;
@@ -164,6 +161,13 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
         DsonReaderUtils.writeBinary(output, bytes, offset, len);
     }
 
+    protected void doWriteFx4(FixedPoint4 value) {
+        WireType wireType = WireType.bestOfInt64(value.rawValue);
+        DsonOutput output = this.output;
+        writeFullTypeAndCurrentName(output, DsonType.FIXED_POINT4, wireType.getNumber());
+        wireType.writeInt64(output, value.rawValue);
+    }
+
     @Override
     protected void doWritePtr(ObjectPtr objectPtr) {
         DsonOutput output = this.output;
@@ -191,6 +195,13 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.DOUBLE4, wireTypeBits);
         DsonReaderUtils.writeDouble4(output, double4, wireTypeBits);
+    }
+
+    @Override
+    protected void doWriteFv4(FixedVector4 fv4, FixedVector4Style style) {
+        DsonOutput output = this.output;
+        writeFullTypeAndCurrentName(output, DsonType.FIXED_VECTOR4, 0);
+        DsonReaderUtils.writeFv4(output, fv4);
     }
     // endregion
 

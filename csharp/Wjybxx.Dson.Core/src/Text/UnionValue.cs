@@ -97,6 +97,11 @@ public struct UnionValue : IEquatable<UnionValue>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfFixedPoint4(FixedPoint4 value) {
+        return new UnionValue(DsonType.FixedPoint4) { lValue = value.rawValue };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static UnionValue OfObjectPtr(in ObjectPtr value) {
         return new UnionValue(DsonType.Pointer) { ObjectPtr = value };
     }
@@ -114,6 +119,11 @@ public struct UnionValue : IEquatable<UnionValue>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static UnionValue OfDouble4(in Double4 value) {
         return new UnionValue(DsonType.Double4) { Double4 = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfFixedVector4(in FixedVector4 value) {
+        return new UnionValue(DsonType.FixedVector4) { FixedVector4 = value };
     }
 
     #endregion
@@ -153,6 +163,16 @@ public struct UnionValue : IEquatable<UnionValue>
         set => objValue1 = value;
     }
 
+    public FixedVector4 FixedVector4 {
+        get => (FixedVector4)objValue1;
+        set => objValue1 = value;
+    }
+
+    public FixedPoint4 FixedPoint4 {
+        get => new FixedPoint4(lValue);
+        set => lValue = value.rawValue;
+    }
+
     #endregion
 
 #nullable restore
@@ -173,6 +193,8 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.DateTime: return DateTime.Equals(other.DateTime);
             case DsonType.Timestamp: return Timestamp.Equals(other.Timestamp);
             case DsonType.Double4: return Double4.Equals(other.Double4);
+            case DsonType.FixedVector4: return FixedVector4.Equals(other.FixedVector4);
+            case DsonType.FixedPoint4: return FixedPoint4.Equals(other.FixedPoint4);
             default:
                 return Equals(objValue1, other.objValue1);
         }
@@ -196,6 +218,8 @@ public struct UnionValue : IEquatable<UnionValue>
             DsonType.DateTime => DateTime.GetHashCode(),
             DsonType.Timestamp => Timestamp.GetHashCode(),
             DsonType.Double4 => Double4.GetHashCode(),
+            DsonType.FixedVector4 => FixedVector4.GetHashCode(),
+            DsonType.FixedPoint4 => lValue.GetHashCode(),
             _ => objValue1 == null ? 0 : objValue1.GetHashCode()
         };
         return (int)type * 31 + vhash;
@@ -221,6 +245,8 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.DateTime: return $"Type: {type}, Value: {DateTime}";
             case DsonType.Timestamp: return $"Type: {type}, Value: {Timestamp}";
             case DsonType.Double4: return $"Type: {type}, Value: {Double4}";
+            case DsonType.FixedVector4: return $"Type: {type}, Value: {FixedVector4}";
+            case DsonType.FixedPoint4: return $"Type: {type}, Value: {FixedPoint4}";
             default:
                 return $"Type: {type}, Value: {objValue1}";
         }

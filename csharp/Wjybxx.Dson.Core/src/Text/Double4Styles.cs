@@ -27,10 +27,6 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 internal static class Double4Styles
 {
-    private const int MASK_VECTOR4 = 'x' | 'y' << 8 | 'z' << 16 | 'w' << 24;
-    private const int MASK_VECTOR3 = 'x' | 'y' << 8 | 'z' << 16;
-    private const int MASK_VECTOR2 = 'x' | 'y' << 8;
-
     public static void Print(DsonPrinter printer, Double4 double4, Double4Style style) {
         int len = 4;
         if ((style & Double4Style.Len3) != 0) {

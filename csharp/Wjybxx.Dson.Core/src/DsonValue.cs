@@ -52,6 +52,9 @@ public abstract class DsonValue
     public Binary AsBinary() => ((DsonBinary)this).Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public FixedPoint4 AsFx4() => ((DsonFx4)this).Value;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ObjectPtr AsPointer() => ((DsonPointer)this).Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -62,6 +65,9 @@ public abstract class DsonValue
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Double4 AsDouble4() => ((DsonDouble4)this).Value;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public FixedVector4 AsFv4() => ((DsonFv4)this).Value;
 
     #endregion
 

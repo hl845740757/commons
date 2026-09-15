@@ -427,6 +427,13 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         PrintBinary(bytes, offset, len);
     }
 
+    protected override void DoWriteFx4(FixedPoint4 fx4) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.FixedPoint4);
+        printer.FastPrint("@fx4 ");
+        printer.FastPrint(fx4);
+    }
+
     protected override void DoWritePtr(ObjectPtr objectPtr) {
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;
@@ -549,6 +556,12 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Double4);
         Double4Styles.Print(printer, double4, style);
+    }
+
+    protected override void DoWriteFv4(FixedVector4 fv4, FixedVector4Style style) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.FixedVector4);
+        FixedVector4Styles.Print(printer, fv4, style);
     }
 
     #endregion

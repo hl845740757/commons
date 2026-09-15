@@ -158,6 +158,13 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         DsonReaderUtils.WriteBinary(output, bytes, offset, len);
     }
 
+    protected override void DoWriteFx4(FixedPoint4 fx4) {
+        WireType wireType = WireTypes.BestOfInt64(fx4.rawValue);
+        IDsonOutput output = this._output;
+        WriteFullTypeAndCurrentName(output, DsonType.FixedPoint4, (int)wireType);
+        wireType.WriteInt64(output, fx4.rawValue);
+    }
+
     protected override void DoWritePtr(ObjectPtr objectPtr) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Pointer, DsonReaderUtils.WireTypeOfPtr(objectPtr));
@@ -181,6 +188,12 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Double4, wireType);
         DsonReaderUtils.WriteDouble4(output, double4, wireType);
+    }
+
+    protected override void DoWriteFv4(FixedVector4 fv4, FixedVector4Style style) {
+        IDsonOutput output = this._output;
+        WriteFullTypeAndCurrentName(output, DsonType.FixedVector4, 0);
+        DsonReaderUtils.WriteFv4(output, fv4);
     }
 
     #endregion

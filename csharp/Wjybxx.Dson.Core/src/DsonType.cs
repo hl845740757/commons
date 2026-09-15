@@ -38,6 +38,10 @@ public enum DsonType : sbyte
     String = 6,
     Null = 7,
     Binary = 8,
+    /// <summary>
+    /// 4位定点数（万分比）
+    /// </summary>
+    FixedPoint4 = 9,
 
     /// <summary>
     /// 对象指针
@@ -55,6 +59,10 @@ public enum DsonType : sbyte
     /// Double4
     /// </summary>
     Double4 = 15,
+    /// <summary>
+    /// 四分量定点数向量
+    /// </summary>
+    FixedVector4 = 16,
 
     /// <summary>
     /// 对象头
@@ -113,6 +121,7 @@ public static class DsonTypes
             DsonType.Int64 => true,
             DsonType.Float => true,
             DsonType.Double => true,
+            DsonType.FixedPoint4 => true,
             _ => false
         };
     }

@@ -20,6 +20,7 @@ import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.internal.Utf8Util;
+import cn.wjybxx.dson.types.FixedPoint4;
 
 import java.util.BitSet;
 import java.util.Set;
@@ -44,15 +45,18 @@ public class DsonTexts {
     public static final String LABEL_BOOL = "b";
     public static final String LABEL_STRING = "s";
     public static final String LABEL_NULL = "N";
+    public static final String LABEL_FX4 = "fx4";
 
     /** 单行纯文本，字符串不需要加引号，不对内容进行转义 */
     public static final String LABEL_STRING_LINE = "sL";
 
     public static final String LABEL_BINARY = "bin";
     public static final String LABEL_PTR = "ptr";
+    public static final String LABEL_REF = "ref"; // ptr别名
     public static final String LABEL_DATETIME = "dt";
     public static final String LABEL_TIMESTAMP = "ts";
     public static final String LABEL_DOUBLE4 = "D4";
+    public static final String LABEL_FIXED_VECTOR4 = "fv4";
 
     public static final String LABEL_BEGIN_OBJECT = "{";
     public static final String LABEL_END_OBJECT = "}";
@@ -68,7 +72,7 @@ public class DsonTexts {
 
     /** 内建结构体标签 */
     private static final Set<String> builtinStructLabels = Set.of(
-            LABEL_PTR, LABEL_DATETIME, LABEL_TIMESTAMP, LABEL_DOUBLE4
+            LABEL_PTR, LABEL_REF, LABEL_DATETIME, LABEL_TIMESTAMP, LABEL_DOUBLE4, LABEL_FIXED_VECTOR4
     );
 
     /** 有特殊含义的字符串 */
@@ -430,6 +434,14 @@ public class DsonTexts {
             throw new NumberFormatException(rawStr);
         }
         return Double.parseDouble(str);
+    }
+
+    public static FixedPoint4 parseFx4(String rawStr) {
+        String str = deleteUnderline(rawStr);
+        if (str.isEmpty()) {
+            throw new NumberFormatException(rawStr);
+        }
+        return FixedPoint4.parse(str);
     }
 
     public static String deleteUnderline(String str) {

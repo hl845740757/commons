@@ -90,6 +90,8 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteBinary(TName name, byte[] bytes, int offset, int len);
 
+    void WriteFx4(TName name, FixedPoint4 fx4);
+
     void WritePtr(TName name, ObjectPtr objectPtr);
 
     void WriteDateTime(TName name, ExtDateTime dateTime);
@@ -97,6 +99,8 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     void WriteTimestamp(TName name, Timestamp timestamp);
 
     void WriteDouble4(TName name, Double4 double4, Double4Style style = default);
+
+    void WriteFv4(TName name, FixedVector4 value, FixedVector4Style style = default);
 
     #endregion
 
@@ -125,6 +129,8 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteBinary(byte[] bytes, int offset, int len);
 
+    void WriteFx4(FixedPoint4 fx4);
+
     void WritePtr(ObjectPtr objectPtr);
 
     void WriteDateTime(ExtDateTime dateTime);
@@ -132,6 +138,8 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     void WriteTimestamp(Timestamp timestamp);
 
     void WriteDouble4(Double4 double4, Double4Style style = default);
+
+    void WriteFv4(FixedVector4 fv4, FixedVector4Style style = default);
 
     #endregion
 

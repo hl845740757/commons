@@ -147,6 +147,10 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
         return DsonReaderUtils.readBinary(input);
     }
 
+    protected FixedPoint4 doReadFx4() {
+        return FixedPoint4.fromRaw(currentWireType.readInt64(input));
+    }
+
     @Override
     protected ObjectPtr doReadPtr() {
         return DsonReaderUtils.readPtr(input, currentWireTypeBits);
@@ -165,6 +169,11 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
     @Override
     protected Double4 doReadDouble4() {
         return DsonReaderUtils.readDouble4(input, currentWireTypeBits);
+    }
+
+    @Override
+    protected FixedVector4 doReadFv4() {
+        return DsonReaderUtils.readFv4(input, currentWireTypeBits);
     }
     // endregion
 

@@ -47,6 +47,8 @@ public interface IDsonObjectReader : IDisposable
 
     Binary? ReadBinary(string name, DeserializeFeatures features = default);
 
+    FixedPoint4 ReadFx4(string name);
+
     ObjectPtr ReadPtr(string name);
 
     DateTime ReadDateTime(string name);
@@ -57,6 +59,8 @@ public interface IDsonObjectReader : IDisposable
     Timestamp ReadTimestamp(string name);
 
     Double4 ReadDouble4(string name);
+
+    FixedVector4 ReadFv4(string name);
 
     T ReadEnum<T>(string name, DeserializeFeatures features = default);
 
@@ -85,6 +89,8 @@ public interface IDsonObjectReader : IDisposable
 
     Binary ReadBinary(DeserializeFeatures features = default);
 
+    FixedPoint4 ReadFx4();
+
     ObjectPtr ReadPtr();
 
     DateTime ReadDateTime();
@@ -95,6 +101,8 @@ public interface IDsonObjectReader : IDisposable
     Timestamp ReadTimestamp();
 
     Double4 ReadDouble4();
+
+    FixedVector4 ReadFv4();
 
     T ReadEnum<T>(DeserializeFeatures features = default);
 
