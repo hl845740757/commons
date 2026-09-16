@@ -45,7 +45,6 @@ public class DsonTimeTest {
     private static final String dsonTimestampString = """
             [
               @ts 1715659200,
-              @ts 1715659200100ms,
               {@ts seconds: 1715659200, millis: 100},
               {@ts seconds: 1715659200, nanos: 100_000_000}
             ]
@@ -58,15 +57,12 @@ public class DsonTimeTest {
         Timestamp timestamp1 = dsonArray.get(0).asTimestamp();
         Timestamp timestamp2 = dsonArray.get(1).asTimestamp();
         Timestamp timestamp3 = dsonArray.get(2).asTimestamp();
-        Timestamp timestamp4 = dsonArray.get(3).asTimestamp();
 
         // 秒部分相同
         Assertions.assertEquals(timestamp1.getSeconds(), timestamp2.getSeconds());
         Assertions.assertEquals(timestamp1.getSeconds(), timestamp3.getSeconds());
-        Assertions.assertEquals(timestamp1.getSeconds(), timestamp4.getSeconds());
         // 纳秒部分相同
         Assertions.assertEquals(timestamp2.getNanos(), timestamp3.getNanos());
-        Assertions.assertEquals(timestamp2.getNanos(), timestamp4.getNanos());
 
         // 测试编解码
         String dsonString2 = Dsons.toDson(dsonArray);

@@ -197,6 +197,10 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return ReadName(name) ? DsonCodecHelper.ReadDouble(reader, name) : 0;
     }
 
+    public Fxp64 ReadFxp64(string name) {
+        return ReadName(name) ? DsonCodecHelper.ReadFxp64(reader, name) : default;
+    }
+
     public bool ReadBool(string name, DeserializeFeatures features) {
         return ReadName(name) && DsonCodecHelper.ReadBool(reader, name);
     }
@@ -240,6 +244,14 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return ReadName(name) ? DsonCodecHelper.ReadDouble4(reader, name) : default;
     }
 
+    public Long4 ReadLong4(string name) {
+        return ReadName(name) ? DsonCodecHelper.ReadLong4(reader, name) : default;
+    }
+
+    public Fxp4 ReadFxp4(string name) {
+        return ReadName(name) ? DsonCodecHelper.ReadFxp4(reader, name) : default;
+    }
+
     public T ReadEnum<T>(string name, DeserializeFeatures features = default) {
         if (!ReadName(name)) {
             return default;
@@ -268,6 +280,10 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
     public double ReadDouble(DeserializeFeatures features) {
         return DsonCodecHelper.ReadDouble(reader, null);
+    }
+
+    public Fxp64 ReadFxp64() {
+        return DsonCodecHelper.ReadFxp64(reader, null);
     }
 
     public bool ReadBool(DeserializeFeatures features) {
@@ -309,6 +325,14 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
     public Double4 ReadDouble4() {
         return DsonCodecHelper.ReadDouble4(reader, null);
+    }
+
+    public Long4 ReadLong4() {
+        return DsonCodecHelper.ReadLong4(reader, null);
+    }
+
+    public Fxp4 ReadFxp4() {
+        return DsonCodecHelper.ReadFxp4(reader, null);
     }
 
     public T ReadEnum<T>(DeserializeFeatures features = default) {

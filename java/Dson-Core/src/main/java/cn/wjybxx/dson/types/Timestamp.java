@@ -55,17 +55,12 @@ public final class Timestamp {
      * 如果字符串以ms结尾，表示毫秒时间戳，否则表示秒时间戳。
      */
     public static Timestamp parse(String rawStr) {
-        String str = DsonTexts.deleteUnderline(rawStr);
+		String str = DsonTexts.deleteUnderline(rawStr);
         if (str.isEmpty()) {
             throw new IllegalArgumentException(rawStr);
         }
-        int length = str.length();
-        if (length > 2 && str.charAt(length - 1) == 's' && str.charAt(length - 2) == 'm') {
-            long epochMillis = Long.parseLong(str, 0, length - 2, 10);
-            return ofEpochMillis(epochMillis);
-        }
-        long seconds = Long.parseLong(str);
-        return new Timestamp(seconds, 0);
+		long seconds = Long.parseLong(str);
+        return new Timestamp(seconds);
     }
 
     public static Timestamp ofInstant(Instant instant) {

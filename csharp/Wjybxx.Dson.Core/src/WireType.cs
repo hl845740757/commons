@@ -173,7 +173,7 @@ public static class WireTypes
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType BestOfInt32(int value) {
         if (value > INT_THRESHOLD) return WireType.Fixed;
-        if (value > 0) return WireType.Uint;
+        if (value >= 0) return WireType.Uint;
         if (value > -(INT_THRESHOLD / 2)) return WireType.Sint;
         return WireType.Fixed;
     }
@@ -182,7 +182,7 @@ public static class WireTypes
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType BestOfInt64(long value) {
         if (value > LONG_THRESHOLD) return WireType.Fixed;
-        if (value > 0) return WireType.Uint;
+        if (value >= 0) return WireType.Uint;
         if (value > -(LONG_THRESHOLD / 2)) return WireType.Sint;
         return WireType.Fixed;
     }

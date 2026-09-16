@@ -128,6 +128,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
+    public void WriteFxp64(string name, Fxp64 value) {
+        writer.WriteFxp64(name, value);
+    }
+
     public void WriteBool(string name, bool value, SerializeFeatures features) {
         if (value || !writer.IsAtName || IsWriteZeroValue(features)) {
             writer.WriteBool(name, value);
@@ -190,8 +194,16 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteTimestamp(name, timestamp);
     }
 
-    public void WriteDouble4(string name, Double4 double4, SerializeFeatures features = default) {
-        writer.WriteDouble4(name, double4, _isTextWriter ? features.ToDouble4Style() : default);
+    public void WriteDouble4(string name, Double4 double4, string? elementNames = null) {
+        writer.WriteDouble4(name, double4, elementNames);
+    }
+
+    public void WriteLong4(string name, Long4 long4, string? elementNames = null) {
+        writer.WriteLong4(name, long4, elementNames);
+    }
+
+    public void WriteFxp4(string name, Fxp4 fv4, string? elementNames = null) {
+        writer.WriteFxp4(name, fv4, elementNames);
     }
 
     public void WriteEnum<T>(string name, T value, SerializeFeatures features = default) {
@@ -223,6 +235,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteDouble(double value, SerializeFeatures features) {
         writer.WriteDouble(value, _isTextWriter ? features.ToNumberStyle() : default);
+    }
+
+    public void WriteFxp64(Fxp64 value) {
+        writer.WriteFxp64(value);
     }
 
     public void WriteBool(bool value, SerializeFeatures features) {
@@ -283,8 +299,16 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteTimestamp(timestamp);
     }
 
-    public void WriteDouble4(Double4 double4, SerializeFeatures features = default) {
-        writer.WriteDouble4(double4, _isTextWriter ? features.ToDouble4Style() : default);
+    public void WriteDouble4(Double4 double4, string? elementNames = null) {
+        writer.WriteDouble4(double4, elementNames);
+    }
+
+    public void WriteLong4(Long4 long4, string? elementNames = null) {
+        writer.WriteLong4(long4, elementNames);
+    }
+
+    public void WriteFxp4(Fxp4 fv4, string? elementNames = null) {
+        writer.WriteFxp4(fv4, elementNames);
     }
 
     public void WriteEnum<T>(T value, SerializeFeatures features = default) {

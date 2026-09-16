@@ -278,6 +278,10 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         return popNextValue().asBinary().deepCopy(); // 需要拷贝
     }
 
+    protected Fxp64 doReadFxp64() {
+        return popNextValue().asFxp64();
+    }
+
     @Override
     protected ObjectPtr doReadPtr() {
         return popNextValue().asPointer();
@@ -296,6 +300,15 @@ public final class DsonCollectionReader extends AbstractDsonReader {
     @Override
     protected Double4 doReadDouble4() {
         return popNextValue().asDouble4();
+    }
+
+    @Override
+    protected Fxp4 doReadFxp4() {
+        return popNextValue().asFxp4();
+    }
+
+    protected Long4 doReadLong4() {
+        return popNextValue().asLong4();
     }
 
     // endregion

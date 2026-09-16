@@ -56,6 +56,7 @@ internal static class DsonCodecHelper
             case DsonType.Int64: return reader.ReadInt64(name);
             case DsonType.Float: return (long)reader.ReadFloat(name);
             case DsonType.Double: return (long)reader.ReadDouble(name);
+            case DsonType.Fxp64: return reader.ReadFxp64(name).rawValue;
             case DsonType.Bool: return reader.ReadBool(name) ? 1 : 0;
             case DsonType.Null: {
                 reader.ReadNull(name);
@@ -97,6 +98,21 @@ internal static class DsonCodecHelper
             }
             default:
                 throw DsonCodecException.Incompatible(typeof(double), dsonType);
+        }
+    }
+
+    public static Fxp64 ReadFxp64(IDsonReader<string> reader, string? name) {
+        DsonType dsonType = ReadOrGetDsonType(reader);
+        switch (dsonType) {
+            case DsonType.Fxp64: return reader.ReadFxp64(name);
+            case DsonType.Int64: return Fxp64.FromRaw(reader.ReadInt64(name));
+            case DsonType.String: return Fxp64.Parse(reader.ReadString(name));
+            case DsonType.Null: {
+                reader.ReadNull(name);
+                return default;
+            }
+            default:
+                throw DsonCodecException.Incompatible(typeof(Fxp64), dsonType);
         }
     }
 
@@ -213,6 +229,32 @@ internal static class DsonCodecHelper
         }
     }
 
+    public static Long4 ReadLong4(IDsonReader<string> reader, string? name) {
+        DsonType dsonType = ReadOrGetDsonType(reader);
+        switch (dsonType) {
+            case DsonType.Long4: return reader.ReadLong4(name);
+            case DsonType.Null: {
+                reader.ReadNull(name);
+                return default;
+            }
+            default:
+                throw DsonCodecException.Incompatible(typeof(Long4), dsonType);
+        }
+    }
+
+    public static Fxp4 ReadFxp4(IDsonReader<string> reader, string? name) {
+        DsonType dsonType = ReadOrGetDsonType(reader);
+        switch (dsonType) {
+            case DsonType.Fxp4: return reader.ReadFxp4(name);
+            case DsonType.Null: {
+                reader.ReadNull(name);
+                return default;
+            }
+            default:
+                throw DsonCodecException.Incompatible(typeof(Fxp4), dsonType);
+        }
+    }
+
     public static object? ReadDsonValueValue(IDsonReader<string> reader, string? name) {
         DsonType dsonType = reader.CurrentDsonType;
         switch (dsonType) {
@@ -220,6 +262,7 @@ internal static class DsonCodecHelper
             case DsonType.Int64: return reader.ReadInt64(name);
             case DsonType.Float: return reader.ReadFloat(name);
             case DsonType.Double: return reader.ReadDouble(name);
+            case DsonType.Fxp64: return reader.ReadFxp64(name);
             case DsonType.Bool: return reader.ReadBool(name);
             case DsonType.String: return reader.ReadString(name);
             case DsonType.Binary: return reader.ReadBinary(name);
@@ -227,6 +270,8 @@ internal static class DsonCodecHelper
             case DsonType.DateTime: return reader.ReadDateTime(name);
             case DsonType.Timestamp: return reader.ReadTimestamp(name);
             case DsonType.Double4: return reader.ReadDouble4(name);
+            case DsonType.Long4: return reader.ReadLong4(name);
+            case DsonType.Fxp4: return reader.ReadFxp4(name);
             case DsonType.Null: {
                 reader.ReadNull(name);
                 return null;

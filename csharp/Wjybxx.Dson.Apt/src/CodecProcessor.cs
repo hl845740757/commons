@@ -52,6 +52,11 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_Binary = "Wjybxx.Dson.Types.Binary";
     private const string CNAME_ObjectPtr = "Wjybxx.Dson.Types.ObjectPtr";
     private const string CNAME_Timestamp = "Wjybxx.Dson.Types.Timestamp";
+    private const string CNAME_Double4 = "Wjybxx.Dson.Types.Double4";
+    private const string CNAME_Long4 = "Wjybxx.Dson.Types.Long4";
+    private const string CNAME_Fxp64 = "Wjybxx.Dson.Types.Fxp64";
+    private const string CNAME_Fxp4 = "Wjybxx.Dson.Types.Fxp4";
+
     private const string CNAME_NumberStyles = "Wjybxx.Dson.Text.NumberStyles"; // 生成器直接指向工具类
     private const string CNAME_ContextType = "Wjybxx.Dson.DsonContextType"; // 生成器直接指向工具类
 
@@ -128,6 +133,10 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_Ptr;
     internal INamedTypeSymbol type_LocalDateTime;
     internal INamedTypeSymbol type_Timestamp;
+    internal INamedTypeSymbol type_Double4;
+    internal INamedTypeSymbol type_Long4;
+    internal INamedTypeSymbol type_Fxp64;
+    internal INamedTypeSymbol type_Fxp4;
 
     internal INamedTypeSymbol type_ILIST;
     internal INamedTypeSymbol type_ISET;
@@ -178,6 +187,10 @@ public class CodecProcessor : ISourceGenerator
         type_Binary = compilation.GetTypeByMetadataName(CNAME_Binary);
         type_Ptr = compilation.GetTypeByMetadataName(CNAME_ObjectPtr);
         type_Timestamp = compilation.GetTypeByMetadataName(CNAME_Timestamp);
+        type_Double4 = compilation.GetTypeByMetadataName(CNAME_Double4);
+        type_Long4 = compilation.GetTypeByMetadataName(CNAME_Long4);
+        type_Fxp64 = compilation.GetTypeByMetadataName(CNAME_Fxp64);
+        type_Fxp4 = compilation.GetTypeByMetadataName(CNAME_Fxp4);
 
         type_ILIST = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IList_T);
         type_ISET = compilation.GetTypeByMetadataName(CNAME_ISet);

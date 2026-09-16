@@ -43,6 +43,9 @@ public abstract class DsonValue
     public double AsDouble() => ((DsonDouble)this).DoubleValue;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Fxp64 AsFxp64() => ((DsonFxp64)this).Value;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AsBool() => ((DsonBool)this).Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -62,6 +65,12 @@ public abstract class DsonValue
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Double4 AsDouble4() => ((DsonDouble4)this).Value;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Long4 AsLong4() => ((DsonLong4)this).Value;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Fxp4 AsFxp4() => ((DsonFxp4)this).Value;
 
     #endregion
 

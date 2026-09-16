@@ -311,6 +311,15 @@ public sealed class DsonScanner : IDisposable
                 UnionValue value = UnionValue.OfDouble(DsonTexts.ParseDouble(nextToken.StringValue()));
                 return new DsonToken(DsonTokenType.Double, in value, Position);
             }
+            case DsonTexts.LabelFxp64: {
+                DsonToken nextToken = NextToken(skipValue);
+                EnsureStringToken(nextToken.type, position);
+                if (skipValue) {
+                    return new DsonToken(DsonTokenType.Fxp64, null, Position);
+                }
+                UnionValue value = UnionValue.OfFixedPoint4(DsonTexts.ParseFx4(nextToken.StringValue()));
+                return new DsonToken(DsonTokenType.Fxp64, in value, Position);
+            }
             case DsonTexts.LabelBool: {
                 DsonToken nextToken = NextToken(skipValue);
                 EnsureStringToken(nextToken.type, position);

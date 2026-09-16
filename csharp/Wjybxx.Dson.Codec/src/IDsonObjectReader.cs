@@ -37,6 +37,8 @@ public interface IDsonObjectReader : IDisposable
 
     double ReadDouble(string name, DeserializeFeatures features = default);
 
+    Fxp64 ReadFxp64(string name);
+
     bool ReadBool(string name, DeserializeFeatures features = default);
 
     string ReadString(string name, DeserializeFeatures features = default);
@@ -58,6 +60,10 @@ public interface IDsonObjectReader : IDisposable
 
     Double4 ReadDouble4(string name);
 
+    Long4 ReadLong4(string name);
+
+    Fxp4 ReadFxp4(string name);
+
     T ReadEnum<T>(string name, DeserializeFeatures features = default);
 
     #endregion
@@ -72,6 +78,8 @@ public interface IDsonObjectReader : IDisposable
 
     double ReadDouble(DeserializeFeatures features = default);
 
+    Fxp64 ReadFxp64();
+
     bool ReadBool(DeserializeFeatures features = default);
 
     string ReadString(DeserializeFeatures features = default);
@@ -85,6 +93,7 @@ public interface IDsonObjectReader : IDisposable
 
     Binary ReadBinary(DeserializeFeatures features = default);
 
+
     ObjectPtr ReadPtr();
 
     DateTime ReadDateTime();
@@ -95,6 +104,10 @@ public interface IDsonObjectReader : IDisposable
     Timestamp ReadTimestamp();
 
     Double4 ReadDouble4();
+
+    Long4 ReadLong4();
+
+    Fxp4 ReadFxp4();
 
     T ReadEnum<T>(DeserializeFeatures features = default);
 

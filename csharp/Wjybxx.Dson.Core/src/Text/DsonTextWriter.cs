@@ -395,6 +395,13 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         PrintDouble(printer, value, style);
     }
 
+    protected override void DoWriteFxp64(Fxp64 value) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Fxp64);
+        printer.FastPrint("@fx ");
+        printer.FastPrint(value);
+    }
+
     protected override void DoWriteBool(bool value) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Bool);
@@ -466,7 +473,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             printer.FastPrint(": ");
             printer.FastPrint(objectPtr.Type);
         }
-        printer.Print('}');
+        printer.FastPrint('}');
     }
 
     protected override void DoWriteDateTime(ExtDateTime dateTime) {
@@ -517,7 +524,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             printer.FastPrint(": ");
             printer.FastPrint(ExtDateTime.FormatOffset(dateTime.Offset));
         }
-        printer.Print('}');
+        printer.FastPrint('}');
     }
 
     protected override void DoWriteTimestamp(Timestamp timestamp) {
@@ -527,28 +534,92 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         if (timestamp.Nanos == 0) { // 打印为缩写
             printer.FastPrint("@ts ");
             printer.FastPrint(timestamp.Seconds, true);
-        } else if (timestamp.CanConvertNanosToMillis()) {
-            printer.FastPrint("@ts ");
-            printer.FastPrint(timestamp.ToEpochMillis(), true);
-            printer.FastPrint("ms");
         } else {
             printer.FastPrint("{@ts ");
             printer.FastPrint(Timestamp.NamesSeconds);
             printer.FastPrint(": ");
             printer.FastPrint(timestamp.Seconds, true);
             printer.FastPrint(", ");
-
-            printer.FastPrint(Timestamp.NamesNanos);
-            printer.FastPrint(": ");
-            printer.FastPrint(timestamp.Nanos);
-            printer.Print('}');
+            //
+            if (timestamp.CanConvertNanosToMillis()) {
+                printer.FastPrint(Timestamp.NamesMillis);
+                printer.FastPrint(": ");
+                printer.FastPrint(timestamp.ConvertNanosToMillis());
+            } else {
+                printer.FastPrint(Timestamp.NamesNanos);
+                printer.FastPrint(": ");
+                printer.FastPrint(timestamp.Nanos);
+            }
+            printer.FastPrint('}');
         }
     }
 
-    protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
+    private static string GetElementNames(string? elementNames) {
+        if (elementNames == null) return "xyzw";
+        if (elementNames.Length < 2 || elementNames.Length > 4) {
+            throw new ArgumentException("elementNames length must be between 2 and 4.", nameof(elementNames));
+        }
+        return elementNames;
+    }
+
+    private void PrintDouble4(DsonPrinter printer, Double4 value, string? elementNames) {
+        elementNames = GetElementNames(elementNames);
+        printer.FastPrint("{@D4 ");
+        for (int index = 0; index < elementNames.Length; index++) {
+            if (index != 0) {
+                printer.FastPrint(", ");
+            }
+            printer.FastPrint(elementNames[index]);
+            printer.FastPrint(": ");
+            PrintDouble(printer, value[index], NumberStyle.Simple);
+        }
+        printer.Print('}');
+    }
+
+    private void PrintLong4(DsonPrinter printer, Long4 value, string? elementNames) {
+        elementNames = GetElementNames(elementNames);
+        printer.FastPrint("{@L4 ");
+        for (int index = 0; index < elementNames.Length; index++) {
+            if (index != 0) {
+                printer.FastPrint(", ");
+            }
+            printer.FastPrint(elementNames[index]);
+            printer.FastPrint(": ");
+            printer.FastPrint(value[index]);
+        }
+        printer.Print('}');
+    }
+
+    private void PrintFxp4(DsonPrinter printer, Fxp4 value, string? elementNames) {
+        elementNames = GetElementNames(elementNames);
+        printer.FastPrint("{@FX4 ");
+        for (int index = 0; index < elementNames.Length; index++) {
+            if (index != 0) {
+                printer.FastPrint(", ");
+            }
+            printer.FastPrint(elementNames[index]);
+            printer.FastPrint(": ");
+            printer.FastPrint(value[index]);
+        }
+        printer.Print('}');
+    }
+
+    protected override void DoWriteDouble4(Double4 double4, string? elementNames) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Double4);
-        Double4Styles.Print(printer, double4, style);
+        PrintDouble4(printer, double4, elementNames);
+    }
+
+    protected override void DoWriteFxp4(Fxp4 fv4, string? elementNames) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Fxp4);
+        PrintFxp4(printer, fv4, elementNames);
+    }
+
+    protected override void DoWriteLong4(Long4 fv4, string? elementNames) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Long4);
+        PrintLong4(printer, fv4, elementNames);
     }
 
     #endregion

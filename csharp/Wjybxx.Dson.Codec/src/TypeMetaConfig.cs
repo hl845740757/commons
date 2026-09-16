@@ -186,13 +186,16 @@ public sealed class TypeMetaConfig
         config.Add(typeof(long), DsonTexts.LabelInt64, "int64", "long");
         config.Add(typeof(float), DsonTexts.LabelFloat, "float");
         config.Add(typeof(double), DsonTexts.LabelDouble, "double");
+        config.Add(typeof(Fxp64), DsonTexts.LabelFxp64, "Fxp64");
         config.Add(typeof(bool), DsonTexts.LabelBool, "bool", "boolean");
         config.Add(typeof(string), DsonTexts.LabelString, "string");
         config.Add(typeof(Binary), DsonTexts.LabelBinary, "bytes");
-        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, "Pointer");
+        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, DsonTexts.LabelRef, "Pointer");
         config.Add(typeof(ExtDateTime), DsonTexts.LabelDateTime, "DateTime");
         config.Add(typeof(Timestamp), DsonTexts.LabelTimestamp, "Timestamp");
         config.Add(typeof(Double4), DsonTexts.LabelDouble4, "Double4");
+        config.Add(typeof(Long4), DsonTexts.LabelLong4, "Long4");
+        config.Add(typeof(Fxp4), DsonTexts.LabelFxp4, "Fxp4");
         // 基础类型
         config.Add(typeof(uint), DsonTexts.LabelUInt32, "uint32", "uint");
         config.Add(typeof(ulong), DsonTexts.LabelUInt64, "uint64", "ulong");

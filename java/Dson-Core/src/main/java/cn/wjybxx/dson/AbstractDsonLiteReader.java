@@ -278,6 +278,13 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         return value;
     }
 
+    public Fxp64 readFxp64(int name) {
+        advanceToValueState(name, DsonType.FXP64);
+        Fxp64 value = doReadFxp64();
+        setNextState();
+        return value;
+    }
+
     @Override
     public ObjectPtr readPtr(int name) {
         advanceToValueState(name, DsonType.POINTER);
@@ -306,6 +313,21 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     public Double4 readDouble4(int name) {
         advanceToValueState(name, DsonType.DOUBLE4);
         Double4 value = doReadDouble4();
+        setNextState();
+        return value;
+    }
+
+    @Override
+    public Fxp4 readFxp4(int name) {
+        advanceToValueState(name, DsonType.FXP4);
+        Fxp4 value = doReadFxp4();
+        setNextState();
+        return value;
+    }
+
+    public Long4 readLong4(int name) {
+        advanceToValueState(name, DsonType.LONG4);
+        Long4 value = doReadLong4();
         setNextState();
         return value;
     }
@@ -374,6 +396,13 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         return value;
     }
 
+    public Fxp64 readFxp64() {
+        ensureValueState(context, DsonType.FXP64);
+        Fxp64 value = doReadFxp64();
+        setNextState();
+        return value;
+    }
+
     @Override
     public ObjectPtr readPtr() {
         ensureValueState(context, DsonType.POINTER);
@@ -405,6 +434,21 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         setNextState();
         return value;
     }
+
+    @Override
+    public Fxp4 readFxp4() {
+        ensureValueState(context, DsonType.FXP4);
+        Fxp4 value = doReadFxp4();
+        setNextState();
+        return value;
+    }
+
+    public Long4 readLong4() {
+        ensureValueState(context, DsonType.LONG4);
+        Long4 value = doReadLong4();
+        setNextState();
+        return value;
+    }
     // endregion
 
     protected abstract int doReadInt32();
@@ -423,6 +467,8 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
 
     protected abstract Binary doReadBinary();
 
+    protected abstract Fxp64 doReadFxp64();
+
     protected abstract ObjectPtr doReadPtr();
 
     protected abstract ExtDateTime doReadDateTime();
@@ -430,6 +476,10 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     protected abstract Timestamp doReadTimestamp();
 
     protected abstract Double4 doReadDouble4();
+
+    protected abstract Fxp4 doReadFxp4();
+
+    protected abstract Long4 doReadLong4();
     // endregion
 
     // region 容器

@@ -2,10 +2,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.text.Double4Style;
-import cn.wjybxx.dson.text.NumberStyle;
-import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.text.StringStyle;
+import cn.wjybxx.dson.text.*;
 import cn.wjybxx.dson.types.*;
 
 import java.util.Objects;
@@ -105,6 +102,10 @@ public class DsonCollectionWriter extends AbstractDsonWriter {
         getContext().add(new DsonBinary(Binary.copyFrom(bytes, offset, len)));
     }
 
+    protected void doWriteFxp64(Fxp64 value) {
+        getContext().add(new DsonFxp64(value));
+    }
+
     @Override
     protected void doWritePtr(ObjectPtr objectPtr) {
         getContext().add(new DsonPointer(objectPtr));
@@ -121,8 +122,17 @@ public class DsonCollectionWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteDouble4(Double4 double4, Double4Style style) {
+    protected void doWriteDouble4(Double4 double4, String elementNames) {
         getContext().add(new DsonDouble4(double4));
+    }
+
+    @Override
+    protected void doWriteFxp4(Fxp4 fv4, String elementNames) {
+        getContext().add(new DsonFxp4(fv4));
+    }
+
+    protected void doWriteLong4(Long4 fv4, String elementNames) {
+        getContext().add(new DsonLong4(fv4));
     }
 
     //endregion

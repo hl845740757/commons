@@ -35,23 +35,21 @@ public enum DsonType {
     STRING(6),
     NULL(7),
     BINARY(8),
+    /** 4位定点数 */
+    FXP64(9),
 
-    /**
-     * 对象指针
-     */
+    /** 对象指针 */
     POINTER(11),
-    /**
-     * 日期时间
-     */
+    /** 日期时间 */
     DATETIME(13),
-    /**
-     * 时间戳
-     */
+    /** 时间戳 */
     TIMESTAMP(14),
-    /**
-     * Double4
-     */
+    /** Double4 */
     DOUBLE4(15),
+    /** Long4 */
+    LONG4(16),
+    /** 四分量定点数 */
+    FXP4(17),
 
     /**
      * 对象头信息，与Object类型编码格式类似
@@ -100,7 +98,7 @@ public enum DsonType {
     /** {@link WireType} */
     public boolean hasWireType() {
         return switch (this) {
-            case INT32, INT64, FLOAT, DOUBLE -> true;
+            case INT32, INT64, FLOAT, DOUBLE, FXP64 -> true;
             default -> false;
         };
     }

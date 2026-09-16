@@ -80,6 +80,8 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteDouble(TName name, double value, NumberStyle style = NumberStyle.Simple);
 
+    void WriteFxp64(TName name, Fxp64 value);
+
     void WriteBool(TName name, bool value);
 
     void WriteString(TName name, string value, StringStyle style = StringStyle.AutoQuote);
@@ -96,7 +98,17 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteTimestamp(TName name, Timestamp timestamp);
 
-    void WriteDouble4(TName name, Double4 double4, Double4Style style = default);
+    /// <summary>
+    /// 写入一个Double4(元组)
+    /// </summary>
+    /// <param name="name">字段的名字</param>
+    /// <param name="double4">要写入的值</param>
+    /// <param name="elementNames">每个元素的名字，每个字符对应一个分量的名字</param>
+    void WriteDouble4(TName name, Double4 double4, string? elementNames = null);
+
+    void WriteLong4(TName name, Long4 long4, string? elementNames = null);
+
+    void WriteFxp4(TName name, Fxp4 value, string? elementNames = null);
 
     #endregion
 
@@ -115,6 +127,8 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteDouble(double value, NumberStyle style = NumberStyle.Simple);
 
+    void WriteFxp64(Fxp64 value);
+
     void WriteBool(bool value);
 
     void WriteString(string value, StringStyle style = StringStyle.AutoQuote);
@@ -130,8 +144,17 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     void WriteDateTime(ExtDateTime dateTime);
 
     void WriteTimestamp(Timestamp timestamp);
+    
+    /// <summary>
+    /// 写入一个Double4(元组)，Long4和Fxp4的元素名字规则同理
+    /// </summary>
+    /// <param name="double4">要写入的值</param>
+    /// <param name="elementNames">每个元素的名字，每个字符对应一个分量的名字</param>
+    void WriteDouble4(Double4 double4, string? elementNames = null);
 
-    void WriteDouble4(Double4 double4, Double4Style style = default);
+    void WriteLong4(Long4 long4, string? elementNames = null);
+
+    void WriteFxp4(Fxp4 fv4, string? elementNames = null);
 
     #endregion
 

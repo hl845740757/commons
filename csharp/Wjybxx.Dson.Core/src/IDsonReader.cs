@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson
@@ -125,6 +124,8 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     double ReadDouble(TName name);
 
+    Fxp64 ReadFxp64(TName name);
+
     bool ReadBool(TName name);
 
     string ReadString(TName name);
@@ -141,6 +142,10 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     Double4 ReadDouble4(TName name);
 
+    Long4 ReadLong4(TName name);
+
+    Fxp4 ReadFxp4(TName name);
+
     #endregion
 
     #region 简单值(无name版)
@@ -152,6 +157,8 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     float ReadFloat();
 
     double ReadDouble();
+
+    Fxp64 ReadFxp64();
 
     bool ReadBool();
 
@@ -168,6 +175,10 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     Timestamp ReadTimestamp();
 
     Double4 ReadDouble4();
+
+    Long4 ReadLong4();
+
+    Fxp4 ReadFxp4();
 
     #endregion
 

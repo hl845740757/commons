@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -293,6 +294,10 @@ public final class DsonTextReader extends AbstractDsonReader {
                 pushNextValue(valueToken.value);
                 yield DsonType.DOUBLE;
             }
+            case FXP64 -> {
+                pushNextValue(valueToken.value);
+                yield DsonType.FXP64;
+            }
             case BOOL -> {
                 pushNextValue(valueToken.value);
                 yield DsonType.BOOL;
@@ -350,7 +355,7 @@ public final class DsonTextReader extends AbstractDsonReader {
                 case DsonHeader.NAMES_CLASS_NAME,
                      DsonHeader.NAMES_COLLECTION,
                      DsonHeader.NAMES_LOCAL_PATH,
-					 DsonHeader.NAMES_NAME -> {
+                     DsonHeader.NAMES_NAME -> {
                     pushNextValue(unquotedString);
                     return DsonType.STRING;
                 }
@@ -390,6 +395,7 @@ public final class DsonTextReader extends AbstractDsonReader {
             case INT64 -> pushNextValue(DsonTexts.parseInt64(unquotedString));
             case FLOAT -> pushNextValue(DsonTexts.parseFloat(unquotedString));
             case DOUBLE -> pushNextValue(DsonTexts.parseDouble(unquotedString));
+            case FXP64 -> pushNextValue(DsonTexts.parseFxp64(unquotedString));
             case BOOL -> pushNextValue(DsonTexts.parseBool(unquotedString));
             case STRING -> pushNextValue(unquotedString);
             case BINARY -> {
@@ -422,7 +428,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         // 2.object和array的className会在beginObject和beginArray的时候转换为结构体 @{}
         // 因此这里只能出现内置结构体的简写形式
         String clsName = valueToken.stringValue();
-        if (DsonTexts.LABEL_PTR.equals(clsName)) {// @ptr localId
+        if (DsonTexts.LABEL_PTR.equals(clsName) || DsonTexts.LABEL_REF.equals(clsName)) {// @ptr localId
             DsonToken nextToken = popToken();
             ensureStringsToken(context, nextToken);
             long localId = DsonTexts.parseInt64(nextToken.stringValue());
@@ -463,7 +469,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         // 内置结构体
         String clsName = headerToken.stringValue();
         return switch (clsName) {
-            case DsonTexts.LABEL_PTR -> {
+            case DsonTexts.LABEL_PTR, DsonTexts.LABEL_REF -> {
                 pushNextValue(scanPtr(context));
                 yield DsonType.POINTER;
             }
@@ -476,8 +482,16 @@ public final class DsonTextReader extends AbstractDsonReader {
                 yield DsonType.TIMESTAMP;
             }
             case DsonTexts.LABEL_DOUBLE4 -> {
-                pushNextValue(scanDouble4FromObject(context));
+                pushNextValue(scanDouble4(context));
                 yield DsonType.DOUBLE4;
+            }
+            case DsonTexts.LABEL_LONG4 -> {
+                pushNextValue(scanLong4(context));
+                yield DsonType.LONG4;
+            }
+            case DsonTexts.LABEL_FXP4 -> {
+                pushNextValue(scanFxp4(context));
+                yield DsonType.FXP4;
             }
             default -> {
                 pushToken(headerToken); // 非Object形式内置结构体
@@ -503,10 +517,6 @@ public final class DsonTextReader extends AbstractDsonReader {
         // 内置元组
         String clsName = headerToken.stringValue();
         return switch (clsName) {
-            case DsonTexts.LABEL_DOUBLE4 -> {
-                pushNextValue(scanDouble4FromArray(context));
-                yield DsonType.DOUBLE4;
-            }
             default -> {
                 pushToken(headerToken);
                 yield DsonType.ARRAY;
@@ -659,39 +669,8 @@ public final class DsonTextReader extends AbstractDsonReader {
         return new ExtDateTime(seconds, nanos, offset, enables);
     }
 
-    private Double4 scanDouble4FromArray(Context context) {
-        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
-        int index = 0;
-        DsonToken valueToken;
-        while ((valueToken = popToken()).type != DsonTokenType.END_ARRAY) {
-            if (valueToken.type == DsonTokenType.COMMA) {
-                index++;
-                continue;
-            }
-            ensureStringsToken(context, valueToken);
-            double value = DsonTexts.parseDouble(valueToken.stringValue());
-            switch (index) {
-                case 0:
-                    v0 = value;
-                    break;
-                case 1:
-                    v1 = value;
-                    break;
-                case 2:
-                    v2 = value;
-                    break;
-                case 3:
-                    v3 = value;
-                    break;
-                default:
-                    throw new DsonIOException("IndexOutOfRange");
-            }
-        }
-        return new Double4(v0, v1, v2, v3);
-    }
-
-    private Double4 scanDouble4FromObject(Context context) {
-        double v0 = 0, v1 = 0, v2 = 0, v3 = 0;
+    private Double4 scanDouble4(Context context) {
+        double[] values = new double[4];
         int index = 0;
         DsonToken keyToken;
         while ((keyToken = popToken()).type != DsonTokenType.END_OBJECT) {
@@ -707,26 +686,48 @@ public final class DsonTextReader extends AbstractDsonReader {
             // 下一个是无引号字符串(double)
             DsonToken valueToken = popToken();
             ensureStringsToken(context, valueToken);
-            //
-            double value = DsonTexts.parseDouble(valueToken.stringValue());
-            switch (index) {
-                case 0:
-                    v0 = value;
-                    break;
-                case 1:
-                    v1 = value;
-                    break;
-                case 2:
-                    v2 = value;
-                    break;
-                case 3:
-                    v3 = value;
-                    break;
-                default:
-                    throw new DsonIOException("IndexOutOfRange");
-            }
+            values[index] = DsonTexts.parseDouble(valueToken.stringValue());
         }
-        return new Double4(v0, v1, v2, v3);
+        return new Double4(values[0], values[1], values[2], values[3]);
+    }
+
+    private Long4 scanLong4(Context context) {
+        long[] values = new long[4];
+        int index = 0;
+        DsonToken keyToken;
+        while ((keyToken = popToken()).type != DsonTokenType.END_OBJECT) {
+            if (keyToken.type == DsonTokenType.COMMA) {
+                index++;
+                continue;
+            }
+            ensureStringsToken(context, keyToken);
+            DsonToken colonToken = popToken();
+            verifyTokenType(context, colonToken, DsonTokenType.COLON);
+            DsonToken valueToken = popToken();
+            ensureStringsToken(context, valueToken);
+            values[index] = DsonTexts.parseInt64(valueToken.stringValue());
+        }
+        return new Long4(values[0], values[1], values[2], values[3]);
+    }
+
+    private Fxp4 scanFxp4(Context context) {
+        Fxp64[] values = new Fxp64[4];
+        Arrays.fill(values, Fxp64.ZERO);
+        int index = 0;
+        DsonToken keyToken;
+        while ((keyToken = popToken()).type != DsonTokenType.END_OBJECT) {
+            if (keyToken.type == DsonTokenType.COMMA) {
+                index++;
+                continue;
+            }
+            ensureStringsToken(context, keyToken);
+            DsonToken colonToken = popToken();
+            verifyTokenType(context, colonToken, DsonTokenType.COLON);
+            DsonToken valueToken = popToken();
+            ensureStringsToken(context, valueToken);
+            values[index] = DsonTexts.parseFxp64(valueToken.stringValue());
+        }
+        return new Fxp4(values[0], values[1], values[2], values[3]);
     }
 
     /** 扫描string，直到遇见逗号或结束符 */
@@ -866,6 +867,10 @@ public final class DsonTextReader extends AbstractDsonReader {
         return binary;
     }
 
+    protected Fxp64 doReadFxp64() {
+        return (Fxp64) Objects.requireNonNull(popNextValue());
+    }
+
     @Override
     protected ObjectPtr doReadPtr() {
         return (ObjectPtr) Objects.requireNonNull(popNextValue());
@@ -885,6 +890,17 @@ public final class DsonTextReader extends AbstractDsonReader {
     protected Double4 doReadDouble4() {
         return (Double4) Objects.requireNonNull(popNextValue());
     }
+
+    @Override
+    protected Long4 doReadLong4() {
+        return (Long4) Objects.requireNonNull(popNextValue());
+    }
+
+    @Override
+    protected Fxp4 doReadFxp4() {
+        return (Fxp4) Objects.requireNonNull(popNextValue());
+    }
+
 
     // endregion
 

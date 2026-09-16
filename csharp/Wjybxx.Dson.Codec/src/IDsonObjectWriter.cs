@@ -40,6 +40,8 @@ public interface IDsonObjectWriter : IDisposable
 
     void WriteDouble(string name, double value, SerializeFeatures features = default);
 
+    void WriteFxp64(string name, Fxp64 value);
+
     void WriteBool(string name, bool value, SerializeFeatures features = default);
 
     void WriteString(string name, string? value, SerializeFeatures features = default);
@@ -65,7 +67,11 @@ public interface IDsonObjectWriter : IDisposable
 
     void WriteTimestamp(string name, Timestamp timestamp);
 
-    void WriteDouble4(string name, Double4 double4, SerializeFeatures features = default);
+    void WriteDouble4(string name, Double4 double4, string? elementNames = null);
+
+    void WriteLong4(string name, Long4 long4, string? elementNames = null);
+
+    void WriteFxp4(string name, Fxp4 fv4, string? elementNames = null);
 
     void WriteEnum<T>(string name, T value, SerializeFeatures features = default);
 
@@ -80,6 +86,8 @@ public interface IDsonObjectWriter : IDisposable
     void WriteFloat(float value, SerializeFeatures features = default);
 
     void WriteDouble(double value, SerializeFeatures features = default);
+
+    void WriteFxp64(Fxp64 value);
 
     void WriteBool(bool value, SerializeFeatures features = default);
 
@@ -96,6 +104,7 @@ public interface IDsonObjectWriter : IDisposable
     /** Binary默认为可共享对象 -- feature用于处理null值 */
     void WriteBinary(Binary? binary, SerializeFeatures features = default);
 
+
     // 内建结构体
     void WritePtr(ObjectPtr objectPtr);
 
@@ -106,7 +115,11 @@ public interface IDsonObjectWriter : IDisposable
 
     void WriteTimestamp(Timestamp timestamp);
 
-    void WriteDouble4(Double4 double4, SerializeFeatures features = default);
+    void WriteDouble4(Double4 double4, string? elementNames = null);
+
+    void WriteLong4(Long4 long4, string? elementNames = null);
+
+    void WriteFxp4(Fxp4 fv4, string? elementNames = null);
 
     void WriteEnum<T>(T value, SerializeFeatures features = default);
 

@@ -38,6 +38,7 @@ public enum DsonType : sbyte
     String = 6,
     Null = 7,
     Binary = 8,
+    Fxp64 = 9,
 
     /// <summary>
     /// 对象指针
@@ -55,6 +56,14 @@ public enum DsonType : sbyte
     /// Double4
     /// </summary>
     Double4 = 15,
+    /// <summary>
+    /// Long4
+    /// </summary>
+    Long4 = 16,
+    /// <summary>
+    /// Fxp4
+    /// </summary>
+    Fxp4 = 17,
 
     /// <summary>
     /// 对象头
@@ -113,6 +122,7 @@ public static class DsonTypes
             DsonType.Int64 => true,
             DsonType.Float => true,
             DsonType.Double => true,
+            DsonType.Fxp64 => true,
             _ => false
         };
     }

@@ -61,6 +61,8 @@ public enum DsonTokenType {
     NULL,
     /** 显式声明 '@bin' */
     BINARY,
+    /** 显式声明 '@fx' */
+    FXP64,
 
     /** 内建结构体 */
     BUILTIN_STRUCT,

@@ -273,6 +273,10 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         return PopNextValue().AsDouble();
     }
 
+    protected override Fxp64 DoReadFxp64() {
+        return PopNextValue().AsFxp64();
+    }
+
     protected override bool DoReadBool() {
         return PopNextValue().AsBool();
     }
@@ -303,6 +307,14 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     protected override Double4 DoReadDouble4() {
         return PopNextValue().AsDouble4();
+    }
+
+    protected override Long4 DoReadLong4() {
+        return PopNextValue().AsLong4();
+    }
+
+    protected override Fxp4 DoReadFxp4() {
+        return PopNextValue().AsFxp4();
     }
 
     #endregion

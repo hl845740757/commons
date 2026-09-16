@@ -75,10 +75,13 @@ Dson支持的值类型和内置结构体包括：
 | s   | string    | 6  | 字符串        |                                                                                        | "10"   <br>  abc                                                                                                  |
 | N   | null      | 7  | null，大写N   |                                                                                        | @N null <br> null                                                                                                 |
 | bin | binary    | 8  | 二进制        |                                                                                        | 十六进制编码<br>@bin "cafebabe" <br> @bin ""                                                                                |
-| ptr | pointer   | 11 | 指针         | {<br> string collection;<br> long localId;<br> string localName;<br> int32 type;<br> } | 单值或object结构<br/> @ptr 10001 <br> {@ptr localId: 10001, coll : global, type: 1 }                                   |
+| fx  | Fxp64     | 9  | 64位定点数（万分比） |                                                                                        | @fx 12.3456                                                                                                       |
+| ptr | pointer   | 11 | 指针         | {<br> string collection;<br> long localId;<br> string localPath;<br> int32 type;<br> } | 单值或object结构<br/> @ptr 10001 <br> {@ptr localId: 10001, coll : global, type: 1 }                                   |
 | dt  | datetime  | 13 | 日期时间       | { <br>  int64 seconds; <br> int32 nanos;<br> int32 offset;<br> int32 enables; <br> }   | 单值或object结构<br/> @dt 2023-06-17T18:37:00 <br/>{@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100} |
 | ts  | timestamp | 14 | 时间戳        | { <br>  int64 seconds; <br> int32 nanos;<br> }                                         | 单值或object结构<br/> @ts 1715659200 <br/>{@ts seconds: 1715659200, nanos: 100}                                        |
-| D4  | double4   | 15 | 4元浮点数      | { <br>  double v0;<br> double v1;<br> double v2; <br> double v3;<br>}                  | obj或array格式<br/> {@D4 x: 1, y: 2, z:1, w: 0} <br/>[@D4 1, 1, 1, 0]                                                |
+| D4  | Double4   | 15 | 4元双精度浮点数 | { <br> double v0;<br> double v1;<br> double v2; <br> double v3;<br> }                  | object结构<br/> {@D4 x: 1, y: 2, z: 1, w: 0}                                                                     |
+| L4  | Long4     | 16 | 4元64位整型    | { <br> long v0;<br> long v1;<br> long v2; <br> long v3;<br> }                          | object结构<br/> {@L4 x: 1, y: 2, z: 1, w: 0}                                                                      |
+| FX4 | Fxp4      | 17 | 4元定点数      | { <br> Fxp64 v0;<br> Fxp64 v1;<br> Fxp64 v2; <br> Fxp64 v3;<br> }                      | object结构<br/> {@FX4 x: 1.25, y: 2, z: 1, w: 0}                                                                 |
 |     | header    | 29 | 对象头        |                                                                                        | 对象形式： @{clsName: Vector3 } <br/> 简写形式： @{Vector3}                                                                 |
 |     | array     | 30 | 数组         |                                                                                        | \[ 1, 2, 3, 4, 5 ]                                                                                                |
 |     | object    | 31 | 对象/结构体     |                                                                                        | { name: wjybxx, age: 28 }                                                                                         |
@@ -132,6 +135,18 @@ ps: 我去除了顶层不能是header的限制，因此可以用顶层的header�
      value10: @i -0b10010001,
      value11: @d -1.05E-15,
    }
+```
+
+### 定点数\(fx)
+
+1. `@fx` 表示`Fxp64`，它是缩放系数为`10_000`的64位定点数；使用普通十进制文本输入。
+2. 可使用正负号和下划线分隔数字，小数部分最多四位；出现小数点时，小数部分必须为一至四位。
+3. `fx`不支持科学计数法、十六进制、二进制、NaN和Infinity。
+
+```
+   @fx 12.3456
+   @fx -1.2
+   @fx 10_000.0001
 ```
 
 ### bool值
@@ -251,10 +266,10 @@ PS： 虽然Dson文本块不要求行首`@`对齐，也不要求开始和结束�
    @bin ""
 ```
 
-### 指针\(ptr)
+### 指针\(ptr、ref)
 
-1. 指针支持两种范式 @ptr localId 和 {@ptr localId: $localId, localPath: $localPath, coll: $coll, type: $type}
-2. @ptr localId 简写方式适用大多数情况，结构体用于复杂情况。
+1. `ref`是`ptr`的别名；两者均支持两种范式：`@ptr localId`和`{@ptr localId: $localId, localPath: $localPath, coll: $coll, type: $type}`。
+2. `@ptr localId`简写方式适用大多数情况，结构体用于复杂情况。
 3. localId 表示对象命名空间下的数字id，限定int32或int64类型
 4. localPath 表示集合下的路径，限定字符串类型，无特殊符号时可省略引号。
 5. coll是collection的缩写，表示目标对象所属的集合，限定字符串类型，无特殊符号时可省略引号。
@@ -264,6 +279,7 @@ PS： 虽然Dson文本块不要求行首`@`对齐，也不要求开始和结束�
 
 ```
    @ptr 10001
+   @ref 10001
    {@ptr localId: 10001, coll: global, type: 1 }
    {@ptr localPath: wjybxx001, coll: global, type: 1}
 ```
@@ -304,29 +320,33 @@ PS：对于配置文件，指针的最大作用是复用和减少嵌套。
 
 ### 时间戳\(ts)
 
-1. dt支持两种范式 `@ts seconds` 和 `{@ts seconds: $seconds, millis: $millis, nanos: $nanos}`
-2. `@ts seconds` 简写方式用于一般情况，结构体用于复杂情况。
-3. `@ts seconds` 支持毫秒时间戳，以`ms`结尾表示毫秒时间戳。
-4. millis 表示输入毫秒转纳秒 —— 简化书写。
-5. nanos 表示直接输入纳秒，millis 和 nanos通常只应该出现一个。
+1. ts支持两种范式：`@ts seconds`和`{@ts seconds: $seconds, millis: $millis}`或`{@ts seconds: $seconds, nanos: $nanos}`。
+2. `@ts seconds`简写方式用于一般情况，简单值只表示秒。
+3. `millis`仅用于object形式，表示输入的毫秒部分并转换为纳秒；取值范围为0至999。
+4. `nanos`表示直接输入的纳秒部分；取值范围为0至999_999_999。`millis`和`nanos`通常只应该出现一个。
+5. 写入时，如果纳秒部分恰为整毫秒，输出`millis`；否则输出`nanos`。
 
 ```
    @ts 1715659200
-   @ts 1715659200100ms // ms结尾表示毫秒时间戳   
    {@ts seconds: 1715659200, millis: 100}
+   {@ts seconds: 1715659200, nanos: 100_000_000}
 ```
 
-### double4
+### 四分量结构体\(D4、L4、FX4)
 
-1. double4用于特定场景下的性能优化，用于减少内存中的DsonObject和DsonArray对象。
-2. double4支持两种obj和array两种范式{@D4 x: 0, y: 0, z: 0, w: 0} 和 [@D4 ]
-3. 解码时忽略字段名，第一个输入默认存储在v0，第二个输入存储在v1，以此类推
+1. 四分量用于减少内存中的DsonObject和DsonArray对象。
+2. `D4`表示四个`double`分量，`L4`表示四个`long`分量，`FX4`表示四个`Fxp64`分量。
+3. 三者只支持object结构形式，不支持数组形式。
+4. Writer可通过`elementNames`指定输出字段名；未提供时默认使用`xyzw`。该字符串长度必须为2至4，Writer按其长度输出前N个分量。
+5. Reader忽略object中的字段名，按出现顺序依次填入`v0`、`v1`、`v2`、`v3`；字段名不用于绑定或重排序。
 
 ```
-   // obj 格式
-   {@D4 x: 1, y: 2, z:1, w: 0}
-   // array 格式
-   [@D4 1, 1, 1, 0]
+   {@D4 x: 1, y: 2, z: 3, w: 4}
+   {@L4 x: 1, y: 2, z: 3, w: 4}
+   {@FX4 x: 1.25, y: 2, z: 3, w: 4}
+
+   // 使用两个字段名时，只输出前两个分量
+   {@D4 r: 1, g: 2}
 ```
 
 ### object

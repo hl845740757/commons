@@ -36,7 +36,6 @@ public static class DsonReaderUtils
         DsonType.String, DsonType.Binary, DsonType.Array, DsonType.Object, DsonType.Header
     }.ToImmutableList2();
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool ReadBool(IDsonInput input, int wireTypeBits) {
         if (wireTypeBits == 1) {
@@ -116,6 +115,21 @@ public static class DsonReaderUtils
         return new ObjectPtr(collection, localPath, localId, type);
     }
 
+    private static void SkipPtr(IDsonInput input, int wireTypeBits) {
+        input.ReadUInt64();
+        if ((wireTypeBits & ObjectPtr.MaskCollection) != 0) {
+            int len = input.ReadUInt32();
+            input.SkipRawBytes(len);
+        }
+        if ((wireTypeBits & ObjectPtr.MaskLocalPath) != 0) {
+            int len = input.ReadUInt32();
+            input.SkipRawBytes(len);
+        }
+        if ((wireTypeBits & ObjectPtr.MaskType) != 0) {
+            input.ReadUInt32();
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteDateTime(IDsonOutput output, ExtDateTime dateTime) {
         output.WriteUInt64(dateTime.Seconds);
@@ -147,41 +161,89 @@ public static class DsonReaderUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WireTypeOfDouble4(Double4 double4) {
-        int v = 0;
-        if (WireTypes.BestOfDouble(double4.v0) == WireType.Uint) v |= 0x01;
-        if (WireTypes.BestOfDouble(double4.v1) == WireType.Uint) v |= 0x02;
-        if (WireTypes.BestOfDouble(double4.v2) == WireType.Uint) v |= 0x04;
-        return v;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteDouble4(IDsonOutput output, Double4 double4, int wireTypeBits) {
-        if ((wireTypeBits & 0x01) != 0) {
-            output.WriteVarDouble(double4.v0);
-        } else {
-            output.WriteDouble(double4.v0);
-        }
-        if ((wireTypeBits & 0x02) != 0) {
-            output.WriteVarDouble(double4.v1);
-        } else {
-            output.WriteDouble(double4.v1);
-        }
-        if ((wireTypeBits & 0x04) != 0) {
-            output.WriteVarDouble(double4.v2);
-        } else {
-            output.WriteDouble(double4.v2);
-        }
-        output.WriteVarDouble(double4.v3);
+    public static void WriteDouble4(IDsonOutput output, Double4 double4) {
+        WireType w0 = WireTypes.BestOfDouble(double4.v0);
+        WireType w1 = WireTypes.BestOfDouble(double4.v1);
+        WireType w2 = WireTypes.BestOfDouble(double4.v2);
+        WireType w3 = WireTypes.BestOfDouble(double4.v3);
+        int mask = (int)w0 | ((int)w1 << 2) | ((int)w2 << 4) | ((int)w3 << 6);
+        //
+        output.WriteRawByte((byte)mask);
+        w0.WriteDouble(output, double4.v0);
+        w1.WriteDouble(output, double4.v1);
+        w2.WriteDouble(output, double4.v2);
+        w3.WriteDouble(output, double4.v3);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Double4 ReadDouble4(IDsonInput input, int wireTypeBits) {
-        double v0 = (wireTypeBits & 0x01) != 0 ? input.ReadVarDouble() : input.ReadDouble();
-        double v1 = (wireTypeBits & 0x02) != 0 ? input.ReadVarDouble() : input.ReadDouble();
-        double v2 = (wireTypeBits & 0x04) != 0 ? input.ReadVarDouble() : input.ReadDouble();
-        double v3 = input.ReadVarDouble();
-        return new Double4(v0, v1, v2, v3);
+        int mask = input.ReadRawByte();
+        WireType w0 = (WireType)(mask & 3);
+        WireType w1 = (WireType)((mask >> 2) & 3);
+        WireType w2 = (WireType)((mask >> 4) & 3);
+        WireType w3 = (WireType)((mask >> 6) & 3);
+        return new Double4(
+            w0.ReadDouble(input),
+            w1.ReadDouble(input),
+            w2.ReadDouble(input),
+            w3.ReadDouble(input));
+    }
+
+
+    public static void WriteLong4(IDsonOutput output, Long4 value) {
+        WireType w0 = WireTypes.BestOfInt64(value.v0);
+        WireType w1 = WireTypes.BestOfInt64(value.v1);
+        WireType w2 = WireTypes.BestOfInt64(value.v2);
+        WireType w3 = WireTypes.BestOfInt64(value.v3);
+        int mask = (int)w0 | ((int)w1 << 2) | ((int)w2 << 4) | ((int)w3 << 6);
+        //
+        output.WriteRawByte((byte)mask);
+        w0.WriteInt64(output, value.v0);
+        w1.WriteInt64(output, value.v1);
+        w2.WriteInt64(output, value.v2);
+        w3.WriteInt64(output, value.v3);
+    }
+
+    public static Long4 ReadLong4(IDsonInput input, int wireTypeBits) {
+        int mask = input.ReadRawByte();
+        WireType w0 = (WireType)(mask & 3);
+        WireType w1 = (WireType)((mask >> 2) & 3);
+        WireType w2 = (WireType)((mask >> 4) & 3);
+        WireType w3 = (WireType)((mask >> 6) & 3);
+        //
+        return new Long4(
+            w0.ReadInt64(input),
+            w1.ReadInt64(input),
+            w2.ReadInt64(input),
+            w3.ReadInt64(input));
+    }
+    
+    public static void WriteFxp4(IDsonOutput output, Fxp4 value) {
+        WireType w0 = WireTypes.BestOfInt64(value.v0.rawValue);
+        WireType w1 = WireTypes.BestOfInt64(value.v1.rawValue);
+        WireType w2 = WireTypes.BestOfInt64(value.v2.rawValue);
+        WireType w3 = WireTypes.BestOfInt64(value.v3.rawValue);
+        int mask = (int)w0 | ((int)w1 << 2) | ((int)w2 << 4) | ((int)w3 << 6);
+        //
+        output.WriteRawByte((byte)mask);
+        w0.WriteInt64(output, value.v0.rawValue);
+        w1.WriteInt64(output, value.v1.rawValue);
+        w2.WriteInt64(output, value.v2.rawValue);
+        w3.WriteInt64(output, value.v3.rawValue);
+    }
+
+    public static Fxp4 ReadFxp4(IDsonInput input, int wireTypeBits) {
+        int mask = input.ReadRawByte();
+        WireType w0 = (WireType)(mask & 3);
+        WireType w1 = (WireType)((mask >> 2) & 3);
+        WireType w2 = (WireType)((mask >> 4) & 3);
+        WireType w3 = (WireType)((mask >> 6) & 3);
+        //
+        Fxp64 v0 = new Fxp64(w0.ReadInt64(input));
+        Fxp64 v1 = new Fxp64(w1.ReadInt64(input));
+        Fxp64 v2 = new Fxp64(w2.ReadInt64(input));
+        Fxp64 v3 = new Fxp64(w3.ReadInt64(input));
+        return new Fxp4(v0, v1, v2, v3);
     }
 
     #endregion
@@ -235,13 +297,14 @@ public static class DsonReaderUtils
 
     public static void SkipValue(IDsonInput input, DsonContextType contextType,
                                  DsonType dsonType, WireType wireType, int wireTypeBits) {
-        int skip;
+        int skip; // 不构建引用的类型可以直接调用对应的Read方法
         switch (dsonType) {
             case DsonType.Int32: {
                 wireType.ReadInt32(input);
                 return;
             }
-            case DsonType.Int64: {
+            case DsonType.Int64:
+            case DsonType.Fxp64: {
                 wireType.ReadInt64(input);
                 return;
             }
@@ -266,49 +329,27 @@ public static class DsonReaderUtils
                 break;
             }
             case DsonType.Pointer: {
-                input.ReadUInt64(); // localId;
-                if ((wireTypeBits & ObjectPtr.MaskCollection) != 0) {
-                    skip = input.ReadUInt32(); // collection长度
-                    input.SkipRawBytes(skip);
-                }
-                if ((wireTypeBits & ObjectPtr.MaskLocalPath) != 0) {
-                    skip = input.ReadUInt32(); // localPath长度
-                    input.SkipRawBytes(skip);
-                }
-                if ((wireTypeBits & ObjectPtr.MaskType) != 0) {
-                    input.ReadUInt32();
-                }
+                SkipPtr(input, wireTypeBits); // 避免构建字符串
                 return;
             }
             case DsonType.DateTime: {
-                input.ReadUInt64();
-                input.ReadUInt32();
-                input.ReadSInt32();
-                // input.ReadRawByte(); // 已转移到 wireTypeBits
+                ReadDateTime(input, wireTypeBits);
                 return;
             }
             case DsonType.Timestamp: {
-                input.ReadUInt64();
-                input.ReadUInt32();
+                ReadTimestamp(input);
+                return;
+            }
+            case DsonType.Fxp4: {
+                ReadFxp4(input, wireTypeBits);
                 return;
             }
             case DsonType.Double4: {
-                if ((wireTypeBits & 0x01) != 0) {
-                    input.ReadVarDouble();
-                } else {
-                    input.ReadDouble();
-                }
-                if ((wireTypeBits & 0x02) != 0) {
-                    input.ReadVarDouble();
-                } else {
-                    input.ReadDouble();
-                }
-                if ((wireTypeBits & 0x04) != 0) {
-                    input.ReadVarDouble();
-                } else {
-                    input.ReadDouble();
-                }
-                input.ReadVarDouble();
+                ReadDouble4(input, wireTypeBits);
+                return;
+            }
+            case DsonType.Long4: {
+                ReadLong4(input, wireTypeBits);
                 return;
             }
             case DsonType.Header: {

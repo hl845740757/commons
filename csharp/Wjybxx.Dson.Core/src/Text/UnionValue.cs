@@ -97,6 +97,11 @@ public struct UnionValue : IEquatable<UnionValue>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfFixedPoint4(Fxp64 value) {
+        return new UnionValue(DsonType.Fxp64) { lValue = value.rawValue };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static UnionValue OfObjectPtr(in ObjectPtr value) {
         return new UnionValue(DsonType.Pointer) { ObjectPtr = value };
     }
@@ -114,6 +119,16 @@ public struct UnionValue : IEquatable<UnionValue>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static UnionValue OfDouble4(in Double4 value) {
         return new UnionValue(DsonType.Double4) { Double4 = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfLong4(in Long4 value) {
+        return new UnionValue(DsonType.Long4) { Long4 = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfFxp4(in Fxp4 value) {
+        return new UnionValue(DsonType.Fxp4) { Fxp4 = value };
     }
 
     #endregion
@@ -153,6 +168,16 @@ public struct UnionValue : IEquatable<UnionValue>
         set => objValue1 = value;
     }
 
+    public Long4 Long4 {
+        get => (Long4)objValue1;
+        set => objValue1 = value;
+    }
+
+    public Fxp4 Fxp4 {
+        get => (Fxp4)objValue1;
+        set => objValue1 = value;
+    }
+
     #endregion
 
 #nullable restore
@@ -167,12 +192,15 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Int64: return lValue == other.lValue;
             case DsonType.Float: return fValue.Equals(other.fValue);
             case DsonType.Double: return dValue.Equals(other.dValue);
+            case DsonType.Fxp64: return lValue.Equals(other.lValue);
             case DsonType.Bool: return iValue == other.iValue;
             case DsonType.Null: return true;
             case DsonType.Pointer: return ObjectPtr.Equals(other.ObjectPtr);
             case DsonType.DateTime: return DateTime.Equals(other.DateTime);
             case DsonType.Timestamp: return Timestamp.Equals(other.Timestamp);
             case DsonType.Double4: return Double4.Equals(other.Double4);
+            case DsonType.Long4: return Long4.Equals(other.Long4);
+            case DsonType.Fxp4: return Fxp4.Equals(other.Fxp4);
             default:
                 return Equals(objValue1, other.objValue1);
         }
@@ -190,12 +218,15 @@ public struct UnionValue : IEquatable<UnionValue>
             DsonType.Int64 => lValue.GetHashCode(),
             DsonType.Float => fValue.GetHashCode(),
             DsonType.Double => dValue.GetHashCode(),
+            DsonType.Fxp64 => lValue.GetHashCode(),
             DsonType.Bool => iValue.GetHashCode(),
             DsonType.Null => 0,
             DsonType.Pointer => ObjectPtr.GetHashCode(),
             DsonType.DateTime => DateTime.GetHashCode(),
             DsonType.Timestamp => Timestamp.GetHashCode(),
             DsonType.Double4 => Double4.GetHashCode(),
+            DsonType.Long4 => Long4.GetHashCode(),
+            DsonType.Fxp4 => Fxp4.GetHashCode(),
             _ => objValue1 == null ? 0 : objValue1.GetHashCode()
         };
         return (int)type * 31 + vhash;
@@ -216,11 +247,14 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Int64: return $"Type: {type}, Value: {lValue}";
             case DsonType.Float: return $"Type: {type}, Value: {fValue}";
             case DsonType.Double: return $"Type: {type}, Value: {dValue}";
+            case DsonType.Fxp64: return $"Type: {type}, Value: {lValue}";
             case DsonType.Bool: return $"Type: {type}, Value: {iValue != 0}";
             case DsonType.Pointer: return $"Type: {type}, Value: {ObjectPtr}";
             case DsonType.DateTime: return $"Type: {type}, Value: {DateTime}";
             case DsonType.Timestamp: return $"Type: {type}, Value: {Timestamp}";
             case DsonType.Double4: return $"Type: {type}, Value: {Double4}";
+            case DsonType.Long4: return $"Type: {type}, Value: {Long4}";
+            case DsonType.Fxp4: return $"Type: {type}, Value: {Fxp4}";
             default:
                 return $"Type: {type}, Value: {objValue1}";
         }

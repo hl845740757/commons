@@ -527,6 +527,10 @@ internal class PojoCodecGenerator
         if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_WRITE_PTR;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_WRITE_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_WRITE_TIMESTAMP;
+        if (fieldType.IsSameType(processor.type_Double4)) return MNAME_WRITE_DOUBLE4;
+        if (fieldType.IsSameType(processor.type_Long4)) return MNAME_WRITE_LONG4;
+        if (fieldType.IsSameType(processor.type_Fxp64)) return MNAME_WRITE_FXP64;
+        if (fieldType.IsSameType(processor.type_Fxp4)) return MNAME_WRITE_FXP4;
         return MNAME_WRITE_OBJECT;
     }
 
@@ -543,6 +547,10 @@ internal class PojoCodecGenerator
         if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_READ_PTR;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_READ_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_READ_TIMESTAMP;
+        if (fieldType.IsSameType(processor.type_Double4)) return MNAME_READ_DOUBLE4;
+        if (fieldType.IsSameType(processor.type_Long4)) return MNAME_READ_LONG4;
+        if (fieldType.IsSameType(processor.type_Fxp64)) return MNAME_READ_FXP64;
+        if (fieldType.IsSameType(processor.type_Fxp4)) return MNAME_READ_FXP4;
         return MNAME_READ_OBJECT;
     }
 
@@ -552,6 +560,10 @@ internal class PojoCodecGenerator
     private const string MNAME_READ_BINARY = "ReadBinary";
     private const string MNAME_READ_OBJECT = "ReadObject";
 
+    private const string MNAME_READ_DOUBLE4 = "ReadDouble4";
+    private const string MNAME_READ_LONG4 = "ReadLong4";
+    private const string MNAME_READ_FXP64 = "ReadFxp64";
+    private const string MNAME_READ_FXP4 = "ReadFxp4";
     private const string MNAME_READ_PTR = "ReadPtr";
     private const string MNAME_READ_DATETIME = "ReadDateTime";
     private const string MNAME_READ_TIMESTAMP = "ReadTimestamp";
@@ -563,6 +575,10 @@ internal class PojoCodecGenerator
     private const string MNAME_WRITE_BINARY = "WriteBinary";
     private const string MNAME_WRITE_OBJECT = "WriteObject";
 
+    private const string MNAME_WRITE_DOUBLE4 = "WriteDouble4";
+    private const string MNAME_WRITE_LONG4 = "WriteLong4";
+    private const string MNAME_WRITE_FXP64 = "WriteFxp64";
+    private const string MNAME_WRITE_FXP4 = "WriteFxp4";
     private const string MNAME_WRITE_PTR = "WritePtr";
     private const string MNAME_WRITE_DATETIME = "WriteDateTime";
     private const string MNAME_WRITE_TIMESTAMP = "WriteTimestamp";

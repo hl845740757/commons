@@ -24,6 +24,7 @@ using System.Threading;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Internal;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Text
 {
@@ -44,15 +45,19 @@ public static class DsonTexts
     public const string LabelBool = "b";
     public const string LabelString = "s";
     public const string LabelNull = "N";
+    public const string LabelFxp64 = "fx";
 
     /** 单行纯文本，字符串不需要加引号，不对内容进行转义 */
     public const string LabelStringLine = "sL";
 
     public const string LabelBinary = "bin";
     public const string LabelPtr = "ptr";
+    public const string LabelRef = "ref"; // ptr的别名
     public const string LabelDateTime = "dt";
     public const string LabelTimestamp = "ts";
     public const string LabelDouble4 = "D4";
+    public const string LabelLong4 = "L4";
+    public const string LabelFxp4 = "FX4";
 
     public const string LabelBeginObject = "{";
     public const string LabelEndObject = "}";
@@ -69,7 +74,7 @@ public static class DsonTexts
     /** 所有内建值类型标签 */
     private static readonly ImmutableSet<string> builtinStructLabels = new[]
     {
-        LabelPtr, LabelDateTime, LabelTimestamp, LabelDouble4
+        LabelPtr, LabelRef, LabelDateTime, LabelTimestamp, LabelDouble4, LabelLong4, LabelFxp4
     }.ToImmutableSet2();
 
     /** 有特殊含义的字符串 */
@@ -471,6 +476,15 @@ public static class DsonTexts
             "NaN" => double.NaN,
             _ => double.Parse(str)
         };
+    }
+
+    public static Fxp64 ParseFx4(string rawStr) {
+        string str = DeleteUnderline(rawStr);
+        if (str.Length == 0) {
+            throw new ArgumentException("NumberFormatException:" + rawStr);
+        }
+
+        return Fxp64.Parse(str);
     }
 
     private static readonly ThreadLocal<StringBuilder> localBuilder = new ThreadLocal<StringBuilder>(() => new StringBuilder(64));

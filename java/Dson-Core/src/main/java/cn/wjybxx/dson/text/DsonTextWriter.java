@@ -443,6 +443,13 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         printBinary(bytes, offset, len);
     }
 
+    protected void doWriteFxp64(Fxp64 value) {
+        DsonPrinter printer = this.printer;
+        writeCurrentName(printer, DsonType.FXP64);
+        printer.fastPrint("@fx ");
+        printer.fastPrint(value);
+    }
+
     @Override
     protected void doWritePtr(ObjectPtr objectPtr) {
         DsonPrinter printer = this.printer;
@@ -546,29 +553,91 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         if (timestamp.getNanos() == 0) { // 打印为缩写
             printer.fastPrint("@ts ");
             printer.fastPrint(timestamp.getSeconds(), true);
-        } else if (timestamp.canConvertNanosToMillis()) {
-            printer.fastPrint("@ts ");
-            printer.fastPrint(timestamp.toEpochMillis(), true);
-            printer.fastPrint("ms");
         } else {
             printer.fastPrint("{@ts ");
             printer.fastPrint(Timestamp.NAMES_SECONDS);
             printer.fastPrint(": ");
             printer.fastPrint(timestamp.getSeconds(), true);
             printer.fastPrint(", ");
-
-            printer.fastPrint(Timestamp.NAMES_NANOS);
-            printer.fastPrint(": ");
-            printer.fastPrint(timestamp.getNanos());
+            //
+            if (timestamp.canConvertNanosToMillis()) {
+                printer.fastPrint(Timestamp.NAMES_MILLIS);
+                printer.fastPrint(": ");
+                printer.fastPrint(timestamp.convertNanosToMillis());
+            } else {
+                printer.fastPrint(Timestamp.NAMES_NANOS);
+                printer.fastPrint(": ");
+                printer.fastPrint(timestamp.getNanos());
+            }
             printer.print('}');
         }
     }
 
+    private static String getElementNames(String elementNames) {
+        if (elementNames == null) {
+            return "xyzw";
+        }
+        if (elementNames.length() < 2 || elementNames.length() > 4) {
+            throw new IllegalArgumentException("elementNames length must be between 2 and 4.");
+        }
+        return elementNames;
+    }
+
+    private void printDouble4(DsonPrinter printer, Double4 value, String elementNames) {
+        elementNames = getElementNames(elementNames);
+        printer.fastPrint("{@D4 ");
+        for (int index = 0; index < elementNames.length(); index++) {
+            if (index != 0) printer.fastPrint(", ");
+            printer.fastPrint(elementNames.charAt(index));
+            printer.fastPrint(": ");
+            printDouble(printer, value.get(index), NumberStyle.SIMPLE);
+        }
+        printer.print('}');
+    }
+
+    private void printFxp4(DsonPrinter printer, Fxp4 value, String elementNames) {
+        elementNames = getElementNames(elementNames);
+        printer.fastPrint("{@FX4 ");
+        for (int index = 0; index < elementNames.length(); index++) {
+            if (index != 0) printer.fastPrint(", ");
+            printer.fastPrint(elementNames.charAt(index));
+            printer.fastPrint(": ");
+            printer.fastPrint(value.get(index));
+        }
+        printer.print('}');
+    }
+
     @Override
-    protected void doWriteDouble4(Double4 double4, Double4Style style) {
+    protected void doWriteDouble4(Double4 double4, String elementNames) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.DOUBLE4);
-        style.print(printer, double4, styleOut);
+        printDouble4(printer, double4, elementNames);
+    }
+
+    private void printLong4(DsonPrinter printer, Long4 value, String elementNames) {
+        elementNames = getElementNames(elementNames);
+        printer.fastPrint("{@L4 ");
+        for (int index = 0; index < elementNames.length(); index++) {
+            if (index != 0) printer.fastPrint(", ");
+            printer.fastPrint(elementNames.charAt(index));
+            printer.fastPrint(": ");
+            printer.fastPrint(value.get(index), true);
+        }
+        printer.print('}');
+    }
+
+    @Override
+    protected void doWriteLong4(Long4 long4, String elementNames) {
+        DsonPrinter printer = this.printer;
+        writeCurrentName(printer, DsonType.LONG4);
+        printLong4(printer, long4, elementNames);
+    }
+
+    @Override
+    protected void doWriteFxp4(Fxp4 fv4, String elementNames) {
+        DsonPrinter printer = this.printer;
+        writeCurrentName(printer, DsonType.FXP4);
+        printFxp4(printer, fv4, elementNames);
     }
 
     // endregion

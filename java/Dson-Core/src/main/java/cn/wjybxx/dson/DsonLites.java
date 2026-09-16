@@ -243,6 +243,9 @@ public class DsonLites {
             case DATETIME -> writer.writeDateTime(dsonValue.asDateTime());
             case TIMESTAMP -> writer.writeTimestamp(dsonValue.asTimestamp());
             case DOUBLE4 -> writer.writeDouble4(dsonValue.asDouble4());
+            case FXP64 -> writer.writeFxp64(dsonValue.asFxp64());
+            case FXP4 -> writer.writeFxp4(dsonValue.asFxp4());
+            case LONG4 -> throw new UnsupportedOperationException("LONG4");
             case HEADER -> writeHeader(writer, dsonValue.asHeaderLite());
             case ARRAY -> writeArray(writer, dsonValue.asArrayLite());
             case OBJECT -> writeObject(writer, dsonValue.asObjectLite());
@@ -269,6 +272,9 @@ public class DsonLites {
             case DATETIME -> new DsonDateTime(reader.readDateTime());
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp());
             case DOUBLE4 -> new DsonDouble4(reader.readDouble4());
+            case FXP64 -> new DsonFxp64(reader.readFxp64());
+            case FXP4 -> new DsonFxp4(reader.readFxp4());
+            case LONG4 -> throw new UnsupportedOperationException("LONG4");
             case HEADER -> {
                 DsonHeader<Integer> header = new DsonHeader<>();
                 readHeader(reader, header);

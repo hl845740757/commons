@@ -71,6 +71,8 @@ public interface DsonLiteWriter extends AutoCloseable {
 
     void writeBinary(int name, byte[] bytes, int offset, int len);
 
+    void writeFxp64(int name, Fxp64 value);
+
     void writePtr(int name, ObjectPtr objectPtr);
 
     void writeDateTime(int name, ExtDateTime dateTime);
@@ -78,27 +80,33 @@ public interface DsonLiteWriter extends AutoCloseable {
     void writeTimestamp(int name, Timestamp timestamp);
 
     void writeDouble4(int name, Double4 double4);
+
+    void writeFxp4(int name, Fxp4 fv4);
+
+    void writeLong4(int name, Long4 fv4);
     // endregion
 
     // region 简单值(无name版)
 
-    void writeInt32(int value);
+    void writeInt32(int fv4);
 
-    void writeInt64(long value);
+    void writeInt64(long fv4);
 
-    void writeFloat(float value);
+    void writeFloat(float fv4);
 
-    void writeDouble(double value);
+    void writeDouble(double fv4);
 
-    void writeBool(boolean value);
+    void writeBool(boolean fv4);
 
-    void writeString(String value);
+    void writeString(String fv4);
 
     void writeNull();
 
     void writeBinary(Binary binary);
 
     void writeBinary(byte[] bytes, int offset, int len);
+
+    void writeFxp64(Fxp64 fv4);
 
     void writePtr(ObjectPtr objectPtr);
 
@@ -107,6 +115,10 @@ public interface DsonLiteWriter extends AutoCloseable {
     void writeTimestamp(Timestamp timestamp);
 
     void writeDouble4(Double4 double4);
+
+    void writeFxp4(Fxp4 fv4);
+
+    void writeLong4(Long4 fv4);
     // endregion
 
     // region 容器

@@ -139,7 +139,7 @@ public enum WireType {
     /** 计算int32的最佳序列化格式 */
     public static WireType bestOfInt32(int value) {
         if (value > INT_THRESHOLD) return WireType.FIXED;
-        if (value > 0) return WireType.UINT;
+        if (value >= 0) return WireType.UINT;
         if (value > -(INT_THRESHOLD / 2)) return WireType.SINT;
         return WireType.FIXED;
     }
@@ -147,7 +147,7 @@ public enum WireType {
     /** 计算int64的最佳序列化格式 */
     public static WireType bestOfInt64(long value) {
         if (value > LONG_THRESHOLD) return WireType.FIXED;
-        if (value > 0) return WireType.UINT;
+        if (value >= 0) return WireType.UINT;
         if (value > -(LONG_THRESHOLD / 2)) return WireType.SINT;
         return WireType.FIXED;
     }

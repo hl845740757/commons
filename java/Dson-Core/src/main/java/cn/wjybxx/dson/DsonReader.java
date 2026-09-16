@@ -116,6 +116,8 @@ public interface DsonReader extends AutoCloseable {
 
     Binary readBinary(String name);
 
+    Fxp64 readFxp64(String name);
+
     ObjectPtr readPtr(String name);
 
     ExtDateTime readDateTime(String name);
@@ -123,6 +125,10 @@ public interface DsonReader extends AutoCloseable {
     Timestamp readTimestamp(String name);
 
     Double4 readDouble4(String name);
+
+    Fxp4 readFxp4(String name);
+
+    Long4 readLong4(String name);
 
     // endregion
 
@@ -144,6 +150,8 @@ public interface DsonReader extends AutoCloseable {
 
     Binary readBinary();
 
+    Fxp64 readFxp64();
+
     ObjectPtr readPtr();
 
     ExtDateTime readDateTime();
@@ -151,6 +159,10 @@ public interface DsonReader extends AutoCloseable {
     Timestamp readTimestamp();
 
     Double4 readDouble4();
+
+    Fxp4 readFxp4();
+
+    Long4 readLong4();
 
     // endregion
 

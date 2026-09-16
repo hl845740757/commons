@@ -57,7 +57,6 @@ public class DsonTimeTest
     private const string DsonTimestampString = """
             [
               @ts 1715659200,
-              @ts 1715659200100ms,
               {@ts seconds: 1715659200, millis: 100},
               {@ts seconds: 1715659200, nanos: 100_000_000}
             ]
@@ -69,14 +68,11 @@ public class DsonTimeTest
         Timestamp time1 = dsonArray[0].AsTimestamp();
         Timestamp time2 = dsonArray[1].AsTimestamp();
         Timestamp time3 = dsonArray[2].AsTimestamp();
-        Timestamp time4 = dsonArray[3].AsTimestamp();
         // 秒相同
         Assert.That(time1.Seconds, Is.EqualTo(time2.Seconds));
         Assert.That(time1.Seconds, Is.EqualTo(time3.Seconds));
-        Assert.That(time1.Seconds, Is.EqualTo(time4.Seconds));
         // 纳秒相同
         Assert.That(time2.Nanos, Is.EqualTo(time3.Nanos));
-        Assert.That(time2.Nanos, Is.EqualTo(time4.Nanos));
 
         // 测试编解码
         string dsonString2 = Dsons.ToDson(dsonArray);

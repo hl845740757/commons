@@ -191,13 +191,13 @@ public enum SerializeFeatures : uint
     /// </summary>
     StringUnquote = 0x20 << 20,
     /// <summary>
+    /// 字符串编码为单行字符模式（内容不可以包含换行符）
+    /// </summary>
+    StringLine = 0x30 << 20,
+    /// <summary>
     /// 字符串编码为Dson文本段
     /// </summary>
     StringText = 0x40 << 20,
-    /// <summary>
-    /// 字符串编码为单行字符模式（内容不可以包含换行符）
-    /// </summary>
-    StringLine = 0x80 << 20,
 
     /// <summary>
     /// 数字编码为16进制（不支持浮点数）
@@ -217,52 +217,13 @@ public enum SerializeFeatures : uint
     NumberFixed = 0x80 << 20,
 
     /// <summary>
-    /// 将Double4编码为向量(1)
-    /// </summary>
-    Double4AsVector = 0x10 << 20,
-    /// <summary>
-    /// 将Double4编码为RGBA(2)
-    /// </summary>
-    Double4AsRgba = 0x20 << 20,
-    /// <summary>
-    /// 将Double4编码为数组(3)
-    /// </summary>
-    Double4AsArray = 0x30 << 20,
-    /// <summary>
-    /// 限定Double4长度为2
-    /// </summary>
-    Double4Len2 = 0x40 << 20,
-    /// <summary>
-    /// 限定Double4长度为3
-    /// </summary>
-    Double4Len3 = 0x80 << 20,
-
-    /// <summary>
-    /// 限定浮点数保留小数点后3位，适用普通浮点数和Double4
+    /// 限定浮点数保留小数点后3位
     /// </summary>
     NumberNoExponent3 = 0x01 << 28,
     /// <summary>
-    /// 限定浮点数保留小数点后7位，适用普通浮点数和Double4
+    /// 限定浮点数保留小数点后7位
     /// </summary>
     NumberNoExponent7 = 0x02 << 28,
-    /// <summary>
-    /// 将浮点数视作整数(兼容Double4)
-    /// </summary>
-    NumberAsInt = 0x04 << 28,
-    /// <summary>
-    /// 限定Double4的值为整数类型
-    /// </summary>
-    Double4AsInt = 0x04 << 28,
-
-    /// <summary>
-    /// Double4序列化为Vector2
-    /// </summary>
-    Double4AsVector2 = Double4AsVector | Double4Len2,
-    /// <summary>
-    /// Double4序列化为Vector3
-    /// </summary>
-    Double4AsVector3 = Double4AsVector | Double4Len3,
-
     /// <summary>
     /// Map编码样式的掩码
     /// </summary>
@@ -277,18 +238,11 @@ public enum SerializeFeatures : uint
     MaskNumberStyles = NumberHex | NumberTyped | NumberSigned | NumberFixed
                        | NumberNoExponent3 | NumberNoExponent7,
     /// <summary>
-    /// Double4编码样式的掩码
-    /// </summary>
-    MaskDouble4Styles = Double4AsVector | Double4AsRgba | Double4AsArray
-                        | Double4Len2 | Double4Len3
-                        | NumberNoExponent3 | NumberNoExponent7
-                        | Double4AsInt,
-    /// <summary>
     /// List/Map元素的序列化特征值掩码（还有部分需要手动转换）
     /// </summary>
     MaskElementFeatures = SerializeReference | SerializeInline | WriteTypeName
                           | EnumAsNumber | EnumAsString
                           | NullStringAsNull | NullStringAsEmpty
-                          | MaskStringStyles | MaskNumberStyles | MaskDouble4Styles
+                          | MaskStringStyles | MaskNumberStyles
 }
 }

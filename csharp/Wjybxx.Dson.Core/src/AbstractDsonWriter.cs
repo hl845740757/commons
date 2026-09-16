@@ -163,6 +163,12 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
+    public void WriteFxp64(TName name, Fxp64 value) {
+        AdvanceToValueState(name);
+        DoWriteFxp64(value);
+        SetNextState();
+    }
+
     public void WriteBool(TName name, bool value) {
         AdvanceToValueState(name);
         DoWriteBool(value);
@@ -216,9 +222,21 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WriteDouble4(TName name, Double4 double4, Double4Style style = default) {
+    public void WriteDouble4(TName name, Double4 double4, string? elementNames = null) {
         AdvanceToValueState(name);
-        DoWriteDouble4(double4, style);
+        DoWriteDouble4(double4, elementNames);
+        SetNextState();
+    }
+
+    public void WriteLong4(TName name, Long4 long4, string? elementNames = null) {
+        AdvanceToValueState(name);
+        DoWriteLong4(long4, elementNames);
+        SetNextState();
+    }
+
+    public void WriteFxp4(TName name, Fxp4 value, string? elementNames = null) {
+        AdvanceToValueState(name);
+        DoWriteFxp4(value, elementNames);
         SetNextState();
     }
 
@@ -245,6 +263,12 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     public void WriteDouble(double value, NumberStyle style = NumberStyle.Simple) {
         EnsureValueState(context);
         DoWriteDouble(value, style);
+        SetNextState();
+    }
+
+    public void WriteFxp64(Fxp64 value) {
+        EnsureValueState(context);
+        DoWriteFxp64(value);
         SetNextState();
     }
 
@@ -301,9 +325,21 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WriteDouble4(Double4 double4, Double4Style style = default) {
+    public void WriteDouble4(Double4 double4, string? elementNames = null) {
         EnsureValueState(context);
-        DoWriteDouble4(double4, style);
+        DoWriteDouble4(double4, elementNames);
+        SetNextState();
+    }
+
+    public void WriteLong4(Long4 long4, string? elementNames = null) {
+        EnsureValueState(context);
+
+        SetNextState();
+    }
+
+    public void WriteFxp4(Fxp4 fv4, string? elementNames = null) {
+        EnsureValueState(context);
+        DoWriteFxp4(fv4, elementNames);
         SetNextState();
     }
 
@@ -316,6 +352,8 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     protected abstract void DoWriteFloat(float value, NumberStyle style);
 
     protected abstract void DoWriteDouble(double value, NumberStyle style);
+
+    protected abstract void DoWriteFxp64(Fxp64 value);
 
     protected abstract void DoWriteBool(bool value);
 
@@ -333,7 +371,11 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     protected abstract void DoWriteTimestamp(Timestamp timestamp);
 
-    protected abstract void DoWriteDouble4(Double4 double4, Double4Style style);
+    protected abstract void DoWriteDouble4(Double4 double4, string? elementNames);
+
+    protected abstract void DoWriteLong4(Long4 long4, string? elementNames);
+
+    protected abstract void DoWriteFxp4(Fxp4 fv4, string? elementNames);
 
     #endregion
 

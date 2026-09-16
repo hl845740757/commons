@@ -593,35 +593,6 @@ public static class DsonConverterUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Double4Style ToDouble4Style(this SerializeFeatures features) {
-        Double4Style style = Double4Style.Array;
-        if ((features & SerializeFeatures.MaskDouble4Styles) == 0) { // 大概率
-            return style;
-        }
-        SerializeFeatures basicStyle = features & SerializeFeatures.Double4AsArray;
-        style = basicStyle switch
-        {
-            SerializeFeatures.Double4AsVector => Double4Style.Vector,
-            SerializeFeatures.Double4AsRgba => Double4Style.Rgba,
-            _ => Double4Style.Array
-        };
-        if ((features & SerializeFeatures.Double4Len2) != 0) {
-            style |= Double4Style.Len2;
-        } else if ((features & SerializeFeatures.Double4Len3) != 0) {
-            style |= Double4Style.Len3;
-        }
-        if ((features & SerializeFeatures.Double4AsInt) != 0) {
-            style |= Double4Style.Integer;
-        }
-        if ((features & SerializeFeatures.NumberNoExponent3) != 0) {
-            style |= Double4Style.NoExponent3;
-        } else if ((features & SerializeFeatures.NumberNoExponent7) != 0) {
-            style |= Double4Style.NoExponent7;
-        }
-        return style;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static StringStyle ToStringStyle(this SerializeFeatures features) {
         features &= SerializeFeatures.MaskStringStyles;
         return features switch

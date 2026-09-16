@@ -74,6 +74,18 @@ public abstract class DsonValue {
         return ((DsonDouble4) this).getValue();
     }
 
+    public Fxp64 asFxp64() {
+        return ((DsonFxp64) this).getValue();
+    }
+
+    public Long4 asLong4() {
+        return ((DsonLong4) this).getValue();
+    }
+
+    public Fxp4 asFxp4() {
+        return ((DsonFxp4) this).getValue();
+    }
+
     // endregion
 
     // region number

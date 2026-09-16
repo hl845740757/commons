@@ -95,6 +95,10 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
         GetContext().Add(DsonDouble.ValueOf(value));
     }
 
+    protected override void DoWriteFxp64(Fxp64 value) {
+        GetContext().Add(new DsonFxp64(value));
+    }
+
     protected override void DoWriteBool(bool value) {
         GetContext().Add(DsonBool.ValueOf(value));
     }
@@ -127,8 +131,16 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
         GetContext().Add(new DsonTimestamp(timestamp));
     }
 
-    protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
+    protected override void DoWriteDouble4(Double4 double4, string? elementNames) {
         GetContext().Add(new DsonDouble4(double4));
+    }
+
+    protected override void DoWriteLong4(Long4 long4, string? elementNames) {
+        GetContext().Add(new DsonLong4(long4));
+    }
+
+    protected override void DoWriteFxp4(Fxp4 fv4, string? elementNames) {
+        GetContext().Add(new DsonFxp4(fv4));
     }
 
     #endregion

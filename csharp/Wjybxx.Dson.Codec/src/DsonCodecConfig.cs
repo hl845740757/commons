@@ -499,12 +499,16 @@ public sealed class DsonCodecConfig
         config.AddCodec(new Int64Codec());
         config.AddCodec(new FloatCodec());
         config.AddCodec(new DoubleCodec());
+        config.AddCodec(new Fxp64Codec());
         config.AddCodec(new BoolCodec());
         config.AddCodec(new StringCodec());
         config.AddCodec(new BinaryCodec());
         config.AddCodec(new ObjectPtrCodec());
         config.AddCodec(new ExtDateTimeCodec());
         config.AddCodec(new TimestampCodec());
+        config.AddCodec(new Double4Codec());
+        config.AddCodec(new Long4Codec());
+        config.AddCodec(new Fxp4Codec());
         // 基本类型补充
         config.AddCodec(new MorePrimitiveCodecs.UInt32Codec());
         config.AddCodec(new MorePrimitiveCodecs.UInt64Codec());
@@ -516,7 +520,6 @@ public sealed class DsonCodecConfig
         // 日期时间
         config.AddCodec(new DateTimeCodec());
         config.AddCodec(new DateTimeOffsetCodec());
-        config.AddCodec(new Double4Codec());
 
         // TODO 特殊Codec绑定
         config.AddCodec(new ObjectCodec());

@@ -47,17 +47,12 @@ public readonly struct Timestamp : IEquatable<Timestamp>
 
     /// <summary>
     /// 解析时间戳字符串。
-    /// 如果字符串以ms结尾，表示毫秒时间戳，否则表示秒时间戳。
+    /// 注：不再支持'ms'结尾表示毫秒，简单值默认秒。
     /// </summary>
     public static Timestamp Parse(string rawStr) {
         string str = DsonTexts.DeleteUnderline(rawStr);
         if (str.Length == 0) {
             throw new ArgumentException("NumberFormatException:" + rawStr);
-        }
-        int length = str.Length;
-        if (length > 2 && str[length - 1] == 's' && str[length - 2] == 'm') {
-            long epochMillis = long.Parse(str.AsSpan(0, length - 2));
-            return OfEpochMillis(epochMillis);
         }
         long seconds = long.Parse(str);
         return new Timestamp(seconds, 0);

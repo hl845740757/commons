@@ -130,6 +130,13 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         wireType.WriteDouble(output, value);
     }
 
+    protected override void DoWriteFxp64(Fxp64 value) {
+        WireType wireType = WireTypes.BestOfInt64(value.rawValue);
+        IDsonOutput output = this._output;
+        WriteFullTypeAndCurrentName(output, DsonType.Fxp64, (int)wireType);
+        wireType.WriteInt64(output, value.rawValue);
+    }
+
     protected override void DoWriteBool(bool value) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Bool, value ? 1 : 0); // 内联到wireType
@@ -176,11 +183,22 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         DsonReaderUtils.WriteTimestamp(output, timestamp);
     }
 
-    protected override void DoWriteDouble4(Double4 double4, Double4Style style) {
-        int wireType = DsonReaderUtils.WireTypeOfDouble4(double4);
+    protected override void DoWriteDouble4(Double4 double4, string? elementNames) {
         IDsonOutput output = this._output;
-        WriteFullTypeAndCurrentName(output, DsonType.Double4, wireType);
-        DsonReaderUtils.WriteDouble4(output, double4, wireType);
+        WriteFullTypeAndCurrentName(output, DsonType.Double4, 0);
+        DsonReaderUtils.WriteDouble4(output, double4);
+    }
+
+    protected override void DoWriteLong4(Long4 long4, string? elementNames) {
+        IDsonOutput output = this._output;
+        WriteFullTypeAndCurrentName(output, DsonType.Long4, 0);
+        DsonReaderUtils.WriteLong4(output, long4);
+    }
+
+    protected override void DoWriteFxp4(Fxp4 fv4, string? elementNames) {
+        IDsonOutput output = this._output;
+        WriteFullTypeAndCurrentName(output, DsonType.Fxp4, 0);
+        DsonReaderUtils.WriteFxp4(output, fv4);
     }
 
     #endregion
