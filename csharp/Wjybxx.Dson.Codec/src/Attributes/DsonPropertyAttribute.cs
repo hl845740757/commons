@@ -27,6 +27,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 1.由于属性较多，因此属性都是get/set，但只应该初始化一次
 /// 2.由于要支持属性，因此不能关闭继承属性
 /// 3.如果是非自动属性，注解必须添加到字段上
+/// 4.该属性也表示私有字段需要序列化
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 [Serializable]
@@ -42,11 +43,11 @@ public class DsonPropertyAttribute : Attribute
     /// 获取字段的属性或方法 -- 特殊情况下使用
     /// </summary>
     [StableName] public string? Getter { get; set; }
-
     /// <summary>
     /// 赋值字段的属性或方法 -- 特殊情况下使用
     /// </summary>
     [StableName] public string? Setter { get; set; }
+    
     /// <summary>
     /// 序列化特征值
     /// </summary>
@@ -55,7 +56,12 @@ public class DsonPropertyAttribute : Attribute
     /// 反序列化特征值
     /// </summary>
     [StableName] public DeserializeFeatures DecodeFeatures { get; set; }
-
+    /// <summary>
+    /// Double4/Long4/Fxp4每个分量的名字
+    /// 注：每个字符代表一个分量的名字，长度2~4
+    /// </summary>
+    [StableName] public string? ElementNames { get; set; }
+    
     #region 多态解析
 
     /// <summary>

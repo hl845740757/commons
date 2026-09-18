@@ -687,20 +687,6 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return (features & DeserializeFeatures.ReadNullValue) != 0;
     }
 
-    private bool IsReadEmptyStringAsNull(DeserializeFeatures features) {
-        if (((features & DeserializeFeatures.EmptyStringAsEmpty) != 0)) return false;
-        if ((features & DeserializeFeatures.EmptyStringAsNull) != 0) return true;
-        TypeMeta typeMeta = ContainerTypeMeta;
-        if (typeMeta != null) {
-            features = typeMeta.decodeFeatures;
-            if (((features & DeserializeFeatures.EmptyStringAsEmpty) != 0)) return false;
-            if ((features & DeserializeFeatures.EmptyStringAsNull) != 0) return true;
-        }
-        features = converter.Options.decodeFeatures;
-        if (((features & DeserializeFeatures.EmptyStringAsEmpty) != 0)) return false;
-        return (features & DeserializeFeatures.EmptyStringAsNull) != 0;
-    }
-
     #endregion
 
     #region context
@@ -779,22 +765,6 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
         public int GetHashCode(ObjectPtr obj) {
             int hashCode = obj.LocalId.GetHashCode();
-            hashCode = (hashCode * 397) ^ (obj.Collection != null ? obj.Collection.GetHashCode() : 0);
-            return hashCode;
-        }
-    }
-
-    private class LocalPathComparer : IEqualityComparer<ObjectPtr>
-    {
-        public static readonly LocalPathComparer Inst = new LocalPathComparer();
-
-        public bool Equals(ObjectPtr x, ObjectPtr y) {
-            return x.LocalPath == y.LocalPath
-                   && x.Collection == y.Collection;
-        }
-
-        public int GetHashCode(ObjectPtr obj) {
-            int hashCode = obj.LocalPath.GetHashCode();
             hashCode = (hashCode * 397) ^ (obj.Collection != null ? obj.Collection.GetHashCode() : 0);
             return hashCode;
         }

@@ -155,7 +155,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteStartObject(encoderType, declaredType, selfFeatures, inst.Count); // 字典写为普通文档
                 foreach (KeyValuePair<K, V> pair in inst) {
                     string keyString = keyEncoder.EncodeKey(pair.Key, keyFeatures);
-                    writer.WriteName(keyString); // 确保null值写入
+                    writer.WriteName(keyString); // 确保null值写入，也可通过Feature实现
                     writer.WriteObject(keyString, pair.Value, elementFeatures);
                 }
                 writer.WriteEndObject();

@@ -598,8 +598,9 @@ public static class DsonConverterUtils
         return features switch
         {
             SerializeFeatures.StringUnquote => StringStyle.Unquote,
-            SerializeFeatures.StringText => StringStyle.DsonText,
             SerializeFeatures.StringLine => StringStyle.SingleLine,
+            SerializeFeatures.StringText => StringStyle.SimpleText,
+            SerializeFeatures.StringDsonText => StringStyle.DsonText,
             _ => StringStyle.AutoQuote
         };
     }

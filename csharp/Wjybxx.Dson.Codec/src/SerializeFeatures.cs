@@ -37,13 +37,13 @@ public enum SerializeFeatures : uint
     /// <summary>
     /// 序列化为内联值，即忽略
     ///
-    /// 支持字段 + 类型配置，用于字段时可忽略类型的<see cref="Wjybxx.Commons.SerializeReference"/>注解。
+    /// 1.支持字段 + 类型配置，用于字段时可忽略类型的<see cref="Wjybxx.Commons.SerializeReference"/>注解。
+    /// 2.用于字符串字段时，表示禁用SST。
     /// </summary>
     SerializeInline = 0x02,
     /// <summary>
     /// 强制写入字段类型名，忽略全局优化（字段级别）
     ///
-    /// 注：
     /// 1.全局写的情况下嵌套对象必须写；但全局可选写的情况下嵌套对象就可以强制写。
     /// 2.作用于List/Map字段时，表示强制写入List/Map元素的类型名（List/Map的类型名价值小）。
     /// </summary>
@@ -179,26 +179,25 @@ public enum SerializeFeatures : uint
     /// </summary>
     ElementFlow = 0x08 << 20,
 
-    // 字符串样式其实可以使用加法
+    // 字符串样式是枚举值
     /// <summary>
-    /// 字符串编码为自动引号格式（字段级别）
-    ///
-    /// 注：无特殊字符时编码为无引号模式，否则编码为引号模式。
+    /// 字符串编码为无引号格式（不可以包含特殊字符）
     /// </summary>
-    StringAutoQuote = 0x10 << 20,
+    StringUnquote = 0x10 << 20,
     /// <summary>
-    /// 字符串编码为无引号格式（内容不可以包含特殊字符）
+    /// 字符串编码为单行字符串模式（不可以包含换行符）
     /// </summary>
-    StringUnquote = 0x20 << 20,
+    StringLine = 0x20 << 20,
     /// <summary>
-    /// 字符串编码为单行字符模式（内容不可以包含换行符）
+    /// 字符串编码为普通文本块
     /// </summary>
-    StringLine = 0x30 << 20,
+    StringText = 0x30 << 20,
     /// <summary>
-    /// 字符串编码为Dson文本段
+    /// 字符串编码为Dson文本块
     /// </summary>
-    StringText = 0x40 << 20,
+    StringDsonText = 0x40 << 20,
 
+    // 数字样式是Flags
     /// <summary>
     /// 数字编码为16进制（不支持浮点数）
     /// </summary>
@@ -215,15 +214,26 @@ public enum SerializeFeatures : uint
     /// int32/int64编码为固定长度16进制
     /// </summary>
     NumberFixed = 0x80 << 20,
-
+    
     /// <summary>
-    /// 限定浮点数保留小数点后3位
+    /// 限定Double4/Long4/Fxp4长度为2
+    /// 注：该特征值并不直接作用于Double4等类型，而是告知用户的Codec将自定义结构转换为Double4写入时要写入的分量数。
+    /// </summary>
+    Vector2 = 0x10 << 20,
+    /// <summary>
+    /// 限定Double4/Long4/Fxp4长度为3
+    /// </summary>
+    Vector3 = 0x20 << 20,
+    
+    /// <summary>
+    /// 限定浮点数保留小数点后3位(慎用)
     /// </summary>
     NumberNoExponent3 = 0x01 << 28,
     /// <summary>
-    /// 限定浮点数保留小数点后7位
+    /// 限定浮点数保留小数点后7位(慎用)
     /// </summary>
     NumberNoExponent7 = 0x02 << 28,
+
     /// <summary>
     /// Map编码样式的掩码
     /// </summary>
@@ -231,18 +241,23 @@ public enum SerializeFeatures : uint
     /// <summary>
     /// String编码样式的掩码
     /// </summary>
-    MaskStringStyles = StringAutoQuote | StringUnquote | StringText | StringLine,
+    MaskStringStyles = StringUnquote  | StringLine | StringText | StringDsonText,
     /// <summary>
     /// Number编码样式的掩码
     /// </summary>
     MaskNumberStyles = NumberHex | NumberTyped | NumberSigned | NumberFixed
                        | NumberNoExponent3 | NumberNoExponent7,
     /// <summary>
+    /// 
+    /// </summary>
+    MaskVectorStyles = Vector2 |  Vector3,
+    
+    /// <summary>
     /// List/Map元素的序列化特征值掩码（还有部分需要手动转换）
     /// </summary>
     MaskElementFeatures = SerializeReference | SerializeInline | WriteTypeName
                           | EnumAsNumber | EnumAsString
                           | NullStringAsNull | NullStringAsEmpty
-                          | MaskStringStyles | MaskNumberStyles
+                          | MaskStringStyles | MaskNumberStyles | MaskVectorStyles
 }
 }
