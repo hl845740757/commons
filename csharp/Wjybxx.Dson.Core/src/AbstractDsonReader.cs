@@ -600,12 +600,14 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         }
     }
 
-    public object Attach(object userData) {
-        return context.Attach(userData);
+    public int UserContextFlags {
+        get => context.flags;
+        set => context.flags = value;
     }
 
-    public object Attachment() {
-        return context.userData;
+    public object UserContextData {
+        get => context.userData;
+        set => context.userData = value;
     }
 
     public DsonReaderGuide WhatShouldIDo() {
@@ -632,6 +634,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         protected internal DsonReaderState state = DsonReaderState.Initial;
         protected internal TName name;
         protected internal bool enableNameIntern;
+        protected internal int flags;
         protected internal object userData;
 
         public Context() {
@@ -651,6 +654,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
             state = default;
             name = default;
             enableNameIntern = false;
+            flags = 0;
             userData = null;
         }
 

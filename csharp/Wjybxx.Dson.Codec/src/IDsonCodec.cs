@@ -30,6 +30,26 @@ public interface IDsonCodec
     /// </summary>
     /// <returns></returns>
     Type GetEncoderType();
+
+    /// <summary>
+    /// 设置字段的值
+    /// 
+    /// 1.用于支持序列化引用 + 常用集合（HashSet/Queue/Stack） + 常用不可变集合。
+    /// 2.只要使用到以上特殊特性，都需要实现该接口。
+    /// </summary>
+    /// <param name="inst">类型实例</param>
+    /// <param name="name">字段名</param>
+    /// <param name="value">字段值</param>
+    /// <returns></returns>
+    bool SetField(object inst, string name, object value);
+
+    /// <summary>
+    /// 执行用户的<c>AfterDecode</c>钩子方法
+    /// 
+    /// 1.由于<c>AfterDecode</c>需要延迟到引用解析之后执行，因此需要定义在最高层。
+    /// 2.当依赖图关系较为复杂时，无法保证该方法的执行顺序。
+    /// </summary>
+    void AfterDecode(IDsonObjectReader reader, object inst);
 }
 
 /// <summary>
@@ -78,10 +98,40 @@ public interface IDsonCodec<T> : IDsonCodec
     /// 注意：name在外部已读取，因此基础类型读取value时name传null。
     /// </summary>
     /// <param name="reader">reader</param>
-    /// <param name="declaredType">对象的声明类型(判断是否可以转不可变等)</param>
+    /// <param name="declaredType">对象的声明类型，用于判断类型转换等</param>
     /// <param name="features">反序列化特征值</param>
-    /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null);
+    T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features);
+
+    /// <summary>
+    /// 设置字段的值
+    ///
+    /// 1.用于支持序列化引用 + 常用集合（HashSet/Queue/Stack） + 常用不可变集合。
+    /// 2.只要使用到以上特殊特性，都需要实现该接口。
+    /// </summary>
+    /// <param name="inst">类型实例</param>
+    /// <param name="name">字段名</param>
+    /// <param name="value">字段值</param>
+    bool SetField(T inst, string name, object value) {
+        return false;
+    }
+
+    /// <summary>
+    /// 执行用户的<c>AfterDecode</c>钩子方法
+    /// 
+    /// 1.由于<c>AfterDecode</c>需要延迟到引用解析之后执行，因此需要定义在最高层。
+    /// 2.当依赖图关系较为复杂时，无法保证该方法的执行顺序。
+    /// 3.钩子函数可能需要访问<c>Options</c>，因此需要传入Reader以感知上下文。
+    /// </summary>
+    void AfterDecode(IDsonObjectReader reader, T inst) {
+    }
+
+    bool IDsonCodec.SetField(object inst, string name, object value) {
+        return SetField((T)inst, name, value);
+    }
+
+    void IDsonCodec.AfterDecode(IDsonObjectReader reader, object inst) {
+        AfterDecode(reader, (T)inst);
+    }
 }
 }

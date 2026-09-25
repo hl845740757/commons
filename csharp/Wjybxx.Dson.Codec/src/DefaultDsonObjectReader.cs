@@ -23,7 +23,6 @@ using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
-using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -32,11 +31,11 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 {
 #nullable disable
     private DefaultDsonConverter converter;
-    private readonly LinkedDictionary<ObjectPtr, ItemContext> referenceTable = new(LocalIdComparer.Inst);
-    // private readonly LinkedDictionary<ObjectPtr, ObjectPtr> pointerLink = new(LocalPathComparer.Inst);
     private DsonCollectionReader<string> reader;
-    private ObjectPtr _stack;
-    private readonly List<ObjectPtr> _listCache = new List<ObjectPtr>();
+
+    private readonly LinkedDictionary<int, ItemContext> referenceTable = new();
+    private int _stack;
+    private readonly List<int> _listCache = new List<int>();
 #nullable restore
 
     private DefaultDsonObjectReader() {
@@ -72,33 +71,33 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
                 dsonValue = dsonValue,
             };
             // 默认覆盖的话容易隐藏错误，还是抛出异常更安全
-            if (!referenceTable.TryAdd(itemContext.pointer, itemContext)) {
-                throw new Exception("Duplicate pointer: " + itemContext.pointer);
+            if (!referenceTable.TryAdd(itemContext.Pointer, itemContext)) {
+                throw new Exception("Duplicate pointer: " + itemContext.Pointer);
             }
         }
     }
 
-    public object ReadFirst(Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        ObjectPtr ptr = referenceTable.PeekFirstKey();
-        return GetReference(ptr, declaredType, features, factory);
+    public object ReadFirst(Type declaredType, DeserializeFeatures features) {
+        int ptr = referenceTable.PeekFirstKey();
+        return GetReference(ptr, declaredType, features);
     }
 
-    public object ReadFirst(Type declaredType, long localId, DeserializeFeatures features, Func<object>? factory = null) {
-        ObjectPtr ptr = localId != 0 ? new ObjectPtr(localId) : referenceTable.PeekFirstKey();
-        return GetReference(ptr, declaredType, features, factory);
+    public object ReadFirst(Type declaredType, int localId, DeserializeFeatures features) {
+        int ptr = localId != 0 ? localId : referenceTable.PeekFirstKey();
+        return GetReference(ptr, declaredType, features);
     }
 
-    public List<T> ReadAll<T>(DeserializeFeatures features, Func<object>? factory = null) {
+    public List<T> ReadAll<T>(DeserializeFeatures features) {
         _listCache.AddRange(referenceTable.Keys); // 用于保持原始顺序
         //
         List<T> result = new List<T>(referenceTable.Count);
-        foreach (ObjectPtr ptr in _listCache) {
-            result.Add((T)GetReference(ptr, typeof(T), features, factory));
+        foreach (int ptr in _listCache) {
+            result.Add((T)GetReference(ptr, typeof(T), features));
         }
         return result;
     }
 
-    private object GetReference(ObjectPtr ptr, Type declaredType, DeserializeFeatures features, Func<object>? factory) {
+    private object GetReference(int ptr, Type declaredType, DeserializeFeatures features) {
         ItemContext itemContext = referenceTable[ptr];
         if (itemContext.objectValue != null) {
             return itemContext.objectValue;
@@ -115,10 +114,10 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         } else {
             referenceTable.PutAfter(ptr, itemContext, _stack);
         }
-        _stack = itemContext.pointer;
+        _stack = itemContext.Pointer;
         reader = itemContext.reader;
         // 用户的Codec可能没有立即发布引用，这里进行修正；值类型统一在这里发布引用
-        object inst = ReadObject(declaredType, features, factory);
+        object inst = ReadObject<object>(name: null, declaredType, features);
         itemContext = referenceTable[ptr];
         if (itemContext.objectValue == null) {
             itemContext.objectValue = inst;
@@ -130,7 +129,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     private void BackToPrevContext() {
         if (reader.ContextDepth == 0
             && referenceTable.PrevKey(_stack, out _, out ItemContext prevContext)) {
-            _stack = prevContext.pointer;
+            _stack = prevContext.Pointer;
             reader = prevContext.reader;
         }
     }
@@ -168,51 +167,49 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             header.localId = dsonValue.AsNumber().IntValue;
             read++;
         }
-        if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Collection, out dsonValue)) {
-            header.collection = dsonValue.AsString();
-            read++;
-        }
-        if (read < dsonHeader.Count && dsonHeader.TryGetValue(DsonHeader.Names_Version, out dsonValue)) {
-            header.version = dsonValue.AsNumber().IntValue;
-            read++;
-        }
         return header;
     }
 
     #region 简单值
 
     public int ReadInt(string name, DeserializeFeatures features) {
-        return ReadName(name) ? DsonCodecHelper.ReadInt(reader, name) : 0;
+        ReadName(name);
+        return DsonCodecHelper.ReadInt(reader);
     }
 
     public long ReadLong(string name, DeserializeFeatures features) {
-        return ReadName(name) ? DsonCodecHelper.ReadLong(reader, name) : 0;
+        ReadName(name);
+        return DsonCodecHelper.ReadLong(reader);
     }
 
     public float ReadFloat(string name, DeserializeFeatures features) {
-        return ReadName(name) ? DsonCodecHelper.ReadFloat(reader, name) : 0;
+        ReadName(name);
+        return DsonCodecHelper.ReadFloat(reader);
     }
 
     public double ReadDouble(string name, DeserializeFeatures features) {
-        return ReadName(name) ? DsonCodecHelper.ReadDouble(reader, name) : 0;
+        ReadName(name);
+        return DsonCodecHelper.ReadDouble(reader);
     }
 
-    public Fxp64 ReadFxp64(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadFxp64(reader, name) : default;
+    public Fxp64 ReadFxp64(string name, DeserializeFeatures features) {
+        ReadName(name);
+        return DsonCodecHelper.ReadFxp64(reader);
     }
 
     public bool ReadBool(string name, DeserializeFeatures features) {
-        return ReadName(name) && DsonCodecHelper.ReadBool(reader, name);
+        ReadName(name);
+        return DsonCodecHelper.ReadBool(reader);
     }
 
     public string? ReadString(string name, DeserializeFeatures features) {
-        return ReadName(name) ? DsonCodecHelper.ReadString(reader, name) : null;
+        ReadName(name);
+        return DsonCodecHelper.ReadString(reader);
     }
 
     public void ReadNull(string name) {
-        if (ReadName(name)) {
-            DsonCodecHelper.ReadNull(reader, name);
-        }
+        ReadName(name);
+        DsonCodecHelper.ReadNull(reader);
     }
 
     public byte[]? ReadBytes(string name, DeserializeFeatures features) {
@@ -221,45 +218,58 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public Binary? ReadBinary(string name, DeserializeFeatures features) {
-        return ReadName(name) ? DsonCodecHelper.ReadBinary(reader, name) : null;
+        ReadName(name);
+        return DsonCodecHelper.ReadBinary(reader);
     }
 
     public ObjectPtr ReadPtr(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadPtr(reader, name) : default;
+        ReadName(name);
+        return DsonCodecHelper.ReadPtr(reader);
     }
 
     public DateTime ReadDateTime(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadDateTime(reader, name).ToDateTime() : default;
+        ReadName(name);
+        return DsonCodecHelper.ReadDateTime(reader).ToDateTime();
     }
 
     public ExtDateTime ReadExtDateTime(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadDateTime(reader, name) : default;
+        ReadName(name);
+        return DsonCodecHelper.ReadDateTime(reader);
     }
 
     public Timestamp ReadTimestamp(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadTimestamp(reader, name) : default;
+        ReadName(name);
+        return DsonCodecHelper.ReadTimestamp(reader);
     }
 
     public Double4 ReadDouble4(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadDouble4(reader, name) : default;
+        ReadName(name);
+        return DsonCodecHelper.ReadDouble4(reader);
     }
 
     public Long4 ReadLong4(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadLong4(reader, name) : default;
+        ReadName(name);
+        return DsonCodecHelper.ReadLong4(reader);
     }
 
     public Fxp4 ReadFxp4(string name) {
-        return ReadName(name) ? DsonCodecHelper.ReadFxp4(reader, name) : default;
+        ReadName(name);
+        return DsonCodecHelper.ReadFxp4(reader);
     }
 
-    public T ReadEnum<T>(string name, DeserializeFeatures features = default) {
-        if (!ReadName(name)) {
-            return default;
-        }
-        if (CodecRegistry.GetDecoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
-            return codecImpl.ReadObject(this, typeof(T), features);
-        }
-        throw new DsonCodecException($"Invalid EnumType: {typeof(T)}");
+    public T ReadEnum<T>(string name, DeserializeFeatures features) {
+        ReadName(name);
+        return ReadEnum<T>(features);
+    }
+
+    public List<T>? ReadList<T>(string name, DeserializeFeatures features) {
+        ReadName(name);
+        return ReadList<T>(features);
+    }
+
+    public Dictionary<K, V>? ReadDictionary<K, V>(string name, DeserializeFeatures features) {
+        ReadName(name);
+        return ReadDictionary<K, V>(features);
     }
 
     #endregion
@@ -267,35 +277,35 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     #region 简单值-无name版
 
     public int ReadInt(DeserializeFeatures features) {
-        return DsonCodecHelper.ReadInt(reader, null);
+        return DsonCodecHelper.ReadInt(reader);
     }
 
     public long ReadLong(DeserializeFeatures features) {
-        return DsonCodecHelper.ReadLong(reader, null);
+        return DsonCodecHelper.ReadLong(reader);
     }
 
     public float ReadFloat(DeserializeFeatures features) {
-        return DsonCodecHelper.ReadFloat(reader, null);
+        return DsonCodecHelper.ReadFloat(reader);
     }
 
     public double ReadDouble(DeserializeFeatures features) {
-        return DsonCodecHelper.ReadDouble(reader, null);
+        return DsonCodecHelper.ReadDouble(reader);
     }
 
-    public Fxp64 ReadFxp64() {
-        return DsonCodecHelper.ReadFxp64(reader, null);
+    public Fxp64 ReadFxp64(DeserializeFeatures features) {
+        return DsonCodecHelper.ReadFxp64(reader);
     }
 
     public bool ReadBool(DeserializeFeatures features) {
-        return DsonCodecHelper.ReadBool(reader, null);
+        return DsonCodecHelper.ReadBool(reader);
     }
 
     public string? ReadString(DeserializeFeatures features) {
-        return DsonCodecHelper.ReadString(reader, null);
+        return DsonCodecHelper.ReadString(reader);
     }
 
     public void ReadNull() {
-        DsonCodecHelper.ReadNull(reader, null);
+        DsonCodecHelper.ReadNull(reader);
     }
 
     public byte[]? ReadBytes(DeserializeFeatures features) {
@@ -304,122 +314,153 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
     }
 
     public Binary? ReadBinary(DeserializeFeatures features) {
-        return DsonCodecHelper.ReadBinary(reader, null);
+        return DsonCodecHelper.ReadBinary(reader);
     }
 
     public ObjectPtr ReadPtr() {
-        return DsonCodecHelper.ReadPtr(reader, null);
+        return DsonCodecHelper.ReadPtr(reader);
     }
 
     public DateTime ReadDateTime() {
-        return DsonCodecHelper.ReadDateTime(reader, null).ToDateTime();
+        return DsonCodecHelper.ReadDateTime(reader).ToDateTime();
     }
 
     public ExtDateTime ReadExtDateTime() {
-        return DsonCodecHelper.ReadDateTime(reader, null);
+        return DsonCodecHelper.ReadDateTime(reader);
     }
 
     public Timestamp ReadTimestamp() {
-        return DsonCodecHelper.ReadTimestamp(reader, null);
+        return DsonCodecHelper.ReadTimestamp(reader);
     }
 
     public Double4 ReadDouble4() {
-        return DsonCodecHelper.ReadDouble4(reader, null);
+        return DsonCodecHelper.ReadDouble4(reader);
     }
 
     public Long4 ReadLong4() {
-        return DsonCodecHelper.ReadLong4(reader, null);
+        return DsonCodecHelper.ReadLong4(reader);
     }
 
     public Fxp4 ReadFxp4() {
-        return DsonCodecHelper.ReadFxp4(reader, null);
+        return DsonCodecHelper.ReadFxp4(reader);
     }
 
-    public T ReadEnum<T>(DeserializeFeatures features = default) {
+    public T ReadEnum<T>(DeserializeFeatures features) {
+        if (reader.CurrentDsonType == DsonType.Null) {
+            reader.ReadNull();
+            return default;
+        }
         if (CodecRegistry.GetDecoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
             return codecImpl.ReadObject(this, typeof(T), features);
         }
         throw new DsonCodecException($"Invalid EnumType: {typeof(T)}");
     }
 
+    public List<T>? ReadList<T>(DeserializeFeatures features) {
+        if (reader.CurrentDsonType == DsonType.Null) {
+            reader.ReadNull();
+            return null;
+        }
+        Type targetType = typeof(List<T>);
+        if (CodecRegistry.GetDecoder(targetType) is DsonCodecImpl<List<T>> codecImpl) {
+            return codecImpl.ReadObject(this, targetType, features);
+        }
+        throw new AssertionError();
+    }
+
+    public Dictionary<K, V>? ReadDictionary<K, V>(DeserializeFeatures features) {
+        if (reader.CurrentDsonType == DsonType.Null) {
+            reader.ReadNull();
+            return null;
+        }
+        Type targetType = typeof(Dictionary<K, V>);
+        if (CodecRegistry.GetDecoder(targetType) is DsonCodecImpl<Dictionary<K, V>> codecImpl) {
+            return codecImpl.ReadObject(this, targetType, features);
+        }
+        throw new AssertionError();
+    }
+
     #endregion
 
     #region object处理
 
-    public object ReadObject(string name, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return ReadObject<object>(name, declaredType, features, factory);
+    public object ReadObject(string name, Type declaredType, DeserializeFeatures features) {
+        return ReadObject<object>(name, declaredType, features);
     }
 
-    public T ReadObject<T>(string name, DeserializeFeatures features, Func<object>? factory = null) {
-        return ReadObject<T>(name, typeof(T), features, factory);
+    public object ReadObject(Type declaredType, DeserializeFeatures features) {
+        return ReadObject<object>(name: null, declaredType, features);
     }
 
-    public object ReadObject(Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return ReadObject<object>(null, declaredType, features, factory);
+    public T ReadObject<T>(string name, DeserializeFeatures features) {
+        return ReadObject<T>(name, typeof(T), features);
     }
 
-    public T ReadObject<T>(DeserializeFeatures features, Func<object>? factory = null) {
-        return ReadObject<T>(null, typeof(T), features, factory);
+    public T ReadObject<T>(DeserializeFeatures features) {
+        return ReadObject<T>(name: null, typeof(T), features);
     }
 
     /// <summary>
     /// 
     /// </summary>
     /// <typeparam name="T">仅用于避免装箱，不能用于其它语义</typeparam>
-    private T ReadObject<T>(string? name, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    private T ReadObject<T>(string? name, Type declaredType, DeserializeFeatures features) {
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
-        if (!ReadName(name)) { //  字段不存在，返回默认值
-            return default;
-        }
+        if (reader.IsAtType) reader.ReadDsonType();
+        if (reader.IsAtName) reader.ReadName(name); // name不匹配抛出异常
+        //
         DsonType dsonType = reader.CurrentDsonType;
         if (dsonType == DsonType.Null) { // null直接返回
             reader.ReadNull(name);
             return default;
         }
-        // DsonValue接收原始数据
+        // DsonValue接收原始数据 - 通过Feature指定时，字段通常应该声明为object
         if ((features & DeserializeFeatures.ReadAsDsonValue) != 0) {
             return (T)(object)Dsons.ReadDsonValue(reader);
         }
         if (!declaredType.IsValueType && typeof(DsonValue).IsAssignableFrom(declaredType)) {
             return (T)(object)Dsons.ReadDsonValue(reader);
         }
-        // 引用解析，值类型也可能是顶层对象
+        // 引用解析，值类型也可能是顶层对象 - 编辑器生成的数据，不过还是应该避免如此
         if (dsonType == DsonType.Pointer
             && declaredType != typeof(ObjectPath)
             && declaredType != typeof(ObjectPtr)) {
             ObjectPtr ptr = reader.ReadPtr();
-            return (T)ReadReference(ptr, declaredType, features, factory);
+            return (T)ReadReference(ptr, declaredType, features);
         }
         // 容器类型只能通过codec解码
-        if (dsonType.IsContainer()) {
+        if (dsonType == DsonType.Object || dsonType == DsonType.Array) {
             string? clsName = GetClassName(reader.CurrentValue);
-            DsonCodecImpl decoder = FindObjectDecoder(declaredType, factory, clsName);
+            DsonCodecImpl decoder = FindObjectDecoder(declaredType, clsName);
             if (decoder == null) {
                 throw DsonCodecException.Incompatible(declaredType, clsName);
             }
             // 避免结构体装箱
             if (decoder is DsonCodecImpl<T> codecImpl) {
-                return codecImpl.ReadObject(this, declaredType, features, factory);
+                return codecImpl.ReadObject(this, declaredType, features);
             } else {
-                return (T)decoder.ReadObject2(this, declaredType, features, factory);
+                return (T)decoder.ReadObject2(this, declaredType, features);
             }
         } else {
             // 非容器类型 -- Dson内建结构，Enum，Const等
             if (converter.CodecRegistry.GetDecoder(declaredType) is DsonCodecImpl<T> decoder) {
-                return decoder.ReadObject(this, declaredType, features, factory);
+                return decoder.ReadObject(this, declaredType, features);
             }
             // 默认类型转换-声明类型可能是个抽象类型，eg：Number
-            return (T)DsonCodecHelper.ReadDsonValueValue(reader, name);
+            return (T)DsonCodecHelper.ReadDsonValueValue(reader);
         }
     }
 
-    private object? ReadReference(ObjectPtr rawPtr, Type declaredType, DeserializeFeatures features, Func<object>? factory) {
+    private object? ReadReference(ObjectPtr rawPtr, Type declaredType, DeserializeFeatures features) {
         if (rawPtr.LocalId == 0) {
             return null;
         }
-        // 引用中可能包含额外数据，需要清理
-        ObjectPtr ptr = new ObjectPtr(rawPtr.Collection, null, rawPtr.LocalId);
-        return referenceTable.ContainsKey(ptr) ? GetReference(ptr, declaredType, features, factory) : null;
+        // 默认的序列化只支持引用当前文件（集合）内的对象
+        int ptr = (int)rawPtr.LocalId;
+        if (!string.IsNullOrEmpty(rawPtr.Collection) || !referenceTable.ContainsKey(ptr)) {
+            throw new DsonCodecException($"Invalid Ptr: {rawPtr}");
+        }
+        return GetReference(ptr, declaredType, features);
     }
 
     private static string? GetClassName(DsonValue dsonValue) {
@@ -435,12 +476,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return null;
     }
 
-    private DsonCodecImpl? FindObjectDecoder<T>(Type declaredType, Func<T>? factory, string? clsName) {
-        // factory不为null时，直接按照声明类型查找 -- factory创建的实例可能和写入的真实类型不兼容
-        if (factory != null) {
-            return converter.CodecRegistry.GetDecoder(declaredType);
-        }
-        // 如果factory为null，最终的codec关联的type一定是声明类型的子类型
+    private DsonCodecImpl? FindObjectDecoder(Type declaredType, string? clsName) {
         // 尝试按真实类型读 -- IsAssignableFrom 支持 Nullable
         if (!string.IsNullOrWhiteSpace(clsName)) {
             TypeMeta typeMeta = converter.TypeMetaRegistry.OfName(clsName);
@@ -448,7 +484,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
                 return converter.CodecRegistry.GetDecoder(typeMeta.type);
             }
         }
-        // 尝试按照声明类型读 - 读的时候两者可能是无继承关系的(投影) LinkedDictionary => Dictionary
+        // 尝试按照声明类型读 - 读的时候两者可能是无继承关系的(投影)
         return converter.CodecRegistry.GetDecoder(declaredType);
     }
 
@@ -477,6 +513,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return reader.IsAtType ? reader.ReadDsonType() : reader.CurrentDsonType;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string ReadName() {
         if (reader.IsAtType) {
             reader.ReadDsonType();
@@ -484,45 +521,12 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return reader.ReadName();
     }
 
-    public bool ReadName(string? name) {
-        DsonCollectionReader<string> reader = this.reader;
-        // array
-        if (reader.ContextType.IsArrayLike()) {
-            if (reader.IsAtValue) {
-                return true;
-            }
-            if (reader.IsAtType) {
-                return reader.ReadDsonType() != DsonType.EndOfObject;
-            }
-            return reader.CurrentDsonType != DsonType.EndOfObject;
-        }
-        // object
-        if (reader.IsAtValue) {
-            if (name == null || reader.CurrentName == name) {
-                return true;
-            }
-            reader.SkipValue();
-        }
-        if (name == null) throw new ArgumentNullException(nameof(name));
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReadName(string name) {
         if (reader.IsAtType) {
-            if (reader.Attachment() is Context context) {
-                if (context.Contains(name)) {
-                    context.SetNext(name);
-                    reader.ReadDsonType();
-                    reader.ReadName();
-                    return true;
-                }
-                return false; // 主动读模式下不破坏输入，因此不抛出异常
-            }
             reader.ReadDsonType();
-            reader.ReadName(name); // 被动读不匹配的情况下抛出异常
-            return true;
-        } else {
-            if (reader.CurrentDsonType == DsonType.EndOfObject) {
-                return false;
-            }
-            return name == reader.ReadName();
         }
+        reader.ReadName(name);
     }
 
     public DsonType CurrentDsonType => reader.CurrentDsonType;
@@ -540,33 +544,17 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             reader.ReadDsonType();
             reader.SkipValue();
         }
-        //
-        if ((features & DeserializeFeatures.PassiveReading) == 0) {
-            Context context = contextPool.Acquire();
-            context.typeMeta = typeMeta;
-            context.SetKeySet(reader.Keys());
-            reader.SetKeyItr(context, DsonNull.NULL);
-            reader.Attach(context);
-        } else {
-            reader.Attach(typeMeta);
-        }
+        reader.Attach(typeMeta);
         //
         if (reader.ContextDepth == 1) {
             ItemContext itemContext = referenceTable[_stack];
             return itemContext.header;
         }
         DsonValue dsonValue = reader.GetContainer();
-        SerializeHeader header = ReadHeader(dsonValue);
-        if (header.count == 0) {
-            header.count = features.ToInitCapacity();
-        }
-        return header;
+        return ReadHeader(dsonValue);
     }
 
     public void ReadEndObject() {
-        if (reader.Attach(null) is Context context) {
-            contextPool.Release(context);
-        }
         reader.SkipToEndOfObject();
         reader.ReadEndObject();
         BackToPrevContext();
@@ -591,11 +579,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
             return itemContext.header;
         }
         DsonValue dsonValue = reader.GetContainer();
-        SerializeHeader header = ReadHeader(dsonValue);
-        if (header.count == 0) {
-            header.count = features.ToInitCapacity();
-        }
-        return header;
+        return ReadHeader(dsonValue);
     }
 
     public void ReadEndArray() {
@@ -620,16 +604,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         return reader.ReadValueAsBytes(name);
     }
 
-    public TypeMeta? ContainerTypeMeta {
-        get {
-            return reader.Attachment() switch
-            {
-                TypeMeta typeMeta => typeMeta,
-                Context context => context.typeMeta,
-                _ => null
-            };
-        }
-    }
+    public TypeMeta? ContainerTypeMeta => reader.Attachment() as TypeMeta;
 
     public DsonCodecImpl<T>? GetInlinableCodec<T>() {
         DsonCodecImpl decoder = converter.CodecRegistry.GetDecoder(typeof(T));
@@ -659,54 +634,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
 
 #nullable disable
 
-    #region util
-
-    private bool IsReadZeroValue(DeserializeFeatures features) {
-        if ((features & DeserializeFeatures.ReadZeroValue) != 0) return true;
-        if ((features & DeserializeFeatures.SkipZeroValue) != 0) return false;
-        TypeMeta typeMeta = ContainerTypeMeta;
-        if (typeMeta != null) {
-            features = typeMeta.decodeFeatures;
-            if ((features & DeserializeFeatures.ReadZeroValue) != 0) return true;
-            if ((features & DeserializeFeatures.SkipZeroValue) != 0) return false;
-        }
-        features = converter.Options.decodeFeatures;
-        return (features & DeserializeFeatures.ReadZeroValue) != 0;
-    }
-
-    private bool IsReadNullValue(DeserializeFeatures features) {
-        if ((features & DeserializeFeatures.ReadNullValue) != 0) return true;
-        if ((features & DeserializeFeatures.SkipNullValue) != 0) return false;
-        TypeMeta typeMeta = ContainerTypeMeta;
-        if (typeMeta != null) {
-            features = typeMeta.decodeFeatures;
-            if ((features & DeserializeFeatures.ReadNullValue) != 0) return true;
-            if ((features & DeserializeFeatures.SkipNullValue) != 0) return false;
-        }
-        features = converter.Options.decodeFeatures;
-        return (features & DeserializeFeatures.ReadNullValue) != 0;
-    }
-
-    private bool IsReadEmptyStringAsNull(DeserializeFeatures features) {
-        if (((features & DeserializeFeatures.EmptyStringAsEmpty) != 0)) return false;
-        if ((features & DeserializeFeatures.EmptyStringAsNull) != 0) return true;
-        TypeMeta typeMeta = ContainerTypeMeta;
-        if (typeMeta != null) {
-            features = typeMeta.decodeFeatures;
-            if (((features & DeserializeFeatures.EmptyStringAsEmpty) != 0)) return false;
-            if ((features & DeserializeFeatures.EmptyStringAsNull) != 0) return true;
-        }
-        features = converter.Options.decodeFeatures;
-        if (((features & DeserializeFeatures.EmptyStringAsEmpty) != 0)) return false;
-        return (features & DeserializeFeatures.EmptyStringAsNull) != 0;
-    }
-
-    #endregion
-
     #region context
-
-    private static readonly ConcurrentObjectPool<Context> contextPool = new(
-        () => new Context(), context => context.Dispose(), 256);
 
     private const int STATUS_NEW = 0;
     private const int STATUS_PROCESSING = 1;
@@ -718,86 +646,7 @@ internal class DefaultDsonObjectReader : IDsonObjectReader
         public DsonValue dsonValue; // 讲道理都是DsonObject
         public object objectValue; // 用户在NewInstance后可能没有立即发布引用
         public int status;
-
-        public ObjectPtr pointer => new ObjectPtr(header.collection, null, header.localId);
-    }
-
-    private class Context : ISequentialEnumerator<string>
-    {
-        private readonly LinkedHashSet<string> keyQueue = new LinkedHashSet<string>();
-        public TypeMeta typeMeta;
-        private ICollection<string> _keySet;
-        private string? _current;
-
-        public void SetKeySet(ICollection<string> keySet) {
-            this._keySet = keySet;
-            foreach (string name in this._keySet) {
-                keyQueue.Add(name);
-            }
-        }
-
-        public void SetNext(string nextName) {
-            if (nextName == null) throw new ArgumentNullException(nameof(nextName));
-            if (keyQueue.TryPeekFirst(out string name) && name == nextName) {
-                return;
-            }
-            keyQueue.AddFirst(nextName);
-        }
-
-        public bool Contains(string name) => _keySet.Contains(name);
-
-        public bool HasNext() {
-            return !keyQueue.IsEmpty;
-        }
-
-        public bool MoveNext() {
-            return keyQueue.TryRemoveFirst(out _current);
-        }
-
-        public void Reset() {
-        }
-
-        public void Dispose() {
-            keyQueue.Clear();
-            typeMeta = null;
-            _keySet = null!;
-            _current = null!;
-        }
-
-        public string? Current => _current;
-        object? IEnumerator.Current => Current;
-    }
-
-    private class LocalIdComparer : IEqualityComparer<ObjectPtr>
-    {
-        public static readonly LocalIdComparer Inst = new LocalIdComparer();
-
-        public bool Equals(ObjectPtr x, ObjectPtr y) {
-            return x.LocalId == y.LocalId
-                   && x.Collection == y.Collection;
-        }
-
-        public int GetHashCode(ObjectPtr obj) {
-            int hashCode = obj.LocalId.GetHashCode();
-            hashCode = (hashCode * 397) ^ (obj.Collection != null ? obj.Collection.GetHashCode() : 0);
-            return hashCode;
-        }
-    }
-
-    private class LocalPathComparer : IEqualityComparer<ObjectPtr>
-    {
-        public static readonly LocalPathComparer Inst = new LocalPathComparer();
-
-        public bool Equals(ObjectPtr x, ObjectPtr y) {
-            return x.LocalPath == y.LocalPath
-                   && x.Collection == y.Collection;
-        }
-
-        public int GetHashCode(ObjectPtr obj) {
-            int hashCode = obj.LocalPath.GetHashCode();
-            hashCode = (hashCode * 397) ^ (obj.Collection != null ? obj.Collection.GetHashCode() : 0);
-            return hashCode;
-        }
+        public int Pointer => header.localId;
     }
 
     #endregion

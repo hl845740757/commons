@@ -248,17 +248,15 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     void SetEnableNameIntern(bool? value);
 
     /// <summary>
-    /// 附近一个数据到当前上下文
+    /// 上层业务为当前上下文附加的标记信息
+    /// (用于避免装箱/避免总是需要引用类型对象)
     /// </summary>
-    /// <param name="userData">用户自定义数据</param>
-    /// <returns>旧值</returns>
-    object Attach(object userData);
+    int UserContextFlags { get; set; }
 
     /// <summary>
-    /// 获取附加到当前上下文的数据
+    /// 上层附加到当前上下文的数据
     /// </summary>
-    /// <returns></returns>
-    object Attachment();
+    object UserContextData { get; set; }
 
     /// <summary>
     /// 关联的配置

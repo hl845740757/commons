@@ -38,7 +38,7 @@ public abstract class DsonCodecImpl
     // 解决泛型协变逆变问题 - 不会导致装箱，但会多一次cast
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, SerializeFeatures features);
 
-    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory);
+    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features);
 
     /** 创建Impl实例 */
     internal static DsonCodecImpl CreateInstance(IDsonCodec codec) {
@@ -94,8 +94,8 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return ReadObject(reader, declaredType, features, factory);
+    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        return ReadObject(reader, declaredType, features);
     }
 
     /// <summary>
@@ -116,17 +116,20 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// <param name="reader">reader</param>
     /// <param name="declaredType"></param>
     /// <param name="features"></param>
-    /// <param name="factory">实例工厂</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return _codec.ReadObject(reader, declaredType, features, factory);
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        return _codec.ReadObject(reader, declaredType, features);
     }
 
     #region nullabel支持
 
-    public bool IsNullableCodec => _nullableCodec != null;
+    public bool IsNullableCodec {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _nullableCodec != null;
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasValue(in T value) {
         if (_nullableCodec != null) {
             return _nullableCodec.HasValue(in value);
@@ -138,6 +141,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
 
     #region 枚举支持
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ToObject(int value) {
         if (_codec is IEnumCodec<T> enumCodec) {
             return enumCodec.ToObject(value);
@@ -145,18 +149,12 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         throw new DsonCodecException("unexpected ToObject method call");
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int ToNumber(T value) {
         if (_codec is IEnumCodec<T> enumCodec) {
             return enumCodec.ToNumber(value);
         }
         throw new DsonCodecException("unexpected ToNumber method call");
-    }
-
-    public bool IsWriteAsString(SerializeFeatures features) {
-        if (_codec is IEnumCodec<T> enumCodec) {
-            return enumCodec.IsWriteAsString(features);
-        }
-        throw new DsonCodecException("unexpected IsWriteAsString method call");
     }
 
     #endregion
@@ -168,6 +166,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// </summary>
     public bool IsKeyCodec => _keyCodec != null;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string EncodeKey(T value, SerializeFeatures features) {
         if (_keyCodec != null) {
             return _keyCodec.EncodeKey(value, features);
@@ -175,6 +174,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         throw new DsonCodecException("unexpected EncodeKey method call");
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T DecodeKey(string keyString) {
         if (_keyCodec != null) {
             return _keyCodec.DecodeKey(keyString);

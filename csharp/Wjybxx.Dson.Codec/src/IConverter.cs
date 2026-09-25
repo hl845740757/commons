@@ -48,9 +48,8 @@ public interface IConverter
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="features">反序列特征值</param>
-    /// <param name="factory">对象工厂</param>
     /// <returns></returns>
-    object Read(byte[] source, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
+    object Read(byte[] source, Type declaredType, DeserializeFeatures features = default);
 
     /// <summary>
     /// 将一个对象转换为字节数组
@@ -61,19 +60,18 @@ public interface IConverter
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="chunk">二进制块</param>
     /// <param name="features">特征值</param>
-    void Write(object value, Type declaredType, DsonChunk chunk, SerializeFeatures features = default);
+    void Write(object value, Type declaredType, DsonChunk chunk, SerializeFeatures features = 0);
 
     /// <summary>
     /// 从数据源中读取一个对象
-    ///
+    /// 
     /// 注意：读取的字节数会设置到<see cref="DsonChunk"/>
     /// </summary>
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="features">反序列特征值</param>
-    /// <param name="factory">对象工厂</param>
     /// <returns></returns>
-    object Read(DsonChunk source, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
+    object Read(DsonChunk source, Type declaredType, DeserializeFeatures features = 0);
 
     #region Clone
 
@@ -85,9 +83,8 @@ public interface IConverter
     /// <param name="value">要克隆的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="targetType">目标类型</param>
-    /// <param name="factory">返回对象类型工厂</param>
     /// <returns></returns>
-    object CloneObject(object? value, Type declaredType, Type targetType, Func<object>? factory = null);
+    object CloneObject(object? value, Type declaredType, Type targetType);
 
     #endregion
 }

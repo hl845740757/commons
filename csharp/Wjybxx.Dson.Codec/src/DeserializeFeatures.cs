@@ -33,15 +33,7 @@ public enum DeserializeFeatures
     /// 读取为DsonValue
     /// 注：字段应当声明为Object或DsonValue类型。
     /// </summary>
-    ReadAsDsonValue = 0x40,
-
-    /// <summary>
-    /// 当Header中不包含Count信息时，赋予1/2/3档初始化空间，可减少扩容次数
-    /// (意义不是很大，正常编辑器导出的数据是包含Count的，序列化也会写入Count)
-    /// </summary>
-    InitCapacity1 = 0x10,
-    InitCapacity2 = 0x20,
-    InitCapacity3 = 0x30,
+    ReadAsDsonValue = 0x04,
 
 #pragma warning disable CA1069
     /// <summary>

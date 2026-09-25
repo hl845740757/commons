@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -38,12 +39,34 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     public void WriteObject(IDsonObjectWriter writer, IEnumerable<T> inst, Type declaredType, SerializeFeatures features) {
         SerializeFeatures selfFeatures = features.ErasureElementFeatures();
         SerializeFeatures elementFeatures = features.GetElementFeatures();
-        writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, 0);
-        foreach (T value in inst) {
-            writer.WriteObject(in value, elementFeatures);
+        // T就是声明类型
+        DsonCodecImpl<T> elementCodec = writer.GetInlinableCodec<T>();
+        int count = GetCount(inst);
+        if (elementCodec != null) {
+            Type elementType = typeof(T);
+            writer.WriteStartArray(encoderType, declaredType, selfFeatures, count);
+            foreach (T e in inst) {
+                elementCodec.WriteObject(writer, e, elementType, elementFeatures);
+            }
+        } else {
+            writer.WriteStartArray(encoderType, declaredType, selfFeatures, count);
+            foreach (T e in inst) {
+                writer.WriteObject(e, elementFeatures);
+            }
+            writer.WriteEndArray();
         }
-        writer.WriteEndArray();
     }
+
+    private static int GetCount(IEnumerable<T> inst) {
+        if (inst is ICollection<T> collection) {
+            return collection.Count;
+        }
+        if (inst is IReadOnlyCollection<T> readOnlyCollection) {
+            return readOnlyCollection.Count;
+        }
+        return 0;
+    }
+
 
     public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return ReadAsList(reader, encoderType, features);

@@ -473,12 +473,14 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public object Attach(object userData) {
-        return context.Attach(userData);
+    public int UserContextFlags {
+        get => context.flags;
+        set => context.flags = value;
     }
 
-    public object Attachment() {
-        return context.userData;
+    public object UserContextData {
+        get => context.userData;
+        set => context.userData = value;
     }
 
     protected abstract void DoWriteValueBytes(DsonType type, byte[] data);
@@ -494,6 +496,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         protected internal DsonType dsonType; // 用于在Object/Array模式下写入内置数据结构
         protected internal DsonWriterState state = DsonWriterState.Initial;
         protected internal TName curName;
+        protected internal int flags;
         protected internal object userData;
 
         public Context() {
@@ -512,13 +515,8 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
             dsonType = DsonTypes.INVALID;
             state = default;
             curName = default;
+            flags = 0;
             userData = null;
-        }
-
-        public object Attach(object userData) {
-            object r = this.userData;
-            this.userData = userData;
-            return r;
         }
 
         /** 方便查看赋值的调用 */

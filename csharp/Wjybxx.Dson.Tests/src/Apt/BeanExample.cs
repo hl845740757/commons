@@ -81,7 +81,7 @@ public class BaseTypeExample
 [DsonSerializable]
 public class BeanExample : BaseTypeExample
 {
-    [DsonProperty(Name = "_name", EncodeFeatures = SerializeFeatures.StringAutoQuote)]
+    [DsonProperty(Name = "_name", EncodeFeatures = SerializeFeatures.StringUnquote)]
     private string? name;
 
     [DsonProperty]
@@ -153,6 +153,8 @@ public class BeanExample : BaseTypeExample
     public Long4 long4;
     public Fxp64 fx4;
     public Fxp4 fv4;
+    [DsonProperty(ElementNames = "xyz")]
+    public Double4 vec3;
     
     public void WriteType(IDsonObjectWriter writer, string dsonName) {
         writer.WriteInt(dsonName, Type);

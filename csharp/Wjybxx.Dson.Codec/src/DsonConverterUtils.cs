@@ -168,40 +168,34 @@ public static class DsonConverterUtils
     #region converter
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte[] Write<T>(this IConverter converter, T value,
-                                  SerializeFeatures features = default) {
+    public static byte[] Write<T>(this IConverter converter, T value, SerializeFeatures features = 0) {
         return converter.Write(value, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Read<T>(this IConverter converter, byte[] source,
-                            DeserializeFeatures features = default,
-                            Func<object>? factory = null) {
-        return (T)converter.Read(source, typeof(T), features, factory);
+    public static T Read<T>(this IConverter converter, byte[] source, DeserializeFeatures features = 0) {
+        return (T)converter.Read(source, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write<T>(this IConverter converter, T value, DsonChunk chunk,
-                                SerializeFeatures features = default) {
+    public static void Write<T>(this IConverter converter, T value, DsonChunk chunk, SerializeFeatures features = 0) {
         converter.Write(value, typeof(T), chunk, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Read<T>(this IConverter converter, DsonChunk source,
-                            DeserializeFeatures features = default,
-                            Func<object>? factory = null) {
-        return (T)converter.Read(source, typeof(T), features, factory);
+    public static T Read<T>(this IConverter converter, DsonChunk source, DeserializeFeatures features = 0) {
+        return (T)converter.Read(source, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object CloneObject(this IConverter converter, object? value, Type declaredType, Func<object>? factory = null) {
-        return converter.CloneObject(value, declaredType, declaredType, factory);
+    public static object CloneObject(this IConverter converter, object? value, Type declaredType) {
+        return converter.CloneObject(value, declaredType, declaredType);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T CloneObject<T>(this IConverter converter, T value, Func<object>? factory = null) {
+    public static T CloneObject<T>(this IConverter converter, T value) {
         Type declaredType = typeof(T);
-        return (T)converter.CloneObject(value, declaredType, declaredType, factory);
+        return (T)converter.CloneObject(value, declaredType, declaredType);
     }
 
     #endregion
@@ -209,62 +203,48 @@ public static class DsonConverterUtils
     #region dson-converter
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write<T>(this IDsonConverter converter, T value, IDsonOutput output,
-                                SerializeFeatures features = default) {
+    public static void Write<T>(this IDsonConverter converter, T value, IDsonOutput output, SerializeFeatures features = 0) {
         converter.Write(value, typeof(T), output, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Read<T>(this IDsonConverter converter, IDsonInput source,
-                            DeserializeFeatures features = default,
-                            Func<object>? factory = null) {
-        return (T)converter.Read(source, typeof(T), features, factory);
+    public static T Read<T>(this IDsonConverter converter, IDsonInput source, DeserializeFeatures features = 0) {
+        return (T)converter.Read(source, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string WriteAsDson<T>(this IDsonConverter converter, T value,
-                                        SerializeFeatures features = default) {
+    public static string WriteAsDson<T>(this IDsonConverter converter, T value, SerializeFeatures features = 0) {
         return converter.WriteAsDson(value, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadFromDson<T>(this IDsonConverter converter, string source,
-                                    DeserializeFeatures features = default,
-                                    Func<object>? factory = null) {
-        return (T)converter.ReadFromDson(source, typeof(T), features, factory);
+    public static T ReadFromDson<T>(this IDsonConverter converter, string source, DeserializeFeatures features = 0) {
+        return (T)converter.ReadFromDson(source, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteAsDson<T>(this IDsonConverter converter, T value, TextWriter writer,
-                                      SerializeFeatures features = default) {
+    public static void WriteAsDson<T>(this IDsonConverter converter, T value, TextWriter writer, SerializeFeatures features = 0) {
         converter.WriteAsDson(value, typeof(T), writer, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadFromDson<T>(this IDsonConverter converter, TextReader source,
-                                    DeserializeFeatures features = default,
-                                    Func<object>? factory = null) {
-        return (T)converter.ReadFromDson(source, typeof(T), features, factory);
+    public static T ReadFromDson<T>(this IDsonConverter converter, TextReader source, DeserializeFeatures features = 0) {
+        return (T)converter.ReadFromDson(source, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DsonArray<string> WriteAsDsonCollection<T>(this IDsonConverter converter, T value,
-                                                             SerializeFeatures features = default) {
+    public static DsonArray<string> WriteAsDsonCollection<T>(this IDsonConverter converter, T value, SerializeFeatures features = 0) {
         return converter.WriteAsDsonCollection(value, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadFromDsonCollection<T>(this IDsonConverter converter, DsonArray<string> source,
-                                              DeserializeFeatures features = default,
-                                              Func<object>? factory = null) {
-        return (T)converter.ReadFromDsonCollection(source, typeof(T), features, factory);
+    public static T ReadFromDsonCollection<T>(this IDsonConverter converter, DsonArray<string> source, DeserializeFeatures features = 0) {
+        return (T)converter.ReadFromDsonCollection(source, typeof(T), features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadFromDsonCollection<T>(this IDsonConverter converter, DsonArray<string> source, long localId,
-                                              DeserializeFeatures features = default,
-                                              Func<object>? factory = null) {
-        return (T)converter.ReadFromDsonCollection(source, localId, typeof(T), features, factory);
+    public static T ReadFromDsonCollection<T>(this IDsonConverter converter, DsonArray<string> source, int localId, DeserializeFeatures features = 0) {
+        return (T)converter.ReadFromDsonCollection(source, localId, typeof(T), features);
     }
 
     #endregion
@@ -274,81 +254,74 @@ public static class DsonConverterUtils
     #region reader
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static short ReadShort(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
+    public static short ReadShort(this IDsonObjectReader reader, string name, DeserializeFeatures features = 0) {
         return (short)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte ReadByte(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
+    public static byte ReadByte(this IDsonObjectReader reader, string name, DeserializeFeatures features = 0) {
         return (byte)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static char ReadChar(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
+    public static char ReadChar(this IDsonObjectReader reader, string name, DeserializeFeatures features = 0) {
         return (char)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint ReadUInt(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
+    public static uint ReadUInt(this IDsonObjectReader reader, string name, DeserializeFeatures features = 0) {
         return (uint)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong ReadULong(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
+    public static ulong ReadULong(this IDsonObjectReader reader, string name, DeserializeFeatures features = 0) {
         return (ulong)reader.ReadLong(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort ReadUShort(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
+    public static ushort ReadUShort(this IDsonObjectReader reader, string name, DeserializeFeatures features = 0) {
         return (ushort)reader.ReadInt(name, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static sbyte ReadSByte(this IDsonObjectReader reader, string name, DeserializeFeatures features = default) {
+    public static sbyte ReadSByte(this IDsonObjectReader reader, string name, DeserializeFeatures features = 0) {
         return (sbyte)reader.ReadInt(name, features);
     }
 
     // 无name版
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static short ReadShort(this IDsonObjectReader reader, DeserializeFeatures features = default) {
+    public static short ReadShort(this IDsonObjectReader reader, DeserializeFeatures features = 0) {
         return (short)reader.ReadInt(features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte ReadByte(this IDsonObjectReader reader, DeserializeFeatures features = default) {
+    public static byte ReadByte(this IDsonObjectReader reader, DeserializeFeatures features = 0) {
         return (byte)reader.ReadInt(features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static char ReadChar(this IDsonObjectReader reader, DeserializeFeatures features = default) {
+    public static char ReadChar(this IDsonObjectReader reader, DeserializeFeatures features = 0) {
         return (char)reader.ReadInt(features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint ReadUInt(this IDsonObjectReader reader, DeserializeFeatures features = default) {
+    public static uint ReadUInt(this IDsonObjectReader reader, DeserializeFeatures features = 0) {
         return (uint)reader.ReadInt(features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong ReadULong(this IDsonObjectReader reader, DeserializeFeatures features = default) {
+    public static ulong ReadULong(this IDsonObjectReader reader, DeserializeFeatures features = 0) {
         return (ulong)reader.ReadLong(features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort ReadUShort(this IDsonObjectReader reader, DeserializeFeatures features = default) {
+    public static ushort ReadUShort(this IDsonObjectReader reader, DeserializeFeatures features = 0) {
         return (ushort)reader.ReadInt(features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static sbyte ReadSByte(this IDsonObjectReader reader, DeserializeFeatures features = default) {
+    public static sbyte ReadSByte(this IDsonObjectReader reader, DeserializeFeatures features = 0) {
         return (sbyte)reader.ReadInt(features);
-    }
-
-    // object
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadObject<T>(this IDsonObjectReader reader, string name, DeserializeFeatures features = default,
-                                  Func<object>? factory = null) {
-        return (T)reader.ReadObject(name, typeof(T), features, factory);
     }
 
     #endregion
@@ -357,77 +330,73 @@ public static class DsonConverterUtils
 
     // name版
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteShort(this IDsonObjectWriter writer, string name, short value, SerializeFeatures features = default) {
+    public static void WriteShort(this IDsonObjectWriter writer, string name, short value, SerializeFeatures features = 0) {
         writer.WriteInt(name, value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteByte(this IDsonObjectWriter writer, string name, byte value, SerializeFeatures features = default) {
+    public static void WriteByte(this IDsonObjectWriter writer, string name, byte value, SerializeFeatures features = 0) {
         writer.WriteInt(name, value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteChar(this IDsonObjectWriter writer, string name, char value, SerializeFeatures features = default) {
+    public static void WriteChar(this IDsonObjectWriter writer, string name, char value, SerializeFeatures features = 0) {
         writer.WriteInt(name, value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUInt(this IDsonObjectWriter writer, string name, uint value, SerializeFeatures features = default) {
-        if ((int)value < 0) features |= SerializeFeatures.NumberHex;
+    public static void WriteUInt(this IDsonObjectWriter writer, string name, uint value, SerializeFeatures features = 0) {
         writer.WriteInt(name, (int)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteULong(this IDsonObjectWriter writer, string name, ulong value, SerializeFeatures features = default) {
-        if ((long)value < 0) features |= SerializeFeatures.NumberHex;
+    public static void WriteULong(this IDsonObjectWriter writer, string name, ulong value, SerializeFeatures features = 0) {
         writer.WriteLong(name, (long)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUShort(this IDsonObjectWriter writer, string name, ushort value, SerializeFeatures features = default) {
+    public static void WriteUShort(this IDsonObjectWriter writer, string name, ushort value, SerializeFeatures features = 0) {
         writer.WriteInt(name, value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteSByte(this IDsonObjectWriter writer, string name, sbyte value, SerializeFeatures features = default) {
+    public static void WriteSByte(this IDsonObjectWriter writer, string name, sbyte value, SerializeFeatures features = 0) {
         writer.WriteInt(name, value, features);
     }
 
     // 无name版
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteShort(this IDsonObjectWriter writer, short value, SerializeFeatures features = default) {
+    public static void WriteShort(this IDsonObjectWriter writer, short value, SerializeFeatures features = 0) {
         writer.WriteInt(value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteByte(this IDsonObjectWriter writer, byte value, SerializeFeatures features = default) {
+    public static void WriteByte(this IDsonObjectWriter writer, byte value, SerializeFeatures features = 0) {
         writer.WriteInt(value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteChar(this IDsonObjectWriter writer, char value, SerializeFeatures features = default) {
+    public static void WriteChar(this IDsonObjectWriter writer, char value, SerializeFeatures features = 0) {
         writer.WriteInt(value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUInt(this IDsonObjectWriter writer, uint value, SerializeFeatures features = default) {
-        if ((int)value < 0) features |= SerializeFeatures.NumberHex;
+    public static void WriteUInt(this IDsonObjectWriter writer, uint value, SerializeFeatures features = 0) {
         writer.WriteInt((int)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteULong(this IDsonObjectWriter writer, ulong value, SerializeFeatures features = default) {
-        if ((long)value < 0) features |= SerializeFeatures.NumberHex;
+    public static void WriteULong(this IDsonObjectWriter writer, ulong value, SerializeFeatures features = 0) {
         writer.WriteLong((long)value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUShort(this IDsonObjectWriter writer, ushort value, SerializeFeatures features = default) {
+    public static void WriteUShort(this IDsonObjectWriter writer, ushort value, SerializeFeatures features = 0) {
         writer.WriteInt(value, features);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteSByte(this IDsonObjectWriter writer, sbyte value, SerializeFeatures features = default) {
+    public static void WriteSByte(this IDsonObjectWriter writer, sbyte value, SerializeFeatures features = 0) {
         writer.WriteInt(value, features);
     }
 
@@ -435,7 +404,8 @@ public static class DsonConverterUtils
 
     #region write-object
 
-    // 流程
+    // 流程 - 简化用户调用
+    // 不写入Header
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartObject(this IDsonObjectWriter writer, string name,
                                         Type encoderType, SerializeFeatures features) {
@@ -443,35 +413,26 @@ public static class DsonConverterUtils
         writer.WriteStartObject(encoderType, features);
     }
 
+    // 条件写入Header
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartObject(this IDsonObjectWriter writer, string name,
-                                        Type encoderType, Type declaredType,
-                                        SerializeFeatures features, SerializeHeader header = default) {
+                                        Type encoderType, Type declaredType, SerializeFeatures features,
+                                        int count = 0) {
         writer.WriteName(name);
         writer.WriteStartObject(encoderType, features);
-        writer.WriteHeader(encoderType, declaredType, features, header);
+        writer.WriteHeader(encoderType, declaredType, count);
     }
 
+    // 条件写入Header
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartObject(this IDsonObjectWriter writer,
-                                        Type encoderType, Type declaredType,
-                                        SerializeFeatures features, SerializeHeader header = default) {
+                                        Type encoderType, Type declaredType, SerializeFeatures features,
+                                        int count = 0) {
         writer.WriteStartObject(encoderType, features);
-        writer.WriteHeader(encoderType, declaredType, features, header);
+        writer.WriteHeader(encoderType, declaredType, count);
     }
 
-    // 用于简化集合的写入代码
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteStartObject(this IDsonObjectWriter writer,
-                                        Type encoderType, Type declaredType,
-                                        SerializeFeatures features, int count) {
-        writer.WriteStartObject(encoderType, features);
-        writer.WriteHeader(encoderType, declaredType, features, new SerializeHeader()
-        {
-            count = count,
-        });
-    }
-
+    // 不写入Header
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartArray(this IDsonObjectWriter writer, string name,
                                        Type encoderType, SerializeFeatures features) {
@@ -479,43 +440,23 @@ public static class DsonConverterUtils
         writer.WriteStartArray(encoderType, features);
     }
 
+    // 条件写入Header
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartArray(this IDsonObjectWriter writer, string name,
-                                       Type encoderType, Type declaredType,
-                                       SerializeFeatures features, SerializeHeader header = default) {
+                                       Type encoderType, Type declaredType, SerializeFeatures features,
+                                       int count = 0) {
         writer.WriteName(name);
         writer.WriteStartArray(encoderType, features);
-        writer.WriteHeader(encoderType, declaredType, features, header);
+        writer.WriteHeader(encoderType, declaredType, count);
     }
 
+    // 条件写入Header
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartArray(this IDsonObjectWriter writer,
-                                       Type encoderType, Type declaredType,
-                                       SerializeFeatures features, SerializeHeader header = default) {
+                                       Type encoderType, Type declaredType, SerializeFeatures features,
+                                       int count = 0) {
         writer.WriteStartArray(encoderType, features);
-        writer.WriteHeader(encoderType, declaredType, features, header);
-    }
-
-    // 用于简化集合的写入代码
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteStartArray(this IDsonObjectWriter writer,
-                                       Type encoderType, Type declaredType,
-                                       SerializeFeatures features, int count) {
-        writer.WriteStartArray(encoderType, features);
-        writer.WriteHeader(encoderType, declaredType, features, new SerializeHeader()
-        {
-            count = count,
-        });
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteHeader(this IDsonObjectWriter writer,
-                                   Type encoderType, Type declaredType,
-                                   SerializeFeatures features, int count) {
-        writer.WriteHeader(encoderType, declaredType, features, new SerializeHeader()
-        {
-            count = count,
-        });
+        writer.WriteHeader(encoderType, declaredType, count);
     }
 
     #endregion
@@ -598,8 +539,9 @@ public static class DsonConverterUtils
         return features switch
         {
             SerializeFeatures.StringUnquote => StringStyle.Unquote,
-            SerializeFeatures.StringText => StringStyle.DsonText,
             SerializeFeatures.StringLine => StringStyle.SingleLine,
+            SerializeFeatures.StringText => StringStyle.SimpleText,
+            SerializeFeatures.StringDsonText => StringStyle.DsonText,
             _ => StringStyle.AutoQuote
         };
     }
@@ -613,18 +555,6 @@ public static class DsonConverterUtils
             SerializeFeatures.PairAsArray => MapStyle.PairAsArray,
             SerializeFeatures.PairAsDocument => MapStyle.PairAsDocument,
             _ => MapStyle.Array
-        };
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int ToInitCapacity(this DeserializeFeatures features) {
-        features = (features & DeserializeFeatures.InitCapacity3);
-        return features switch
-        {
-            DeserializeFeatures.InitCapacity1 => 10,
-            DeserializeFeatures.InitCapacity2 => 24,
-            DeserializeFeatures.InitCapacity3 => 48,
-            _ => 0
         };
     }
 

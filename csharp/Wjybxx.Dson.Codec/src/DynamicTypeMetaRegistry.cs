@@ -20,7 +20,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Wjybxx.Commons;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
 {

@@ -120,8 +120,7 @@ public class CodecTest
         string dson = converter2.WriteAsDson(dictionary, typeof(object)); // 会写入类型信息
         Console.WriteLine(dson);
 
-        IDictionary<int, Vector3> copied = converter2.ReadFromDson<IDictionary<int, Vector3>>(dson, default,
-            () => new Dictionary<int, Vector3>());
+        IDictionary<int, Vector3> copied = converter2.ReadFromDson<IDictionary<int, Vector3>>(dson, default);
         Assert.IsTrue(CollectionUtil.DataEquals(copied, dictionary));
     }
 
@@ -139,30 +138,7 @@ public class CodecTest
         string dson = converter.WriteAsDson(dictionary, typeof(object)); // 会写入类型信息
         Console.WriteLine(dson);
 
-        IDictionary<int, Vector3?> copied = converter.ReadFromDson<IDictionary<int, Vector3?>>(dson, default,
-            () => new Dictionary<int, Vector3?>());
-        Assert.IsTrue(CollectionUtil.DataEquals(copied, dictionary));
-    }
-
-    /// <summary>
-    /// 测试读取为不可变集合
-    /// </summary>
-    [Test]
-    public void TestImmutableDictionaryVector3() {
-        IDictionary<int, Vector3> dictionary = new Dictionary<int, Vector3>();
-        for (int i = 1; i <= 5; i++) {
-            dictionary[i] = new Vector3(i - 0.5f, i, i + 0.5f);
-        }
-
-        string dson = converter.WriteAsDson(dictionary, typeof(object)); // 会写入类型信息
-        Console.WriteLine(dson);
-
-        ConverterOptions.Builder builder = converter.Options.ToBuilder();
-        builder.DecodeFeatures |= DeserializeFeatures.ReadAsImmutable;
-
-        IDsonConverter converter2 = converter.WithOptions(builder.Build());
-        IDictionary<int, Vector3> copied = converter2.ReadFromDson<IDictionary<int, Vector3>>(dson, default,
-            () => new Dictionary<int, Vector3>());
+        IDictionary<int, Vector3?> copied = converter.ReadFromDson<IDictionary<int, Vector3?>>(dson, default);
         Assert.IsTrue(CollectionUtil.DataEquals(copied, dictionary));
     }
 }

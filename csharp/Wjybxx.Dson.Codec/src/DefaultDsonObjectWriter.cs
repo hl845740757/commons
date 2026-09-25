@@ -34,9 +34,9 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     private DefaultDsonConverter converter;
     private IDsonWriter<string> writer;
 
-    private readonly LinkedDictionary<object, ObjectPtr> referenceTable = new(ReferenceComparer.Inst);
-    private ObjectPtr _stack;
-    private long _nextLocalId;
+    private readonly LinkedDictionary<object, int> referenceTable = new(ReferenceComparer.Inst);
+    private int _stack;
+    private int _nextLocalId;
     private bool _isTextWriter;
 #nullable restore
     private DefaultDsonObjectWriter() {
@@ -59,27 +59,16 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         this._isTextWriter = writer is DsonTextWriter;
     }
 
-    public void AddReference(object reference, ObjectPtr ptr) {
-        if (reference == null) {
-            throw new ArgumentNullException(nameof(reference));
-        }
-        if (!ptr.HasCollection) {
-            _nextLocalId = Math.Max(_nextLocalId, ptr.LocalId);
-        }
-        referenceTable.Add(reference, ptr);
-    }
-
     public ObjectPtr AddReference(object reference) {
         if (reference == null) {
             throw new ArgumentNullException(nameof(reference));
         }
-        // 如果是值类型，占用localId不影响正确性
-        if (referenceTable.TryGetValue(reference, out ObjectPtr ptr)) {
-            return ptr;
+        if (referenceTable.TryGetValue(reference, out int localId)) {
+            return new ObjectPtr(localId);
         }
-        ptr = new ObjectPtr(++_nextLocalId);
-        referenceTable.Add(reference, ptr);
-        return ptr;
+        localId = ++_nextLocalId;
+        referenceTable.Add(reference, localId);
+        return new ObjectPtr(localId);
     }
 
     public void AddReferences(IEnumerable collection) {
@@ -128,8 +117,10 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
-    public void WriteFxp64(string name, Fxp64 value) {
-        writer.WriteFxp64(name, value);
+    public void WriteFxp64(string name, Fxp64 value, SerializeFeatures features) {
+        if (value.rawValue != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
+            writer.WriteFxp64(name, value);
+        }
     }
 
     public void WriteBool(string name, bool value, SerializeFeatures features) {
@@ -237,7 +228,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteDouble(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
-    public void WriteFxp64(Fxp64 value) {
+    public void WriteFxp64(Fxp64 value, SerializeFeatures features) {
         writer.WriteFxp64(value);
     }
 
@@ -325,20 +316,20 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     #region object
 
-    public void WriteObject(string name, object? value, Type declaredType, SerializeFeatures features) {
-        WriteObject<object>(name, value, declaredType, features);
-    }
-
     public void WriteObject<T>(string name, in T? value, SerializeFeatures features) {
         WriteObject<T>(name, in value, typeof(T), features);
     }
 
-    public void WriteObject(object? value, Type declaredType, SerializeFeatures features) {
-        WriteObject<object>(null, value, declaredType, features);
-    }
-
     public void WriteObject<T>(in T? value, SerializeFeatures features) {
         WriteObject<T>(null, in value, typeof(T), features);
+    }
+
+    public void WriteObject(string name, object? value, Type declaredType, SerializeFeatures features) {
+        WriteObject<object>(name, value, declaredType, features);
+    }
+
+    public void WriteObject(object? value, Type declaredType, SerializeFeatures features) {
+        WriteObject<object>(null, value, declaredType, features);
     }
 
     /// <summary>
@@ -432,7 +423,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     public void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features) {
         ObjectStyle style = _isTextWriter ? GetObjectStyle(features, typeMeta) : default;
         writer.WriteStartObject(style);
-        writer.Attach(typeMeta);
+        writer.UserContextData = typeMeta;
     }
 
     public void WriteEndObject() {
@@ -447,7 +438,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     public void WriteStartArray(TypeMeta? typeMeta, SerializeFeatures features) {
         ObjectStyle style = _isTextWriter ? GetObjectStyle(features, typeMeta) : default;
         writer.WriteStartArray(style);
-        writer.Attach(typeMeta);
+        writer.UserContextData = typeMeta;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -455,28 +446,28 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteEndArray();
     }
 
-    public void WriteHeader(Type encoderType, Type declaredType, SerializeFeatures features,
-                            SerializeHeader header) {
-        // 顶层对象需要写入LocalId，不论是否是值类型
+    public void WriteHeader(Type encoderType, Type declaredType, int count) {
+        SerializeHeader header = new SerializeHeader();
+        // 顶层元素才需要写入localId
         if (writer.ContextDepth == 1) {
-            header.collection = _stack.Collection;
-            header.localId = (int)_stack.LocalId;
+            header.localId = _stack;
         }
-        // count大于默认初始化空间才写入
-        if (header.count < 5) {
-            header.count = 0;
+        // count大于默认初始化空间(4)才有写入价值
+        if (count > 4) {
+            header.count = count;
         }
-        bool headerIsEmpty = header.IsEmpty;
-        bool typed = (features & SerializeFeatures.WriteTypeName) != 0
-                     || converter.TypeWriteHelper.RequireTypeName(encoderType, declaredType);
+        // 只有运行时类型和声明类型不一致时才需要写入类型名
+        bool typed = converter.TypeWriteHelper.RequireTypeName(encoderType, declaredType);
         if (typed) {
-            TypeMeta typeMeta = (TypeMeta)writer.Attachment();
+            TypeMeta typeMeta = (TypeMeta)writer.UserContextData
+                                ?? throw new InvalidOperationException(encoderType.FullName);
             header.clsName = typeMeta.MainName;
         }
-        if (!typed && headerIsEmpty) {
+        if (header.IsEmpty) {
             return;
         }
-        if (headerIsEmpty && writer is DsonTextWriter textWriter) {
+        // 只有clsName时写为简化Header样式：@{Vector3}
+        if (header.IsClassNameOnly && writer is DsonTextWriter textWriter) {
             textWriter.WriteSimpleHeader(header.clsName);
             return;
         }
@@ -485,17 +476,11 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if (typed) {
             writer.WriteString(DsonHeader.Names_ClassName, header.clsName);
         }
-        if (!string.IsNullOrEmpty(header.collection)) {
-            writer.WriteString(DsonHeader.Names_Collection, header.collection);
-        }
         if (header.localId != 0) {
             writer.WriteInt64(DsonHeader.Names_LocalId, header.localId, NumberStyle.Simple);
         }
         if (header.count > 0) {
             writer.WriteInt32(DsonHeader.Names_Count, header.count, NumberStyle.Simple);
-        }
-        if (header.version != 0) {
-            writer.WriteInt32(DsonHeader.Names_Version, header.version, NumberStyle.Simple);
         }
         writer.WriteEndHeader();
     }
@@ -505,7 +490,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteValueBytes(name, dsonType, data);
     }
 
-    public TypeMeta? ContainerTypeMeta => writer.Attachment() as TypeMeta;
+    public TypeMeta? ContainerTypeMeta => writer.UserContextData as TypeMeta;
 
     public DsonCodecImpl<T>? GetInlinableCodec<T>() {
         DsonCodecImpl encoder = converter.CodecRegistry.GetEncoder(typeof(T));
@@ -592,9 +577,9 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if ((features & SerializeFeatures.ObjectFlow) != 0) return ObjectStyle.Flow;
         if ((features & SerializeFeatures.ObjectIndent) != 0) return ObjectStyle.Indent;
         if (typeMeta != null) {
-            return (typeMeta.encodeFeatures & SerializeFeatures.ObjectFlow) != 0
-                ? ObjectStyle.Flow
-                : ObjectStyle.Indent;
+            features = typeMeta.encodeFeatures;
+            if ((features & SerializeFeatures.ObjectFlow) != 0) return ObjectStyle.Flow;
+            if ((features & SerializeFeatures.ObjectIndent) != 0) return ObjectStyle.Indent;
         }
         return ObjectStyle.Indent;
     }

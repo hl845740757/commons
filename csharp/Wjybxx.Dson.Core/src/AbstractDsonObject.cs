@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson
@@ -49,6 +50,7 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
 
     #region 元素检查
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected static void CheckElement(TK? key, DsonValue? value) {
         if (!typeof(TK).IsValueType && key == null) throw new ArgumentException("key cant be null");
         if (value == null) throw new ArgumentException("value cant be null");
@@ -85,7 +87,7 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
 
     public AbstractDsonObject<TK> Append(TK key, DsonValue value) {
         CheckElement(key, value);
-        _valueMap[key!] = value;
+        _valueMap[key] = value;
         return this;
     }
 

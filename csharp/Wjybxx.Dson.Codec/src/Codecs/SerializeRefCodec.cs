@@ -9,7 +9,7 @@ public class SerializeRefCodec<T> : IDsonCodec<SerializeRef<T>> where T : class
         if (inst.Value == null) {
             writer.WriteNull();
         } else {
-            writer.WriteObject(inst.Value, typeof(T), SerializeFeatures.SerializeReference);
+            writer.WriteObject(inst.Value, SerializeFeatures.SerializeReference);
         }
     }
 
@@ -17,9 +17,9 @@ public class SerializeRefCodec<T> : IDsonCodec<SerializeRef<T>> where T : class
         var box = new SerializeRef<T>();
         if (reader.CurrentDsonType == DsonType.Pointer) {
             var ptr = reader.ReadPtr();
-            reader.DeferReference(this, box, "Value", ptr);
+            reader.DeferReference(this, box, "Value", (int)ptr.LocalId);
         } else {
-            box.Value = reader.ReadObject<T>(0);
+            box.Value = reader.ReadObject<T>();
         }
         return box;
     }

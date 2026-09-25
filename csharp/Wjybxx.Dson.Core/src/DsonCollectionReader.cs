@@ -37,7 +37,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 #nullable disable
     private TName _nextName;
     private DsonValue _nextValue;
-    private bool _singleValue;
+    // private bool _singleValue;
 
     /// <summary>
     /// 
@@ -60,7 +60,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     public void UnsafeInit(DsonReaderSettings settings, DsonValue dsonValue, bool singleValue) {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-        this._singleValue = singleValue;
+        // this._singleValue = singleValue;
         if (dsonValue == null) throw new ArgumentNullException(nameof(dsonValue));
         // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
         Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
@@ -137,10 +137,6 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     /// </summary>
     /// <returns></returns>
     public DsonValue CurrentValue => _nextValue;
-    /// <summary>
-    /// 是否是单值集合（顶层上下文）
-    /// </summary>
-    public bool IsSingleValueCollection => _singleValue;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {

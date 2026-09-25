@@ -180,12 +180,12 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
         return DateTime.ParseExact(datetimeString, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
     }
 
-    /** 为避免dotnet5的兼容性问题，我们返回DateTime */
+    /** 为避免unity的兼容性问题，我们返回DateTime */
     public static DateTime ParseDate(string dateString) {
         return DateTime.ParseExact(dateString + "T00:00:00", "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
     }
 
-    /** 为避免dotnet的兼容性问题，我们返回总秒数 */
+    /** 为避免unity的兼容性问题，我们返回总秒数 */
     public static int ParseTime(string timeString) {
         return DatetimeUtil.ParseTime2(timeString);
     }

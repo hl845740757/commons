@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
+using System.Collections.Generic;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -32,30 +32,30 @@ public interface IDsonObjectWriter : IDisposable
     #region 基础值
 
     // 这里使用simple -- 外部通常包含明确类型
-    void WriteInt(string name, int value, SerializeFeatures features = default);
+    void WriteInt(string name, int value, SerializeFeatures features = 0);
 
-    void WriteLong(string name, long value, SerializeFeatures features = default);
+    void WriteLong(string name, long value, SerializeFeatures features = 0);
 
-    void WriteFloat(string name, float value, SerializeFeatures features = default);
+    void WriteFloat(string name, float value, SerializeFeatures features = 0);
 
-    void WriteDouble(string name, double value, SerializeFeatures features = default);
+    void WriteDouble(string name, double value, SerializeFeatures features = 0);
 
-    void WriteFxp64(string name, Fxp64 value);
+    void WriteFxp64(string name, Fxp64 value, SerializeFeatures features = 0);
 
-    void WriteBool(string name, bool value, SerializeFeatures features = default);
+    void WriteBool(string name, bool value, SerializeFeatures features = 0);
 
-    void WriteString(string name, string? value, SerializeFeatures features = default);
+    void WriteString(string name, string? value, SerializeFeatures features = 0);
 
     /** 如果尚未写入name，则根据features决定是否写入 */
-    void WriteNull(string name, SerializeFeatures features = default);
+    void WriteNull(string name, SerializeFeatures features = 0);
 
     void WriteBytes(string name, byte[] bytes, int offset, int len);
 
     /** bytes默认为不可共享对象 -- 如果不期望拷贝，可先包装为Binary */
-    void WriteBytes(string name, byte[]? bytes, SerializeFeatures features = default);
+    void WriteBytes(string name, byte[]? bytes, SerializeFeatures features = 0);
 
     /** Binary默认为可共享对象 - feature用于处理null值*/
-    void WriteBinary(string name, Binary? binary, SerializeFeatures features = default);
+    void WriteBinary(string name, Binary? binary, SerializeFeatures features = 0);
 
     // 内建结构体
     void WritePtr(string name, ObjectPtr objectPtr);
@@ -73,25 +73,26 @@ public interface IDsonObjectWriter : IDisposable
 
     void WriteFxp4(string name, Fxp4 fv4, string? elementNames = null);
 
-    void WriteEnum<T>(string name, T value, SerializeFeatures features = default);
+    // Enum接口未对泛型做限制，目的是支持任意非多态类型
+    void WriteEnum<T>(string name, T value, SerializeFeatures features = 0);
 
     #endregion
 
     #region 基础值-无name版
 
-    void WriteInt(int value, SerializeFeatures features = default);
+    void WriteInt(int value, SerializeFeatures features = 0);
 
-    void WriteLong(long value, SerializeFeatures features = default);
+    void WriteLong(long value, SerializeFeatures features = 0);
 
-    void WriteFloat(float value, SerializeFeatures features = default);
+    void WriteFloat(float value, SerializeFeatures features = 0);
 
-    void WriteDouble(double value, SerializeFeatures features = default);
+    void WriteDouble(double value, SerializeFeatures features = 0);
 
-    void WriteFxp64(Fxp64 value);
+    void WriteFxp64(Fxp64 value, SerializeFeatures features = 0);
 
-    void WriteBool(bool value, SerializeFeatures features = default);
+    void WriteBool(bool value, SerializeFeatures features = 0);
 
-    void WriteString(string? value, SerializeFeatures features = default);
+    void WriteString(string? value, SerializeFeatures features = 0);
 
     /** 注意：该方法一定会写入null -- 因为已写入name */
     void WriteNull();
@@ -99,10 +100,10 @@ public interface IDsonObjectWriter : IDisposable
     void WriteBytes(byte[] bytes, int offset, int len);
 
     /** bytes默认为不可共享对象 -- 如果不期望拷贝，可先包装为Binary */
-    void WriteBytes(byte[]? bytes, SerializeFeatures features = default);
+    void WriteBytes(byte[]? bytes, SerializeFeatures features = 0);
 
     /** Binary默认为可共享对象 -- feature用于处理null值 */
-    void WriteBinary(Binary? binary, SerializeFeatures features = default);
+    void WriteBinary(Binary? binary, SerializeFeatures features = 0);
 
 
     // 内建结构体
@@ -121,43 +122,34 @@ public interface IDsonObjectWriter : IDisposable
 
     void WriteFxp4(Fxp4 fv4, string? elementNames = null);
 
-    void WriteEnum<T>(T value, SerializeFeatures features = default);
+    // Enum接口未对泛型做限制，目的是支持任意非多态类型
+    void WriteEnum<T>(T value, SerializeFeatures features = 0);
 
     #endregion
 
     #region object
 
     /// <summary>
-    /// 写嵌套对象
+    /// 写入任意类型对象到输出流
+    /// 
     /// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
     /// 2.如果尚未写入name且value为null，则根据features决定是否写入null。
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="value">要写入的对象</param>
-    /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="features">特征值</param>
-    void WriteObject(string name, object? value, Type declaredType, SerializeFeatures features = default);
-
-    /// <summary>
-    /// 写嵌套对象
-    /// 
-    /// 该接口用于避免结构体装箱
-    /// </summary>
-    /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
-    /// <param name="value">要写入的对象</param>
     /// <param name="features">特征值</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
-    void WriteObject<T>(string name, in T? value, SerializeFeatures features = default);
+    void WriteObject<T>(string name, in T? value, SerializeFeatures features = 0);
 
     /// <summary>
-    /// 写嵌套对象
+    /// 写入任意类型对象到输出流
     /// </summary>
-    void WriteObject(object? value, Type declaredType, SerializeFeatures features = default);
+    void WriteObject<T>(in T? value, SerializeFeatures features = 0);
 
-    /// <summary>
-    /// 写嵌套对象
-    /// </summary>
-    void WriteObject<T>(in T? value, SerializeFeatures features = default);
+    // 非泛型接口用于类似反射这类无法进行类型转换的的场景
+    void WriteObject(string name, object? value, Type declaredType, SerializeFeatures features = 0);
+
+    void WriteObject(object? value, Type declaredType, SerializeFeatures features = 0);
 
     #endregion
 
@@ -184,37 +176,32 @@ public interface IDsonObjectWriter : IDisposable
     /// </summary>
     /// <param name="encoderType">类型信息，用于嵌套对象获取信息</param>
     /// <param name="features">主要用于计算Style</param>
-    void WriteStartObject(Type? encoderType, SerializeFeatures features = default);
+    void WriteStartObject(Type? encoderType, SerializeFeatures features = 0);
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="typeMeta">类型信息，用于嵌套对象获取信息</param>
     /// <param name="features">主要用于计算Style</param>
-    void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features = default);
+    void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features = 0);
 
     void WriteEndObject();
 
-    void WriteStartArray(Type encoderType, SerializeFeatures features = default);
+    void WriteStartArray(Type encoderType, SerializeFeatures features = 0);
 
-    void WriteStartArray(TypeMeta typeMeta, SerializeFeatures features = default);
+    void WriteStartArray(TypeMeta typeMeta, SerializeFeatures features = 0);
 
     void WriteEndArray();
 
     /// <summary>
     /// 写入对象头信息
     /// 
-    /// 1.该方法应当在writeStartObject/Array后立即调用。
-    /// 2.不写入Header的类型不支持被其它对象引用。
-    /// 3.Header不支持自定义内容，因为框架只能解析固定的Header字段。
-    /// 4.集合类型注意去除<see cref="SerializeFeatures.WriteTypeName"/>属性。
+    /// 注：该方法应当在writeStartObject/Array后立即调用。
     /// </summary>
     /// <param name="encoderType">被编码的类型，不一定等于value的类型，可能是超类类型</param>
     /// <param name="declaredType">声明类型，用于判断是否写入类型信息</param>
-    /// <param name="features">序列化特征值</param>
-    /// <param name="header">对象头信息</param>
-    void WriteHeader(Type encoderType, Type declaredType, SerializeFeatures features,
-                     SerializeHeader header = default);
+    /// <param name="count">List/Map类容器的元素个数</param>
+    void WriteHeader(Type encoderType, Type declaredType, int count = 0);
 
     /// <summary>
     /// 当前容器的类型元数据
