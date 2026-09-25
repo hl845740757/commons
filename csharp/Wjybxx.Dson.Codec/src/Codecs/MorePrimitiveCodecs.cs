@@ -29,7 +29,6 @@ public static class MorePrimitiveCodecs
     public class UInt32Codec : IDsonCodec<uint>, IKeyCodec<uint>
     {
         public string EncodeKey(uint value, SerializeFeatures features) {
-            if ((int)value < 0) features |= SerializeFeatures.NumberHex;
             return features.ToNumberStyle().ToString((int)value).Value;
         }
 
@@ -38,14 +37,13 @@ public static class MorePrimitiveCodecs
         }
 
         public void WriteObject(IDsonObjectWriter writer, uint inst, Type declaredType, SerializeFeatures features) {
-            if ((int)inst < 0) features |= SerializeFeatures.NumberHex;
             if (declaredType != typeof(uint)) {
                 features |= SerializeFeatures.NumberTyped;
             }
             writer.WriteInt((int)inst, features);
         }
 
-        public uint ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public uint ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             return (uint)reader.ReadInt(features);
         }
     }
@@ -53,7 +51,6 @@ public static class MorePrimitiveCodecs
     public class UInt64Codec : IDsonCodec<ulong>, IKeyCodec<ulong>
     {
         public string EncodeKey(ulong value, SerializeFeatures features) {
-            if ((long)value < 0) features |= SerializeFeatures.NumberHex;
             return features.ToNumberStyle().ToString((long)value).Value;
         }
 
@@ -62,14 +59,13 @@ public static class MorePrimitiveCodecs
         }
 
         public void WriteObject(IDsonObjectWriter writer, ulong inst, Type declaredType, SerializeFeatures features) {
-            if ((long)inst < 0) features |= SerializeFeatures.NumberHex;
             if (declaredType != typeof(ulong)) {
                 features |= SerializeFeatures.NumberTyped;
             }
             writer.WriteLong((long)inst, features);
         }
 
-        public ulong ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public ulong ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             return (ulong)reader.ReadLong(features);
         }
     }
@@ -91,7 +87,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features);
         }
 
-        public short ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public short ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             return (short)reader.ReadInt(features);
         }
     }
@@ -113,7 +109,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features);
         }
 
-        public ushort ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public ushort ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             return (ushort)reader.ReadInt(features);
         }
     }
@@ -127,7 +123,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features); // c# byte是无符号数
         }
 
-        public byte ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public byte ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             return (byte)reader.ReadInt(features);
         }
     }
@@ -141,7 +137,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features);
         }
 
-        public sbyte ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public sbyte ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             return (sbyte)reader.ReadInt(features);
         }
     }
@@ -155,7 +151,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(inst, features);
         }
 
-        public char ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public char ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             return (char)reader.ReadInt(features);
         }
     }

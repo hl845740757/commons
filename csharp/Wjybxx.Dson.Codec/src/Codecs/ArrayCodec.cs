@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -50,7 +49,7 @@ public sealed class ArrayCodec<T> : IDsonCodec<T[]>
         }
     }
 
-    public T[] ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public T[] ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         // count非精确值，不可以直接创建数组

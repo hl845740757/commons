@@ -44,8 +44,8 @@ public class NullableCodec<T> : IDsonCodec<T?>, INullableCodec<T?> where T : str
         }
     }
 
-    public T? ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return reader.ReadObject<T>(features.GetElementFeatures(), factory);
+    public T? ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        return reader.ReadObject<T>(features.GetElementFeatures());
     }
 }
 }

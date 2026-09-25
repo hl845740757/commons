@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -29,8 +28,7 @@ public class PairCodec<K, V> : IDsonCodec<KeyValuePair<K, V>>
         SerializeFeatures elementFeatures = features.GetElementFeatures();
         //
         Type encoderType = typeof(KeyValuePair<K, V>);
-        const SerializeFeatures arrayFeatures = SerializeFeatures.WriteAsArray | SerializeFeatures.PairAsArray;
-        if ((features & arrayFeatures) != 0) {
+        if ((features & SerializeFeatures.PairAsArray) != 0) {
             writer.WriteStartArray(encoderType, selfFeatures);
             writer.WriteObject(inst.Key);
             writer.WriteObject(inst.Value, elementFeatures);
@@ -43,13 +41,13 @@ public class PairCodec<K, V> : IDsonCodec<KeyValuePair<K, V>>
         }
     }
 
-    public KeyValuePair<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
+    public KeyValuePair<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        // DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
         Type encoderType = typeof(KeyValuePair<K, V>);
         if (reader.CurrentDsonType == DsonType.Object) {
-            reader.ReadStartObject(encoderType, DeserializeFeatures.PassiveReading);
+            reader.ReadStartObject(encoderType);
             K key = reader.ReadObject<K>("key", 0);
             V value = reader.ReadObject<V>("value", elementFeatures);
             reader.ReadEndObject();

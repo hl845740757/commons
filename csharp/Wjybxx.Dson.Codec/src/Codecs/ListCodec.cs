@@ -18,13 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
 /// 数组的统一解码器，需要根据泛型参数动态构造，以避免拆装箱。
-/// 如果想提升性能，可以为常见基本类型数组提供定制的Codec，以避免低效的WriteObject/ReadObject。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class ListCodec<T> : IDsonCodec<List<T>>
@@ -50,7 +48,7 @@ public sealed class ListCodec<T> : IDsonCodec<List<T>>
         }
     }
 
-    public List<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public List<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //

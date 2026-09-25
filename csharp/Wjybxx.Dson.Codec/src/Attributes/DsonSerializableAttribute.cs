@@ -116,15 +116,22 @@ public class DsonSerializableAttribute : Attribute
     [StableName] public string? Singleton { get; set; }
 
     /// <summary>
-    /// 字段名使用蛇形命名法(TODO)
+    /// 字段名样式（TODO）
     /// 
     /// 1.用于编译期代码生成，非运行时属性；
     /// 2.尽量还是通过<see cref="DsonPropertyAttribute"/>指定字段名。
     /// </summary>
-    [StableName] public bool SnakeCase { get; set; }
+    [StableName] public DsonNameStyle NameStyle { get; set; }
+    /// <summary>
+    /// 是否属性名优先
+    ///
+    /// 注：可以通过【优先属性命名 + 小驼峰命名】，隐藏字段的前缀下划线。
+    /// </summary>
+    [StableName] public bool PreferPropertyName { get; set; }
 
     /// <summary>
     /// 不自动编解码的字段和属性，通常用于跳过不能直接访问的超类字段和属性，然后手动编解码。
+    /// (TODO 删除)
     ///
     /// 注意：
     /// 1.skip仅仅表示不自动读写，被跳过的字段仍然会占用字段编号和name!
@@ -142,5 +149,15 @@ public class DsonSerializableAttribute : Attribute
     /// 为生成代码附加的注解(只支持无参注解)
     /// </summary>
     [StableName] public Type[] Attributes { get; set; } = Array.Empty<Type>();
+}
+
+/// <summary>
+/// Dson字段名样式
+/// </summary>
+public enum DsonNameStyle
+{
+    Unspecified, // 未指定的（原始命名）
+    CamelCase, // 小驼峰（主要转换自动属性命名）
+    SnakeCase, // 蛇形命名（可读性最好）
 }
 }

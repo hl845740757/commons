@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -46,20 +45,7 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
         writer.WriteEndArray();
     }
 
-    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        if (factory != null) {
-            DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-            DeserializeFeatures elementFeatures = features.GetElementFeatures();
-            //
-            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
-            ICollection<T> result = factory() as ICollection<T> ?? new List<T>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(elementFeatures);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            return result;
-        }
+    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return ReadAsList(reader, encoderType, features);
     }
 

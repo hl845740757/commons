@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -30,7 +29,7 @@ public class FloatCodec : IDsonCodec<float>
         writer.WriteFloat(inst, features);
     }
 
-    public float ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public float ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return reader.ReadFloat(features);
     }
 }

@@ -49,8 +49,6 @@ internal interface IEnumCodec<T>
     T ToObject(int value);
 
     int ToNumber(T value);
-
-    bool IsWriteAsString(SerializeFeatures features);
 }
 
 /// <summary>
@@ -62,7 +60,7 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IEnumCodec<T>, IKeyCodec<T> wh
 {
     private readonly Dictionary<T, EnumValueInfo<T>> _value2EnumDic;
     private readonly Dictionary<int, EnumValueInfo<T>> _number2EnumDic;
-    private readonly Dictionary<string, EnumValueInfo<T>> _name2EnumDic; // 忽略大小写
+    private readonly Dictionary<string, EnumValueInfo<T>> _name2EnumDic;
     private readonly bool _isFlags;
     private readonly bool _isWriteAsString;
 
@@ -144,7 +142,7 @@ public sealed class EnumCodec<T> : IDsonCodec<T>, IEnumCodec<T>, IKeyCodec<T> wh
         }
     }
 
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         if (reader.CurrentDsonType.IsNumber()) {
             int number = reader.ReadInt();
             if (number == 0) {

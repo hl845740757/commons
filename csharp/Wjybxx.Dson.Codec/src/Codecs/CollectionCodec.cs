@@ -20,6 +20,10 @@ using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
 
+#if NET6_0_OR_GREATER
+using SystemImmutable = System.Collections.Immutable;
+#endif
+
 namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
@@ -79,14 +83,13 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 
     public Type GetEncoderType() => encoderType;
 
-    private ICollection<T> NewCollection(Func<object>? userFactory, int count) {
-        if (userFactory != null) return (ICollection<T>)userFactory();
+    private ICollection<T> NewCollection(int count) {
         if (factory != null) return factory();
         return factoryKind switch
         {
             FactoryKind.HashSet => new HashSet<T>(count),
             FactoryKind.LinkedHashSet => new LinkedHashSet<T>(count),
-            FactoryKind.ArrayDequeue => new ArrayDeque<T>(),
+            FactoryKind.ArrayDequeue => new ArrayDeque<T>(count),
             FactoryKind.MultiChunkDequeue => new MultiChunkDeque<T>(),
             _ => new List<T>(count)
         };
@@ -105,7 +108,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
             if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableSet<>)) {
                 return ImmutableSet<T>.CreateRange(result);
             }
-            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)) {
+            if (declaredType.GetGenericTypeDefinition() == typeof(SystemImmutable.ImmutableList<>)) {
                 return ImmutableList<T>.CreateRange(result);
             }
         }
@@ -133,12 +136,12 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         }
     }
 
-    public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
         int count = reader.ReadStartArray(encoderType, selfFeatures).count;
-        ICollection<T> result = NewCollection(factory, count);
+        ICollection<T> result = NewCollection(count);
         // T就是声明类型
         DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();
         if (elementCodec != null) {
@@ -155,18 +158,25 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         }
         reader.ReadEndArray();
 
-        // 处理默认的不可变集合
+        // 处理默认的不可变集合 TODO 此处不应该再出现不可变集合，外部会先解码为普通List，再延迟转不可变
         if (declaredType.IsGenericType) {
-            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)) {
+            Type genericTypeDefinition = declaredType.GetGenericTypeDefinition();
+            if (genericTypeDefinition == typeof(ImmutableList<>)) {
                 return result.ToImmutableList2();
             }
-            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableSet<>)) {
+            if (genericTypeDefinition == typeof(ImmutableSet<>)) {
                 return result.ToImmutableSet2();
             }
+#if NET6_0_OR_GREATER
+            if (genericTypeDefinition == typeof(SystemImmutable.ImmutableList<>)) {
+                return SystemImmutable.ImmutableList.CreateRange(result);
+            }
+            if (genericTypeDefinition == typeof(SystemImmutable.ImmutableHashSet<>)) {
+                return SystemImmutable.ImmutableHashSet.CreateRange(result);
+            }
+#endif
         }
-        return DsonCodecHelper.IsReadAsImmutable(features, reader)
-            ? ToImmutable(declaredType, result)
-            : result;
+        return result;
     }
 }
 }

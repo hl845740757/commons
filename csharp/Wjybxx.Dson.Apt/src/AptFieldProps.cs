@@ -41,6 +41,8 @@ internal class AptFieldProps
     public int encodeFeatures;
     /** 反序列化特征值 */
     public int decodeFeatures;
+    /** 向量分量的名字 */
+    public string? elementNames;
 
     /** 实现类 -- 会被替换（修正泛型参数） */
     private INamedTypeSymbol? implType;
@@ -82,6 +84,7 @@ internal class AptFieldProps
         props.setter = GetStringValue(attributeData, "Setter", props.setter);
         props.encodeFeatures = GetIntValue(attributeData, "EncodeFeatures", props.encodeFeatures);
         props.decodeFeatures = GetIntValue(attributeData, "DecodeFeatures", props.decodeFeatures);
+        props.elementNames = GetStringValue(attributeData, "ElementNames", props.elementNames);
 
         props.writeProxy = GetStringValue(attributeData, "WriteProxy", props.writeProxy);
         props.readProxy = GetStringValue(attributeData, "ReadProxy", props.readProxy);
@@ -156,6 +159,7 @@ internal class AptFieldProps
     private static PropertyInfo refPropertySetter;
     private static PropertyInfo refPropertyEncodeFeatures;
     private static PropertyInfo refPropertyDecodeFeatures;
+    private static PropertyInfo refPropertyElementNames;
 
     private static PropertyInfo refPropertyWriteProxy;
     private static PropertyInfo refPropertyReadProxy;
@@ -171,15 +175,16 @@ internal class AptFieldProps
             return;
         }
         {
-            Type type = Type.GetType(CodecProcessor.CNAME_PROPERTY);
+            Type type = Type.GetType(CodecProcessor.CNAME_DSON_PROPERTY);
             if (type == null) {
-                throw new Exception($"load type {CodecProcessor.CNAME_PROPERTY} failed");
+                throw new Exception($"load type {CodecProcessor.CNAME_DSON_PROPERTY} failed");
             }
             refPropertyName = type.GetProperty("Name");
             refPropertyGetter = type.GetProperty("Getter");
             refPropertySetter = type.GetProperty("Setter");
             refPropertyEncodeFeatures = type.GetProperty("EncodeFeatures");
             refPropertyDecodeFeatures = type.GetProperty("DecodeFeatures");
+            refPropertyElementNames = type.GetProperty("ElementNames");
 
             refPropertyWriteProxy = type.GetProperty("WriteProxy");
             refPropertyReadProxy = type.GetProperty("ReadProxy");
@@ -209,6 +214,7 @@ internal class AptFieldProps
         props.setter = (string)refPropertySetter.GetValue(attribute);
         props.encodeFeatures = (int)refPropertyEncodeFeatures.GetValue(attribute);
         props.decodeFeatures = (int)refPropertyDecodeFeatures.GetValue(attribute);
+        props.elementNames = (string)refPropertyElementNames.GetValue(attribute);
 
         props.writeProxy = (string)refPropertyWriteProxy.GetValue(attribute);
         props.readProxy = (string)refPropertyReadProxy.GetValue(attribute);

@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
@@ -28,7 +27,7 @@ public class ExtDateTimeCodec : IDsonCodec<ExtDateTime>
         writer.WriteExtDateTime(inst);
     }
 
-    public ExtDateTime ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public ExtDateTime ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return reader.ReadExtDateTime();
     }
 }

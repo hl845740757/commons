@@ -22,6 +22,10 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 
+#if NET6_0_OR_GREATER
+using SystemImmutable = System.Collections.Immutable;
+#endif
+
 namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
@@ -71,8 +75,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     public Type GetEncoderType() => encoderType;
 
-    private IDictionary<K, V> NewDictionary(Func<object>? userFactory, int count) {
-        if (userFactory != null) return (IDictionary<K, V>)userFactory();
+    private IDictionary<K, V> NewDictionary(int count) {
         if (this.factory != null) return this.factory();
         return factoryKind switch
         {
@@ -111,7 +114,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         }
     }
 
-    public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         reader.SetEnableNameIntern(false); // 禁用字典的name池化
         DsonCodecImpl<K> keyEncoder = reader.CodecRegistry.GetDecoder(typeof(K)) as DsonCodecImpl<K>;
         IDictionary<K, V> result;
@@ -120,7 +123,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             //
             int count = reader.ReadStartArray(encoderType, selfFeatures).count;
-            result = NewDictionary(factory, count);
+            result = NewDictionary(count);
             reader.PublishReference(result);
             //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -130,17 +133,21 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndArray();
         } else {
-            result = ReadDictionary(reader, features, factory, keyEncoder);
+            result = ReadDictionary(reader, features, keyEncoder);
         }
         // 处理默认的不可变集合
         if (declaredType.IsGenericType) {
-            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableDictionary<,>)) {
+            Type genericTypeDefinition = declaredType.GetGenericTypeDefinition();
+            if (genericTypeDefinition == typeof(ImmutableDictionary<,>)) {
                 return result.ToImmutableDictionary2();
             }
+#if NET6_0_OR_GREATER
+            if (genericTypeDefinition == typeof(SystemImmutable.ImmutableDictionary<,>)) {
+                return SystemImmutable.ImmutableDictionary.CreateRange(result);
+            }
+#endif
         }
-        return DsonCodecHelper.IsReadAsImmutable(features, reader)
-            ? ToImmutable(declaredType, result)
-            : result;
+        return result;
     }
 
     private void WriteDictionary(IDsonObjectWriter writer, IDictionary<K, V> inst,
@@ -155,7 +162,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteStartObject(encoderType, declaredType, selfFeatures, inst.Count); // 字典写为普通文档
                 foreach (KeyValuePair<K, V> pair in inst) {
                     string keyString = keyEncoder.EncodeKey(pair.Key, keyFeatures);
-                    writer.WriteName(keyString); // 确保null值写入
+                    writer.WriteName(keyString); // 确保null值写入，也可通过Feature实现
                     writer.WriteObject(keyString, pair.Value, elementFeatures);
                 }
                 writer.WriteEndObject();
@@ -204,15 +211,14 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     }
 
     private IDictionary<K, V> ReadDictionary(IDsonObjectReader reader, DeserializeFeatures features,
-                                             Func<object>? factory,
                                              DsonCodecImpl<K> keyDecoder) {
-        DeserializeFeatures selfFeatures = features.ErasureElementFeatures() | DeserializeFeatures.PassiveReading;
+        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
         IDictionary<K, V> result;
         if (reader.CurrentDsonType == DsonType.Object) {
             int count = reader.ReadStartObject(encoderType, selfFeatures).count;
-            result = NewDictionary(factory, count);
+            result = NewDictionary(count);
             reader.PublishReference(result);
             //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -223,7 +229,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             reader.ReadEndObject();
         } else {
             int count = reader.ReadStartArray(encoderType, selfFeatures).count;
-            result = NewDictionary(factory, count);
+            result = NewDictionary(count);
             reader.PublishReference(result);
             //
             DsonType firstDsonType = reader.ReadDsonType();
@@ -232,7 +238,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 case DsonType.Object: { // Pair为子文档
                     TypeMeta pairTypeMeta = GetPairTypeMeta(reader.TypeMetaRegistry);
                     do {
-                        reader.ReadStartObject(pairTypeMeta, DeserializeFeatures.PassiveReading);
+                        reader.ReadStartObject(pairTypeMeta);
                         {
                             reader.ReadDsonType();
                             K key = keyDecoder.DecodeKey(reader.ReadName());

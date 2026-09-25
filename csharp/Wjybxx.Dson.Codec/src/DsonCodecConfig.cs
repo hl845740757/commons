@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec.Codecs;
 
@@ -482,6 +483,7 @@ public sealed class DsonCodecConfig
         // 特殊组件
         config.AddGenericCodec(typeof(Nullable<>), typeof(NullableCodec<>));
         config.AddGenericCodec(typeof(KeyValuePair<,>), typeof(PairCodec<,>));
+        config.AddGenericCodec(typeof(SerializeRef<>), typeof(SerializeRefCodec<>));
 
         // 所有集合都能转IEnumerable编码；readonly只能解码为默认类型
         config.AddGenericEncoder(typeof(IEnumerable<>), typeof(EnumerableCodec<>));

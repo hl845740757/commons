@@ -496,6 +496,12 @@ internal class PojoCodecGenerator
             codeBuilder.AddStatement("writer.$L($L, inst.$L, ($T)$L)",
                 writeMethodName, SerialName(fieldName), fieldAccess,
                 CodecProcessor.typeName_EncodeFeatures, fieldProps.encodeFeatures);
+        } else if (fieldProps.elementNames != null && (writeMethodName  == MNAME_WRITE_DOUBLE4 
+                                                       || writeMethodName == MNAME_WRITE_LONG4 
+                                                       || writeMethodName == MNAME_WRITE_FXP4)) {
+            // writer.writeDouble4(names_fieldName, inst.field, elementNames)
+            codeBuilder.AddStatement("writer.$L($L, inst.$L, $S)",
+                writeMethodName, SerialName(fieldName), fieldAccess, fieldProps.elementNames);
         } else {
             // 未对DateTime等结构体做in优化，因为通过属性访问时，无法使用in
             // writer.writeInt(names_fieldName, inst.field)

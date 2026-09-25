@@ -47,7 +47,7 @@ public static class MoreCollectionCodecs
             writer.WriteEndArray();
         }
 
-        public Stack<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public Stack<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             List<T> list = EnumerableCodec<T>.ReadAsList(reader, typeof(Stack<T>), features);
             // Stack并未实现ICollection接口，另外我们需要保持与序列化之前相同的顺序，需要将list反向转换为Stack
             Stack<T> result = new Stack<T>(list.Count);
@@ -76,7 +76,7 @@ public static class MoreCollectionCodecs
             writer.WriteEndArray();
         }
 
-        public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             // Queue重复编码，避免不必要的拷贝
@@ -112,7 +112,7 @@ public static class MoreCollectionCodecs
             writer.WriteEndArray();
         }
 
-        public SmallDynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public SmallDynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             //
@@ -148,7 +148,7 @@ public static class MoreCollectionCodecs
             writer.WriteEndArray();
         }
 
-        public DynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+        public DynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
             DeserializeFeatures elementFeatures = features.GetElementFeatures();
             //

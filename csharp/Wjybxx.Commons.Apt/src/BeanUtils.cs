@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Wjybxx.Commons.Poet;
 
@@ -354,6 +355,41 @@ public static class BeanUtils
         }
         MethodInfo setMethod = propertyInfo.SetMethod!;
         return setMethod.IsStatic;
+    }
+
+    #endregion
+
+    #region util
+
+    /// <summary>
+    /// CamelCase => snake_case
+    /// </summary>
+    public static string ToSnakeCase(string value) {
+        if (string.IsNullOrEmpty(value)) {
+            return value;
+        }
+
+        var builder = new StringBuilder(value.Length + 8);
+        for (int i = 0; i < value.Length; i++) {
+            char current = value[i];
+            if (!char.IsUpper(current)) {
+                builder.Append(current);
+                continue;
+            }
+            if (i > 0) {
+                char previous = value[i - 1];
+                bool followsLowerOrDigit = char.IsLower(previous) || char.IsDigit(previous);
+                bool startsWordAfterAcronym = char.IsUpper(previous)
+                                              && i + 1 < value.Length
+                                              && char.IsLower(value[i + 1]);
+
+                if (followsLowerOrDigit || startsWordAfterAcronym) {
+                    builder.Append('_');
+                }
+            }
+            builder.Append(char.ToLowerInvariant(current));
+        }
+        return builder.ToString();
     }
 
     #endregion

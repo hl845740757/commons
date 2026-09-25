@@ -22,7 +22,6 @@ using System.Linq;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
 {

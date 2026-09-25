@@ -60,7 +60,6 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_NumberStyles = "Wjybxx.Dson.Text.NumberStyles"; // 生成器直接指向工具类
     private const string CNAME_ContextType = "Wjybxx.Dson.DsonContextType"; // 生成器直接指向工具类
 
-    private const string CNAME_NonSerialize = "System.NonSerializedAttribute";
     private const string CNAME_TypeInfo = "Wjybxx.Commons.TypeInfo";
     private const string CNAME_TypeName = "Wjybxx.Commons.TypeName";
 
@@ -68,12 +67,14 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_ISet = "System.Collections.Generic.ISet`1";
     private const string CNAME_IDictionary = "System.Collections.Generic.IDictionary`2";
 
+    private const string CNAME_NON_SERIALIZED = "System.NonSerializedAttribute";
+    private const string CNAME_UNITY_SERIALIZE_FIELD = "UnityEngine.SerializeField";
     private const string CNAME_SERIALIZE_REFERENCES = "Wjybxx.Commons.SerializeReference";
     private const string CNAME_UNITY_SERIALIZE_REFERENCES = "UnityEngine.SerializeReference";
 
     // dson
     private const string CNAME_SERIALIZABLE = "Wjybxx.Dson.Codec.Attributes.DsonSerializableAttribute";
-    internal const string CNAME_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
+    internal const string CNAME_DSON_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
     internal const string CNAME_DSON_IGNORE = "Wjybxx.Dson.Codec.Attributes.DsonIgnoreAttribute";
     private const string CNAME_DSON_READER = "Wjybxx.Dson.Codec.IDsonObjectReader";
     private const string CNAME_DSON_WRITER = "Wjybxx.Dson.Codec.IDsonObjectWriter";
@@ -167,7 +168,7 @@ public class CodecProcessor : ISourceGenerator
 
         // dson
         anno_DsonSerializable = compilation.GetTypeByMetadataName(CNAME_SERIALIZABLE);
-        anno_DsonProperty = compilation.GetTypeByMetadataName(CNAME_PROPERTY);
+        anno_DsonProperty = compilation.GetTypeByMetadataName(CNAME_DSON_PROPERTY);
         anno_DsonIgnore = compilation.GetTypeByMetadataName(CNAME_DSON_IGNORE);
         type_DsonReader = compilation.GetTypeByMetadataName(CNAME_DSON_READER);
         type_DsonWriter = compilation.GetTypeByMetadataName(CNAME_DSON_WRITER);
@@ -507,7 +508,7 @@ public class CodecProcessor : ISourceGenerator
                 continue;
             }
             // dson-property
-            AptFieldProps aptFieldProps = AptFieldProps.Parse(fieldInfo, CNAME_PROPERTY, compilation);
+            AptFieldProps aptFieldProps = AptFieldProps.Parse(fieldInfo, CNAME_DSON_PROPERTY, compilation);
             // dson-ignore
             aptFieldProps.ParseIgnore(fieldInfo, CNAME_DSON_IGNORE);
             // serialize-reference
@@ -515,7 +516,6 @@ public class CodecProcessor : ISourceGenerator
             if (aptFieldProps.serializeReference == null) {
                 aptFieldProps.ParseSerializeReference(fieldInfo, CNAME_UNITY_SERIALIZE_REFERENCES);
             }
-            //
             context.fieldPropsMap[fieldInfo] = aptFieldProps;
         }
     }
@@ -783,8 +783,13 @@ public class CodecProcessor : ISourceGenerator
             return !aptFieldProps.ignore.Value;
         }
         // 无注解的情况下，默认忽略 NonSerialized 字段
-        if (fieldInfo.GetAttribute(CNAME_NonSerialize) != null) {
+        if (fieldInfo.GetAttribute(CNAME_NON_SERIALIZED) != null) {
             return false;
+        }
+        // 有DsonProperty注解也视作需要序列化, Unity项目的话还需要包括SerializeField
+        if (fieldInfo.GetAttribute(CNAME_DSON_PROPERTY) != null
+            || fieldInfo.GetAttribute(CNAME_UNITY_SERIALIZE_FIELD) != null) {
+            return true;
         }
         // 判断public和getter/setter
         if (fieldInfo.IsPublic) {

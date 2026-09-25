@@ -34,7 +34,7 @@ public class StringCodec : IDsonCodec<string>, IKeyCodec<string>
         writer.WriteString(inst, features);
     }
 
-    public string ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public string ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return reader.ReadString(features);
     }
 }
