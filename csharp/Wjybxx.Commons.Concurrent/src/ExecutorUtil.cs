@@ -127,7 +127,7 @@ public static class ExecutorUtil
     /// <param name="options">awaiter的调度选项</param>
     /// <returns></returns>
     public static FutureAwaitable2<T> GetAwaitable2<T>(this IFuture<T> future, IExecutor? executor,
-                                                      int options = TaskOptions.SUPPRESS_ALL_THROW) {
+                                                       int options = TaskOptions.SUPPRESS_ALL_THROW) {
         return new FutureAwaitable2<T>(future, executor, options);
     }
 
@@ -138,7 +138,7 @@ public static class ExecutorUtil
     /// <param name="options">awaiter的调度选项</param>
     /// <returns></returns>
     public static FutureAwaitable2<T> GetAwaitable2<T>(this IFuture<T> future,
-                                                      int options = TaskOptions.SUPPRESS_ALL_THROW) {
+                                                       int options = TaskOptions.SUPPRESS_ALL_THROW) {
         return new FutureAwaitable2<T>(future, null, options);
     }
 

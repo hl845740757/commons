@@ -528,6 +528,7 @@ public static class Dsons
             case DsonType.Int64: return DsonInt64.ValueOf(reader.ReadInt64());
             case DsonType.Float: return DsonFloat.ValueOf(reader.ReadFloat());
             case DsonType.Double: return DsonDouble.ValueOf(reader.ReadDouble());
+            case DsonType.Fxp64: return new DsonFxp64(reader.ReadFxp64());
             case DsonType.Bool: return DsonBool.ValueOf(reader.ReadBool());
             case DsonType.String: return new DsonString(reader.ReadString());
             case DsonType.Null: {
@@ -535,7 +536,6 @@ public static class Dsons
                 return DsonNull.NULL;
             }
             case DsonType.Binary: return new DsonBinary(reader.ReadBinary());
-            case DsonType.Fxp64: return new DsonFxp64(reader.ReadFxp64());
             case DsonType.Pointer: return new DsonPointer(reader.ReadPtr());
             case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
             case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());

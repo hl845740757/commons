@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -26,36 +28,13 @@ namespace Wjybxx.Commons.Collections
 /// </summary>
 public static partial class CollectionUtil
 {
-    #region factory
-
-    /** 创建一个元素的字典 */
-    public static Dictionary<TKey, TValue> NewDictionary<TKey, TValue>(TKey key, TValue value) {
-        Dictionary<TKey, TValue>? values = new Dictionary<TKey, TValue>(2);
-        values.Add(key, value);
-        return values;
+#if NET6_0_OR_GREATER
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ref TValue? GetValueRefOrAddDefault<TKey, TValue>(
+        this Dictionary<TKey, TValue> dictionary, TKey key, out bool exists) where TKey : notnull {
+        return ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, key, out exists);
     }
-
-    /** 创建2个元素字典 */
-    public static Dictionary<TKey, TValue> NewDictionary<TKey, TValue>(TKey key1, TValue value1,
-                                                                       TKey key2, TValue value2) {
-        Dictionary<TKey, TValue>? values = new Dictionary<TKey, TValue>(2);
-        values.Add(key1, value1);
-        values.Add(key2, value2);
-        return values;
-    }
-
-    /** 创建3个元素的字典 */
-    public static Dictionary<TKey, TValue> NewDictionary<TKey, TValue>(TKey key1, TValue value1,
-                                                                       TKey key2, TValue value2,
-                                                                       TKey key3, TValue value3) {
-        Dictionary<TKey, TValue>? values = new Dictionary<TKey, TValue>(4);
-        values.Add(key1, value1);
-        values.Add(key2, value2);
-        values.Add(key3, value3);
-        return values;
-    }
-
-    #endregion
+#endif
 
     /// <summary>
     /// 如果key存在，则返回key关联的value；如果key不存在，则执行给定的action，并将value放入字典；

@@ -592,9 +592,9 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     public void SetEnableNameIntern(bool? value) {
         if (value == null) {
-            context.enableNameIntern = settings.enableNameIntern != null && settings.enableNameIntern.Value;
+            context.enableNameIntern = settings.enableNameIntern ?? false;
         } else if (value.Value) {
-            context.enableNameIntern = settings.enableNameIntern == null || settings.enableNameIntern.Value;
+            context.enableNameIntern = settings.enableNameIntern ?? true;
         } else {
             context.enableNameIntern = false;
         }

@@ -400,7 +400,7 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
         ValidateReentryId(reentryId);
         SetCompletion(TYPE_RUN_CTX, continuation, state, executor, options, cancelToken);
     }
-    
+
     private void SetCompletion(int type, object? action, object? state,
                                IExecutor? executor, int options, CancellationToken cancelToken) {
         // if (action == null) throw new ArgumentNullException(nameof(action));
@@ -459,7 +459,7 @@ public class ValuePromise<T> : IValuePromise<T>, ITask
     }
 
     #endregion
-    
+
     #endregion
 
     #region api-promise

@@ -67,7 +67,7 @@ public static class DsonReaderUtils
         int oldLimit = input.PushLimit(size);
         Binary binary;
         {
-            binary = Binary.UnsafeWrap(input.ReadRawBytes(size));
+            binary = Binary.Wrap(input.ReadRawBytes(size));
         }
         input.PopLimit(oldLimit);
         return binary;
@@ -217,7 +217,7 @@ public static class DsonReaderUtils
             w2.ReadInt64(input),
             w3.ReadInt64(input));
     }
-    
+
     public static void WriteFxp4(IDsonOutput output, Fxp4 value) {
         WireType w0 = WireTypes.BestOfInt64(value.v0.rawValue);
         WireType w1 = WireTypes.BestOfInt64(value.v1.rawValue);

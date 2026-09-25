@@ -35,4 +35,32 @@ public sealed class SerializeReference : Attribute
     public SerializeReference() {
     }
 }
+
+/// <summary>
+/// 序列化引用
+/// 
+/// 1.该注解用于解决值类型内部禁止使用<see cref="SerializeReference"/>的问题。
+/// 2.该结构与<see cref="Nullable{T}"/>类似，编码时会进行拆箱。
+/// 3.使用该结构时，应该避免null - 即使用空容器代替null。
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public sealed class SerializeRef<T> : IEquatable<SerializeRef<T>> where T : class
+{
+    public T? Value { get; set; }
+
+    public bool Equals(SerializeRef<T>? other) {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Equals(Value, other.Value);
+    }
+
+    public override bool Equals(object? obj) {
+        return ReferenceEquals(this, obj) || obj is SerializeRef<T> other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        // ReSharper disable NonReadonlyMemberInGetHashCode
+        return Value == null ? 0 : Value.GetHashCode();
+    }
+}
 }

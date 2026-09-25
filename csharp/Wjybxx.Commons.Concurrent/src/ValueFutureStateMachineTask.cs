@@ -142,7 +142,7 @@ internal sealed class ValueFutureStateMachineTask<S, T> : ValuePromise<T>, IValu
             Unlock();
         }
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Lock() {
         while (Interlocked.CompareExchange(ref _spinLock, 1, 0) != 0) {

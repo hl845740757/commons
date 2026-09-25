@@ -47,7 +47,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     /// </summary>
     [FieldOffset(8)] private readonly string localPath;
     /// <summary>
-    /// 对象在集合内的id
+    /// 对象在集合内的id TODO int32足够
     /// (如果目标集合是数组，则可能是下标) 
     /// </summary>
     [FieldOffset(16)] private readonly long localId;

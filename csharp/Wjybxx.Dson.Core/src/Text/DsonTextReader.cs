@@ -847,11 +847,8 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override void DoReadName() {
-        if (context.enableNameIntern) {
-            currentName = Dsons.InternField(PopNextName());
-        } else {
-            currentName = PopNextName() ?? throw new NullReferenceException();
-        }
+        string name = PopNextName() ?? throw new AssertionError();
+        currentName = context.enableNameIntern ? Dsons.InternField(name) : name;
     }
 
     #endregion

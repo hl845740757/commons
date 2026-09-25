@@ -102,7 +102,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     #region internal
 
     internal void Reset() {
-#pragma warning disable CS0420        
+#pragma warning disable CS0420
         stack = null;
         _executor = null;
         _result = default;
@@ -476,7 +476,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     /** 状态机特殊优化 */
     private void PushUniOnCompletedFsm(IExecutor? executor, int options, CancellationToken cancelToken,
-                                        Action<object?> continuation, object? state) {
+                                       Action<object?> continuation, object? state) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
             // 需检查取消令牌，行为一致性

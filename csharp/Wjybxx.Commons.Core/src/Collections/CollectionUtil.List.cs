@@ -354,13 +354,21 @@ public static partial class CollectionUtil
     /// <summary>
     /// 将List转换为Stack
     /// </summary>
-    /// <param name="list"></param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
     public static Stack<T> ToStack<T>(IList<T> list) {
         Stack<T> stack = new Stack<T>(list.Count);
         for (int idx = list.Count - 1; idx >= 0; idx--) {
             stack.Push(list[idx]);
+        }
+        return stack;
+    }
+
+    /// <summary>
+    /// 将List转换为Queue
+    /// </summary>
+    public static Queue<T> ToQueue<T>(IList<T> list) {
+        Queue<T> stack = new Queue<T>(list.Count);
+        for (int idx = 0; idx < list.Count; idx++) {
+            stack.Enqueue(list[idx]);
         }
         return stack;
     }

@@ -144,7 +144,7 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     void WriteDateTime(ExtDateTime dateTime);
 
     void WriteTimestamp(Timestamp timestamp);
-    
+
     /// <summary>
     /// 写入一个Double4(元组)，Long4和Fxp4的元素名字规则同理
     /// </summary>

@@ -52,6 +52,10 @@ public enum NumberStyle
     /// 固定长度编码（全Bit编码），适用十六进制和二进制
     /// </summary>
     Fixed = 0x40,
+    /// <summary>
+    /// 打印为无符号数(预留，用于支持uint32/uint64)
+    /// </summary>
+    Unsigned = 0x80,
 
     /// <summary>
     /// 浮点数禁用科学计数法，并最多保留小数点后3位(向最近的偶数舍入) -- 可能导致反序列化结果不相等
