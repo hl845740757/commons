@@ -41,11 +41,13 @@ internal class AptFieldProps
     public int encodeFeatures;
     /** 反序列化特征值 */
     public int decodeFeatures;
+    /** 向量分量的名字 */
+    public string? elementNames;
 
-    /** 实现类 -- 会被替换（修正泛型参数） */
-    private INamedTypeSymbol? implType;
-    /** 实现类的TypeName缓存 */
-    public TypeName? implTypeName;
+    /** 目标类型 -- 会被替换（修正泛型参数） */
+    public INamedTypeSymbol? targetType;
+    /** 目标类型的TypeName缓存 */
+    public TypeName? targetTypeName;
     /** 写代理方法名 */
     public string? writeProxy;
     /** 读代理方法名 */
@@ -68,41 +70,51 @@ internal class AptFieldProps
             return new AptFieldProps();
         }
         if (attributeData.CompilationData != null) {
-            return ParseByCompilationData(fieldInfo, attributeData.CompilationData);
+            return ParseByCompilationData(fieldInfo, attributeData.CompilationData, compilation);
         }
         return ParseByReflectionData(fieldInfo, attributeData.ReflectionData, compilation);
     }
 
+    private void ParseTargetType(AptFieldInfo fieldInfo, INamedTypeSymbol? targetType,
+                                 Compilation compilation) {
+        ITypeSymbol? fieldType = fieldInfo.FieldType;
+        if (fieldType == null || targetType == null) {
+            throw new InvalidOperationException($"无法解析字段'{fieldInfo.Name}'的TargetType或声明类型。");
+        }
+        // 生成器使用typed null传递目标类型，只支持引用目标；不要求无参构造函数
+        if (!targetType.IsReferenceType) {
+            throw new InvalidOperationException($"字段'{fieldInfo.Name}'的TargetType '{targetType}'必须为引用类型。");
+        }
+        // 不测试IsUnboundGenericType，保留将声明类型的泛型参数拷贝给TargetType的约定
+        if (targetType.IsGenericType) {
+            INamedTypeSymbol? namedFieldType = fieldType as INamedTypeSymbol;
+            int argumentCount = namedFieldType?.TypeArguments.Length ?? 0;
+            if (namedFieldType == null || targetType.Arity != argumentCount) {
+                throw new InvalidOperationException($"字段'{fieldInfo.Name}'的TargetType '{targetType}'需要{targetType.Arity}个泛型参数，但声明类型'{fieldType}'提供了{argumentCount}个。");
+            }
+            targetType = targetType.OriginalDefinition.Construct(namedFieldType.TypeArguments.ToArray());
+        }
+        this.targetType = targetType;
+        this.targetTypeName = AptUtils.ParseType(targetType).RemoveAllNullableAttribute();
+    }
+
     #region parse-compilation
 
-    private static AptFieldProps ParseByCompilationData(AptFieldInfo fieldInfo, AttributeData attributeData) {
+    private static AptFieldProps ParseByCompilationData(AptFieldInfo fieldInfo, AttributeData attributeData,
+                                                        Compilation compilation) {
         AptFieldProps props = new AptFieldProps();
         props.name = GetStringValue(attributeData, "Name", props.name);
         props.getter = GetStringValue(attributeData, "Getter", props.getter);
         props.setter = GetStringValue(attributeData, "Setter", props.setter);
         props.encodeFeatures = GetIntValue(attributeData, "EncodeFeatures", props.encodeFeatures);
         props.decodeFeatures = GetIntValue(attributeData, "DecodeFeatures", props.decodeFeatures);
+        props.elementNames = GetStringValue(attributeData, "ElementNames", props.elementNames);
 
         props.writeProxy = GetStringValue(attributeData, "WriteProxy", props.writeProxy);
         props.readProxy = GetStringValue(attributeData, "ReadProxy", props.readProxy);
-        // 需要将字段的泛型参数拷贝给Impl
-        {
-            if (AptUtils.GetAttributeValue(attributeData, "Impl", out TypedConstant typedConstant)) {
-                INamedTypeSymbol? fieldType = fieldInfo.FieldType as INamedTypeSymbol;
-                INamedTypeSymbol? implType = typedConstant.Value as INamedTypeSymbol;
-                if (fieldType == null || implType == null) {
-                    throw new InvalidOperationException("fieldType == null || implType == null");
-                }
-                // 不测试IsUnboundGenericType，因为可能绑定了一部分...
-                if (implType.IsGenericType) {
-                    implType = implType.OriginalDefinition.Construct(fieldType.TypeArguments.ToArray());
-                }
-                props.implType = implType;
-                props.implTypeName = AptUtils.ParseType(implType).RemoveAllNullableAttribute();
-            } else {
-                props.implType = null;
-                props.implTypeName = null;
-            }
+
+        if (AptUtils.GetAttributeValue(attributeData, "TargetType", out TypedConstant typedConstant)) {
+            props.ParseTargetType(fieldInfo, typedConstant.Value as INamedTypeSymbol, compilation);
         }
         return props;
     }
@@ -110,16 +122,6 @@ internal class AptFieldProps
     private static string? GetStringValue(AttributeData attributeData, string propertyName, string? defValue) {
         if (AptUtils.GetAttributeValue(attributeData, propertyName, out TypedConstant typedConstant)) {
             return typedConstant.GetValueAsString() ?? defValue;
-        }
-        return defValue;
-    }
-
-    private static string? GetEnumStringValue(AttributeData attributeData, string propertyName, string? defValue,
-                                              INamedTypeSymbol typeSymbol) {
-        if (AptUtils.GetAttributeValue(attributeData, propertyName, out TypedConstant typedConstant)) {
-            if (typedConstant.Value is int value) {
-                return AptUtils.GetEnumName(typeSymbol, value);
-            }
         }
         return defValue;
     }
@@ -156,10 +158,11 @@ internal class AptFieldProps
     private static PropertyInfo refPropertySetter;
     private static PropertyInfo refPropertyEncodeFeatures;
     private static PropertyInfo refPropertyDecodeFeatures;
+    private static PropertyInfo refPropertyElementNames;
 
+    private static PropertyInfo refPropertyTargetType;
     private static PropertyInfo refPropertyWriteProxy;
     private static PropertyInfo refPropertyReadProxy;
-    private static PropertyInfo refPropertyImpl;
     // DsonIgnore
     private static PropertyInfo refPropertyIgnoreValue;
 
@@ -171,19 +174,20 @@ internal class AptFieldProps
             return;
         }
         {
-            Type type = Type.GetType(CodecProcessor.CNAME_PROPERTY);
+            Type type = Type.GetType(CodecProcessor.CNAME_DSON_PROPERTY);
             if (type == null) {
-                throw new Exception($"load type {CodecProcessor.CNAME_PROPERTY} failed");
+                throw new Exception($"load type {CodecProcessor.CNAME_DSON_PROPERTY} failed");
             }
             refPropertyName = type.GetProperty("Name");
             refPropertyGetter = type.GetProperty("Getter");
             refPropertySetter = type.GetProperty("Setter");
             refPropertyEncodeFeatures = type.GetProperty("EncodeFeatures");
             refPropertyDecodeFeatures = type.GetProperty("DecodeFeatures");
+            refPropertyElementNames = type.GetProperty("ElementNames");
 
+            refPropertyTargetType = type.GetProperty("TargetType");
             refPropertyWriteProxy = type.GetProperty("WriteProxy");
             refPropertyReadProxy = type.GetProperty("ReadProxy");
-            refPropertyImpl = type.GetProperty("Impl");
         }
         {
             Type type = Type.GetType(CodecProcessor.CNAME_DSON_IGNORE);
@@ -209,26 +213,15 @@ internal class AptFieldProps
         props.setter = (string)refPropertySetter.GetValue(attribute);
         props.encodeFeatures = (int)refPropertyEncodeFeatures.GetValue(attribute);
         props.decodeFeatures = (int)refPropertyDecodeFeatures.GetValue(attribute);
+        props.elementNames = (string)refPropertyElementNames.GetValue(attribute);
 
         props.writeProxy = (string)refPropertyWriteProxy.GetValue(attribute);
         props.readProxy = (string)refPropertyReadProxy.GetValue(attribute);
 
-        // 修正实现类的泛型参数
-        Type? implType = refPropertyImpl.GetValue(attribute) as Type;
-        if (implType != null) {
-            if (implType.IsGenericType) {
-                implType = implType.GetGenericTypeDefinition();
-            }
-            INamedTypeSymbol? fieldType = fieldInfo.FieldType as INamedTypeSymbol;
-            INamedTypeSymbol? implTypeSymbol = compilation.GetTypeByMetadataName(implType.ToString());
-            if (fieldType == null || implTypeSymbol == null) {
-                throw new InvalidOperationException("implTypeSymbol == null");
-            }
-            if (implTypeSymbol.IsGenericType) {
-                implTypeSymbol = implTypeSymbol.OriginalDefinition.Construct(fieldType.TypeArguments.ToArray());
-            }
-            props.implType = implTypeSymbol;
-            props.implTypeName = AptUtils.ParseType(implTypeSymbol).RemoveAllNullableAttribute();
+        // 反射类型先还原为定义，再统一按声明类型闭合泛型参数
+        if (refPropertyTargetType.GetValue(attribute) is Type targetTyp0) {
+            INamedTypeSymbol? targetType = compilation.GetTypeByMetadataName(targetTyp0.ToString());
+            props.ParseTargetType(fieldInfo, targetType, compilation);
         }
         return props;
     }
@@ -259,6 +252,7 @@ internal class AptFieldProps
         }
         serializeReference = true;
         encodeFeatures |= 0x01; // 序列化引用
+        decodeFeatures |= 0x01;
     }
 
     #endregion

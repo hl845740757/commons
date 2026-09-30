@@ -27,7 +27,7 @@ public class Fxp4Codec : IDsonCodec<Fxp4>
         writer.WriteFxp4(inst);
     }
 
-    public Fxp4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public Fxp4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return reader.ReadFxp4();
     }
 }

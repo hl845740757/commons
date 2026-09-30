@@ -53,12 +53,18 @@ public sealed class ArrayDictionary<TKey, TValue> : ISequencedDictionary<TKey, T
         }
     }
 
-    public ArrayDictionary(IDictionary<TKey, TValue> dictionary) {
+    public ArrayDictionary(IDictionary<TKey, TValue> dictionary, bool fastPath = false) {
         if (dictionary.Count > 0) { // 避免创建Table，但并发字典的Count测试可能是不精确的
             EnsureCapacity(dictionary.Count);
         }
-        foreach (var pair in dictionary) {
-            Put(pair.Key, pair.Value);
+        if (fastPath) {
+            foreach (var pair in dictionary) {
+                AddMultiple(pair.Key, pair.Value);
+            }
+        } else {
+            foreach (var pair in dictionary) {
+                Add(pair.Key, pair.Value);
+            }
         }
     }
 

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -29,39 +28,22 @@ public class PairCodec<K, V> : IDsonCodec<KeyValuePair<K, V>>
         SerializeFeatures elementFeatures = features.GetElementFeatures();
         //
         Type encoderType = typeof(KeyValuePair<K, V>);
-        const SerializeFeatures arrayFeatures = SerializeFeatures.WriteAsArray | SerializeFeatures.PairAsArray;
-        if ((features & arrayFeatures) != 0) {
-            writer.WriteStartArray(encoderType, selfFeatures);
-            writer.WriteObject(inst.Key);
-            writer.WriteObject(inst.Value, elementFeatures);
-            writer.WriteEndArray();
-        } else {
-            writer.WriteStartObject(encoderType, selfFeatures);
-            writer.WriteObject("key", inst.Key);
-            writer.WriteObject("value", inst.Value, elementFeatures);
-            writer.WriteEndObject();
-        }
+        writer.WriteStartArray(encoderType, selfFeatures);
+        writer.WriteObject(inst.Key);
+        writer.WriteObject(inst.Value, elementFeatures);
+        writer.WriteEndArray();
     }
 
-    public KeyValuePair<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-        DeserializeFeatures elementFeatures = features.GetElementFeatures();
+    public KeyValuePair<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        // DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
+        // DeserializeFeatures elementFeatures = features.GetElementFeatures();
         //
         Type encoderType = typeof(KeyValuePair<K, V>);
-        if (reader.CurrentDsonType == DsonType.Object) {
-            reader.ReadStartObject(encoderType, DeserializeFeatures.PassiveReading);
-            K key = reader.ReadObject<K>("key", 0);
-            V value = reader.ReadObject<V>("value", elementFeatures);
-            reader.ReadEndObject();
-            return new KeyValuePair<K, V>(key, value);
-        } else {
-            // Array
-            reader.ReadStartArray(encoderType);
-            K key = reader.ReadObject<K>(0);
-            V value = reader.ReadObject<V>(elementFeatures);
-            reader.ReadEndArray();
-            return new KeyValuePair<K, V>(key, value);
-        }
+        reader.ReadStartArray(encoderType);
+        K key = reader.ReadObject<K>();
+        V value = reader.ReadObject<V>();
+        reader.ReadEndArray();
+        return new KeyValuePair<K, V>(key, value);
     }
 }
 }

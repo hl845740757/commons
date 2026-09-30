@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -27,7 +26,7 @@ public class DoubleCodec : IDsonCodec<double>
         writer.WriteDouble(inst, features); // double无需声明类型
     }
 
-    public double ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public double ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return reader.ReadDouble(features);
     }
 }

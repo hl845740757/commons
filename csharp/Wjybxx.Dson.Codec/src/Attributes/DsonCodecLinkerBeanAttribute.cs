@@ -40,24 +40,14 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///
 ///      // Class
 ///      public static MyBean NewInstance(IDsonObjectReader reader){}
-///      public static void ReadObject(MyBean instance, IDsonObjectReader reader){}
 ///      public static void ReadField(MyBean instance, IDsonObjectReader reader, string dsonName){}
-///      public static void AfterDecode(MyBean instance, ConverterOptions options){}
-///
-///      public static void BeforeEncode(MyBean instance, ConverterOptions options){}
-///      public static void WriteObject(MyBean instance, IDsonObjectWriter writer){}
 ///      // 字段读写代理
 ///      public static void ReadField1(MyBean instance, IDsonObjectReader reader, String dsonName){}
 ///      public static void WriteField1(MyBean instance, IDsonObjectWriter writer, String dsonName){}
 /// 
 ///      // 结构体需要使用ref
 ///      public static MyBean NewInstance(IDsonObjectReader reader){}
-///      public static void ReadObject(ref MyBean instance, IDsonObjectReader reader){}
 ///      public static void ReadField(ref MyBean instance, IDsonObjectReader reader, string dsonName){}
-///      public static void AfterDecode(ref MyBean instance, ConverterOptions options){}
-/// 
-///      public static void BeforeEncode(ref MyBean instance, ConverterOptions options){}
-///      public static void WriteObject(ref MyBean instance, IDsonObjectWriter writer){}
 ///      // 字段读写代理
 ///      public static void ReadField1(ref MyBean instance, IDsonObjectReader reader, String dsonName){}
 ///      public static void WriteField1(ref MyBean instance, IDsonObjectWriter writer, String dsonName){}

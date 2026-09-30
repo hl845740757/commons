@@ -35,8 +35,6 @@ public class NullableCodec<T> : IDsonCodec<T?>, INullableCodec<T?> where T : str
     public bool HasValue(in T? inst) => inst.HasValue;
 
     public void WriteObject(IDsonObjectWriter writer, T? inst, Type declaredType, SerializeFeatures features) {
-        // declaredType 是Nullable<T>的类型，不是T的声明类型
-        // 为避免外部测试是否为null导致装箱，Nullable结构体的null测试由Codec处理
         if (inst.HasValue) {
             writer.WriteObject(inst.Value, features.GetElementFeatures());
         } else {
@@ -44,8 +42,8 @@ public class NullableCodec<T> : IDsonCodec<T?>, INullableCodec<T?> where T : str
         }
     }
 
-    public T? ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        return reader.ReadObject<T>(features.GetElementFeatures(), factory);
+    public T? ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        return reader.ReadObject<T>(features.GetElementFeatures());
     }
 }
 }

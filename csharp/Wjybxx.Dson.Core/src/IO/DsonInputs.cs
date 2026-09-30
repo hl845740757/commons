@@ -235,6 +235,12 @@ public static class DsonInputs
             return bytes;
         }
 
+        public void ReadRawBytes(byte[] buffer, int offset, int count) {
+            CheckNewBufferPos(_bufferPos + count);
+            Array.Copy(_buffer, _bufferPos, buffer, offset, count);
+            _bufferPos += count;
+        }
+
         public void SkipRawBytes(int n) {
             if (n < 0) throw new ArgumentException(nameof(n));
             if (n == 0) return;

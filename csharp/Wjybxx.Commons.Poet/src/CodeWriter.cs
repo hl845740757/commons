@@ -1050,7 +1050,7 @@ public sealed class CodeWriter
             if (count++ > 0) Emit(", ");
             EmitTypeName(bound);
         }
-        
+
         if ((typeParameter.constraints & TypeParameterConstraints.AllowsRefStructConstraint) != 0) {
             if (count++ > 0) Emit(", ");
             Emit("allows ref struct");

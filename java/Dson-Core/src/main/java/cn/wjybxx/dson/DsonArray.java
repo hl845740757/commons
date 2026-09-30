@@ -40,6 +40,12 @@ public class DsonArray<K> extends AbstractDsonArray implements RandomAccess {
         header.putAll(src.getHeader());
     }
 
+    public static <K> DsonArray<K> fromSingleValue(DsonValue dsonValue) {
+        var array = new DsonArray<K>(1);
+        array.add(dsonValue);
+        return array;
+    }
+
     @Nonnull
     @Override
     public final DsonType getDsonType() {

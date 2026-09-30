@@ -57,6 +57,7 @@ public enum WireType
 public static class WireTypes
 {
     /** 通过number查找关联枚举 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType ForNumber(int number) {
         return number switch
         {

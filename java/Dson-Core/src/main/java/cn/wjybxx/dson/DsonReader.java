@@ -66,6 +66,16 @@ public interface DsonReader extends AutoCloseable {
      */
     DsonType peekDsonType();
 
+    /**
+     * 查看当前Object/Array的类型名，不消耗输入。
+     * 在读取类型和字段名（如有）后、readStartObject/readStartArray之前调用。
+     *
+     * @param name 固定为{@link DsonHeader#NAMES_CLASS_NAME}
+     * @return 类型名；没有字符串类型的类名时返回null，空字符串仍返回空字符串
+     */
+    @Nullable
+    String peekClassName(String name);
+
     /** 当前是否处于应该读取name状态 */
     boolean isAtName();
 

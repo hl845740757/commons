@@ -17,7 +17,9 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.IO;
@@ -34,17 +36,22 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
 #nullable disable
     private IDsonInput _input;
     private readonly bool _autoClose;
-    private readonly AbstractDsonReader<string> _textReader;
-    private readonly AbstractDsonReader<int> _binReader;
+    private readonly DsonBinaryReader<string> _textReader;
+    private readonly DsonBinaryReader<int> _binReader;
+
+    private TName _name0;
+    private readonly byte[] _nameBuffer;
 
     public DsonBinaryReader(DsonReaderSettings settings, IDsonInput input, bool? autoClose = null)
         : base(settings) {
         if (DsonInternals.IsStringKey<TName>()) {
-            this._textReader = this as AbstractDsonReader<string>;
+            this._textReader = this as DsonBinaryReader<string>;
             this._binReader = null;
+            this._nameBuffer = new byte[7];
         } else {
             this._textReader = null;
-            this._binReader = this as AbstractDsonReader<int>;
+            this._binReader = this as DsonBinaryReader<int>;
+            this._nameBuffer = Array.Empty<byte>();
         }
 
         this._input = input ?? throw new ArgumentNullException(nameof(input));
@@ -84,7 +91,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
 
         int fullType = _input.IsAtEnd() ? 0 : _input.ReadRawByte();
         int wreTypeBits = Dsons.WireTypeOfFullType(fullType);
-        DsonType dsonType = DsonTypes.ForNumber(Dsons.DsonTypeOfFullType(fullType));
+        DsonType dsonType = (DsonType)Dsons.DsonTypeOfFullType(fullType);
         WireType wireType = dsonType.HasWireType() ? WireTypes.ForNumber(wreTypeBits) : WireType.Uint;
         this.currentDsonType = dsonType;
         this.currentWireType = wireType;
@@ -100,7 +107,85 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         CheckReadDsonTypeState(context);
 
         int fullType = _input.IsAtEnd() ? 0 : _input.GetByte(_input.Position);
-        return DsonTypes.ForNumber(Dsons.DsonTypeOfFullType(fullType));
+        return (DsonType)Dsons.DsonTypeOfFullType(fullType);
+    }
+
+    public override bool PeekClassName(TName name, out string? clsName) {
+        int position = _input.Position;
+        int length = _input.ReadFixed32(); // array/object的长度字段
+        int oldLimit = _input.PushLimit(length);
+        try {
+            int fullType = _input.IsAtEnd() ? 0 : _input.ReadRawByte();
+            DsonType dsonType = (DsonType)Dsons.DsonTypeOfFullType(fullType);
+            if (dsonType != DsonType.Header) {
+                clsName = null;
+                return false;
+            }
+
+            length = _input.ReadFixed16(); // header长度
+            _input.PushLimit(length);
+
+            _name0 = name;
+            bool r = _textReader != null
+                ? ScanClassName0(out clsName)
+                : ScanClassName1(out clsName);
+            return r;
+        }
+        finally {
+            _input.Position = position;
+            _input.PopLimit(oldLimit);
+        }
+    }
+
+    private bool ScanClassName0(out string clsName) {
+        byte[] targetName = DsonHeader.Bytes_ClassName;
+        byte[] buffer = _nameBuffer;
+        Array.Clear(buffer, 0, buffer.Length);
+        //
+        while (!_input.IsAtEnd()) {
+            int fullType = _input.ReadRawByte();
+            int wreTypeBits = Dsons.WireTypeOfFullType(fullType);
+            DsonType dsonType = (DsonType)Dsons.DsonTypeOfFullType(fullType);
+            int size = _input.ReadUInt32(); // name长度
+            if (dsonType == DsonType.String && size == targetName.Length) {
+                _input.ReadRawBytes(buffer, 0, size);
+                if (ArrayUtil.Equals(targetName, buffer)) {
+                    clsName = _input.ReadString();
+                    return true;
+                }
+            } else {
+                _input.SkipRawBytes(size); // skipName
+            }
+            DsonReaderUtils.SkipValue(_input, DsonContextType.Header, dsonType, wreTypeBits);
+        }
+        clsName = null;
+        return false;
+    }
+
+    private bool ScanClassName1(out string clsName) {
+        int targetName = _binReader._name0;
+        while (!_input.IsAtEnd()) {
+            int fullType = _input.ReadRawByte();
+            int wreTypeBits = Dsons.WireTypeOfFullType(fullType);
+            DsonType dsonType = (DsonType)Dsons.DsonTypeOfFullType(fullType);
+            if (dsonType != DsonType.String) {
+                // 跳过Name + Value
+                _input.ReadUInt32();
+                DsonReaderUtils.SkipValue(_input, DsonContextType.Header, dsonType, wreTypeBits);
+            } else {
+                // 测试name
+                int name = _input.ReadUInt32();
+                if (name == targetName) {
+                    clsName = _input.ReadString();
+                    return true;
+                }
+                // 跳过Value(string)
+                int size = _input.ReadUInt32();
+                _input.SkipRawBytes(size);
+            }
+        }
+        clsName = null;
+        return false;
     }
 
     protected override void DoReadName() {
@@ -209,11 +294,6 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         this.recursionDepth--;
         SetContext(context.parent!);
         ReturnContext(context);
-
-        // 告知可释放缓存
-        if (GetContext().contextType == DsonContextType.TopLevel) {
-            _input.ReadComplete(_input.Position);
-        }
     }
 
     #endregion
@@ -234,7 +314,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
 
     protected override void DoSkipValue() {
         ClearWaitStartContext();
-        DsonReaderUtils.SkipValue(_input, ContextType, currentDsonType, currentWireType, currentWireTypeBits);
+        DsonReaderUtils.SkipValue(_input, ContextType, currentDsonType, currentWireTypeBits);
     }
 
     protected override void DoSkipToEndOfObject() {

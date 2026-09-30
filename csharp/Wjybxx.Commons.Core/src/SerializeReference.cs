@@ -27,12 +27,42 @@ namespace Wjybxx.Commons
 /// 1.当用于List/HashSet/Map字段时，表示其Values需要序列化为引用，而不是集合整体序列化为引用；
 /// 因为当注解表示List整体序列化为引用时，我们将无法知晓List的元素是否应该序列化为引用。
 ///
-/// 2.当用于类型时，表示该类型及其子类默认序列化为引用类型 —— 可能与Unity的兼容性不好，减少使用。
+/// 2.当用于类型时，表示该类型及其子类默认序列化为引用类型 —— 可能与Unity的兼容性不好，尽量避免使用。
+/// 
+/// 3.用于值类型字段时，表示输入流可能是包含引用的（兼容旧数据） —— 值类型序列化时仍然内联（拷贝）。
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
 public sealed class SerializeReference : Attribute
 {
     public SerializeReference() {
+    }
+}
+
+/// <summary>
+/// 序列化引用
+/// 
+/// 1.该注解用于解决值类型内部禁止使用<see cref="SerializeReference"/>的问题。
+/// 2.该结构与<see cref="Nullable{T}"/>类似，编码时会进行拆箱。
+/// 3.使用该结构时，应该避免null - 即使用空容器代替null。
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public sealed class SerializeRef<T> : IEquatable<SerializeRef<T>> where T : class
+{
+    public T? Value { get; set; }
+
+    public bool Equals(SerializeRef<T>? other) {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Equals(Value, other.Value);
+    }
+
+    public override bool Equals(object? obj) {
+        return ReferenceEquals(this, obj) || obj is SerializeRef<T> other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        // ReSharper disable NonReadonlyMemberInGetHashCode
+        return Value == null ? 0 : Value.GetHashCode();
     }
 }
 }

@@ -41,11 +41,14 @@ public class ClassName : TypeName
     public static readonly ClassName UINT_PTR = InternalGet(typeof(UIntPtr));
     public static readonly ClassName DATETIME = InternalGet(typeof(DateTime));
     public static readonly ClassName DELEGATE = InternalGet(typeof(Delegate));
-
+    //
+    public static readonly ClassName LIST = InternalGet(typeof(List<>));
+    public static readonly ClassName HASHSET = InternalGet(typeof(HashSet<>));
+    public static readonly ClassName DICTIONARY = InternalGet(typeof(Dictionary<,>));
+    //
     public static readonly ClassName ATTRIBUTE = InternalGet(typeof(Attribute));
     public static readonly ClassName SERIALIZABLE = InternalGet(typeof(SerializableAttribute));
     public static readonly ClassName NON_SERIALIZED = InternalGet(typeof(NonSerializedAttribute));
-    public static readonly ClassName OPTIONAL = InternalGet(typeof(OptionalAttribute));
     public static readonly ClassName FLAGS = InternalGet(typeof(FlagsAttribute));
 
     /// <summary>

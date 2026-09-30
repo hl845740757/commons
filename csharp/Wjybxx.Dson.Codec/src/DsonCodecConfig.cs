@@ -17,8 +17,8 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec.Codecs;
 
@@ -459,35 +459,38 @@ public sealed class DsonCodecConfig
 
     private static void InitDefaultGenericCodecs(DsonCodecConfig config) {
         // CollectionCodec默认测试了常见的集合类型
-        config.AddGenericCodec(typeof(ICollection<>), typeof(CollectionCodec<>));
-        config.AddGenericCodec(typeof(IList<>), typeof(CollectionCodec<>));
-        config.AddGenericCodec(typeof(List<>), typeof(ListCodec<>));
-        // 
-        config.AddGenericCodec(typeof(ISet<>), typeof(CollectionCodec<>));
+        config.AddGenericCodec(typeof(List<>), typeof(CollectionCodec<>));
         config.AddGenericCodec(typeof(HashSet<>), typeof(CollectionCodec<>));
         config.AddGenericCodec(typeof(LinkedHashSet<>), typeof(CollectionCodec<>));
         //
         config.AddGenericCodec(typeof(Stack<>), typeof(MoreCollectionCodecs.StackCodec<>));
         config.AddGenericCodec(typeof(Queue<>), typeof(MoreCollectionCodecs.QueueCodec<>));
-        //
-        config.AddGenericCodec(typeof(SmallDynamicArray<>), typeof(MoreCollectionCodecs.SmallDynamicArrayCodec<>));
-        config.AddGenericCodec(typeof(DynamicArray<>), typeof(MoreCollectionCodecs.DynamicArrayCodec<>));
+        config.AddGenericCodec(typeof(ArrayDeque<>), typeof(CollectionCodec<>));
+        config.AddGenericCodec(typeof(MultiChunkDeque<>), typeof(CollectionCodec<>));
 
         // IDictionary接口不指定工厂，根据options动态分配实现
-        config.AddGenericCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericCodec(typeof(Dictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericCodec(typeof(ArrayDictionary<,>), typeof(DictionaryCodec<,>));
-        config.AddGenericCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddGenericCodec(typeof(SortedList<,>), typeof(DictionaryCodec<,>));
         // 特殊组件
         config.AddGenericCodec(typeof(Nullable<>), typeof(NullableCodec<>));
         config.AddGenericCodec(typeof(KeyValuePair<,>), typeof(PairCodec<,>));
+        config.AddGenericCodec(typeof(SerializeRef<>), typeof(SerializeRefCodec<>));
 
-        // 所有集合都能转IEnumerable编码；readonly只能解码为默认类型
+        // 所有集合都能转IEnumerable编码（字典除外）
+        config.AddGenericEncoder(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddGenericEncoder(typeof(IReadOnlyDictionary<,>), typeof(DictionaryCodec<,>));
         config.AddGenericEncoder(typeof(IEnumerable<>), typeof(EnumerableCodec<>));
+        // 为常见接口类型配置默认解码类型
+        config.AddGenericDecoder(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddGenericDecoder(typeof(IReadOnlyDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddGenericDecoder(typeof(ICollection<>), typeof(CollectionCodec<>));
         config.AddGenericDecoder(typeof(IReadOnlyCollection<>), typeof(CollectionCodec<>));
         config.AddGenericDecoder(typeof(IReadOnlyList<>), typeof(CollectionCodec<>));
         config.AddGenericDecoder(typeof(IEnumerable<>), typeof(CollectionCodec<>));
+        config.AddGenericDecoder(typeof(IGenericDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddGenericDecoder(typeof(IGenericSet<>), typeof(CollectionCodec<>));
 #if NET6_0_OR_GREATER
         config.AddGenericDecoder(typeof(IReadOnlySet<>), typeof(CollectionCodec<>));
 #endif

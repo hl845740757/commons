@@ -565,11 +565,11 @@ public class BoundedArrayDeque<T> : IDeque<T>
     {
         private readonly BoundedArrayDeque<T> _arrayDeque;
         private readonly bool _reversed;
-        private int _version;
+        private readonly int _version;
         private int _cursor; // 下一个元素
         private T? _current;
 
-        public Enumerator(BoundedArrayDeque<T> arrayDeque, bool reversed) {
+        internal Enumerator(BoundedArrayDeque<T> arrayDeque, bool reversed) {
             _arrayDeque = arrayDeque;
             _reversed = reversed;
             _version = arrayDeque._version;

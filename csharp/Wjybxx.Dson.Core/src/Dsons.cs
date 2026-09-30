@@ -109,6 +109,15 @@ public static class Dsons
         };
     }
 
+    public static DsonHeader<TName>? GetHeader<TName>(DsonValue dsonValue) {
+        return dsonValue switch
+        {
+            DsonObject<TName> dsonObject => dsonObject.Header,
+            DsonArray<TName> dsonArray => dsonArray.Header,
+            _ => null
+        };
+    }
+
     #endregion
 
     #region Check
@@ -528,6 +537,7 @@ public static class Dsons
             case DsonType.Int64: return DsonInt64.ValueOf(reader.ReadInt64());
             case DsonType.Float: return DsonFloat.ValueOf(reader.ReadFloat());
             case DsonType.Double: return DsonDouble.ValueOf(reader.ReadDouble());
+            case DsonType.Fxp64: return new DsonFxp64(reader.ReadFxp64());
             case DsonType.Bool: return DsonBool.ValueOf(reader.ReadBool());
             case DsonType.String: return new DsonString(reader.ReadString());
             case DsonType.Null: {
@@ -535,7 +545,6 @@ public static class Dsons
                 return DsonNull.NULL;
             }
             case DsonType.Binary: return new DsonBinary(reader.ReadBinary());
-            case DsonType.Fxp64: return new DsonFxp64(reader.ReadFxp64());
             case DsonType.Pointer: return new DsonPointer(reader.ReadPtr());
             case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
             case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());
@@ -619,16 +628,6 @@ public static class Dsons
     #endregion
 
     #region 快捷方法
-
-    [Obsolete("Use ToFlatDson Instead")]
-    public static string ToCollectionDson(this DsonArray<string> collection, DsonTextWriterSettings? settings = null) {
-        return ToFlatDson(collection, settings);
-    }
-
-    [Obsolete("Use FromFlatDson Instead")]
-    public static DsonArray<string> FromCollectionDson(string dsonString) {
-        return FromFlatDson(dsonString);
-    }
 
     /** 该接口用于写顶层数组容器，所有元素将被展开 */
     public static string ToFlatDson(this DsonArray<string> collection, DsonTextWriterSettings? settings = null) {

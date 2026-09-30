@@ -57,23 +57,17 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_Fxp64 = "Wjybxx.Dson.Types.Fxp64";
     private const string CNAME_Fxp4 = "Wjybxx.Dson.Types.Fxp4";
 
-    private const string CNAME_NumberStyles = "Wjybxx.Dson.Text.NumberStyles"; // 生成器直接指向工具类
-    private const string CNAME_ContextType = "Wjybxx.Dson.DsonContextType"; // 生成器直接指向工具类
-
-    private const string CNAME_NonSerialize = "System.NonSerializedAttribute";
     private const string CNAME_TypeInfo = "Wjybxx.Commons.TypeInfo";
     private const string CNAME_TypeName = "Wjybxx.Commons.TypeName";
 
-    private const string CNAME_IList = "System.Collections.Generic.IList`1";
-    private const string CNAME_ISet = "System.Collections.Generic.ISet`1";
-    private const string CNAME_IDictionary = "System.Collections.Generic.IDictionary`2";
-
+    private const string CNAME_NON_SERIALIZED = "System.NonSerializedAttribute";
+    private const string CNAME_UNITY_SERIALIZE_FIELD = "UnityEngine.SerializeField";
     private const string CNAME_SERIALIZE_REFERENCES = "Wjybxx.Commons.SerializeReference";
     private const string CNAME_UNITY_SERIALIZE_REFERENCES = "UnityEngine.SerializeReference";
 
     // dson
     private const string CNAME_SERIALIZABLE = "Wjybxx.Dson.Codec.Attributes.DsonSerializableAttribute";
-    internal const string CNAME_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
+    internal const string CNAME_DSON_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
     internal const string CNAME_DSON_IGNORE = "Wjybxx.Dson.Codec.Attributes.DsonIgnoreAttribute";
     private const string CNAME_DSON_READER = "Wjybxx.Dson.Codec.IDsonObjectReader";
     private const string CNAME_DSON_WRITER = "Wjybxx.Dson.Codec.IDsonObjectWriter";
@@ -98,6 +92,7 @@ public class CodecProcessor : ISourceGenerator
     internal const string MNAME_NEW_INSTANCE = "NewInstance";
     internal const string MNAME_READ_FIELDS = "ReadFields";
     internal const string MNAME_READ_FIELD = "ReadField";
+    internal const string MNAME_SET_FIELD = "SetField";
     internal const string MNAME_AFTER_DECODE = "AfterDecode";
 
     internal static readonly TypeName typeName_EncodeFeatures = ClassName.Get("Wjybxx.Dson.Codec", "SerializeFeatures");
@@ -138,9 +133,17 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_Fxp64;
     internal INamedTypeSymbol type_Fxp4;
 
-    internal INamedTypeSymbol type_ILIST;
-    internal INamedTypeSymbol type_ISET;
-    internal INamedTypeSymbol type_IDICTIONARY;
+    internal INamedTypeSymbol type_List;
+    internal INamedTypeSymbol type_ICollection;
+    internal INamedTypeSymbol type_IReadonlyCollection;
+    internal INamedTypeSymbol type_IEnumerable;
+
+    internal INamedTypeSymbol type_Dictionary;
+    internal INamedTypeSymbol type_IDictionary;
+    internal INamedTypeSymbol type_IReadonlyDictionary;
+
+    private HashSet<string> immutableCollectionTypes = new HashSet<string>();
+    private HashSet<string> immutableDictionaryTypes = new HashSet<string>();
 
     private GeneratorExecutionContext sourceProductionContext;
     private Compilation compilation;
@@ -167,7 +170,7 @@ public class CodecProcessor : ISourceGenerator
 
         // dson
         anno_DsonSerializable = compilation.GetTypeByMetadataName(CNAME_SERIALIZABLE);
-        anno_DsonProperty = compilation.GetTypeByMetadataName(CNAME_PROPERTY);
+        anno_DsonProperty = compilation.GetTypeByMetadataName(CNAME_DSON_PROPERTY);
         anno_DsonIgnore = compilation.GetTypeByMetadataName(CNAME_DSON_IGNORE);
         type_DsonReader = compilation.GetTypeByMetadataName(CNAME_DSON_READER);
         type_DsonWriter = compilation.GetTypeByMetadataName(CNAME_DSON_WRITER);
@@ -192,9 +195,21 @@ public class CodecProcessor : ISourceGenerator
         type_Fxp64 = compilation.GetTypeByMetadataName(CNAME_Fxp64);
         type_Fxp4 = compilation.GetTypeByMetadataName(CNAME_Fxp4);
 
-        type_ILIST = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IList_T);
-        type_ISET = compilation.GetTypeByMetadataName(CNAME_ISet);
-        type_IDICTIONARY = compilation.GetTypeByMetadataName(CNAME_IDictionary);
+        // 集合类型
+        type_List = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1");
+        type_ICollection = compilation.GetSpecialType(SpecialType.System_Collections_Generic_ICollection_T);
+        type_IReadonlyCollection = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IReadOnlyCollection_T);
+        type_IEnumerable = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T);
+
+        type_IDictionary = compilation.GetTypeByMetadataName("System.Collections.Generic.IDictionary`2");
+        type_Dictionary = compilation.GetTypeByMetadataName("System.Collections.Generic.Dictionary`2");
+        type_IReadonlyDictionary = compilation.GetTypeByMetadataName("System.Collections.Generic.IReadOnlyDictionary`2");
+
+        //
+        immutableCollectionTypes.Add("ImmutableList`1");
+        immutableCollectionTypes.Add("ImmutableSet`1");
+        immutableCollectionTypes.Add("ImmutableHashSet`1");
+        immutableDictionaryTypes.Add("ImmutableDictionary`2");
     }
 
     private void ReportDiagnostic(DiagnosticSeverity severity, ISymbol? symbol, int code, string msgFormat, params object[] args) {
@@ -412,11 +427,6 @@ public class CodecProcessor : ISourceGenerator
             if (memberInfo.MemberType != MemberTypes.Field) continue;
             FieldInfo fieldInfo = (FieldInfo)memberInfo;
             if (fieldInfo.IsStatic) continue;
-            // 检查属性 -- 属性类型和字段类型不同的跳过
-            PropertyInfo propertyInfo = BeanUtils.FindProperty(fieldInfo.Name, reflectionMembers);
-            if (propertyInfo != null && propertyInfo.PropertyType != fieldInfo.FieldType) {
-                continue;
-            }
             var fieldKey = new FieldKey(Util.GetSimpleName(fieldInfo.DeclaringType!), fieldInfo.Name);
             reflectionFieldDic.Add(fieldKey, fieldInfo);
         }
@@ -425,11 +435,6 @@ public class CodecProcessor : ISourceGenerator
         foreach (ISymbol symbol in context.allMembers) {
             if (symbol.Kind != SymbolKind.Field || symbol.IsStatic) continue;
             IFieldSymbol fieldSymbol = (IFieldSymbol)symbol;
-            // 检查属性 -- 属性类型和字段类型不同的跳过
-            IPropertySymbol propertySymbol = BeanUtils.FindProperty(fieldSymbol.Name, context.allMembers);
-            if (propertySymbol != null && !fieldSymbol.Type.IsSameType(propertySymbol.Type)) {
-                continue;
-            }
             FieldKey key = new FieldKey(fieldSymbol.ContainingType.Name, fieldSymbol.Name);
             compilationFieldDic.Add(key, fieldSymbol);
         }
@@ -442,9 +447,10 @@ public class CodecProcessor : ISourceGenerator
         foreach (FieldKey key in fieldKeys) {
             reflectionFieldDic.TryGetValue(key, out FieldInfo? fieldInfo);
             compilationFieldDic.TryGetValue(key, out IFieldSymbol? fieldSymbol);
-            // props只需要访问public权限的，因此无需特殊处理
+            // 字段类型和属性类型不同时忽略属性
             IPropertySymbol propertySymbol = BeanUtils.FindProperty(key.fieldName, context.allMembers);
-
+            propertySymbol = CheckProperty(propertySymbol, fieldSymbol);
+            // 只能扫描到public权限的属性，因此无法实现期望的优先通过属性反射的需求
             AptFieldInfo aptFieldInfo = new AptFieldInfo(fieldInfo, fieldSymbol, propertySymbol);
             if (aptFieldInfo.FieldType != null) {
                 aptFieldInfo.typeName = AptUtils.ParseType(aptFieldInfo.FieldType).RemoveAllNullableAttribute();
@@ -452,6 +458,14 @@ public class CodecProcessor : ISourceGenerator
             allFields.Add(aptFieldInfo);
         }
         context.allFields = allFields;
+    }
+
+    // 无法准确处理第三方程序集的属性和字段验证，由用户自行处理字段类型和属性名不一致的情况（读写代理）
+    private IPropertySymbol? CheckProperty(IPropertySymbol? propertySymbol, IFieldSymbol? fieldSymbol) {
+        if (propertySymbol != null && fieldSymbol != null) {
+            return propertySymbol.Type.IsSameType(fieldSymbol.Type) ? propertySymbol : null;
+        }
+        return propertySymbol;
     }
 
     private List<MemberInfo> GetReflectionMembers(INamedTypeSymbol typeSymbol, ISymbol linkerSymbol) {
@@ -471,7 +485,6 @@ public class CodecProcessor : ISourceGenerator
         return BeanUtils.GetAllMembersWithInherit(reflectType, MemberTypes.Field | MemberTypes.Property)
             .ToList();
     }
-
 
     private Type TryLoadThirdPartyType(ITypeSymbol thirdPartyType, string typeFullName) {
         IAssemblySymbol assemblySymbol = thirdPartyType.ContainingAssembly;
@@ -507,7 +520,7 @@ public class CodecProcessor : ISourceGenerator
                 continue;
             }
             // dson-property
-            AptFieldProps aptFieldProps = AptFieldProps.Parse(fieldInfo, CNAME_PROPERTY, compilation);
+            AptFieldProps aptFieldProps = AptFieldProps.Parse(fieldInfo, CNAME_DSON_PROPERTY, compilation);
             // dson-ignore
             aptFieldProps.ParseIgnore(fieldInfo, CNAME_DSON_IGNORE);
             // serialize-reference
@@ -515,7 +528,6 @@ public class CodecProcessor : ISourceGenerator
             if (aptFieldProps.serializeReference == null) {
                 aptFieldProps.ParseSerializeReference(fieldInfo, CNAME_UNITY_SERIALIZE_REFERENCES);
             }
-            //
             context.fieldPropsMap[fieldInfo] = aptFieldProps;
         }
     }
@@ -574,52 +586,26 @@ public class CodecProcessor : ISourceGenerator
         }
         CheckConstructor(context);
 
-        List<ISymbol> allMembers = context.allMembers;
         foreach (AptFieldInfo fieldInfo in context.allFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
             if (!IsSerializableField(fieldInfo, aptFieldProps!)) {
                 continue;
             }
             context.serialFields.Add(fieldInfo);
-
-            if (IsAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
-                CheckAutoWriteField(fieldInfo, aptFieldProps, allMembers);
-            }
-            if (IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
-                CheckAutoReadField(fieldInfo, aptFieldProps, allMembers);
-            }
+            CheckSerializeField(context, fieldInfo);
         }
     }
 
-    /** 检查自动读字段 */
-    private void CheckAutoReadField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps, List<ISymbol> allMembers) {
-        if (!string.IsNullOrWhiteSpace(aptFieldProps.readProxy)) {
-            return;
-        }
-        // 工具读：需要是public或包含public setter
-        if (!CanSetDirectly(fieldInfo)
-            && string.IsNullOrWhiteSpace(aptFieldProps.setter)
-            && !fieldInfo.HasPublicSetter) {
-            // 由于可能是超类的字段，symbol可能为null，所以格式化文本中追加字段名
-            ReportDiagnostic(DiagnosticSeverity.Error, fieldInfo.fieldSymbol, 1001,
-                "auto read field {0} must be public or contains a public setter",
-                fieldInfo.Name);
-        }
-    }
-
-    /** 检查自动写字段 */
-    private void CheckAutoWriteField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps, List<ISymbol> allMembers) {
-        if (!string.IsNullOrWhiteSpace(aptFieldProps.writeProxy)) {
-            return;
-        }
-        // 工具写：需要是public字段或包含public getter
-        if (!CanGetDirectly(fieldInfo)
-            && string.IsNullOrWhiteSpace(aptFieldProps.getter)
-            && !fieldInfo.HasPublicGetter) {
-            // 由于可能是超类的字段，symbol可能为null，所以格式化文本中追加字段名
-            ReportDiagnostic(DiagnosticSeverity.Error, fieldInfo.fieldSymbol, 1002,
-                "auto write field {0} must be public or contains a public getter",
-                fieldInfo.Name);
+    // 新版本不再校验字段访问权限，不可正常读写时通过反射操作 - 但值类型不可以包含需要反射读写的字段
+    // 值类型的List/Dictionary使用序列化引用时，只能使用原始的List和Dictionary，不能产生延迟转换需求
+    private void CheckSerializeField(Context context, AptFieldInfo fieldInfo) {
+        if (context.type.IsValueType) {
+            bool genGetter = !CanGetDirectly(fieldInfo) && !fieldInfo.HasPublicGetter;
+            bool genSetter = !CanSetDirectly(fieldInfo) && !fieldInfo.HasPublicSetter;
+            if (genGetter || genSetter) {
+                ISymbol symbol = fieldInfo.fieldSymbol ?? (ISymbol)context.type;
+                ReportDiagnostic(DiagnosticSeverity.Error, symbol, 1002, "值类型不可以包含需要反射操作的字段!");
+            }
         }
     }
 
@@ -640,8 +626,7 @@ public class CodecProcessor : ISourceGenerator
             return;
         }
         //
-        ReportDiagnostic(DiagnosticSeverity.Error, typeSymbol, 1003,
-            "SerializableClass must contains public no-args constructor or reader-args constructor!");
+        ReportDiagnostic(DiagnosticSeverity.Error, typeSymbol, 1003, "要序列化的类型必须包含无参构造函数或解码构造函数");
     }
 
     #endregion
@@ -700,28 +685,28 @@ public class CodecProcessor : ISourceGenerator
         return ContainsHookMethod(allMembers, MNAME_WRITE_FIELDS, type_DsonWriter);
     }
 
-    /** 是否包含 beforeEncode 实例方法 */
+    /** 是否包含 beforeEncode 实例方法 - 返回值表示方法参数个数，-1表示不包含钩子 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal (bool contains, int argCount) ContainsBeforeEncodeMethod(List<ISymbol> allMembers) {
+    internal int ContainsBeforeEncodeMethod(List<ISymbol> allMembers) {
         if (ContainsHookMethod(allMembers, MNAME_BEFORE_ENCODE, type_Options)) {
-            return (true, 1);
+            return 1;
         }
         if (ContainsNoArgsHookMethod(allMembers, MNAME_BEFORE_ENCODE)) {
-            return (true, 0);
+            return 0;
         }
-        return (false, 0);
+        return -1;
     }
 
-    /** 是否包含 afterDecode 实例方法 */
+    /** 是否包含 afterDecode 实例方法 - 返回值表示方法参数个数，-1表示不包含钩子 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal (bool contains, int argCount) ContainsAfterDecodeMethod(List<ISymbol> allMembers) {
+    internal int ContainsAfterDecodeMethod(List<ISymbol> allMembers) {
         if (ContainsHookMethod(allMembers, MNAME_AFTER_DECODE, type_Options)) {
-            return (true, 1);
+            return 1;
         }
         if (ContainsNoArgsHookMethod(allMembers, MNAME_AFTER_DECODE)) {
-            return (true, 0);
+            return 0;
         }
-        return (false, 0);
+        return -1;
     }
 
     /** 是否包含指定参数的钩子方法 */
@@ -783,14 +768,19 @@ public class CodecProcessor : ISourceGenerator
             return !aptFieldProps.ignore.Value;
         }
         // 无注解的情况下，默认忽略 NonSerialized 字段
-        if (fieldInfo.GetAttribute(CNAME_NonSerialize) != null) {
+        if (fieldInfo.GetAttribute(CNAME_NON_SERIALIZED) != null) {
             return false;
+        }
+        // 有DsonProperty注解也视作需要序列化, Unity项目的话还需要包括SerializeField
+        if (fieldInfo.GetAttribute(CNAME_DSON_PROPERTY) != null
+            || fieldInfo.GetAttribute(CNAME_UNITY_SERIALIZE_FIELD) != null) {
+            return true;
         }
         // 判断public和getter/setter
         if (fieldInfo.IsPublic) {
             return true;
         }
-        // 我们在Props上缓存了关联的属性
+        // 我们在FieldInfo上缓存了关联的属性
         return fieldInfo.HasPublicSetter && fieldInfo.HasPublicGetter;
     }
 
@@ -808,10 +798,6 @@ public class CodecProcessor : ISourceGenerator
     /** 是否是托管读的字段 */
     internal bool IsAutoReadField(AptFieldInfo fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
         if (aptClassProps.IsSingleton) {
-            return false;
-        }
-        // readonly或无setter的字段只能构造方法读
-        if (fieldInfo.IsReadOnly) {
             return false;
         }
         if (IsSkipField(fieldInfo, aptClassProps, aptFieldProps)) {
@@ -836,10 +822,7 @@ public class CodecProcessor : ISourceGenerator
             fieldName = fieldInfo.Name;
         }
         if (aptClassProps.skipFields.Contains(fieldName)) {
-            return true; // 完全匹配
-        }
-        if (!aptClassProps.clippedSkipFields.Contains(fieldName)) {
-            return false; // 简单名不存在
+            return true;
         }
         // 测试类名 -- 不测试FullName，C#的FullName并不易编写
         string declaringTypeName = fieldInfo.FieldKey.ToString();
@@ -847,6 +830,28 @@ public class CodecProcessor : ISourceGenerator
             return true;
         }
         return false;
+    }
+
+    internal bool IsCollection(ITypeSymbol type) {
+        type = type.OriginalDefinition;
+        return type.IsSameType(type_List) || type.IsSubTypeOf(type_ICollection)
+                                          || type.IsSubTypeOf(type_IReadonlyCollection);
+    }
+
+    internal bool IsDictionary(ITypeSymbol type) {
+        type = type.OriginalDefinition;
+        return type.IsSameType(type_Dictionary) || type.IsSubTypeOf(type_IDictionary)
+                                                || type.IsSubTypeOf(type_IReadonlyDictionary);
+    }
+
+    internal bool IsImmutableCollection(ITypeSymbol type) {
+        type = type.OriginalDefinition;
+        return immutableCollectionTypes.Contains(type.MetadataName);
+    }
+
+    internal bool IsImmutableDictionary(ITypeSymbol type) {
+        type = type.OriginalDefinition;
+        return immutableDictionaryTypes.Contains(type.MetadataName);
     }
 
     #endregion
@@ -886,6 +891,19 @@ public class CodecProcessor : ISourceGenerator
             throw new InvalidOperationException();
         }
         return AptUtils.Overriding(methodInfo);
+    }
+
+    public MethodSpec.Builder NewSetFieldMethodBuilder(INamedTypeSymbol superDeclaredType) {
+        IMethodSymbol? methodInfo = GetFirstVirtualMethod(superDeclaredType, MNAME_SET_FIELD);
+        if (methodInfo == null) {
+            throw new InvalidOperationException();
+        }
+        return AptUtils.Overriding(methodInfo);
+    }
+
+    internal INamedTypeSymbol GetTypeSymbol(string metadataName) {
+        return compilation.GetTypeByMetadataName(metadataName)
+               ?? throw new InvalidOperationException($"找不到类型：{metadataName}");
     }
 
     public MethodSpec.Builder NewReadFieldMethodBuilder(INamedTypeSymbol superDeclaredType) {

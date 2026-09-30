@@ -78,10 +78,10 @@ public class BaseTypeExample
 /// <summary>
 /// 
 /// </summary>
-[DsonSerializable]
+[DsonSerializable(NameStyle = DsonNameStyle.Unspecified)]
 public class BeanExample : BaseTypeExample
 {
-    [DsonProperty(Name = "_name", EncodeFeatures = SerializeFeatures.StringAutoQuote)]
+    [DsonProperty(Name = "_name", EncodeFeatures = SerializeFeatures.StringUnquote)]
     private string? name;
 
     [DsonProperty]
@@ -90,6 +90,10 @@ public class BeanExample : BaseTypeExample
     [DsonProperty]
     private DsonType dsonType;
 
+    // 测试私有字段生成
+    [DsonProperty] 
+    private int _code;
+    
     public string? Name {
         get => name;
         set => name = value;
@@ -103,7 +107,7 @@ public class BeanExample : BaseTypeExample
     /// <summary>
     /// 测试自动属性
     /// </summary>
-    [DsonProperty(WriteProxy = "WriteType", ReadProxy = "ReadType")]
+    [DsonProperty(WriteProxy = nameof(WriteType), ReadProxy = nameof(ReadType))]
     public int Type { get; set; }
 
     /// <summary>
@@ -121,7 +125,7 @@ public class BeanExample : BaseTypeExample
     /// <summary>
     /// 测试泛型集合
     /// </summary>
-    [DsonProperty(Impl = typeof(HashSet<>), EncodeFeatures = SerializeFeatures.ObjectFlow)]
+    [DsonProperty(TargetType = typeof(HashSet<>), EncodeFeatures = SerializeFeatures.ObjectFlow)]
     public ISet<string>? hashSet2;
     /// <summary>
     /// 测试不可变集合
@@ -132,7 +136,7 @@ public class BeanExample : BaseTypeExample
     /// <summary>
     /// 测试泛型字典
     /// </summary>
-    [DsonProperty(Impl = typeof(LinkedDictionary<,>), EncodeFeatures = SerializeFeatures.ObjectFlow)]
+    [DsonProperty(TargetType = typeof(LinkedDictionary<,>), EncodeFeatures = SerializeFeatures.ObjectFlow)]
     public IDictionary<int, string>? dictionary;
 
     /// <summary>
@@ -153,7 +157,9 @@ public class BeanExample : BaseTypeExample
     public Long4 long4;
     public Fxp64 fx4;
     public Fxp4 fv4;
-    
+    [DsonProperty(ElementNames = "xyz")]
+    public Double4 vec3;
+
     public void WriteType(IDsonObjectWriter writer, string dsonName) {
         writer.WriteInt(dsonName, Type);
     }

@@ -18,21 +18,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Poet;
-using ClassName = Wjybxx.Commons.Poet.ClassName;
 using TypeName = Wjybxx.Commons.Poet.TypeName;
 
 namespace Wjybxx.Dson.Apt
 {
 /// <summary>
-/// 生成Codec的常量字段
+/// 生成Codec的常量字段和反射读写方法
 /// </summary>
 internal class SchemaGenerator
 {
-    // 新实现下，工厂对象已约定为Func<object>
-    private static readonly ClassName className_Func = ClassName.Get(typeof(Func<>));
-    private static readonly ClassName factoryTypeName = ClassName.Get(typeof(Func<object>));
-
     private readonly CodecProcessor processor;
     private readonly Context context;
 
@@ -42,49 +39,8 @@ internal class SchemaGenerator
     }
 
     public void Execute() {
-        context.typeBuilder
-            .AddFields(GenNameFields())
-            .AddFields(GenFactoryFields());
-    }
-
-    internal static string GetNameFieldName(string rawFieldName) {
-        if (rawFieldName[0] == '<') { // 自动属性字段
-            rawFieldName = rawFieldName.Substring2(1, rawFieldName.IndexOf('>'));
-        }
-        string nameFieldName = rawFieldName[0] == '_'
-            ? "names" + rawFieldName
-            : "names_" + rawFieldName;
-        return nameFieldName;
-    }
-
-    internal static string GetFactoryFieldName(string rawFieldName) {
-        if (rawFieldName[0] == '<') { // 自动属性字段
-            rawFieldName = rawFieldName.Substring2(1, rawFieldName.IndexOf('>'));
-        }
-        string factoryFieldName = rawFieldName[0] == '_'
-            ? "factories" + rawFieldName
-            : "factories_" + rawFieldName;
-        return factoryFieldName;
-    }
-
-    private List<FieldSpec> GenFactoryFields() {
-        List<FieldSpec> result = new List<FieldSpec>();
-        foreach (AptFieldInfo fieldInfo in context.serialFields) {
-            AptFieldProps props = context.fieldPropsMap[fieldInfo];
-            if (props.implTypeName != null) {
-                result.Add(GenFactoryField(fieldInfo, props));
-            }
-        }
-        return result;
-    }
-
-    // 不能在编译时生成过多的factory，因为即使字段的声明类型是具体类型，其运行时类型仍可能是子类型，因此默认分配factory不安全
-    private FieldSpec GenFactoryField(AptFieldInfo fieldInfo, AptFieldProps props) {
-        // dotnet 6泛型不支持协变 -- 现在的工厂统一为了Func<object>
-        return FieldSpec.NewBuilder(factoryTypeName, GetFactoryFieldName(fieldInfo.Name),
-                Modifiers.Public | Modifiers.Static | Modifiers.ReadOnly)
-            .Initializer(CodeBlock.Of("() => new $T()", props.implTypeName))
-            .Build();
+        context.typeBuilder.AddFields(GenNameFields());
+        GenAccessMethods();
     }
 
     private List<FieldSpec> GenNameFields() {
@@ -94,26 +50,115 @@ internal class SchemaGenerator
         foreach (AptFieldInfo fieldInfo in context.serialFields) {
             AptFieldProps props = context.fieldPropsMap[fieldInfo];
             string fieldName = fieldInfo.Name;
-            string dsonName;
+            string serialName;
             if (!string.IsNullOrWhiteSpace(props.name)) {
-                dsonName = props.name.Trim();
-            } else if (fieldInfo.IsAutoPropertyField) {
-                // 自动属性字段使用属性名
-                dsonName = fieldInfo.propertySymbol!.Name;
+                serialName = props.name.Trim();
             } else {
-                // 删除首字符下划线
-                dsonName = fieldName[0] == '_' ? fieldName.Substring(1) : fieldName;
+                if (fieldInfo.IsAutoPropertyField) {
+                    serialName = fieldInfo.propertySymbol!.Name;
+                } else {
+                    serialName = fieldName;
+                }
+                // 显式字段名不参与样式转换
+                serialName = context.aptClassProps.nameStyle switch
+                {
+                    1 => Util.FirstCharToLowerCase(serialName),
+                    2 => BeanUtils.ToSnakeCase(serialName),
+                    3 => ToCamelCaseNoPrefix(fieldName),
+                    _ => serialName
+                };
             }
-            if (!dsonNameSet.Add(dsonName)) {
-                throw new Exception($"dsonName {dsonName} is duplicate, Type: {context.type}");
+            if (!dsonNameSet.Add(serialName)) {
+                throw new Exception($"SerialName {serialName} is duplicate, Type: {context.type}");
             }
 
-            FieldSpec fieldSpec = FieldSpec.NewBuilder(TypeName.STRING, GetNameFieldName(fieldName), Modifiers.Public | Modifiers.Const)
-                .Initializer(CodeBlock.Of("$S", dsonName))
+            FieldSpec fieldSpec = FieldSpec.NewBuilder(TypeName.STRING, GetNameFieldName(fieldName), Modifiers.Private | Modifiers.Const)
+                .Initializer(CodeBlock.Of("$S", serialName))
                 .Build();
             result.Add(fieldSpec);
         }
         return result;
+    }
+
+    private static string ToCamelCaseNoPrefix(string fieldName) {
+        if (fieldName[0] == '_') {
+            fieldName = fieldName.Substring(1);
+        }
+        return Util.FirstCharToLowerCase(fieldName);
+    }
+
+    internal static string GetNameFieldName(string rawFieldName) {
+        return "names" + GetAccessFieldName(rawFieldName);
+    }
+
+    internal static string GetGetValueMethodName(string rawFieldName) {
+        return "set" + GetAccessFieldName(rawFieldName);
+    }
+
+    internal static string GetSetValueMethodName(string rawFieldName) {
+        return "get" + GetAccessFieldName(rawFieldName);
+    }
+
+    private static string GetAccessFieldName(string rawFieldName) {
+        string val = rawFieldName[0] == '<' // 自动属性字段
+            ? rawFieldName.Substring2(1, rawFieldName.IndexOf('>'))
+            : rawFieldName;
+        return val[0] != '_' ? "_" + val : val;
+    }
+
+    private void GenAccessMethods() {
+        HashSet<string> memberNames = new HashSet<string>();
+        foreach (AptFieldInfo fieldInfo in context.serialFields) {
+            bool genGetter = !processor.CanGetDirectly(fieldInfo) && !fieldInfo.HasPublicGetter;
+            bool genSetter = !processor.CanSetDirectly(fieldInfo) && !fieldInfo.HasPublicSetter;
+            if (!genGetter && !genSetter) {
+                continue;
+            }
+            // 属性必须同时包含getter/setter，读写才统一走属性反射
+            bool useProperty = fieldInfo.propertySymbol?.GetMethod != null
+                               && fieldInfo.propertySymbol.SetMethod != null;
+            string refName = (useProperty ? "refp" : "ref") + GetAccessFieldName(fieldInfo.Name);
+            CheckMemberName(memberNames, refName);
+            context.typeBuilder.AddField(FieldSpec.NewBuilder(
+                    TypeName.Get(useProperty ? typeof(PropertyInfo) : typeof(FieldInfo)),
+                    refName, Modifiers.Private | Modifiers.Static | Modifiers.ReadOnly)
+                .Initializer(CodeBlock.Of("$L($S)!",
+                    useProperty ? "InternalGetProperty" : "InternalGetField",
+                    useProperty ? fieldInfo.propertySymbol!.Name : fieldInfo.Name))
+                .Build());
+
+            if (genGetter) {
+                string methodName = GetGetValueMethodName(fieldInfo.Name);
+                CheckMemberName(memberNames, methodName);
+                context.typeBuilder.AddMethod(MethodSpec.NewMethodBuilder(methodName)
+                    .AddModifiers(Modifiers.Private | Modifiers.Static)
+                    .Returns(fieldInfo.typeName)
+                    .AddParameter(context.rawTypeName, "inst")
+                    .Code(CodeBlock.NewBuilder()
+                        .AddStatement("return ($T)$L.GetValue(inst)!", fieldInfo.typeName, refName)
+                        .Build())
+                    .Build());
+            }
+            if (genSetter) {
+                string methodName = GetSetValueMethodName(fieldInfo.Name);
+                CheckMemberName(memberNames, methodName);
+                context.typeBuilder.AddMethod(MethodSpec.NewMethodBuilder(methodName)
+                    .AddModifiers(Modifiers.Private | Modifiers.Static)
+                    .Returns(TypeName.VOID)
+                    .AddParameter(context.type.IsValueType ? context.rawTypeName.MakeByRefType() : context.rawTypeName, "inst")
+                    .AddParameter(fieldInfo.typeName, "value")
+                    .Code(CodeBlock.NewBuilder()
+                        .AddStatement("$L.SetValue(inst, value)", refName)
+                        .Build())
+                    .Build());
+            }
+        }
+    }
+
+    private void CheckMemberName(HashSet<string> memberNames, string name) {
+        if (!memberNames.Add(name)) {
+            throw new Exception($"reflection member {name} is duplicate, Type: {context.type}");
+        }
     }
 }
 }

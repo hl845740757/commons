@@ -483,7 +483,6 @@ public static class DsonTexts
         if (str.Length == 0) {
             throw new ArgumentException("NumberFormatException:" + rawStr);
         }
-
         return Fxp64.Parse(str);
     }
 

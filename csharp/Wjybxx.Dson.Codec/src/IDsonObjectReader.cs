@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -29,25 +30,25 @@ public interface IDsonObjectReader : IDisposable
 {
     #region 基础值
 
-    int ReadInt(string name, DeserializeFeatures features = default);
+    int ReadInt(string name, DeserializeFeatures features = 0);
 
-    long ReadLong(string name, DeserializeFeatures features = default);
+    long ReadLong(string name, DeserializeFeatures features = 0);
 
-    float ReadFloat(string name, DeserializeFeatures features = default);
+    float ReadFloat(string name, DeserializeFeatures features = 0);
 
-    double ReadDouble(string name, DeserializeFeatures features = default);
+    double ReadDouble(string name, DeserializeFeatures features = 0);
 
-    Fxp64 ReadFxp64(string name);
+    Fxp64 ReadFxp64(string name, DeserializeFeatures features = 0);
 
-    bool ReadBool(string name, DeserializeFeatures features = default);
+    bool ReadBool(string name, DeserializeFeatures features = 0);
 
-    string ReadString(string name, DeserializeFeatures features = default);
+    string ReadString(string name, DeserializeFeatures features = 0);
 
     void ReadNull(string name);
 
-    byte[]? ReadBytes(string name, DeserializeFeatures features = default);
+    byte[]? ReadBytes(string name, DeserializeFeatures features = 0);
 
-    Binary? ReadBinary(string name, DeserializeFeatures features = default);
+    Binary? ReadBinary(string name, DeserializeFeatures features = 0);
 
     ObjectPtr ReadPtr(string name);
 
@@ -64,34 +65,32 @@ public interface IDsonObjectReader : IDisposable
 
     Fxp4 ReadFxp4(string name);
 
-    T ReadEnum<T>(string name, DeserializeFeatures features = default);
+    // Enum接口未对泛型做限制，目的是支持任意非多态类型
+    T ReadEnum<T>(string name, DeserializeFeatures features = 0) where T : struct;
 
     #endregion
 
     #region 基础值-无name版
 
-    int ReadInt(DeserializeFeatures features = default);
+    int ReadInt(DeserializeFeatures features = 0);
 
-    long ReadLong(DeserializeFeatures features = default);
+    long ReadLong(DeserializeFeatures features = 0);
 
-    float ReadFloat(DeserializeFeatures features = default);
+    float ReadFloat(DeserializeFeatures features = 0);
 
-    double ReadDouble(DeserializeFeatures features = default);
+    double ReadDouble(DeserializeFeatures features = 0);
 
-    Fxp64 ReadFxp64();
+    Fxp64 ReadFxp64(DeserializeFeatures features = 0);
 
-    bool ReadBool(DeserializeFeatures features = default);
+    bool ReadBool(DeserializeFeatures features = 0);
 
-    string ReadString(DeserializeFeatures features = default);
+    string ReadString(DeserializeFeatures features = 0);
 
     void ReadNull();
 
-    byte[]? ReadBytes(DeserializeFeatures features = default) {
-        Binary binary = ReadBinary();
-        return binary.Unwrap();
-    }
+    byte[]? ReadBytes(DeserializeFeatures features = 0);
 
-    Binary ReadBinary(DeserializeFeatures features = default);
+    Binary ReadBinary(DeserializeFeatures features = 0);
 
 
     ObjectPtr ReadPtr();
@@ -109,55 +108,35 @@ public interface IDsonObjectReader : IDisposable
 
     Fxp4 ReadFxp4();
 
-    T ReadEnum<T>(DeserializeFeatures features = default);
+    // Enum接口未对泛型做限制，目的是支持任意非多态类型
+    T ReadEnum<T>(DeserializeFeatures features = 0) where T : struct;
 
     #endregion
 
     #region object
 
     /// <summary>
-    /// 从输入流中读取一个对象
-    /// 注意：
-    /// 1. 该方法对于无法精确解析的对象，可能返回一个不兼容的类型。
-    /// 2. 目标类型可以与写入类型不一致，甚至无继承关系，只要数据格式兼容即可 —— 投影。
-    /// 3. 如果声明类型是的<see cref="DsonValue"/>类型，将保留对象头信息。
-    /// 4. 由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
+    /// 从输入流中读取任意类型对象
+    /// 
+    /// 1.该方法对于无法精确解析的对象，可能返回一个不兼容的类型。
+    /// 2.目标类型可以与写入类型不一致，甚至无继承关系，只要数据格式兼容即可 —— 投影。
+    /// 3.如果声明类型是<see cref="DsonValue"/>类型，将保留对象头信息。
+    /// 4.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
-    /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="features">反序列化特征值</param>
-    /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
-    /// <returns></returns>
-    object ReadObject(string name, Type declaredType, DeserializeFeatures features = default, Func<object>? factory = null);
-
-    /// <summary>
-    /// 从输入流中读取一个对象
-    /// 
-    /// 该方法用于避免结构体类型装箱
-    /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
-    /// <param name="features">反序列化特征值</param>
-    /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
-    /// <typeparam name="T">对象的声明类型</typeparam>
-    /// </summary>
-    T ReadObject<T>(string name, DeserializeFeatures features, Func<object>? factory = null);
-
-    /// <summary>
-    /// 从输入流中读取一个对象
-    /// </summary>
-    /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="features">反序列化特征值</param>
-    /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
-    /// <returns></returns>
-    object ReadObject(Type declaredType, DeserializeFeatures features, Func<object>? factory = null);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
     /// <param name="features">反序列化特征值</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
-    /// <returns></returns>
-    T ReadObject<T>(DeserializeFeatures features, Func<object>? factory = null);
+    T ReadObject<T>(string name, DeserializeFeatures features = 0);
+
+    /// <summary>
+    /// 从输入流中读取任意类型对象
+    /// </summary>
+    T ReadObject<T>(DeserializeFeatures features = 0);
+
+    // 非泛型接口用于类似反射这类无法进行类型转换的的场景
+    object ReadObject(string name, Type declaredType, DeserializeFeatures features = 0);
+
+    object ReadObject(Type declaredType, DeserializeFeatures features = 0);
 
     #endregion
 
@@ -167,6 +146,7 @@ public interface IDsonObjectReader : IDisposable
     ConverterOptions Options { get; }
     ITypeMetaRegistry TypeMetaRegistry { get; }
     IDsonCodecRegistry CodecRegistry { get; }
+    bool IsTextReader { get; }
 
     /// <summary>
     /// 读取下一个数据的类型
@@ -176,26 +156,17 @@ public interface IDsonObjectReader : IDisposable
 
     /// <summary>
     /// 读取下一个值的名字
-    /// 该方法只能在<see cref="ReadDsonType"/>后调用
     /// </summary>
     /// <returns></returns>
     string ReadName();
 
     /// <summary>
-    /// 读取指定名字的值 -- 非被动读模式下可用。
-    /// 如果尚未调用<see cref="ReadDsonType"/>，该方法将尝试跳转到该name所在的字段。
-    /// 如果已调用<see cref="ReadDsonType"/>，则name必须与下一个name匹配。
-    /// 如果已调用<see cref="ReadName()"/>，则name可以为null，否则必须当前name匹配。
-    /// 返回false的情况下，可继续调用该方法或<see cref="ReadDsonType"/>读取下一个字段。
-    ///
-    /// 如果是Object上下文，如果字段存在则返回true，否则返回false；
-    /// 如果是Array上下文，如果尚未到达数组尾部，则返回true，否则返回false。
+    /// 读取下一个值的名字，名字不匹配时抛出异常
     /// </summary>
     /// <param name="name">期望的字段名</param>
-    bool ReadName(string? name);
+    void ReadName(string? name);
 
     DsonType CurrentDsonType { get; }
-
     string CurrentName { get; }
 
     /// <summary>
@@ -203,32 +174,21 @@ public interface IDsonObjectReader : IDisposable
     /// </summary>
     /// <param name="encoderType">类型信息，用于嵌套对象获取信息</param>
     /// <param name="features">反序列化特征值</param>
-    SerializeHeader ReadStartObject(Type encoderType, DeserializeFeatures features = default);
+    SerializeHeader ReadStartObject(Type encoderType, DeserializeFeatures features = 0);
 
-    SerializeHeader ReadStartObject(TypeMeta? typeMeta, DeserializeFeatures features = default);
+    SerializeHeader ReadStartObject(TypeMeta? typeMeta, DeserializeFeatures features = 0);
 
     void ReadEndObject();
 
-    SerializeHeader ReadStartArray(Type encoderType, DeserializeFeatures features = default);
+    SerializeHeader ReadStartArray(Type encoderType, DeserializeFeatures features = 0);
 
-    SerializeHeader ReadStartArray(TypeMeta typeMeta, DeserializeFeatures features = default);
+    SerializeHeader ReadStartArray(TypeMeta typeMeta, DeserializeFeatures features = 0);
 
     void ReadEndArray();
 
-    void SkipName();
-
     void SkipValue();
 
-    void SkipToEndOfObject();
-
     byte[] ReadValueAsBytes(string name);
-
-    /// <summary>
-    /// 发布引用
-    /// 
-    /// 注：Codec应该在创建实例以后立刻发布，以避免循环依赖时出现错误。
-    /// </summary>
-    void PublishReference<T>(T reference);
 
     /// <summary>
     /// 获取当前容器的类型元数据
@@ -247,15 +207,64 @@ public interface IDsonObjectReader : IDisposable
 
     /// <summary>
     /// 设置是否启用name池化
+    /// (null表示使用Reader默认设置)
     /// </summary>
     /// <param name="value"></param>
     void SetEnableNameIntern(bool? value);
 
+    #endregion
+
+    #region 引用解析
+
     /// <summary>
-    /// 设置数组/object的value的类型，用于精确解析Dson文本。
+    /// 发布引用
     /// </summary>
-    /// <param name="dsonType">value的类型</param>
-    void SetComponentType(DsonType dsonType);
+    /// <param name="ptr">引用id</param>
+    /// <param name="target">对象</param>
+    void PublishReference(int ptr, object target);
+
+    /// <summary>
+    /// 尝试读取引用Id
+    /// 
+    /// 注：用于判断目标对象时是否被序列化为共享引用。
+    /// </summary>
+    /// <param name="ptr">接收引用Id</param>
+    /// <returns></returns>
+    bool TryReadPtr(out int ptr);
+
+    /// <summary>
+    /// 延迟解析引用
+    /// 
+    /// 1.通过<see cref="IDsonCodec.SetField(object, string, object)"/>注入最终引用。
+    /// 2.字段名指的是序列化name，而非真实名（反射名）。
+    /// 3.如果目标引用已存在，可能立即注入。
+    /// </summary>
+    /// <param name="ptr">目标指针</param>
+    /// <param name="codec">注入回调</param>
+    /// <param name="inst">目标实例</param>
+    /// <param name="fieldName">目标字段</param>
+    void DeferReference(int ptr, IDsonCodec codec, object inst, string fieldName);
+
+    void DeferReference<T>(int ptr, IDsonCodec codec, List<T> inst, int index);
+
+    void DeferReference<K, V>(int ptr, IDsonCodec codec, Dictionary<K, V> inst, List<K> keyArray, int index);
+
+    /// <summary>
+    /// 延迟转换为目标类型（延迟到fieldValue引用解析完后执行）
+    ///
+    /// 0.如果fieldValue内部不包含未解析的引用，则可能立即执行。
+    /// 1.也通过<see cref="IDsonCodec.SetField(object, string, object)"/>注入最终引用。
+    /// 2.如果Func为null，表示不进行转换，只是延迟注入引用。
+    /// 3.如果字段值为null，则会立即注入null值（null值不执行func）。
+    /// 4.暂时要求必须紧随<see cref="ReadObject{T}(DeserializeFeatures)"/>调用。
+    /// </summary>
+    /// <param name="codec">注入回调</param>
+    /// <param name="inst">目标实例</param>
+    /// <param name="fieldName">目标字段</param>
+    /// <param name="fieldValue">字段临时值</param>
+    /// <param name="func">转换函数</param>
+    void DeferToTargetType(IDsonCodec codec, object inst, string fieldName,
+                           object? fieldValue, Func<object, object>? func);
 
     #endregion
 }

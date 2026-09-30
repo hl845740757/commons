@@ -66,6 +66,8 @@ public interface DsonInput extends AutoCloseable {
     /** @param count 要读取的字节数 */
     byte[] readRawBytes(int count);
 
+    void readRawBytes(byte[] buffer, int offset, int count);
+
     /** @param n 要跳过的字节数 */
     void skipRawBytes(int n);
 

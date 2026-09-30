@@ -400,7 +400,7 @@ public abstract class AbstractPromise
 #nullable restore
 
         public UniOnCompletedFsm(IExecutor? executor, int options, CancellationToken cancelToken,
-                                  Action<object?> action, object? state) {
+                                 Action<object?> action, object? state) {
             this.executor = executor;
             this.cancelToken = cancelToken;
             this.options = options;

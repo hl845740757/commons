@@ -17,6 +17,7 @@
 #endregion
 
 using System.Collections.Generic;
+using System.Text;
 using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson
@@ -59,5 +60,7 @@ public static class DsonHeader
     public const string Names_LocalId = "localId";
     public const string Names_Count = "count";
     public const string Names_Version = "version";
+
+    internal static byte[] Bytes_ClassName = Encoding.UTF8.GetBytes(Names_ClassName);
 }
 }

@@ -67,7 +67,7 @@ public static class DsonReaderUtils
         int oldLimit = input.PushLimit(size);
         Binary binary;
         {
-            binary = Binary.UnsafeWrap(input.ReadRawBytes(size));
+            binary = Binary.Wrap(input.ReadRawBytes(size));
         }
         input.PopLimit(oldLimit);
         return binary;
@@ -217,7 +217,7 @@ public static class DsonReaderUtils
             w2.ReadInt64(input),
             w3.ReadInt64(input));
     }
-    
+
     public static void WriteFxp4(IDsonOutput output, Fxp4 value) {
         WireType w0 = WireTypes.BestOfInt64(value.v0.rawValue);
         WireType w1 = WireTypes.BestOfInt64(value.v1.rawValue);
@@ -296,7 +296,8 @@ public static class DsonReaderUtils
     #endregion
 
     public static void SkipValue(IDsonInput input, DsonContextType contextType,
-                                 DsonType dsonType, WireType wireType, int wireTypeBits) {
+                                 DsonType dsonType, int wireTypeBits) {
+        WireType wireType = (WireType)wireTypeBits;
         int skip; // 不构建引用的类型可以直接调用对应的Read方法
         switch (dsonType) {
             case DsonType.Int32: {

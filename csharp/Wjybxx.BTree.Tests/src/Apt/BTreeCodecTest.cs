@@ -71,6 +71,10 @@ public class BTreeCodecTest
             builder.AddTypeMeta(typeMeta);
         }
         builder.AddTypeMeta(TypeMeta.Of(typeof(Task<>), "Task"));
+        builder.Options = new ConverterOptions.Builder()
+        {
+            EncodeFeatures = SerializeFeatures.SkipNullValue
+        }.Build();
         converter = builder.Build();
     }
 
@@ -105,7 +109,7 @@ public class BTreeCodecTest
     [Test]
     public void SerializeTest() {
         List<Task<string>> list = converter.ReadCollectionFromDson<Task<string>>(dsonString2);
-        string collectionString = converter.WriteAsDson(list, typeof(Task<string>));
+        string collectionString = converter.WriteCollectionAsDson(list);
         Console.WriteLine(collectionString);
     }
 }

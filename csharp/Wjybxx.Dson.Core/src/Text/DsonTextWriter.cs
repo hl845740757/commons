@@ -96,7 +96,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         if (context.contextType != DsonContextType.TopLevel && context.count > 0) {
             printer.Print(',');
         }
-        // 用于用户追加注释
+        // 用于用户追加注释(或换行)
         if (context.textBeforeName != null) {
             printer.Print(context.textBeforeName);
             context.textBeforeName = null;

@@ -232,12 +232,8 @@ public static partial class CollectionUtil
     /// 预测集合的大小
     /// </summary>
     internal static int? PredicateCount<T>(IEnumerable<T> items) {
-        if (items is ICollection<T> other1) { // C#的数组实现了ICollection...
-            return other1.Count;
-        }
-        if (items is IReadOnlyCollection<T> other2) {
-            return other2.Count;
-        }
+        if (items is ICollection<T> other1) return other1.Count;
+        if (items is IReadOnlyCollection<T> other2) return other2.Count;
         return null;
     }
 

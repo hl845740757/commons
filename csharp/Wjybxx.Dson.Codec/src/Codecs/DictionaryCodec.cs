@@ -17,10 +17,11 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -51,11 +52,11 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             || typeInfo == typeof(IGenericDictionary<K, V>)) {
             return FactoryKind.LinkedDictionary;
         }
-        if (typeInfo == typeof(ConcurrentDictionary<K, V>)) {
-            return FactoryKind.ConcurrentDictionary;
-        }
         if (typeInfo == typeof(ArrayDictionary<K, V>)) {
             return FactoryKind.ArrayDictionary;
+        }
+        if (typeInfo == typeof(SortedList<K, V>)) {
+            return FactoryKind.SortedList;
         }
         // IDictionary接口类型根据配置决定
         return FactoryKind.Unknown;
@@ -65,41 +66,28 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     {
         Unknown,
         LinkedDictionary,
-        ConcurrentDictionary,
-        ArrayDictionary
+        ArrayDictionary,
+        SortedList
     }
 
     public Type GetEncoderType() => encoderType;
 
-    private IDictionary<K, V> NewDictionary(Func<object>? userFactory, int count) {
-        if (userFactory != null) return (IDictionary<K, V>)userFactory();
+    private IDictionary<K, V> NewDictionary(int count) {
         if (this.factory != null) return this.factory();
         return factoryKind switch
         {
             FactoryKind.LinkedDictionary => new LinkedDictionary<K, V>(count),
-            FactoryKind.ConcurrentDictionary => new ConcurrentDictionary<K, V>(),
             FactoryKind.ArrayDictionary => new ArrayDictionary<K, V>(count),
+            FactoryKind.SortedList => new SortedList<K, V>(count),
             _ => new Dictionary<K, V>(count)
         };
     }
 
-    private IDictionary<K, V> ToImmutable(Type declaredType, IDictionary<K, V> dictionary) {
-        if (declaredType.IsInterface) {
-            return ImmutableDictionary<K, V>.CreateRange(dictionary);
-        }
-        if (declaredType.IsGenericType
-            && declaredType.GetGenericTypeDefinition() == typeof(ImmutableDictionary<,>)) {
-            return ImmutableDictionary<K, V>.CreateRange(dictionary);
-        }
-        return dictionary;
-    }
-
     public void WriteObject(IDsonObjectWriter writer, IDictionary<K, V> inst, Type declaredType, SerializeFeatures features) {
-        DsonCodecImpl<K> keyEncoder = writer.CodecRegistry.GetEncoder(typeof(K)) as DsonCodecImpl<K>;
-        if (keyEncoder == null || !keyEncoder.IsKeyCodec) {
-            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-            SerializeFeatures elementFeatures = features.GetElementFeatures();
-            //
+        DsonCodecImpl<K> keyCodec = writer.GetInlinableCodec<K>();
+        SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+        SerializeFeatures elementFeatures = features.GetElementFeatures();
+        if (keyCodec == null || !keyCodec.IsKeyCodec) {
             writer.WriteStartArray(encoderType, declaredType, selfFeatures, inst.Count);
             foreach (KeyValuePair<K, V> pair in inst) {
                 writer.WriteObject(pair.Key);
@@ -107,167 +95,160 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             writer.WriteEndArray();
         } else {
-            WriteDictionary(writer, inst, declaredType, features, keyEncoder);
-        }
-    }
-
-    public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        reader.SetEnableNameIntern(false); // 禁用字典的name池化
-        DsonCodecImpl<K> keyEncoder = reader.CodecRegistry.GetDecoder(typeof(K)) as DsonCodecImpl<K>;
-        IDictionary<K, V> result;
-        if (keyEncoder == null || !keyEncoder.IsKeyCodec) {
-            DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-            DeserializeFeatures elementFeatures = features.GetElementFeatures();
-            //
-            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
-            result = NewDictionary(factory, count);
-            reader.PublishReference(result);
-            //
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                K key = reader.ReadObject<K>(0);
-                V value = reader.ReadObject<V>(elementFeatures);
-                result[key] = value;
-            }
-            reader.ReadEndArray();
-        } else {
-            result = ReadDictionary(reader, features, factory, keyEncoder);
-        }
-        // 处理默认的不可变集合
-        if (declaredType.IsGenericType) {
-            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableDictionary<,>)) {
-                return result.ToImmutableDictionary2();
-            }
-        }
-        return DsonCodecHelper.IsReadAsImmutable(features, reader)
-            ? ToImmutable(declaredType, result)
-            : result;
-    }
-
-    private void WriteDictionary(IDsonObjectWriter writer, IDictionary<K, V> inst,
-                                 Type declaredType, SerializeFeatures features,
-                                 DsonCodecImpl<K> keyEncoder) {
-        SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-        SerializeFeatures elementFeatures = features.GetElementFeatures();
-        SerializeFeatures keyFeatures = GetKeyFeatures(features);
-        MapStyle style = GetMapStyle(features, writer, MapStyle.Document);
-        switch (style) {
-            case MapStyle.Document: {
-                writer.WriteStartObject(encoderType, declaredType, selfFeatures, inst.Count); // 字典写为普通文档
-                foreach (KeyValuePair<K, V> pair in inst) {
-                    string keyString = keyEncoder.EncodeKey(pair.Key, keyFeatures);
-                    writer.WriteName(keyString); // 确保null值写入
-                    writer.WriteObject(keyString, pair.Value, elementFeatures);
-                }
-                writer.WriteEndObject();
-                break;
-            }
-            case MapStyle.PairAsDocument: {
-                TypeMeta pairTypeMeta = GetPairTypeMeta(writer.TypeMetaRegistry);
+            // 接口类型foreach会导致迭代器装箱，但序列化性能不是重点关注项
+            // 理论上Value也可以内联加速，但Key+Value组合情况较多，暂不优化
+            SerializeFeatures keyFeatures = GetKeyFeatures(features);
+            if (IsWriteAsArray(features, writer)) {
                 writer.WriteStartArray(encoderType, declaredType, selfFeatures, inst.Count);
                 foreach (KeyValuePair<K, V> pair in inst) {
-                    writer.WriteStartObject(pairTypeMeta, SerializeFeatures.ObjectFlow); // pair写为子文档-没有类型
-                    {
-                        string keyString = keyEncoder.EncodeKey(pair.Key, keyFeatures);
-                        writer.WriteName(keyString); // 确保null值写入
-                        writer.WriteObject(keyString, pair.Value, elementFeatures);
-                    }
-                    writer.WriteEndObject();
-                }
-                writer.WriteEndArray();
-                break;
-            }
-            case MapStyle.PairAsArray: {
-                TypeMeta pairTypeMeta = GetPairTypeMeta(writer.TypeMetaRegistry);
-                writer.WriteStartArray(encoderType, declaredType, selfFeatures, inst.Count);
-                foreach (KeyValuePair<K, V> pair in inst) {
-                    writer.WriteStartArray(pairTypeMeta, SerializeFeatures.ObjectFlow); // pair写为子数组-没有类型
-                    {
-                        keyEncoder.WriteObject(writer, pair.Key, typeof(K), default);
-                        writer.WriteObject(pair.Value, elementFeatures);
-                    }
-                    writer.WriteEndArray();
-                }
-                writer.WriteEndArray();
-                break;
-            }
-            case MapStyle.Array:
-            default: {
-                writer.WriteStartArray(encoderType, declaredType, selfFeatures, inst.Count); // 整个字典写为数组
-                foreach (KeyValuePair<K, V> pair in inst) {
-                    keyEncoder.WriteObject(writer, pair.Key, typeof(K), default);
+                    keyCodec.WriteObject(writer, pair.Key, typeof(K), keyFeatures);
                     writer.WriteObject(pair.Value, elementFeatures);
                 }
                 writer.WriteEndArray();
-                break;
+            } else {
+                writer.WriteStartObject(encoderType, declaredType, selfFeatures, inst.Count);
+                foreach (KeyValuePair<K, V> pair in inst) {
+                    string keyString = keyCodec.EncodeKey(pair.Key, keyFeatures);
+                    writer.WriteName(keyString); // 确保null值写入，也可通过Feature实现
+                    writer.WriteObject(keyString, pair.Value, elementFeatures);
+                }
+                writer.WriteEndObject();
             }
         }
     }
 
-    private IDictionary<K, V> ReadDictionary(IDsonObjectReader reader, DeserializeFeatures features,
-                                             Func<object>? factory,
-                                             DsonCodecImpl<K> keyDecoder) {
-        DeserializeFeatures selfFeatures = features.ErasureElementFeatures() | DeserializeFeatures.PassiveReading;
+    public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        reader.SetEnableNameIntern(false); // 禁用字典的name池化
+        if ((features & DeserializeFeatures.SerializeReference) != 0) {
+            return ReadDictionaryRef(reader, features);
+        }
+
+        DsonCodecImpl<K> keyCodec = reader.GetInlinableCodec<K>();
+        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
         DeserializeFeatures elementFeatures = features.GetElementFeatures();
-        //
         IDictionary<K, V> result;
-        if (reader.CurrentDsonType == DsonType.Object) {
-            int count = reader.ReadStartObject(encoderType, selfFeatures).count;
-            result = NewDictionary(factory, count);
-            reader.PublishReference(result);
+        if (keyCodec == null || !keyCodec.IsKeyCodec) {
+            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
+            result = NewDictionary(count);
             //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                K key = keyDecoder.DecodeKey(reader.ReadName());
+                K key = reader.ReadObject<K>();
                 V value = reader.ReadObject<V>(elementFeatures);
                 result[key] = value;
             }
-            reader.ReadEndObject();
-        } else {
-            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
-            result = NewDictionary(factory, count);
-            reader.PublishReference(result);
-            //
-            DsonType firstDsonType = reader.ReadDsonType();
-            switch (firstDsonType) {
-                case DsonType.EndOfObject: break; // 没有元素
-                case DsonType.Object: { // Pair为子文档
-                    TypeMeta pairTypeMeta = GetPairTypeMeta(reader.TypeMetaRegistry);
-                    do {
-                        reader.ReadStartObject(pairTypeMeta, DeserializeFeatures.PassiveReading);
-                        {
-                            reader.ReadDsonType();
-                            K key = keyDecoder.DecodeKey(reader.ReadName());
-                            V value = reader.ReadObject<V>(elementFeatures);
-                            result[key] = value;
-                        }
-                        reader.ReadEndObject();
-                    } while (reader.ReadDsonType() != DsonType.EndOfObject);
-                    break;
-                }
-                case DsonType.Array: { // Pair为子数组
-                    TypeMeta pairTypeMeta = GetPairTypeMeta(reader.TypeMetaRegistry);
-                    do {
-                        reader.ReadStartArray(pairTypeMeta);
-                        {
-                            K key = reader.ReadObject<K>(0);
-                            V value = reader.ReadObject<V>(elementFeatures);
-                            result[key] = value;
-                        }
-                        reader.ReadEndArray();
-                    } while (reader.ReadDsonType() != DsonType.EndOfObject);
-                    break;
-                }
-                default: { // 整个字典写为数组
-                    do {
-                        K key = reader.ReadObject<K>(0);
-                        V value = reader.ReadObject<V>(elementFeatures);
-                        result[key] = value;
-                    } while (reader.ReadDsonType() != DsonType.EndOfObject);
-                    break;
-                }
-            }
             reader.ReadEndArray();
+        } else {
+            const DeserializeFeatures keyFeatures = 0;
+            if (reader.CurrentDsonType == DsonType.Array) {
+                // 输入流为Array
+                int count = reader.ReadStartArray(encoderType, selfFeatures).count;
+                result = NewDictionary(count);
+                //
+                while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                    K key = keyCodec.ReadObject(reader, typeof(K), keyFeatures);
+                    V value = reader.ReadObject<V>(elementFeatures);
+                    result[key] = value;
+                }
+                reader.ReadEndArray();
+            } else {
+                // 输入流为Document
+                int count = reader.ReadStartObject(encoderType, selfFeatures).count;
+                result = NewDictionary(count);
+                //
+                while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                    K key = keyCodec.DecodeKey(reader.ReadName());
+                    V value = reader.ReadObject<V>(elementFeatures);
+                    result[key] = value;
+                }
+                reader.ReadEndObject();
+            }
         }
         return result;
+    }
+
+    private IDictionary<K, V> ReadDictionaryRef(IDsonObjectReader reader, DeserializeFeatures features) {
+        DsonCodecImpl<K> keyCodec = reader.GetInlinableCodec<K>();
+        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
+        DeserializeFeatures elementFeatures = features.GetElementFeatures();
+        Dictionary<K, V> result;
+        List<K> keyArray;
+        if (keyCodec == null || !keyCodec.IsKeyCodec) {
+            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
+            result = new Dictionary<K, V>(count);
+            keyArray = new List<K>(count);
+            //
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                K key = reader.ReadObject<K>();
+                V value = ReadValueRef(reader, elementFeatures, result, keyArray, key);
+                result[key] = value;
+            }
+            reader.ReadEndArray();
+        } else {
+            const DeserializeFeatures keyFeatures = 0;
+            if (reader.CurrentDsonType == DsonType.Array) {
+                // 输入流为Array
+                int count = reader.ReadStartArray(encoderType, selfFeatures).count;
+                result = new Dictionary<K, V>(count);
+                keyArray = new List<K>(count);
+                //
+                while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                    K key = keyCodec.ReadObject(reader, typeof(K), keyFeatures);
+                    V value = ReadValueRef(reader, elementFeatures, result, keyArray, key);
+                    result[key] = value;
+                }
+                reader.ReadEndArray();
+            } else {
+                // 输入流为Document
+                int count = reader.ReadStartObject(encoderType, selfFeatures).count;
+                result = new Dictionary<K, V>(count);
+                keyArray = new List<K>(count);
+                //
+                while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                    K key = keyCodec.DecodeKey(reader.ReadName());
+                    V value = ReadValueRef(reader, elementFeatures, result, keyArray, key);
+                    result[key] = value;
+                }
+                reader.ReadEndObject();
+            }
+        }
+        return result;
+    }
+
+    // 走到该方法时Value通常为引用类型
+    private V ReadValueRef(IDsonObjectReader reader, DeserializeFeatures elementFeatures,
+                           Dictionary<K, V> result, List<K> keyArray, K key) {
+        if (reader.TryReadPtr(out int ptr)) {
+            reader.DeferReference(ptr, this, result, keyArray, keyArray.Count);
+            keyArray.Add(key);
+            return default;
+        }
+        return reader.ReadObject<V>(elementFeatures);
+    }
+
+    public bool SetField(object inst, object keyArray, int index, object value) {
+        if (inst is Dictionary<K, V> result && keyArray is List<K> keys) {
+            K key = keys[index];
+            result[key] = (V)value;
+            return true;
+        }
+        return false;
+    }
+
+    private static bool IsWriteAsArray(SerializeFeatures features, IDsonObjectWriter writer) {
+        if ((features & SerializeFeatures.MapAsArray) != 0) return true;
+        if ((features & SerializeFeatures.MapAsDocument) != 0) return false;
+        //
+        TypeMeta typeMeta = writer.ContainerTypeMeta;
+        if (typeMeta != null) {
+            features = typeMeta.encodeFeatures;
+            if ((features & SerializeFeatures.MapAsArray) != 0) return true;
+            if ((features & SerializeFeatures.MapAsDocument) != 0) return false;
+        }
+        features = writer.Options.encodeFeatures;
+        if ((features & SerializeFeatures.MapAsArray) != 0) return true;
+        if ((features & SerializeFeatures.MapAsDocument) != 0) return false;
+        //
+        return !writer.IsTextWriter;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -275,25 +256,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         return typeMetaRegistry.OfType(typeof(KeyValuePair<K, V>))!;
     }
 
-    private static MapStyle GetMapStyle(SerializeFeatures features, IDsonObjectWriter writer, MapStyle def) {
-        if ((features & SerializeFeatures.MaskMapStyles) != 0) {
-            return features.ToMapStyle();
-        }
-        TypeMeta typeMeta = writer.ContainerTypeMeta;
-        if (typeMeta != null) {
-            features = typeMeta.encodeFeatures;
-            if ((features & SerializeFeatures.MaskMapStyles) != 0) {
-                return features.ToMapStyle();
-            }
-        }
-        features = writer.Options.encodeFeatures;
-        if ((features & SerializeFeatures.MaskMapStyles) != 0) {
-            return features.ToMapStyle();
-        }
-        return def;
-    }
-
-    private SerializeFeatures GetKeyFeatures(SerializeFeatures features) {
+    private static SerializeFeatures GetKeyFeatures(SerializeFeatures features) {
         if (typeof(K).IsEnum) {
             if ((features & SerializeFeatures.EnumKeyAsString) != 0) return SerializeFeatures.EnumAsString;
             if ((features & SerializeFeatures.EnumKeyAsNumber) != 0) return SerializeFeatures.EnumAsNumber;

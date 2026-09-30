@@ -23,6 +23,7 @@ namespace Wjybxx.Commons.Logger
 /// </summary>
 public enum Level : byte
 {
+    None = 0,
     /// <summary>
     /// Trace
     /// </summary>

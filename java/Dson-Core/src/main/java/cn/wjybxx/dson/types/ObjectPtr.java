@@ -153,13 +153,4 @@ public final class ObjectPtr {
     public static final String NAMES_LOCAL_PATH = "localPath";
     public static final String NAMES_LOCAL_ID = "localId";
     public static final String NAMES_TYPE = "type";
-
-    // 转换
-    public static ObjectPtr OfObjectPath(ObjectPath path) {
-        return new ObjectPtr(path.collection, path.localPath, path.localId, path.type);
-    }
-
-    public ObjectPath toObjectPath() {
-        return new ObjectPath(collection, localPath, localId, type);
-    }
 }

@@ -122,6 +122,9 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     public abstract DsonType PeekDsonType();
 
+    // 暂时可不做校验，以后再补
+    public abstract bool PeekClassName(TName name, out string? clsName);
+
     /** 不直接返回值，而是存储在变量上可避免泛型问题 */
     protected abstract void DoReadName();
 
@@ -592,20 +595,22 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     public void SetEnableNameIntern(bool? value) {
         if (value == null) {
-            context.enableNameIntern = settings.enableNameIntern != null && settings.enableNameIntern.Value;
+            context.enableNameIntern = settings.enableNameIntern ?? false;
         } else if (value.Value) {
-            context.enableNameIntern = settings.enableNameIntern == null || settings.enableNameIntern.Value;
+            context.enableNameIntern = settings.enableNameIntern ?? true;
         } else {
             context.enableNameIntern = false;
         }
     }
 
-    public object Attach(object userData) {
-        return context.Attach(userData);
+    public int UserContextFlags {
+        get => context.flags;
+        set => context.flags = value;
     }
 
-    public object Attachment() {
-        return context.userData;
+    public object UserContextData {
+        get => context.userData;
+        set => context.userData = value;
     }
 
     public DsonReaderGuide WhatShouldIDo() {
@@ -632,6 +637,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         protected internal DsonReaderState state = DsonReaderState.Initial;
         protected internal TName name;
         protected internal bool enableNameIntern;
+        protected internal int flags;
         protected internal object userData;
 
         public Context() {
@@ -651,6 +657,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
             state = default;
             name = default;
             enableNameIntern = false;
+            flags = 0;
             userData = null;
         }
 

@@ -148,7 +148,8 @@ public static class DsonTypes
     /** 通过Number获取对应的枚举 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DsonType ForNumber(int number) {
-        return LOOK_UP[number];
+        return (DsonType)number;
+        // return LOOK_UP[number];
     }
 }
 }

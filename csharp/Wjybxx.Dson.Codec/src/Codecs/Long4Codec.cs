@@ -27,7 +27,7 @@ public class Long4Codec : IDsonCodec<Long4>
         writer.WriteLong4(inst);
     }
 
-    public Long4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public Long4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return reader.ReadLong4();
     }
 }

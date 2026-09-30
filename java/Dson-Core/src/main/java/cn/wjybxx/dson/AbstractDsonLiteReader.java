@@ -134,6 +134,10 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         }
     }
 
+    @Nullable
+    @Override
+    public abstract String peekClassName(int name);
+
     protected abstract void doReadName();
 
     /** 检查是否可以执行{@link #readDsonType()} */

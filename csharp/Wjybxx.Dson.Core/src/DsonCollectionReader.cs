@@ -37,12 +37,11 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 #nullable disable
     private TName _nextName;
     private DsonValue _nextValue;
-    private bool _singleValue;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="settings"></param>
+    /// <param name="settings">设置</param>
     /// <param name="dsonArray">输入</param>
     public DsonCollectionReader(DsonReaderSettings settings, DsonArray<TName> dsonArray)
         : base(settings) {
@@ -53,59 +52,6 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         context.container = dsonArray;
         context.arrayIterator.SetBaseIterator(dsonArray.GetEnumerator());
         SetContext(context);
-    }
-
-    private DsonCollectionReader() : base(null) {
-    }
-
-    public void UnsafeInit(DsonReaderSettings settings, DsonValue dsonValue, bool singleValue) {
-        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-        this._singleValue = singleValue;
-        if (dsonValue == null) throw new ArgumentNullException(nameof(dsonValue));
-        // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
-        Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
-        if (singleValue) {
-            context.header = null;
-            context.container = dsonValue;
-            context.arrayIterator.SetBaseIterator(new SingleValueEnumerator<DsonValue>(dsonValue));
-        } else {
-            DsonArray<TName> dsonArray = (DsonArray<TName>)dsonValue;
-            context.header = dsonArray.Header.Count > 0 ? dsonArray.Header : null;
-            context.container = dsonArray;
-            context.arrayIterator.SetBaseIterator(dsonArray.GetEnumerator());
-        }
-        SetContext(context);
-    }
-
-    /// <summary>
-    /// 用于支持池化
-    /// </summary>
-    /// <returns></returns>
-    public static DsonCollectionReader<TName> UnsafeCreate() {
-        return new DsonCollectionReader<TName>();
-    }
-
-    /// <summary>
-    /// 适用读取顶层集合的单个值的情况
-    /// </summary>
-    public static DsonCollectionReader<TName> UnsafeCreate(DsonReaderSettings settings, DsonValue dsonValue, bool singleValue) {
-        DsonCollectionReader<TName> reader = new DsonCollectionReader<TName>();
-        reader.UnsafeInit(settings, dsonValue, singleValue);
-        return reader;
-    }
-
-    /// <summary>
-    /// 设置key的迭代顺序。
-    /// 注意：这期间不能触发<see cref="PeekDsonType"/>等可能导致mark的操作，
-    ///  mark操作会导致key缓存到本地，从而使得外部的keyItr无效。
-    /// </summary>
-    /// <param name="keyItr">Key的迭代器</param>
-    /// <param name="defValue">key不存在时的返回值</param>
-    public void SetKeyItr(ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
-        if (keyItr == null) throw new ArgumentNullException(nameof(keyItr));
-        if (defValue == null) throw new ArgumentNullException(nameof(defValue));
-        Context context = GetContext();
-        context.SetKeyItr(keyItr, defValue);
     }
 
     /// <summary>
@@ -137,10 +83,6 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     /// </summary>
     /// <returns></returns>
     public DsonValue CurrentValue => _nextValue;
-    /// <summary>
-    /// 是否是单值集合（顶层上下文）
-    /// </summary>
-    public bool IsSingleValueCollection => _singleValue;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {
@@ -247,6 +189,22 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             context.ResetItr();
             return nextElement!.Value.Value.DsonType;
         }
+    }
+
+    public override bool PeekClassName(TName name, out string clsName) {
+        // 该方法在ReadDsonType后调用，尚未调用ReadStart
+        DsonHeader<TName> header = _nextValue switch
+        {
+            DsonObject<TName> dsonObject => dsonObject.Header,
+            DsonArray<TName> dsonArray => dsonArray.Header,
+            _ => null
+        };
+        if (header != null && header.TryGetValue(name, out DsonValue value) && value.DsonType == DsonType.String) {
+            clsName = value.AsString();
+            return true;
+        }
+        clsName = null;
+        return false;
     }
 
     protected override void DoReadName() {
@@ -411,7 +369,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     }
 
 #pragma warning disable CS0628
-    protected new class Context : AbstractDsonReader<TName>.Context, ISequentialEnumerator<KeyValuePair<TName, DsonValue>>
+    protected new class Context : AbstractDsonReader<TName>.Context
     {
         /** 如果不为null，则表示需要先读取header */
         protected internal DsonHeader<TName> header;
@@ -420,10 +378,6 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         /** 迭代器和Context一起缓存 -- 这里传<see cref="ISequentialEnumerator{T}.Empty"/>会引发unity崩溃！*/
         protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator = new(null);
         protected internal MarkableIterator<DsonValue> arrayIterator = new(null);
-
-        /** 按照外部key迭代 -- 避免再封装一层增加开销 */
-        private ISequentialEnumerator<TName> keyItr;
-        private DsonValue defValue;
 
         public Context() {
         }
@@ -437,15 +391,10 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             container = null;
             objectIterator.Dispose();
             arrayIterator.Dispose();
-            keyItr = null;
-            defValue = null;
         }
 
         /** 该方法重合了迭代器的hasNext，需要兼容 */
         public bool HasNext() {
-            if (keyItr != null) {
-                return keyItr.HasNext();
-            }
             if (contextType.IsArrayLike()) {
                 return arrayIterator.HasNext();
             }
@@ -468,44 +417,12 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             }
         }
 
-        public DsonValue NextValue() {
+        public DsonValue? NextValue() {
             return arrayIterator.HasNext() ? arrayIterator.Next() : null;
         }
 
         public KeyValuePair<TName, DsonValue>? NextElement() {
             return objectIterator.HasNext() ? objectIterator.Next() : null;
-        }
-
-        // key-itr
-        public void SetKeyItr(ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
-            if (contextType.IsArrayLike()) throw new InvalidOperationException("container is not an object");
-            if (objectIterator.IsMarking) throw new InvalidOperationException("reader is in marking state");
-
-            this.keyItr = keyItr;
-            this.defValue = defValue;
-            objectIterator.Dispose();
-            objectIterator.SetBaseIterator(this);
-        }
-
-        public bool MoveNext() {
-            return keyItr.MoveNext();
-        }
-
-        public KeyValuePair<TName, DsonValue> Current {
-            get {
-                TName key = keyItr.Current;
-                AbstractDsonObject<TName> dsonObject = (AbstractDsonObject<TName>)container;
-                if (dsonObject.TryGetValue(key!, out DsonValue dsonValue)) {
-                    return new KeyValuePair<TName, DsonValue>(key, dsonValue);
-                } else {
-                    return new KeyValuePair<TName, DsonValue>(key, defValue);
-                }
-            }
-        }
-
-        object IEnumerator.Current => Current;
-
-        public void Dispose() {
         }
     }
 
