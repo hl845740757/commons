@@ -22,6 +22,7 @@ import cn.wjybxx.dson.ext.SingleValueIterator;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.types.*;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -32,7 +33,6 @@ public final class DsonCollectionReader extends AbstractDsonReader {
 
     private String nextName;
     private DsonValue nextValue;
-    private boolean singleValue;
 
     public DsonCollectionReader(DsonReaderSettings settings, DsonArray<String> dsonArray) {
         super(settings);
@@ -45,44 +45,8 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         setContext(context);
     }
 
-    private DsonCollectionReader() {
-        super(null);
-    }
-
-    public void unsafeInit(DsonReaderSettings settings, DsonValue dsonValue, boolean singleValue) {
-        this.settings = Objects.requireNonNull(settings);
-        this.singleValue = singleValue;
-        Objects.requireNonNull(dsonValue);
-
-        // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
-        Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
-        if (singleValue) {
-            context.header = null;
-            context.container = dsonValue;
-            context.arrayIterator.setBaseIterator(new SingleValueIterator<>(dsonValue));
-        } else {
-            DsonArray<String> dsonArray = dsonValue.asArray();
-            context.header = dsonArray.getHeader().size() > 0 ? dsonArray.getHeader() : null;
-            context.container = dsonArray;
-            context.arrayIterator.setBaseIterator(dsonArray.iterator());
-        }
-        setContext(context);
-    }
-
-    /** 用于支持池化 */
-    public static DsonCollectionReader unsafeCreate() {
-        return new DsonCollectionReader();
-    }
-
-    /** 适用读取顶层集合的单个值的情况 */
-    public static DsonCollectionReader unsafeCreate(DsonReaderSettings settings, DsonValue dsonValue, boolean singleValue) {
-        DsonCollectionReader reader = new DsonCollectionReader();
-        reader.unsafeInit(settings, dsonValue, singleValue);
-        return reader;
-    }
-
     /**
-     * 设置key的迭代顺序
+     * 设置key的迭代顺序 TODO 删除
      * 注意：这期间不能触发{@link #peekDsonType()}等可能导致mark的操作，
      * mark操作会导致key缓存到本地，从而使得外部的keyItr无效。
      *
@@ -96,7 +60,7 @@ public final class DsonCollectionReader extends AbstractDsonReader {
     }
 
     /**
-     * 获取当前对象的所有key。
+     * 获取当前对象的所有key。 TODO 删除
      * 注意：不可修改返回的集合。
      */
     public Set<String> getkeySet() {
@@ -117,11 +81,6 @@ public final class DsonCollectionReader extends AbstractDsonReader {
     /** 获取当前要读取的值 */
     public DsonValue getCurrentValue() {
         return nextValue;
-    }
-
-    /** 是否是单值集合（顶层上下文） */
-    public boolean isSingleValueCollection() {
-        return singleValue;
     }
 
     @Override
@@ -229,6 +188,22 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         }
     }
 
+    @Nullable
+    @Override
+    public String peekClassName(String name) {
+        // readDsonType后、readStart前，只查看待读取值的header。
+        DsonHeader<?> header = switch (nextValue) {
+            case DsonObject<?> dsonObject -> dsonObject.getHeader();
+            case DsonArray<?> dsonArray -> dsonArray.getHeader();
+            case null, default -> null;
+        };
+        if (header == null) {
+            return null;
+        }
+        DsonValue value =  header.get(name);
+        return value != null && value.getDsonType() == DsonType.STRING ? value.asString() : null;
+    }
+
     @Override
     protected void doReadName() {
         currentName = popNextName();
@@ -278,6 +253,10 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         return popNextValue().asBinary().deepCopy(); // 需要拷贝
     }
 
+    protected Fxp64 doReadFxp64() {
+        return popNextValue().asFxp64();
+    }
+
     @Override
     protected ObjectPtr doReadPtr() {
         return popNextValue().asPointer();
@@ -296,6 +275,15 @@ public final class DsonCollectionReader extends AbstractDsonReader {
     @Override
     protected Double4 doReadDouble4() {
         return popNextValue().asDouble4();
+    }
+
+    @Override
+    protected Fxp4 doReadFxp4() {
+        return popNextValue().asFxp4();
+    }
+
+    protected Long4 doReadLong4() {
+        return popNextValue().asLong4();
     }
 
     // endregion

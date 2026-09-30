@@ -97,6 +97,10 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
         getContext().add(new DsonBinary(Binary.copyFrom(bytes, offset, len)));
     }
 
+    protected void doWriteFxp64(Fxp64 value) {
+        getContext().add(new DsonFxp64(value));
+    }
+
     @Override
     protected void doWritePtr(ObjectPtr objectPtr) {
         getContext().add(new DsonPointer(objectPtr));
@@ -115,6 +119,15 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
     @Override
     protected void doWriteDouble4(Double4 double4) {
         getContext().add(new DsonDouble4(double4));
+    }
+
+    @Override
+    protected void doWriteFxp4(Fxp4 fv4) {
+        getContext().add(new DsonFxp4(fv4));
+    }
+
+    protected void doWriteLong4(Long4 fv4) {
+        getContext().add(new DsonLong4(fv4));
     }
     //endregion
 

@@ -159,7 +159,7 @@ final class DsonCodecHelper {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
             case INT32 -> new ObjectPtr(reader.readInt32(name));
-            case INT64 -> new ObjectPtr(reader.readInt64(name));
+            case INT64 -> new ObjectPtr((int) reader.readInt64(name));
             case POINTER -> reader.readPtr(name);
             case NULL -> {
                 reader.readNull(name);

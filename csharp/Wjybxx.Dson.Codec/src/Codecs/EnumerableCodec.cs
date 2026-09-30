@@ -18,7 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Dson.Text;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -37,30 +37,33 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     public Type GetEncoderType() => encoderType;
 
     public void WriteObject(IDsonObjectWriter writer, IEnumerable<T> inst, Type declaredType, SerializeFeatures features) {
-        SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-        SerializeFeatures elementFeatures = features.GetElementFeatures();
-        writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, 0);
-        foreach (T value in inst) {
-            writer.WriteObject(in value, elementFeatures);
-        }
-        writer.WriteEndArray();
+        WriteAsList(writer, inst, encoderType, declaredType, features);
     }
 
-    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        if (factory != null) {
-            DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-            DeserializeFeatures elementFeatures = features.GetElementFeatures();
-            //
-            int count = reader.ReadStartArray(encoderType, selfFeatures).count;
-            ICollection<T> result = factory() as ICollection<T> ?? new List<T>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(elementFeatures);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            return result;
-        }
+    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return ReadAsList(reader, encoderType, features);
+    }
+
+    public static void WriteAsList(IDsonObjectWriter writer, IEnumerable<T> inst,
+                                   Type encoderType, Type declaredType, SerializeFeatures features) {
+        SerializeFeatures selfFeatures = features.ErasureElementFeatures();
+        SerializeFeatures elementFeatures = features.GetElementFeatures();
+        // T就是声明类型
+        DsonCodecImpl<T> elementCodec = writer.GetInlinableCodec<T>();
+        int count = GetCount(inst);
+        if (elementCodec != null) {
+            Type elementType = typeof(T);
+            writer.WriteStartArray(encoderType, declaredType, selfFeatures, count);
+            foreach (T e in inst) {
+                elementCodec.WriteObject(writer, e, elementType, elementFeatures);
+            }
+        } else {
+            writer.WriteStartArray(encoderType, declaredType, selfFeatures, count);
+            foreach (T e in inst) {
+                writer.WriteObject(e, elementFeatures);
+            }
+            writer.WriteEndArray();
+        }
     }
 
     public static List<T> ReadAsList(IDsonObjectReader reader, Type encoderType,
@@ -70,12 +73,32 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
         //
         int count = reader.ReadStartArray(encoderType, selfFeatures).count;
         List<T> result = new List<T>(count);
-        while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>(elementFeatures);
-            result.Add(value);
+        // T就是声明类型
+        DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();
+        if (elementCodec != null) {
+            Type elementType = typeof(T);
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                T value = elementCodec.ReadObject(reader, elementType, elementFeatures);
+                result.Add(value);
+            }
+        } else {
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                T value = reader.ReadObject<T>(elementFeatures);
+                result.Add(value);
+            }
         }
         reader.ReadEndArray();
         return result;
+    }
+
+    private static int GetCount(IEnumerable<T> inst) {
+        if (inst is ICollection<T> collection) {
+            return collection.Count;
+        }
+        if (inst is IReadOnlyCollection<T> readOnlyCollection) {
+            return readOnlyCollection.Count;
+        }
+        return 0;
     }
 }
 }

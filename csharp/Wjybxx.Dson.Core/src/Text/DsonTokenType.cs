@@ -54,6 +54,8 @@ public enum DsonTokenType
     Float,
     /** 显式声明 '@d' */
     Double,
+    /** 显式声明 '@fx' */
+    Fxp64,
     /** 显式声明 '@b' */
     Bool,
     /** 显式声明 双引号 或 '@s' 或 '@sL' */

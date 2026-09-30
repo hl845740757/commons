@@ -344,17 +344,6 @@ public static class ArrayUtil
     /// <summary>
     /// 拷贝数组
     /// </summary>
-    /// <param name="src"></param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T[] Copy<T>(this T[] src) {
-        return CopyOf(src);
-    }
-
-    /// <summary>
-    /// 拷贝数组
-    /// </summary>
     /// <param name="src">原始数组</param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>

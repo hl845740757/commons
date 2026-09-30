@@ -51,6 +51,7 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
     /// 2.如果是外部程序集类型的public和protected属性，则该字段也有值；
     /// </summary>
     public readonly IPropertySymbol? propertySymbol;
+    private readonly int _hash;
 
     /// <summary>
     /// 字段的类型名缓存
@@ -67,6 +68,7 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
         this.fieldInfo = fieldInfo;
         this.fieldSymbol = fieldSymbol;
         this.propertySymbol = propertySymbol;
+        this._hash = fieldInfo != null ? fieldInfo.GetHashCode() : fieldSymbol.GetHashCode();
     }
 
     /// <summary>
@@ -112,8 +114,8 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
     /// </summary>
     public ITypeSymbol? FieldType {
         get {
-            if (propertySymbol != null) return propertySymbol.Type;
-            return fieldSymbol != null ? fieldSymbol.Type : null;
+            if (fieldSymbol != null) return fieldSymbol.Type;
+            return propertySymbol?.Type;
         }
     }
 
@@ -157,23 +159,15 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
     #region equals
 
     public bool Equals(AptFieldInfo other) {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        if (fieldInfo != null) {
-            return fieldInfo.Equals(other.fieldInfo);
-        }
-        return fieldSymbol!.Equals(other.fieldSymbol, SymbolEqualityComparer.Default);
+        return ReferenceEquals(this, other);
     }
 
-    public override bool Equals(object obj) {
-        return ReferenceEquals(this, obj) || obj is AptFieldInfo other && Equals(other);
+    public override bool Equals(object? obj) {
+        return ReferenceEquals(this, obj);
     }
 
     public override int GetHashCode() {
-        if (fieldInfo != null) {
-            return fieldInfo.GetHashCode();
-        }
-        return SymbolEqualityComparer.Default.GetHashCode(fieldSymbol);
+        return _hash;
     }
 
     public static bool operator ==(AptFieldInfo left, AptFieldInfo right) {

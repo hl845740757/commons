@@ -191,6 +191,13 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
         setNextState();
     }
 
+    public void writeFxp64(int name, Fxp64 value) {
+        Objects.requireNonNull(value);
+        advanceToValueState(name);
+        doWriteFxp64(value);
+        setNextState();
+    }
+
     @Override
     public void writePtr(int name, ObjectPtr objectPtr) {
         Objects.requireNonNull(objectPtr);
@@ -220,6 +227,21 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
         Objects.requireNonNull(double4);
         advanceToValueState(name);
         doWriteDouble4(double4);
+        setNextState();
+    }
+
+    @Override
+    public void writeFxp4(int name, Fxp4 fv4) {
+        Objects.requireNonNull(fv4);
+        advanceToValueState(name);
+        doWriteFxp4(fv4);
+        setNextState();
+    }
+
+    public void writeLong4(int name, Long4 fv4) {
+        Objects.requireNonNull(fv4);
+        advanceToValueState(name);
+        doWriteLong4(fv4);
         setNextState();
     }
 
@@ -290,6 +312,13 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
         setNextState();
     }
 
+    public void writeFxp64(Fxp64 value) {
+        Objects.requireNonNull(value);
+        ensureValueState(context);
+        doWriteFxp64(value);
+        setNextState();
+    }
+
     @Override
     public void writePtr(ObjectPtr objectPtr) {
         Objects.requireNonNull(objectPtr);
@@ -322,6 +351,21 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
         setNextState();
     }
 
+    @Override
+    public void writeFxp4(Fxp4 fv4) {
+        Objects.requireNonNull(fv4);
+        ensureValueState(context);
+        doWriteFxp4(fv4);
+        setNextState();
+    }
+
+    public void writeLong4(Long4 fv4) {
+        Objects.requireNonNull(fv4);
+        ensureValueState(context);
+        doWriteLong4(fv4);
+        setNextState();
+    }
+
     protected abstract void doWriteInt32(int value);
 
     protected abstract void doWriteInt64(long value);
@@ -340,6 +384,8 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
 
     protected abstract void doWriteBinary(byte[] bytes, int offset, int len);
 
+    protected abstract void doWriteFxp64(Fxp64 value);
+
     protected abstract void doWritePtr(ObjectPtr objectPtr);
 
     protected abstract void doWriteDateTime(ExtDateTime dateTime);
@@ -347,6 +393,10 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
     protected abstract void doWriteTimestamp(Timestamp timestamp);
 
     protected abstract void doWriteDouble4(Double4 double4);
+
+    protected abstract void doWriteFxp4(Fxp4 value);
+
+    protected abstract void doWriteLong4(Long4 value);
     // endregion
 
     // region 容器

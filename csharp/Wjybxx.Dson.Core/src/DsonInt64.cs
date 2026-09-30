@@ -80,22 +80,6 @@ public sealed class DsonInt64 : DsonNumber, IEquatable<DsonInt64>, IComparable<D
         return obj is DsonInt64 other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(DsonInt64)}");
     }
 
-    public static bool operator <(DsonInt64? left, DsonInt64? right) {
-        return Comparer<DsonInt64>.Default.Compare(left, right) < 0;
-    }
-
-    public static bool operator >(DsonInt64? left, DsonInt64? right) {
-        return Comparer<DsonInt64>.Default.Compare(left, right) > 0;
-    }
-
-    public static bool operator <=(DsonInt64? left, DsonInt64? right) {
-        return Comparer<DsonInt64>.Default.Compare(left, right) <= 0;
-    }
-
-    public static bool operator >=(DsonInt64? left, DsonInt64? right) {
-        return Comparer<DsonInt64>.Default.Compare(left, right) >= 0;
-    }
-
     #endregion
 
     public override string ToString() {

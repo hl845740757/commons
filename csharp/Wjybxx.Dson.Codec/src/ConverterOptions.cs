@@ -99,7 +99,6 @@ public class ConverterOptions
         this.maxBufferLength = builder.MaxBufferLength;
         this.bufferPool = builder.BufferPool;
         this.stringBuilderPool = builder.StringBuilderPool;
-        this.readerPool = builder.ReaderPool;
 
         this.binReaderSettings = builder.BinReaderSettings;
         this.binWriterSettings = builder.BinWriterSettings;
@@ -128,7 +127,6 @@ public class ConverterOptions
         builder.MaxBufferLength = maxBufferLength;
         builder.BufferPool = bufferPool;
         builder.StringBuilderPool = stringBuilderPool;
-        builder.ReaderPool = readerPool;
 
         builder.BinReaderSettings = binReaderSettings;
         builder.BinWriterSettings = binWriterSettings;
@@ -136,11 +134,6 @@ public class ConverterOptions
         builder.TextWriterSettings = textWriterSettings;
     }
 
-    /// <summary>
-    /// 共享Reader池，注意初始化顺序
-    /// </summary>
-    private static readonly ConcurrentObjectPool<DsonCollectionReader<string>> SHARED_READER_POOL = new(
-        DsonCollectionReader<string>.UnsafeCreate, e => e.Dispose());
     /// <summary>
     /// 默认的Options
     /// </summary>
@@ -165,7 +158,6 @@ public class ConverterOptions
         public int MaxBufferLength { get; set; } = 1024 * 1024;
         public IArrayPool<byte> BufferPool { get; set; } = IArrayPool<byte>.Shared;
         public IObjectPool<StringBuilder> StringBuilderPool { get; set; } = ConcurrentObjectPool.SharedStringBuilderPool;
-        public IObjectPool<DsonCollectionReader<string>> ReaderPool { get; set; } = SHARED_READER_POOL;
 
         public DsonReaderSettings BinReaderSettings { get; set; } = DsonReaderSettings.Default;
         public DsonWriterSettings BinWriterSettings { get; set; } = DsonWriterSettings.Default;

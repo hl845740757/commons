@@ -66,6 +66,16 @@ public interface DsonReader extends AutoCloseable {
      */
     DsonType peekDsonType();
 
+    /**
+     * 查看当前Object/Array的类型名，不消耗输入。
+     * 在读取类型和字段名（如有）后、readStartObject/readStartArray之前调用。
+     *
+     * @param name 固定为{@link DsonHeader#NAMES_CLASS_NAME}
+     * @return 类型名；没有字符串类型的类名时返回null，空字符串仍返回空字符串
+     */
+    @Nullable
+    String peekClassName(String name);
+
     /** 当前是否处于应该读取name状态 */
     boolean isAtName();
 
@@ -116,6 +126,8 @@ public interface DsonReader extends AutoCloseable {
 
     Binary readBinary(String name);
 
+    Fxp64 readFxp64(String name);
+
     ObjectPtr readPtr(String name);
 
     ExtDateTime readDateTime(String name);
@@ -123,6 +135,10 @@ public interface DsonReader extends AutoCloseable {
     Timestamp readTimestamp(String name);
 
     Double4 readDouble4(String name);
+
+    Fxp4 readFxp4(String name);
+
+    Long4 readLong4(String name);
 
     // endregion
 
@@ -144,6 +160,8 @@ public interface DsonReader extends AutoCloseable {
 
     Binary readBinary();
 
+    Fxp64 readFxp64();
+
     ObjectPtr readPtr();
 
     ExtDateTime readDateTime();
@@ -151,6 +169,10 @@ public interface DsonReader extends AutoCloseable {
     Timestamp readTimestamp();
 
     Double4 readDouble4();
+
+    Fxp4 readFxp4();
+
+    Long4 readLong4();
 
     // endregion
 

@@ -32,11 +32,10 @@ public class ObjectCodec : IDsonCodec<object>
         writer.WriteEndObject();
     }
 
-    public object ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public object ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         reader.ReadStartObject(typeof(object), features);
         reader.ReadEndObject();
         return empty;
-        // return reader.ReadObject<DsonValue>(features);
     }
 }
 }

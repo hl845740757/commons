@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dson.types;
 
-import cn.wjybxx.base.ObjectPath;
 import cn.wjybxx.base.ObjectUtils;
 
 import javax.annotation.concurrent.Immutable;
@@ -51,18 +50,18 @@ public final class ObjectPtr {
      * 对象在集合内的id
      * (如果目标集合是数组，则可能是下标)
      */
-    private final long localId;
+    private final int localId;
     /**
      * 引用类型
      * (用于引用分析，也可以表示如何解析引用等)
      */
     private final int type;
 
-    public ObjectPtr(long localId) {
+    public ObjectPtr(int localId) {
         this(null, null, localId, 0);
     }
 
-    public ObjectPtr(String collection, String localPath, long localId, int type) {
+    public ObjectPtr(String collection, String localPath, int localId, int type) {
         // 空字符串转null以兼容default构建的实例
         this.collection = ObjectUtils.emptyToDef(collection, null);
         this.localPath = ObjectUtils.emptyToDef(localPath, null);
@@ -105,7 +104,7 @@ public final class ObjectPtr {
         return localPath;
     }
 
-    public long getLocalId() {
+    public int getLocalId() {
         return localId;
     }
 
@@ -153,13 +152,4 @@ public final class ObjectPtr {
     public static final String NAMES_LOCAL_PATH = "localPath";
     public static final String NAMES_LOCAL_ID = "localId";
     public static final String NAMES_TYPE = "type";
-
-    // 转换
-    public static ObjectPtr OfObjectPath(ObjectPath path) {
-        return new ObjectPtr(path.collection, path.localPath, path.localId, path.type);
-    }
-
-    public ObjectPath toObjectPath() {
-        return new ObjectPath(collection, localPath, localId, type);
-    }
 }

@@ -19,6 +19,7 @@ package cn.wjybxx.dson;
 import cn.wjybxx.dson.types.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author wjybxx
@@ -61,6 +62,16 @@ public interface DsonLiteReader extends AutoCloseable {
      * 2.不论是否支持mark和reset，定义该方法都是必要的，以允许实现类以最小的代价实现
      */
     DsonType peekDsonType();
+
+    /**
+     * 查看当前Object/Array的类型名，不消耗输入。
+     * 在读取类型和字段名（如有）后、readStartObject/readStartArray之前调用。
+     *
+     * @param name 自定义的类名字段编号
+     * @return 类型名；没有字符串类型的类名时返回null，空字符串仍返回空字符串
+     */
+    @Nullable
+    String peekClassName(int name);
 
     /** 当前是否处于应该读取name状态 */
     boolean isAtName();
@@ -112,6 +123,8 @@ public interface DsonLiteReader extends AutoCloseable {
 
     Binary readBinary(int name);
 
+    Fxp64 readFxp64(int name);
+
     ObjectPtr readPtr(int name);
 
     ExtDateTime readDateTime(int name);
@@ -119,6 +132,10 @@ public interface DsonLiteReader extends AutoCloseable {
     Timestamp readTimestamp(int name);
 
     Double4 readDouble4(int name);
+
+    Fxp4 readFxp4(int name);
+
+    Long4 readLong4(int name);
 
     // endregion
 
@@ -140,6 +157,8 @@ public interface DsonLiteReader extends AutoCloseable {
 
     Binary readBinary();
 
+    Fxp64 readFxp64();
+
     ObjectPtr readPtr();
 
     ExtDateTime readDateTime();
@@ -147,6 +166,10 @@ public interface DsonLiteReader extends AutoCloseable {
     Timestamp readTimestamp();
 
     Double4 readDouble4();
+
+    Fxp4 readFxp4();
+
+    Long4 readLong4();
     // endregion
 
     // region 容器

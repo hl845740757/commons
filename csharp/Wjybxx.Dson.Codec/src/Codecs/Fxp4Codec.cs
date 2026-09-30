@@ -1,13 +1,13 @@
 #region LICENSE
 
-// Copyright 2025 wjybxx(845740757@qq.com)
-// 
+// Copyright 2026 wjybxx(845740757@qq.com)
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,18 @@
 #endregion
 
 using System;
+using Wjybxx.Dson.Types;
 
-namespace Wjybxx.Dson.Codec.Attributes
+namespace Wjybxx.Dson.Codec.Codecs
 {
-/// <summary>
-/// 该注解用于告知扫描器扫描codec实现时进行忽略
-/// 这使得生成的类不自动实例化，因此你可以自行实例化，以对其进行封装等。
-/// </summary>
-[AttributeUsage(AttributeTargets.Class)]
-public class DsonCodecScanIgnoreAttribute : Attribute
+public class Fxp4Codec : IDsonCodec<Fxp4>
 {
+    public void WriteObject(IDsonObjectWriter writer, Fxp4 inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteFxp4(inst);
+    }
+
+    public Fxp4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        return reader.ReadFxp4();
+    }
 }
 }

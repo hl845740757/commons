@@ -105,17 +105,17 @@ public sealed class Binary
     public string ToHexString() => DsonInternals.ToHexString(_data);
 
     /// <summary>
-    /// 获取底层的字节数组，一般业务不应该访问，否则可能破坏不可变约束
-    /// </summary>
-    [Obsolete("Use Unwrap() instead.")]
-    public byte[] UnsafeBuffer => _data;
-
-    /// <summary>
-    /// 获取底层的字节数组，一般业务不应该访问，否则可能破坏不可变约束
+    /// 获取底层的字节数组（不拷贝）
+    /// (一般业务不应该访问，否则可能破坏不可变约束)
     /// </summary>
     public byte[] Unwrap() => _data;
 
-    public static Binary UnsafeWrap(byte[] value) {
+    /// <summary>
+    /// 将字节数组封装为Binary（不拷贝）
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static Binary Wrap(byte[] value) {
         return new Binary(value);
     }
 

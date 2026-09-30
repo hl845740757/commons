@@ -229,6 +229,13 @@ public class DsonInputs {
         }
 
         @Override
+        public void readRawBytes(byte[] buffer2, int offset, int count) {
+            checkNewBufferPos(bufferPos + count);
+            System.arraycopy(buffer, bufferPos, buffer2, offset, count);
+            bufferPos += count;
+        }
+
+        @Override
         public void skipRawBytes(int n) {
             if (n < 0) throw new IllegalArgumentException("n");
             if (n == 0) return;

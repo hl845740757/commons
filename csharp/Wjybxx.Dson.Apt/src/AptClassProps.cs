@@ -29,22 +29,18 @@ internal class AptClassProps
 {
 #nullable disable
     /// <summary>
+    /// 字段名样式
+    /// </summary>
+    public int nameStyle;
+    /// <summary>
     /// 获取单例的方法名（兼容属性）
     /// </summary>
-    public string? singleton = null;
-    /// <summary>
-    /// 字段名是否使用"snake_case"风格
-    /// </summary>
-    public bool snakeCase;
+    public string? singleton;
 
     /// <summary>
-    /// 跳过的字段 -- HashSet加快查询
+    /// 跳过的字段
     /// </summary>
     public readonly HashSet<string> skipFields = new();
-    /// <summary>
-    /// 裁剪过的字段名，去掉了类名，只包含FieldName
-    /// </summary>
-    public readonly HashSet<string> clippedSkipFields = new();
     /// <summary>
     /// 为生成代码附加的注解(只支持无参注解)
     /// </summary>
@@ -76,20 +72,21 @@ internal class AptClassProps
             if (AptUtils.GetAttributeValue(attributeData, "Singleton", out TypedConstant attributeValue)) {
                 props.singleton = attributeValue.GetValueAsString();
             }
-            if (AptUtils.GetAttributeValue(attributeData, "SnakeCase", out attributeValue)) {
-                props.snakeCase = attributeValue.Value is bool value && value;
+        }
+        // 解析字段命名规则
+        {
+            if (AptUtils.GetAttributeValue(attributeData, "NameStyle", out TypedConstant attributeValue)) {
+                props.nameStyle = (int)attributeValue.Value!;
+                if (props.nameStyle < 0 || props.nameStyle > 2) { // DsonNameStyle
+                    throw new System.ArgumentException($"Invalid NameStyle: {props.nameStyle}");
+                }
             }
         }
-        // 解析不自动编解码的字段
+        // 解析不自动读字段
         {
             if (AptUtils.GetAttributeValue(attributeData, "SkipFields", out TypedConstant attributeValue)) {
                 foreach (TypedConstant typedConstant in attributeValue.Values) {
-                    string fieldName = typedConstant.GetValueAsString();
-                    if (string.IsNullOrWhiteSpace(fieldName)) continue;
-                    props.skipFields.Add(fieldName);
-
-                    int spIndex = fieldName.LastIndexOf('.');
-                    props.clippedSkipFields.Add(spIndex < 0 ? fieldName : fieldName.Substring(spIndex + 1));
+                    props.skipFields.Add(typedConstant.GetValueAsString());
                 }
             }
         }

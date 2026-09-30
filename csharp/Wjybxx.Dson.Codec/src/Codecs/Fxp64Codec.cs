@@ -1,13 +1,13 @@
 #region LICENSE
 
-// Copyright 2025 wjybxx(845740757@qq.com)
-// 
+// Copyright 2026 wjybxx(845740757@qq.com)
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,18 +16,19 @@
 
 #endregion
 
-using Wjybxx.Dson.Tests.Apt;
+using System;
+using Wjybxx.Dson.Types;
 
-namespace Wjybxx.Dson.Tests.Codec;
-
-/// <summary>
-/// 这是提交给Rider的测试用例
-/// </summary>
-public class AptSymbolTest
+namespace Wjybxx.Dson.Codec.Codecs
 {
-    public void Test() {
-        // 如果在编译时没有注释该行代码，则Rider会提示无法访问对应的符号
-        // 如果在编译时先注释该行代码，就可以解析对应的符号
-        Console.WriteLine(ThirdPartyBean2Codec.names_age);
+public class Fxp64Codec : IDsonCodec<Fxp64>
+{
+    public void WriteObject(IDsonObjectWriter writer, Fxp64 inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteFxp64(inst);
     }
+
+    public Fxp64 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        return reader.ReadFxp64();
+    }
+}
 }

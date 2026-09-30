@@ -21,6 +21,7 @@ import cn.wjybxx.base.io.StringBuilderWriter;
 import cn.wjybxx.base.pool.ConcurrentArrayPool;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.io.DsonIOException;
+import cn.wjybxx.dson.types.Fxp64;
 
 import java.io.Writer;
 
@@ -164,6 +165,13 @@ public final class DsonPrinter implements AutoCloseable {
             builder.append("@L ");
         }
         builder.append(value);
+        column += builder.length() - prevLen;
+    }
+
+    /** 打印fx4值，避免toString的额外分配 */
+    public void fastPrint(Fxp64 fx4) {
+        int prevLen = builder.length();
+        Fxp64.toString0(fx4, builder);
         column += builder.length() - prevLen;
     }
 

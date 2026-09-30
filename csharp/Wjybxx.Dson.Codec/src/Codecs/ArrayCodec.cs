@@ -18,60 +18,23 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
 /// 数组的统一解码器，需要根据泛型参数动态构造，以避免拆装箱。
-/// 如果想提升性能，可以为常见基本类型数组提供定制的Codec，以避免低效的WriteObject/ReadObject。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class ArrayCodec<T> : IDsonCodec<T[]>
 {
     public void WriteObject(IDsonObjectWriter writer, T[] inst, Type declaredType, SerializeFeatures features) {
-        SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-        SerializeFeatures elementFeatures = features.GetElementFeatures();
-        // T就是声明类型
-        DsonCodecImpl<T> elementCodec = writer.GetInlinableCodec<T>();
-        if (elementCodec != null) {
-            Type elementType = typeof(T);
-            writer.WriteStartArray(typeof(T[]), declaredType, selfFeatures, inst.Length);
-            for (int i = 0; i < inst.Length; i++) {
-                elementCodec.WriteObject(writer, in inst[i], elementType, elementFeatures);
-            }
-            writer.WriteEndArray();
-        } else {
-            writer.WriteStartArray(typeof(T[]), declaredType, selfFeatures, inst.Length);
-            for (int i = 0; i < inst.Length; i++) {
-                writer.WriteObject(inst[i], elementFeatures);
-            }
-            writer.WriteEndArray();
-        }
+        EnumerableCodec<T>.WriteAsList(writer, inst, typeof(T[]), declaredType, features);
     }
 
-    public T[] ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-        DeserializeFeatures elementFeatures = features.GetElementFeatures();
-        // count非精确值，不可以直接创建数组
-        int count = reader.ReadStartArray(typeof(T[]), selfFeatures).count;
-        List<T> result = new List<T>(count);
-        // T就是声明类型
-        DsonCodecImpl<T> elementCodec = reader.GetInlinableCodec<T>();
-        if (elementCodec != null) {
-            Type elementType = typeof(T);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = elementCodec.ReadObject(reader, elementType, elementFeatures);
-                result.Add(value);
-            }
-        } else {
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(elementFeatures);
-                result.Add(value);
-            }
-        }
-        reader.ReadEndArray();
-        return result.ToArray();
+    public T[] ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        // Header中的count并非精确值，因此不能直接构造最终数组
+        List<T> list = EnumerableCodec<T>.ReadAsList(reader, typeof(T[]), features);
+        return list.ToArray();
     }
 }
 }

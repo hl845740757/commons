@@ -149,6 +149,13 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
 
 ## ReleaseNotes
 
+### 2.8.0
+
+1. 引入`Fxp64`,`Long4`,`Fxp4`类型；`Fxp64`为万分比定点数，用于游戏配置。
+2. 引入`PeekClassName`方法，更好的支持Codec模块。
+3. `ObjectPtr.LocalId`由64位类型改为32位。
+4. DsonCodec模块重写反序列化对象图处理，由预解析为DsonValue中间层改为流式解码。
+
 ### 2.6.x
 
 主要改动的是序列化实现，增加了对象图支持。

@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
@@ -50,6 +51,17 @@ public class ArrayDeque<T> : IDeque<T>
         if (capacity < 0) throw new ArgumentException(nameof(capacity));
         _elements = capacity == 0 ? Array.Empty<T>() : new T[capacity];
         _head = _tail = -1;
+    }
+
+    public ArrayDeque(IEnumerable<T> list) {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        _elements = list.ToArray();
+        if (_elements.Length > 0) {
+            _head = 0;
+            _tail = _elements.Length - 1;
+        } else {
+            _head = _tail = -1;
+        }
     }
 
     public bool IsReadOnly => false;
@@ -549,11 +561,11 @@ public class ArrayDeque<T> : IDeque<T>
     {
         private readonly ArrayDeque<T> _arrayDeque;
         private readonly bool _reversed;
-        private int _version;
+        private readonly int _version;
         private int _cursor; // 下一个元素
         private T? _current;
 
-        public Enumerator(ArrayDeque<T> arrayDeque, bool reversed) {
+        internal Enumerator(ArrayDeque<T> arrayDeque, bool reversed) {
             _arrayDeque = arrayDeque;
             _reversed = reversed;
             _version = arrayDeque._version;

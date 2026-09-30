@@ -17,6 +17,7 @@
 package cn.wjybxx.dson;
 
 import javax.annotation.Nonnull;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -71,4 +72,6 @@ public class DsonHeader<K> extends AbstractDsonObject<K> {
     public static final String NAMES_LOCAL_ID = "localId";
     public static final String NAMES_COUNT = "count";
     public static final String NAMES_VERSION = "version";
+
+    static final byte[] BYTES_CLASS_NAME = NAMES_CLASS_NAME.getBytes(StandardCharsets.UTF_8);
 }

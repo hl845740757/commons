@@ -22,6 +22,8 @@ import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonInput;
 import cn.wjybxx.dson.types.*;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -32,6 +34,7 @@ public final class DsonBinaryReader extends AbstractDsonReader {
 
     private DsonInput input;
     private final boolean autoClose;
+    private final byte[] nameBuffer = new byte[7];
 
     public DsonBinaryReader(DsonReaderSettings settings, DsonInput input) {
         this(settings, input, settings.autoClose);
@@ -98,6 +101,52 @@ public final class DsonBinaryReader extends AbstractDsonReader {
         return DsonType.forNumber(Dsons.dsonTypeOfFullType(fullType));
     }
 
+    @Nullable
+    @Override
+    public String peekClassName(String name) {
+        int position = input.getPosition();
+        int oldLimit = -1;
+        try {
+            int length = input.readFixed32(); // array/object的长度字段
+            oldLimit = input.pushLimit(length);
+            int fullType = input.isAtEnd() ? 0 : Byte.toUnsignedInt(input.readRawByte());
+            DsonType dsonType = DsonType.forNumber(Dsons.dsonTypeOfFullType(fullType));
+            if (dsonType != DsonType.HEADER) {
+                return null;
+            }
+            length = input.readFixed16(); // header长度
+            input.pushLimit(length);
+            return scanClassName();
+        } finally {
+            input.setPosition(position);
+            if (oldLimit != -1) {
+                input.popLimit(oldLimit);
+            }
+        }
+    }
+
+    @Nullable
+    private String scanClassName() {
+        byte[] targetName = DsonHeader.BYTES_CLASS_NAME;
+        while (!input.isAtEnd()) {
+            int fullType = Byte.toUnsignedInt(input.readRawByte());
+            int wireTypeBits = Dsons.wireTypeOfFullType(fullType);
+            DsonType dsonType = DsonType.forNumber(Dsons.dsonTypeOfFullType(fullType));
+            int size = input.readUInt32();
+            if (dsonType == DsonType.STRING && size == targetName.length) {
+                input.readRawBytes(nameBuffer, 0, size);
+                if (Arrays.equals(nameBuffer, targetName)) {
+                    return input.readString();
+                }
+            } else {
+                input.skipRawBytes(size);
+            }
+            WireType wireType = dsonType.hasWireType() ? WireType.forNumber(wireTypeBits) : WireType.UINT;
+            DsonReaderUtils.skipValue(input, DsonContextType.HEADER, dsonType, wireType, wireTypeBits);
+        }
+        return null;
+    }
+
     @Override
     protected void doReadName() {
         String fieldName = input.readString();
@@ -152,6 +201,10 @@ public final class DsonBinaryReader extends AbstractDsonReader {
         return DsonReaderUtils.readBinary(input);
     }
 
+    protected Fxp64 doReadFxp64() {
+        return Fxp64.fromRaw(currentWireType.readInt64(input));
+    }
+
     @Override
     protected ObjectPtr doReadPtr() {
         return DsonReaderUtils.readPtr(input, currentWireTypeBits);
@@ -170,6 +223,15 @@ public final class DsonBinaryReader extends AbstractDsonReader {
     @Override
     protected Double4 doReadDouble4() {
         return DsonReaderUtils.readDouble4(input, currentWireTypeBits);
+    }
+
+    @Override
+    protected Fxp4 doReadFxp4() {
+        return DsonReaderUtils.readFxp4(input, currentWireTypeBits);
+    }
+
+    protected Long4 doReadLong4() {
+        return DsonReaderUtils.readLong4(input, currentWireTypeBits);
     }
 
     // endregion

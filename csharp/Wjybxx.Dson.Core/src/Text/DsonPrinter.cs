@@ -17,11 +17,13 @@
 #endregion
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons.IO;
 using Wjybxx.Commons.Pool;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Text
 {
@@ -162,6 +164,14 @@ public class DsonPrinter : IDisposable
             _builder.Append("@L ");
         }
         _builder.Append(value);
+        _column += _builder.Length - prevLen;
+    }
+
+    /** 打印long值，避免ToString()分配 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void FastPrint(Fxp64 value) {
+        int prevLen = _builder.Length;
+        Fxp64.ToString0(value, _builder);
         _column += _builder.Length - prevLen;
     }
 

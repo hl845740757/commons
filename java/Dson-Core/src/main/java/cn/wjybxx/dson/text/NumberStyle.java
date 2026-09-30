@@ -185,9 +185,9 @@ public final class NumberStyle {
     /** double能精确表示的最大整数 */
     private static final long DOUBLE_MAX_LONG = (1L << 53) - 1;
 
-	public static boolean isUnsafeLong(long value) {
-		return value < -DOUBLE_MAX_LONG || value > DOUBLE_MAX_LONG;
-	}
+    public static boolean isUnsafeLong(long value) {
+        return value < -DOUBLE_MAX_LONG || value > DOUBLE_MAX_LONG;
+    }
 
     /// <summary>
     /// 转2进制，长度补全为8的倍数

@@ -16,10 +16,7 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.text.Double4Style;
-import cn.wjybxx.dson.text.NumberStyle;
-import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.text.StringStyle;
+import cn.wjybxx.dson.text.*;
 import cn.wjybxx.dson.types.*;
 
 /**
@@ -77,29 +74,36 @@ public interface DsonWriter extends AutoCloseable {
 
     void writeBinary(String name, byte[] bytes, int offset, int len);
 
+    void writeFxp64(String name, Fxp64 value);
+
     void writePtr(String name, ObjectPtr objectPtr);
 
     void writeDateTime(String name, ExtDateTime dateTime);
 
     void writeTimestamp(String name, Timestamp timestamp);
 
-    void writeDouble4(String name, Double4 double4, Double4Style style);
+    void writeDouble4(String name, Double4 double4, String elementNames);
+
+
+    void writeFxp4(String name, Fxp4 fv4, String elementNames);
+
+    void writeLong4(String name, Long4 fv4, String elementNames);
 
     // endregion
 
     // region 简单值(无name版)
 
-    void writeInt32(int value, NumberStyle style);
+    void writeInt32(int fv4, NumberStyle style);
 
-    void writeInt64(long value, NumberStyle style);
+    void writeInt64(long fv4, NumberStyle style);
 
-    void writeFloat(float value, NumberStyle style);
+    void writeFloat(float fv4, NumberStyle style);
 
-    void writeDouble(double value, NumberStyle style);
+    void writeDouble(double fv4, NumberStyle style);
 
-    void writeBool(boolean value);
+    void writeBool(boolean fv4);
 
-    void writeString(String value, StringStyle style);
+    void writeString(String fv4, StringStyle style);
 
     void writeNull();
 
@@ -107,13 +111,19 @@ public interface DsonWriter extends AutoCloseable {
 
     void writeBinary(byte[] bytes, int offset, int len);
 
+    void writeFxp64(Fxp64 fv4);
+
     void writePtr(ObjectPtr objectPtr);
 
     void writeDateTime(ExtDateTime dateTime);
 
     void writeTimestamp(Timestamp timestamp);
 
-    void writeDouble4(Double4 double4, Double4Style style);
+    void writeDouble4(Double4 double4, String elementNames);
+
+    void writeFxp4(Fxp4 fv4, String elementNames);
+
+    void writeLong4(Long4 fv4, String elementNames);
 
     // endregion
 
@@ -217,7 +227,15 @@ public interface DsonWriter extends AutoCloseable {
     }
 
     default void writeDouble4(String name, Double4 double4) {
-        writeDouble4(name, double4, Double4Style.ARRAY);
+        writeDouble4(name, double4, null);
+    }
+
+    default void writeFxp4(String name, Fxp4 fv4) {
+        writeFxp4(name, fv4, null);
+    }
+
+    default void writeLong4(String name, Long4 fv4) {
+        writeLong4(name, fv4, null);
     }
 
     default void writeInt32(int value) {
@@ -245,7 +263,15 @@ public interface DsonWriter extends AutoCloseable {
     }
 
     default void writeDouble4(Double4 double4) {
-        writeDouble4(double4, Double4Style.ARRAY);
+        writeDouble4(double4, null);
+    }
+
+    default void writeFxp4(Fxp4 fv4) {
+        writeFxp4(fv4, null);
+    }
+
+    default void writeLong4(Long4 fv4) {
+        writeLong4(fv4, null);
     }
     // endregion
 }

@@ -65,7 +65,9 @@ public static class LoggerFactory
     /// 关闭Logger
     /// </summary>
     public static void Shutdown() {
-        provider.Dispose();
+        lock (_lockObject) {
+            provider.Dispose();
+        }
     }
 
     #region GetLogger

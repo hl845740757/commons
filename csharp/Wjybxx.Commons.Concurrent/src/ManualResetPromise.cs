@@ -59,7 +59,7 @@ public sealed class ManualResetPromise<T> : Promise<T>, IManualResetPromise
             POOL = new ConcurrentObjectPool<ManualResetPromise<T>>(() => new ManualResetPromise<T>(), e => e.Reset(), poolSize);
         }
     }
-    
+
     /// <summary>
     /// 从对象池中申请一个Promise
     /// </summary>

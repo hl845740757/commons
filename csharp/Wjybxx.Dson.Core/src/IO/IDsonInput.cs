@@ -86,6 +86,11 @@ public interface IDsonInput : IDisposable
     byte[] ReadRawBytes(int count);
 
     /// <summary>
+    /// 读取原始的bytes
+    /// </summary>
+    void ReadRawBytes(byte[] buffer, int offset, int count);
+
+    /// <summary>
     /// 跳过指定数量的字节
     /// </summary>
     /// <param name="n">要跳过的字节数；0安全</param>

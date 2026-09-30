@@ -35,34 +35,24 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 6. 自动属性规则同普通字段，非自动属性不会被序列化。
 /// 
 /// 普通类钩子方法：
-/// 1. 如果类提供了非私有的<code>ClassName(IDsonObjectReader)</code>的单参构造方法，将自动调用 -- 该方法可用于final和忽略字段。
-/// 2. 如果类提供了静态的<code>NewInstance(IDsonObjectReader)</code>方法，将自动调用 -- 优先级高于构造方法。
-/// 3. 如果类提供了非私有的<code>AfterDecode(ConverterOptions)</code>方法，且在options中启用，则自动调用 -- 通常用于数据转换，或构建缓存字段。
-/// 4. 如果类提供了非私有的<code>BeforeEncode(ConverterOptions)</code>方法，且在options中启用，则自动调用 -- 通常用于数据转换。
-/// 5. 如果类提供了非私有的<code>ReadObject(IDsonObjectReader)</code>方法，将自动调用 -- 该方法可用于忽略字段。
-/// 6. 如果类提供了非私有的<code>WriteObject(IDsonObjectWriter)</code>方法，将自动调用 -- 该方法可用于final和忽略字段。
-/// 7. 如果类提供了非私有的<code>ReadField(DsonObjectReader reader, string dsonName)</code>方法，将自动调用 -- 即用户支持Switch-Case随机读。
-/// 8. 如果是通过<see cref="DsonCodecLinkerBeanAttribute"/>配置的类，这些方法都需要转换为静态方法。
-/// 9. 关于钩子函数，可阅读<see cref="AbstractDsonCodec{T}"/>实现。
+/// 1. 如果类提供了静态的<code>NewInstance(IDsonObjectReader)</code>方法，将自动调用 -- 优先级高于构造方法。
+/// 2. 如果类提供了非私有的<code>ClassName(IDsonObjectReader)</code>的单参构造方法，将自动调用 -- 可处理Readonly字段。
+/// 3. 如果类提供了非私有的<code>ReadField(DsonObjectReader reader, string dsonName)</code>方法，将自动调用。
+/// 4. 如果是通过<see cref="DsonCodecLinkerBeanAttribute"/>配置的类，这些方法都需要转换为静态方法。
+/// 5. 关于钩子函数，可阅读<see cref="AbstractDsonCodec{T}"/>实现。
 ///
 /// <pre><code>
 ///   public static Bean NewInstance(DsonObjectReader reader){}
-///   public void ReadObject(DsonObjectReader reader){} // 读取特殊字段
-///   public void ReadField(DsonObjectReader reader, string dsonName); // 随机读
-///   public void AfterDecode(ConverterOptions options){} // 实例方法支持无参
-/// 
-///   public void BeforeEncode(ConverterOptions options){} // 实例方法支持无参
-///   public void WriteObject(DsonObjectWriter writer){} // 写特殊字段，如被框架忽略的字段
-/// 
-///   public void ReadField1(DsonObjectReader reader, String dsonName){} // 字段代理
-///   public void WriteField1(DsonObjectWriter writer, String dsonName){}
+///   public void ReadField(DsonObjectReader reader, string dsonName);
+///   // 字段读写代理
+///   public void ReadField1(DsonObjectReader reader, String dsonName){} // 字段读代理
+///   public void WriteField1(DsonObjectWriter writer, String dsonName){} // 字段写代理
 /// </code></pre>
 ///
 /// <h3>序列化的字段</h3>
 /// 1. 默认序列化public和或包含public属性的字段；默认忽略有<see cref="NonSerializedAttribute"/>或<see cref="DsonIgnoreAttribute"/>注解的字段。
-/// 2. <see cref="DsonIgnoreAttribute"/>的优先级更高，可以覆盖<see cref="NonSerializedAttribute"/>。 // 未特殊处理Unity的SerializedField
-/// 3. 如果你提供了WriteObjet和ReadObject方法，你可以在其中写入忽略字段。
-/// 4. 自动属性规则同普通字段，非自动属性不会被序列化。
+/// 2. <see cref="DsonIgnoreAttribute"/>的优先级更高，可以覆盖<see cref="NonSerializedAttribute"/>。
+/// 3. 自动属性规则同普通字段，非自动属性不会被序列化。
 ///
 /// <h3>多态字段</h3>
 /// 1. 如果对象的运行时类型存在于<see cref="IDsonCodecRegistry"/>中，则总是可以精确解析，因此不需要特殊处理。
@@ -70,10 +60,12 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///
 /// <h3>readonly字段</h3>
 /// 考虑到性能和安全性，readonly字段必须通过解析构造函数解析。
+/// (新版本简化了readonly支持，建议总是通过private setter代替readonly)
 ///
-/// <h3>读写忽略字段</h3>
-/// 用户可以通过构造解码器和写对象方法实现。
-///
+/// <h3>值类型限制</h3>
+/// 1.值类型的普通字段不能直接使用序列化引用，解决方案可参考<see cref="SerializeRef{T}"/>。
+/// 2.值类型的List/Dictionary字段使用序列化引用时，只能使用原始的List和Dictionary，不能产生延迟转换需求
+/// 
 /// <h3>扩展</h3>
 /// Q: 是否可以不使用注解，也能序列化？
 /// A: 如果不使用注解，需要手动实现<see cref="IDsonCodec{T}"/>，并将其添加到注册表中。
@@ -81,8 +73,8 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///
 /// <h3>一些建议</h3>
 /// 1. 一般而言，建议使用该注解并遵循相关规范，由注解处理器生成的类负责解析，而不是手动实现<see cref="IDsonCodec{T}"/>。
-/// 2. 并不建议都实现为贫血模型。
-/// 3. 由于属性较多，因此属性都是get/set，但只应该初始化一次。
+/// 2. 由于属性较多，因此属性都是get/set，但只应该初始化一次。
+/// 3. 除字段读写代理外，其它特性尽量避免使用（以减少对Dson序列化的依赖）。
 ///
 /// <h3>辅助类类名</h3>
 /// 生成的辅助类为<c>XXXCodec</c>
@@ -109,26 +101,25 @@ public class DsonSerializableAttribute : Attribute
     /// 反序列化特征值
     /// </summary>
     public DeserializeFeatures DecodeFeatures { get; set; }
+    /// <summary>
+    /// 字段名样式
+    /// 
+    /// 1.用于编译期代码生成，非运行时属性；
+    /// 2.尽量还是通过<see cref="DsonPropertyAttribute"/>指定字段名。
+    /// </summary>
+    [StableName] public DsonNameStyle NameStyle { get; set; }
 
     /// <summary>
     /// 获取单例的方法名（兼容属性）
     /// </summary>
     [StableName] public string? Singleton { get; set; }
-
-    /// <summary>
-    /// 字段名使用蛇形命名法(TODO)
-    /// 
-    /// 1.用于编译期代码生成，非运行时属性；
-    /// 2.尽量还是通过<see cref="DsonPropertyAttribute"/>指定字段名。
-    /// </summary>
-    [StableName] public bool SnakeCase { get; set; }
-
     /// <summary>
     /// 不自动编解码的字段和属性，通常用于跳过不能直接访问的超类字段和属性，然后手动编解码。
     ///
     /// 注意：
-    /// 1.skip仅仅表示不自动读写，被跳过的字段仍然会占用字段编号和name!
+    /// 1.skip仅仅表示不自动读写，被跳过的字段仍然会占用字段编号和name。
     /// 2.如果包含星号('*')，表示所有字段跳过。
+    /// 3.不再支持<c>type.name</c>样式，用户应该避免字段名重复。
     /// </summary>
     [StableName] public string[] SkipFields { get; set; } = Array.Empty<string>();
 
@@ -142,5 +133,17 @@ public class DsonSerializableAttribute : Attribute
     /// 为生成代码附加的注解(只支持无参注解)
     /// </summary>
     [StableName] public Type[] Attributes { get; set; } = Array.Empty<Type>();
+}
+
+/// <summary>
+/// Dson字段名样式
+/// 注意：代码生成器依赖数字编号。
+/// </summary>
+public enum DsonNameStyle
+{
+    Unspecified = 0, // 未指定的（原始命名）
+    CamelCase = 1, // 小驼峰（主要转换自动属性命名）
+    SnakeCase = 2, // 蛇形命名（可读性最好）
+    CamelCaseNoPrefix = 3, // 无前缀小驼峰（隐藏私有字段的前缀下划线）
 }
 }

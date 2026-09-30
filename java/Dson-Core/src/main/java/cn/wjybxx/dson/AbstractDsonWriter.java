@@ -18,10 +18,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.dson.io.DsonIOException;
-import cn.wjybxx.dson.text.Double4Style;
-import cn.wjybxx.dson.text.NumberStyle;
-import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.text.StringStyle;
+import cn.wjybxx.dson.text.*;
 import cn.wjybxx.dson.types.*;
 
 import java.util.List;
@@ -200,6 +197,13 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
+    public void writeFxp64(String name, Fxp64 value) {
+        Objects.requireNonNull(value);
+        advanceToValueState(name);
+        doWriteFxp64(value);
+        setNextState();
+    }
+
     @Override
     public void writePtr(String name, ObjectPtr objectPtr) {
         Objects.requireNonNull(objectPtr);
@@ -225,10 +229,25 @@ public abstract class AbstractDsonWriter implements DsonWriter {
     }
 
     @Override
-    public void writeDouble4(String name, Double4 double4, Double4Style style) {
+    public void writeDouble4(String name, Double4 double4, String elementNames) {
         Objects.requireNonNull(double4);
         advanceToValueState(name);
-        doWriteDouble4(double4, style);
+        doWriteDouble4(double4, elementNames);
+        setNextState();
+    }
+
+    @Override
+    public void writeFxp4(String name, Fxp4 fv4, String elementNames) {
+        Objects.requireNonNull(fv4);
+        advanceToValueState(name);
+        doWriteFxp4(fv4, elementNames);
+        setNextState();
+    }
+
+    public void writeLong4(String name, Long4 fv4, String elementNames) {
+        Objects.requireNonNull(fv4);
+        advanceToValueState(name);
+        doWriteLong4(fv4, elementNames);
         setNextState();
     }
 
@@ -299,6 +318,13 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
+    public void writeFxp64(Fxp64 value) {
+        Objects.requireNonNull(value);
+        ensureValueState(context);
+        doWriteFxp64(value);
+        setNextState();
+    }
+
     @Override
     public void writePtr(ObjectPtr objectPtr) {
         Objects.requireNonNull(objectPtr);
@@ -324,10 +350,25 @@ public abstract class AbstractDsonWriter implements DsonWriter {
     }
 
     @Override
-    public void writeDouble4(Double4 double4, Double4Style style) {
+    public void writeDouble4(Double4 double4, String elementNames) {
         Objects.requireNonNull(double4);
         ensureValueState(context);
-        doWriteDouble4(double4, style);
+        doWriteDouble4(double4, elementNames);
+        setNextState();
+    }
+
+    @Override
+    public void writeFxp4(Fxp4 fv4, String elementNames) {
+        Objects.requireNonNull(fv4);
+        ensureValueState(context);
+        doWriteFxp4(fv4, elementNames);
+        setNextState();
+    }
+
+    public void writeLong4(Long4 fv4, String elementNames) {
+        Objects.requireNonNull(fv4);
+        ensureValueState(context);
+        doWriteLong4(fv4, elementNames);
         setNextState();
     }
 
@@ -351,13 +392,19 @@ public abstract class AbstractDsonWriter implements DsonWriter {
 
     protected abstract void doWriteBinary(byte[] bytes, int offset, int len);
 
+    protected abstract void doWriteFxp64(Fxp64 value);
+
     protected abstract void doWritePtr(ObjectPtr objectPtr);
 
     protected abstract void doWriteDateTime(ExtDateTime dateTime);
 
     protected abstract void doWriteTimestamp(Timestamp timestamp);
 
-    protected abstract void doWriteDouble4(Double4 double4, Double4Style style);
+    protected abstract void doWriteDouble4(Double4 double4, String elementNames);
+
+    protected abstract void doWriteFxp4(Fxp4 value, String elementNames);
+
+    protected abstract void doWriteLong4(Long4 value, String elementNames);
     // endregion
 
     // region 容器
@@ -397,7 +444,6 @@ public abstract class AbstractDsonWriter implements DsonWriter {
     }
 
     private void writeStartContainer(DsonContextType contextType, DsonType dsonType, ObjectStyle style) {
-        Objects.requireNonNull(style);
         if (recursionDepth >= settings.recursionLimit) {
             throw DsonIOException.recursionLimitExceeded();
         }

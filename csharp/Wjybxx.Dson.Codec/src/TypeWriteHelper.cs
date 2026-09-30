@@ -67,7 +67,7 @@ public sealed class TypeWriteHelper
             return true;
         }
         if (encoderType == declaredType) return true;
-        if (declaredType == typeof(object)) return false;
+        if (declaredType.IsAbstract || declaredType == typeof(object)) return false;
 
         if (encoderType.IsGenericType) {
             if (!declaredType.IsGenericType) {
