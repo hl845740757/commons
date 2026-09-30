@@ -41,7 +41,7 @@ public final class ObjectPath {
      * 对象在集合内的id
      * (如果目标集合是数组，则可能是下标)
      */
-    public long localId;
+    public int localId;
     /**
      * 引用类型
      * (用于引用分析，也可以表示如何解析引用等)
@@ -51,17 +51,17 @@ public final class ObjectPath {
     public ObjectPath() {
     }
 
-    public ObjectPath(long localId) {
+    public ObjectPath(int localId) {
         this.localId = localId;
     }
 
-    public ObjectPath(String collection, String localPath, long localId) {
+    public ObjectPath(String collection, String localPath, int localId) {
         this.collection = collection;
         this.localPath = localPath;
         this.localId = localId;
     }
 
-    public ObjectPath(String collection, String localPath, long localId, int type) {
+    public ObjectPath(String collection, String localPath, int localId, int type) {
         this.collection = collection;
         this.localId = localId;
         this.localPath = localPath;
@@ -108,7 +108,7 @@ public final class ObjectPath {
         return localId;
     }
 
-    public void setLocalId(long localId) {
+    public void setLocalId(int localId) {
         this.localId = localId;
     }
 

@@ -438,7 +438,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 break;
             }
             case DsonType.Pointer: {
-                long localId = DsonTexts.ParseInt64(unquotedString);
+                int localId = DsonTexts.ParseInt32(unquotedString);
                 PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
                 break;
             }
@@ -469,7 +469,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (DsonTexts.LabelPtr == clsName || DsonTexts.LabelRef == clsName) { // @ptr localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context.contextType, nextToken);
-            long localId = DsonTexts.ParseInt64(nextToken.StringValue());
+            int localId = DsonTexts.ParseInt32(nextToken.StringValue());
             PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
             return DsonType.Pointer;
         }
@@ -611,7 +611,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         DsonContextType contextType = context.contextType;
         string collection = null;
         string localPath = null;
-        long localId = 0;
+        int localId = 0;
         int type = 0;
         DsonToken keyToken;
         while ((keyToken = PopToken()).type != DsonTokenType.EndObject) {
@@ -635,7 +635,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 }
                 case ObjectPtr.NamesLocalId: {
                     VerifyTokenType(contextType, valueToken, DsonTokenType.UnquoteString);
-                    localId = DsonTexts.ParseInt64(valueToken.StringValue());
+                    localId = DsonTexts.ParseInt32(valueToken.StringValue());
                     break;
                 }
                 case ObjectPtr.NamesType: {

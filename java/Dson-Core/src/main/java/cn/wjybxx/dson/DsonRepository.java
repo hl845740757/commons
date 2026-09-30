@@ -15,7 +15,7 @@ import java.util.Objects;
  */
 public class DsonRepository {
 
-    private final Map<Long, DsonValue> indexMap = new HashMap<>();
+    private final Map<Integer, DsonValue> indexMap = new HashMap<>();
     private final DsonArray<String> collection;
 
     public DsonRepository() {
@@ -25,7 +25,7 @@ public class DsonRepository {
     public DsonRepository(DsonArray<String> collection) {
         this.collection = Objects.requireNonNull(collection);
         for (DsonValue dsonValue : collection) {
-            long localId = Dsons.getLocalId(dsonValue);
+            int localId = Dsons.getLocalId(dsonValue);
             if (localId != 0) {
                 indexMap.put(localId, dsonValue);
             }
@@ -33,7 +33,7 @@ public class DsonRepository {
     }
 
     /** 获取索引信息 -- 勿修改返回的对象 */
-    public Map<Long, DsonValue> getIndexMap() {
+    public Map<Integer, DsonValue> getIndexMap() {
         return indexMap;
     }
 
@@ -56,7 +56,7 @@ public class DsonRepository {
         }
         collection.add(value);
 
-        long localId = Dsons.getLocalId(value);
+        int localId = Dsons.getLocalId(value);
         if (localId != 0) {
             DsonValue exist = indexMap.put(localId, value);
             if (exist != null) {
@@ -68,7 +68,7 @@ public class DsonRepository {
 
     public DsonValue removeAt(int idx) {
         DsonValue dsonValue = collection.remove(idx);
-        long localId = Dsons.getLocalId(dsonValue);
+        int localId = Dsons.getLocalId(dsonValue);
         if (localId != 0) {
             indexMap.remove(localId);
         }
@@ -85,7 +85,7 @@ public class DsonRepository {
         }
     }
 
-    public DsonValue removeById(long localId) {
+    public DsonValue removeById(int localId) {
         DsonValue exist = indexMap.remove(localId);
         if (exist != null) {
             CollectionUtils.removeRef(collection, exist);
@@ -93,7 +93,7 @@ public class DsonRepository {
         return exist;
     }
 
-    public DsonValue find(long localId) {
+    public DsonValue find(int localId) {
         return indexMap.get(localId);
     }
 

@@ -428,7 +428,7 @@ public final class DsonTextReader extends AbstractDsonReader {
                 pushNextValue(binary);
             }
             case POINTER -> {
-                long localId = DsonTexts.parseInt64(unquotedString);
+                int localId = DsonTexts.parseInt32(unquotedString);
                 pushNextValue(new ObjectPtr(localId));
             }
             case DATETIME -> {
@@ -456,7 +456,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         if (DsonTexts.LABEL_PTR.equals(clsName) || DsonTexts.LABEL_REF.equals(clsName)) {// @ptr localId
             DsonToken nextToken = popToken();
             ensureStringsToken(context.contextType, nextToken);
-            long localId = DsonTexts.parseInt64(nextToken.stringValue());
+            int localId = DsonTexts.parseInt32(nextToken.stringValue());
             pushNextValue(new ObjectPtr(localId));
             return DsonType.POINTER;
         }
@@ -591,7 +591,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         DsonContextType contextType = context.contextType;
         String collection = null;
         String localPath = null;
-        long localId = 0;
+        int localId = 0;
         int type = 0;
         DsonToken keyToken;
         while ((keyToken = popToken()).type != DsonTokenType.END_OBJECT) {
@@ -613,7 +613,7 @@ public final class DsonTextReader extends AbstractDsonReader {
                 }
                 case ObjectPtr.NAMES_LOCAL_ID -> {
                     verifyTokenType(contextType, valueToken, DsonTokenType.UNQUOTE_STRING);
-                    localId = DsonTexts.parseInt64(valueToken.stringValue());
+                    localId = DsonTexts.parseInt32(valueToken.stringValue());
                 }
                 case ObjectPtr.NAMES_TYPE -> {
                     verifyTokenType(contextType, valueToken, DsonTokenType.UNQUOTE_STRING);

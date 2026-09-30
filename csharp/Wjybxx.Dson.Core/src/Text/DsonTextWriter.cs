@@ -441,7 +441,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         // 只有localId时简写
         if (objectPtr.CanBeAbbreviated) {
             printer.FastPrint("@ptr ");
-            printer.FastPrint(objectPtr.LocalId, true);
+            printer.FastPrint(objectPtr.LocalId);
             return;
         }
 
@@ -450,7 +450,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         {
             printer.FastPrint(ObjectPtr.NamesLocalId);
             printer.FastPrint(": ");
-            printer.FastPrint(objectPtr.LocalId, true);
+            printer.FastPrint(objectPtr.LocalId);
         }
         if (objectPtr.HashLocalPath) {
             printer.FastPrint(", ");

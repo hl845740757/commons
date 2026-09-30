@@ -31,7 +31,7 @@ public class ObjectPathCodec : IDsonCodec<ObjectPath>
 
     public ObjectPath ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         ObjectPtr objectPtr = reader.ReadPtr();
-        return new ObjectPath(objectPtr.Collection, objectPtr.LocalPath, (int)objectPtr.LocalId, objectPtr.Type);
+        return new ObjectPath(objectPtr.Collection, objectPtr.LocalPath, objectPtr.LocalId, objectPtr.Type);
     }
 }
 }

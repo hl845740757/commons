@@ -546,7 +546,7 @@ internal class DsonObjectReader : IDsonObjectReader
             _reader.ReadDsonType();
         }
         if (_reader.CurrentDsonType == DsonType.Pointer) {
-            ptr = (int)_reader.ReadPtr().LocalId;
+            ptr = _reader.ReadPtr().LocalId;
             return true;
         }
         ptr = 0;

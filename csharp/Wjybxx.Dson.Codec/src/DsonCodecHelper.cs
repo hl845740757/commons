@@ -179,7 +179,7 @@ internal static class DsonCodecHelper
         DsonType dsonType = reader.CurrentDsonType;
         switch (dsonType) {
             case DsonType.Int32: return new ObjectPtr(reader.ReadInt32());
-            case DsonType.Int64: return new ObjectPtr(reader.ReadInt64());
+            case DsonType.Int64: return new ObjectPtr((int)reader.ReadInt64());
             case DsonType.Pointer: return reader.ReadPtr();
             case DsonType.Null: {
                 reader.ReadNull();

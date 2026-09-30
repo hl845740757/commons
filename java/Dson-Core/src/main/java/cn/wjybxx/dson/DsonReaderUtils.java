@@ -84,7 +84,7 @@ public class DsonReaderUtils {
     }
 
     public static void writePtr(DsonOutput output, ObjectPtr objectPtr) {
-        output.writeUInt64(objectPtr.getLocalId());
+        output.writeUInt32(objectPtr.getLocalId());
         if (objectPtr.hasCollection()) {
             output.writeString(objectPtr.getCollection());
         }
@@ -97,7 +97,7 @@ public class DsonReaderUtils {
     }
 
     public static ObjectPtr readPtr(DsonInput input, int wireTypeBits) {
-        long localId = input.readUInt64();
+        int localId = input.readUInt32();
         String colletion = (wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0 ? input.readString() : null;
         String localPath = (wireTypeBits & ObjectPtr.MASK_LOCAL_PATH) != 0 ? input.readString() : null;
         int type = (wireTypeBits & ObjectPtr.MASK_TYPE) != 0 ? input.readUInt32() : 0;
@@ -105,7 +105,7 @@ public class DsonReaderUtils {
     }
 
     private static void skipPtr(DsonInput input, int wireTypeBits) {
-        input.readUInt64();
+        input.readUInt32();
         if ((wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0) {
             int skip = input.readUInt32(); // collection长度
             input.skipRawBytes(skip);

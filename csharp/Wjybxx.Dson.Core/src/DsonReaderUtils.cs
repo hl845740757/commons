@@ -94,7 +94,7 @@ public static class DsonReaderUtils
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WritePtr(IDsonOutput output, ObjectPtr objectPtr) {
-        output.WriteUInt64(objectPtr.LocalId);
+        output.WriteUInt32(objectPtr.LocalId);
         if (objectPtr.HasCollection) {
             output.WriteString(objectPtr.Collection);
         }
@@ -108,7 +108,7 @@ public static class DsonReaderUtils
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ObjectPtr ReadPtr(IDsonInput input, int wireTypeBits) {
-        long localId = input.ReadUInt64();
+        int localId = input.ReadUInt32();
         string collection = (wireTypeBits & ObjectPtr.MaskCollection) != 0 ? input.ReadString() : null;
         string localPath = (wireTypeBits & ObjectPtr.MaskLocalPath) != 0 ? input.ReadString() : null;
         int type = (wireTypeBits & ObjectPtr.MaskType) != 0 ? input.ReadUInt32() : 0;
@@ -116,7 +116,7 @@ public static class DsonReaderUtils
     }
 
     private static void SkipPtr(IDsonInput input, int wireTypeBits) {
-        input.ReadUInt64();
+        input.ReadUInt32();
         if ((wireTypeBits & ObjectPtr.MaskCollection) != 0) {
             int len = input.ReadUInt32();
             input.SkipRawBytes(len);

@@ -458,7 +458,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         // 只有localId时简写
         if (objectPtr.canBeAbbreviated()) {
             printer.fastPrint("@ptr ");
-            printer.fastPrint(objectPtr.getLocalId(), true);
+            printer.fastPrint(objectPtr.getLocalId());
             return;
         }
 
@@ -467,7 +467,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         {
             printer.fastPrint(ObjectPtr.NAMES_LOCAL_ID);
             printer.fastPrint(": ");
-            printer.fastPrint(objectPtr.getLocalId(), true);
+            printer.fastPrint(objectPtr.getLocalId());
         }
         if (objectPtr.hasLocalPath()) {
             printer.fastPrint(", ");

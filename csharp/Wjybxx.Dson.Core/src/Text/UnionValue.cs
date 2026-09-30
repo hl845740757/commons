@@ -136,11 +136,11 @@ public struct UnionValue : IEquatable<UnionValue>
     #region converter
 
     public ObjectPtr ObjectPtr {
-        get => new ObjectPtr((string)objValue1, (string)objValue2, lValue, v2);
+        get => new ObjectPtr((string)objValue1, (string)objValue2, iValue, v2);
         set {
             objValue1 = value.Collection;
             objValue2 = value.LocalPath;
-            lValue = value.LocalId;
+            iValue = value.LocalId;
             v2 = value.Type;
         }
     }

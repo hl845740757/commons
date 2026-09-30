@@ -711,7 +711,7 @@ public static class Dsons
     }
 
     /** 获取dsonValue的localId -- dson的约定之一 */
-    public static long GetLocalId(DsonValue dsonValue) {
+    public static int GetLocalId(DsonValue dsonValue) {
         DsonHeader<string> header;
         if (dsonValue is DsonObject<string> dsonObject) {
             header = dsonObject.Header;
@@ -721,7 +721,7 @@ public static class Dsons
             return 0;
         }
         if (header.TryGetValue(DsonHeader.Names_LocalId, out DsonValue wrapped)) {
-            return wrapped.IsNumber ? wrapped.AsNumber().LongValue : 0;
+            return wrapped.IsNumber ? wrapped.AsNumber().IntValue : 0;
         }
         return 0;
     }

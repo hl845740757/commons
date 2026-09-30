@@ -514,7 +514,7 @@ public final class Dsons {
     }
 
     /** 获取dsonValue的localId -- dson的约定之一 */
-    public static long getLocalId(DsonValue dsonValue) {
+    public static int getLocalId(DsonValue dsonValue) {
         DsonHeader<?> header;
         if (dsonValue instanceof DsonObject<?> dsonObject) {
             header = dsonObject.getHeader();
@@ -524,7 +524,7 @@ public final class Dsons {
             return 0;
         }
         DsonValue wrapped = header.get(DsonHeader.NAMES_LOCAL_ID);
-        return wrapped.isNumber() ? wrapped.asNumber().longValue() : 0;
+        return wrapped.isNumber() ? wrapped.asNumber().intValue() : 0;
     }
 
     // endregion

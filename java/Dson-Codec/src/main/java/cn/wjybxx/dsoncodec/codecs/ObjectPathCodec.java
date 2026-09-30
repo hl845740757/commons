@@ -53,6 +53,6 @@ public class ObjectPathCodec implements DsonCodec<ObjectPath> {
     @Override
     public ObjectPath readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends ObjectPath> factory) {
         ObjectPtr ptr = reader.readPtr(null);
-        return ptr == null ? null : new ObjectPath(ptr.getCollection(), ptr.getLocalPath(), (int) ptr.getLocalId(), ptr.getType());
+        return ptr == null ? null : new ObjectPath(ptr.getCollection(), ptr.getLocalPath(), ptr.getLocalId(), ptr.getType());
     }
 }
