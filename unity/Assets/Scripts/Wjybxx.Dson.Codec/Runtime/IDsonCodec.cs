@@ -17,6 +17,8 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
+using Wjybxx.Dson.Codec.Codecs;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -30,6 +32,30 @@ public interface IDsonCodec
     /// </summary>
     /// <returns></returns>
     Type GetEncoderType();
+
+    /// <summary>
+    /// 设置字段的值
+    /// 
+    /// 1.用于支持序列化引用 + 常用集合（HashSet/Queue/Stack） + 常用不可变集合。
+    /// 2.只要使用到以上特殊特性，都需要实现该接口。
+    /// </summary>
+    /// <param name="inst">类型实例</param>
+    /// <param name="name">字段名</param>
+    /// <param name="value">字段值</param>
+    /// <returns></returns>
+    bool SetField(object inst, string name, object? value) {
+        return false;
+    }
+
+    // 用于注入List/Array的元素
+    bool SetField(object inst, int index, object? value) {
+        return false;
+    }
+
+    // 用于注入Dictionary的元素
+    bool SetField(object inst, object keyArray, int index, object? value) {
+        return false;
+    }
 }
 
 /// <summary>
@@ -37,12 +63,10 @@ public interface IDsonCodec
 /// Codec与<see cref="DsonCodecImpl{T}"/>协调工作，为典型的桥接模式。
 /// 
 /// 1. 编码的对象可能是'T'的子类；解码返回的对象也可能是'T'的子类。
-/// 2. Codec的泛型'T'和参数declaredType可能并不兼容，因此必须显式传入。
-/// 3. 泛型codec可以包含接收<see cref="Type"/>的构造函数，还可以接收一个Factory。
-/// 4. 手写Codec尽量继承<see cref="AbstractDsonCodec{T}"/>.
+/// 2. 泛型codec可以包含接收<see cref="Type"/>的构造函数，还可以接收一个Factory。
+/// 3. 手写Codec尽量继承<see cref="AbstractDsonCodec{T}"/>.
 ///
-/// <code>Struct(Type encoderType)</code>
-/// <code>Struct(Type encoderType, Func factory)</code>
+/// 泛型Codec可参考：<see cref="CollectionCodec{T}"/>、<see cref="DictionaryCodec{K,V}"/>
 /// </summary>
 /// <typeparam name="T">实例类型，可能是EncoderType的超类</typeparam>
 public interface IDsonCodec<T> : IDsonCodec
@@ -57,12 +81,9 @@ public interface IDsonCodec<T> : IDsonCodec
 
     /// <summary>
     /// 将对象写入输出流。
-    /// 将对象及其所有超类定义的所有要序列化的字段写入输出流。
-    /// 由于序列化的时候，可能触发实例数据变化，为支持结构体序列化，因此需要使用ref
-    /// 
-    /// 注意：
+    ///
     /// 1.name在外部已写入，因此基础类型写入value时name传null。
-    /// 2.declaredType只影响外层类型信息是否写入，而不应向下传递。以字典为例，KV是否需要写入类型信息，取决于encoderType中的信息。 
+    /// 2.declaredType只影响外层类型信息是否写入，而不应向下传递；以字典为例，字典本身可能需要写入类型信息，而KV可能是不需要的。
     /// </summary>
     /// <param name="writer">writer</param>
     /// <param name="inst">要编码的实例</param>
@@ -72,16 +93,32 @@ public interface IDsonCodec<T> : IDsonCodec
 
     /// <summary>
     /// 从输入流中解析指定对象。
-    /// 它应该创建对象，并反序列化该类及其所有超类定义的所有要序列化的字段。
-    /// factory用于将超类数据读取到子类，通常用于集合类型。
-    /// 
-    /// 注意：name在外部已读取，因此基础类型读取value时name传null。
+    ///
+    /// 1.name在外部已读取，可通过<see cref="IDsonObjectReader.CurrentName"/>获取。
+    /// 2.T一定是declaredType的子类型，投影逻辑在外层处理。
     /// </summary>
     /// <param name="reader">reader</param>
-    /// <param name="declaredType">对象的声明类型(判断是否可以转不可变等)</param>
+    /// <param name="declaredType">对象的声明类型，用于判断类型转换等</param>
     /// <param name="features">反序列化特征值</param>
-    /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null);
+    T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features);
+
+    /// <summary>
+    /// 设置字段的值
+    ///
+    /// 1.用于支持序列化引用 + 常用集合（HashSet/Queue/Stack） + 常用不可变集合。
+    /// 2.只要使用到以上特殊特性，都需要实现该接口。
+    /// </summary>
+    /// <param name="inst">类型实例</param>
+    /// <param name="name">字段名</param>
+    /// <param name="value">字段值</param>
+    bool SetField(T inst, string name, object value) {
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    bool IDsonCodec.SetField(object inst, string name, object value) {
+        return SetField((T)inst, name, value);
+    }
 }
 }

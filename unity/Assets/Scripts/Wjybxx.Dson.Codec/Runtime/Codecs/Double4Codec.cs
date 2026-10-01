@@ -27,7 +27,7 @@ public class Double4Codec : IDsonCodec<Double4>
         writer.WriteDouble4(inst);
     }
 
-    public Double4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
+    public Double4 ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         return reader.ReadDouble4();
     }
 }

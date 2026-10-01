@@ -33,17 +33,15 @@ namespace Wjybxx.Commons.Collections
 public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
 {
     private readonly T[] _elements;
-    private readonly ReversedCollectionView<T> _reversed;
+    // private ReversedCollectionView<T>? _reversed;
 
     private ImmutableList(T element) {
         this._elements = new[] { element };
-        this._reversed = new ReversedCollectionView<T>(this);
     }
 
     private ImmutableList(T[] elements, bool copy = true) {
         if (elements == null) throw new ArgumentNullException(nameof(elements));
-        this._elements = copy ? elements.Copy() : elements;
-        this._reversed = new ReversedCollectionView<T>(this);
+        this._elements = copy ? ArrayUtil.CopyOf(elements) : elements;
     }
 
     #region factory
@@ -190,7 +188,8 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
     }
 
     public ISequencedCollection<T> Reversed() {
-        return _reversed;
+        return new ReversedCollectionView<T>(this);
+        // return _reversed ??= new ReversedCollectionView<T>(this);
     }
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator() {

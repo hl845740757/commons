@@ -291,10 +291,7 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 
     public ISequencedSet<TKey> Reversed() {
         return new ReversedSequenceSetView<TKey>(this);
-        // if (_reversed == null) {
-        //     _reversed = new ReversedSequenceSetView<TKey>(this);
-        // }
-        // return _reversed;
+        // return _reversed ??= new ReversedSequenceSetView<TKey>(this);
     }
 
     IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() {

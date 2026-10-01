@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using Wjybxx.Commons;
 using Wjybxx.Dson.Codec.Attributes;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -40,7 +39,7 @@ public class DsonConverterBuilder
     }
 
     public IDsonConverter Build() {
-        return new DefaultDsonConverter(
+        return new DsonConverter(
             new DynamicTypeMetaRegistry(typeMetaConfig),
             new DynamicCodecRegistry(codecConfig),
             new TypeWriteHelper(options.typeWritePolicy, codecConfig.GetOptimizedTypes()),

@@ -50,21 +50,21 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     /// 对象在集合内的id
     /// (如果目标集合是数组，则可能是下标) 
     /// </summary>
-    [FieldOffset(16)] private readonly long localId;
+    [FieldOffset(16)] private readonly int localId;
     /// <summary>
     /// 引用类型
     /// (用于引用分析，也可以表示如何解析引用等)
     /// </summary>
-    [FieldOffset(24)] private readonly int type;
+    [FieldOffset(20)] private readonly int type;
 
-    public ObjectPtr(long localId) {
+    public ObjectPtr(int localId) {
         this.localId = localId;
         this.collection = null;
         this.localPath = null;
         this.type = 0;
     }
 
-    public ObjectPtr(string collection, string localPath, long localId, int type = 0) {
+    public ObjectPtr(string collection, string localPath, int localId, int type = 0) {
         // 空字符串转null以兼容default构建的实例
         this.collection = ObjectUtil.EmptyToDef(collection, null);
         this.localPath = ObjectUtil.EmptyToDef(localPath, null);
@@ -74,7 +74,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
 
     public string Collection => collection;
     public string LocalPath => localPath;
-    public long LocalId => localId;
+    public int LocalId => localId;
     public int Type => type;
 #nullable restore
 

@@ -122,6 +122,9 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     public abstract DsonType PeekDsonType();
 
+    // 暂时可不做校验，以后再补
+    public abstract bool PeekClassName(TName name, out string? clsName);
+
     /** 不直接返回值，而是存储在变量上可避免泛型问题 */
     protected abstract void DoReadName();
 
@@ -238,6 +241,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public Fxp64 ReadFxp64(TName name) {
+        AdvanceToValueState(name, DsonType.Fxp64);
+        Fxp64 value = DoReadFxp64();
+        SetNextState();
+        return value;
+    }
+
     public bool ReadBool(TName name) {
         AdvanceToValueState(name, DsonType.Bool);
         bool value = DoReadBool();
@@ -293,6 +303,20 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public Long4 ReadLong4(TName name) {
+        AdvanceToValueState(name, DsonType.Long4);
+        Long4 value = DoReadLong4();
+        SetNextState();
+        return value;
+    }
+
+    public Fxp4 ReadFxp4(TName name) {
+        AdvanceToValueState(name, DsonType.Fxp4);
+        Fxp4 value = DoReadFxp4();
+        SetNextState();
+        return value;
+    }
+
     #region 无name版
 
     public int ReadInt32() {
@@ -319,6 +343,13 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     public double ReadDouble() {
         EnsureValueState(context, DsonType.Double);
         double value = DoReadDouble();
+        SetNextState();
+        return value;
+    }
+
+    public Fxp64 ReadFxp64() {
+        EnsureValueState(context, DsonType.Fxp64);
+        Fxp64 value = DoReadFxp64();
         SetNextState();
         return value;
     }
@@ -378,6 +409,20 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
+    public Long4 ReadLong4() {
+        EnsureValueState(context, DsonType.Long4);
+        Long4 value = DoReadLong4();
+        SetNextState();
+        return value;
+    }
+
+    public Fxp4 ReadFxp4() {
+        EnsureValueState(context, DsonType.Fxp4);
+        Fxp4 value = DoReadFxp4();
+        SetNextState();
+        return value;
+    }
+
     #endregion
 
     protected abstract int DoReadInt32();
@@ -387,6 +432,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected abstract float DoReadFloat();
 
     protected abstract double DoReadDouble();
+
+    protected abstract Fxp64 DoReadFxp64();
 
     protected abstract bool DoReadBool();
 
@@ -403,6 +450,10 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected abstract Timestamp DoReadTimestamp();
 
     protected abstract Double4 DoReadDouble4();
+
+    protected abstract Long4 DoReadLong4();
+
+    protected abstract Fxp4 DoReadFxp4();
 
     #endregion
 
@@ -544,20 +595,22 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     public void SetEnableNameIntern(bool? value) {
         if (value == null) {
-            context.enableNameIntern = settings.enableNameIntern != null && settings.enableNameIntern.Value;
+            context.enableNameIntern = settings.enableNameIntern ?? false;
         } else if (value.Value) {
-            context.enableNameIntern = settings.enableNameIntern == null || settings.enableNameIntern.Value;
+            context.enableNameIntern = settings.enableNameIntern ?? true;
         } else {
             context.enableNameIntern = false;
         }
     }
 
-    public object Attach(object userData) {
-        return context.Attach(userData);
+    public int UserContextFlags {
+        get => context.flags;
+        set => context.flags = value;
     }
 
-    public object Attachment() {
-        return context.userData;
+    public object UserContextData {
+        get => context.userData;
+        set => context.userData = value;
     }
 
     public DsonReaderGuide WhatShouldIDo() {
@@ -584,6 +637,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         protected internal DsonReaderState state = DsonReaderState.Initial;
         protected internal TName name;
         protected internal bool enableNameIntern;
+        protected internal int flags;
         protected internal object userData;
 
         public Context() {
@@ -603,6 +657,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
             state = default;
             name = default;
             enableNameIntern = false;
+            flags = 0;
             userData = null;
         }
 

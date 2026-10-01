@@ -99,7 +99,8 @@ public static class TaskPoolConfig
             return 0;
         }
         // 保底方案
-        return poolType switch {
+        return poolType switch
+        {
             TaskPoolType.ValuePromise => 2000,
             TaskPoolType.PromiseTask => 1000,
             TaskPoolType.ScheduledPromiseTask => 1000,

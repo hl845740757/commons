@@ -32,31 +32,16 @@ public enum SerializeFeatures : uint
     ///
     /// 1.支持字段 + 类型配置，等效<see cref="Wjybxx.Commons.SerializeReference"/>注解。
     /// 2.不可修改枚举数，代码生成器存在依赖。
+    /// 3.用于字符串字段时，表示启用SST。
     /// </summary>
     SerializeReference = 0x01,
     /// <summary>
-    /// 序列化为内联值，即忽略
+    /// 序列化为内联值
     ///
-    /// 支持字段 + 类型配置，用于字段时可忽略类型的<see cref="Wjybxx.Commons.SerializeReference"/>注解。
+    /// 1.支持字段 + 类型配置，用于字段时可忽略类型的<see cref="Wjybxx.Commons.SerializeReference"/>注解。
+    /// 2.用于字符串字段时，表示禁用SST。
     /// </summary>
     SerializeInline = 0x02,
-    /// <summary>
-    /// 强制写入字段类型名，忽略全局优化（字段级别）
-    ///
-    /// 注：
-    /// 1.全局写的情况下嵌套对象必须写；但全局可选写的情况下嵌套对象就可以强制写。
-    /// 2.作用于List/Map字段时，表示强制写入List/Map元素的类型名（List/Map的类型名价值小）。
-    /// </summary>
-    WriteTypeName = 0x04,
-    /// <summary>
-    /// 将普通object编码为Array
-    /// 
-    /// 1.如果开启该选项，将不写入object的字段名，只是顺序写入object的所有字段值。
-    /// 2.这可以避免大量的字符串编解码，从而提升性能 - 适用于非持久化场景。
-    /// 3.该选项仅对继承<see cref="AbstractDsonCodec"/>的编码器有效。
-    /// 4.对象字段不可以有特殊的初始值 -- 否则会被反序列化覆盖。
-    /// </summary>
-    WriteAsArray = 0x08,
 
     // 集合特征值之间可重复
 #pragma warning disable CA1069
@@ -79,22 +64,6 @@ public enum SerializeFeatures : uint
     /// </code>
     /// </summary>
     MapAsDocument = 0x20,
-    /// <summary>
-    /// 将Pair写为子数组，无兼容性问题
-    /// 
-    /// <code>
-    /// [[K1, V1], [K2, V2], [K3, V3]]
-    /// </code>
-    /// </summary>
-    PairAsArray = 0x30,
-    /// <summary>
-    /// 将Pair写为子文档
-    /// 
-    /// <code>
-    /// [{K1: V1}, {K2: V2}, {K3: V3}]
-    /// </code>
-    /// </summary>
-    PairAsDocument = 0x40,
 #pragma warning restore CA1069
 
     /// <summary>
@@ -146,17 +115,17 @@ public enum SerializeFeatures : uint
     EnumKeyAsString = 0x80 << 8,
 
     /// <summary>
-    /// 将Null值保持为Null值，禁用转换
-    ///
-    /// 注：禁用转换后如果想写入null值，需启用<see cref="WriteNullValue"/>。
-    /// </summary>
-    NullStringAsNull = 0x10 << 8,
-    /// <summary>
     /// 将Null字符串值写为空字符串。
     /// 
     /// 注：虽然字典的Key也可能为字符串，但字典的Key通常不应该为null。
     /// </summary>
-    NullStringAsEmpty = 0x20 << 8,
+    NullStringAsEmpty = 0x10 << 8,
+    /// <summary>
+    /// 将Null值保持为Null值，禁用转换
+    ///
+    /// 注：禁用转换后如果想写入null值，需启用<see cref="WriteNullValue"/>。
+    /// </summary>
+    NullStringAsNull = 0x20 << 8,
 #pragma warning restore CA1069
 
 #pragma warning disable CA1069
@@ -179,26 +148,25 @@ public enum SerializeFeatures : uint
     /// </summary>
     ElementFlow = 0x08 << 20,
 
-    // 字符串样式其实可以使用加法
+    // 字符串样式是枚举值
     /// <summary>
-    /// 字符串编码为自动引号格式（字段级别）
-    ///
-    /// 注：无特殊字符时编码为无引号模式，否则编码为引号模式。
+    /// 字符串编码为无引号格式（不可以包含特殊字符）
     /// </summary>
-    StringAutoQuote = 0x10 << 20,
+    StringUnquote = 0x10 << 20,
     /// <summary>
-    /// 字符串编码为无引号格式（内容不可以包含特殊字符）
+    /// 字符串编码为单行字符串模式（不可以包含换行符）
     /// </summary>
-    StringUnquote = 0x20 << 20,
+    StringLine = 0x20 << 20,
     /// <summary>
-    /// 字符串编码为Dson文本段
+    /// 字符串编码为普通文本块
     /// </summary>
-    StringText = 0x40 << 20,
+    StringText = 0x30 << 20,
     /// <summary>
-    /// 字符串编码为单行字符模式（内容不可以包含换行符）
+    /// 字符串编码为Dson文本块
     /// </summary>
-    StringLine = 0x80 << 20,
+    StringDsonText = 0x40 << 20,
 
+    // 数字样式是Flags
     /// <summary>
     /// 数字编码为16进制（不支持浮点数）
     /// </summary>
@@ -217,78 +185,48 @@ public enum SerializeFeatures : uint
     NumberFixed = 0x80 << 20,
 
     /// <summary>
-    /// 将Double4编码为向量(1)
+    /// 限定Double4/Long4/Fxp4长度为2
+    /// 注：该特征值并不直接作用于Double4等类型，而是告知用户的Codec将自定义结构转换为Double4写入时要写入的分量数。
     /// </summary>
-    Double4AsVector = 0x10 << 20,
+    Double4Len2 = 0x10 << 20,
     /// <summary>
-    /// 将Double4编码为RGBA(2)
+    /// 限定Double4/Long4/Fxp4长度为3
     /// </summary>
-    Double4AsRgba = 0x20 << 20,
-    /// <summary>
-    /// 将Double4编码为数组(3)
-    /// </summary>
-    Double4AsArray = 0x30 << 20,
-    /// <summary>
-    /// 限定Double4长度为2
-    /// </summary>
-    Double4Len2 = 0x40 << 20,
-    /// <summary>
-    /// 限定Double4长度为3
-    /// </summary>
-    Double4Len3 = 0x80 << 20,
+    Double4Len3 = 0x20 << 20,
 
     /// <summary>
-    /// 限定浮点数保留小数点后3位，适用普通浮点数和Double4
+    /// 限定浮点数保留小数点后3位(慎用)
     /// </summary>
     NumberNoExponent3 = 0x01 << 28,
     /// <summary>
-    /// 限定浮点数保留小数点后7位，适用普通浮点数和Double4
+    /// 限定浮点数保留小数点后7位(慎用)
     /// </summary>
     NumberNoExponent7 = 0x02 << 28,
-    /// <summary>
-    /// 将浮点数视作整数(兼容Double4)
-    /// </summary>
-    NumberAsInt = 0x04 << 28,
-    /// <summary>
-    /// 限定Double4的值为整数类型
-    /// </summary>
-    Double4AsInt = 0x04 << 28,
-
-    /// <summary>
-    /// Double4序列化为Vector2
-    /// </summary>
-    Double4AsVector2 = Double4AsVector | Double4Len2,
-    /// <summary>
-    /// Double4序列化为Vector3
-    /// </summary>
-    Double4AsVector3 = Double4AsVector | Double4Len3,
 
     /// <summary>
     /// Map编码样式的掩码
     /// </summary>
-    MaskMapStyles = MapAsArray | MapAsDocument | PairAsArray | PairAsDocument,
+    MaskMapStyles = MapAsArray | MapAsDocument,
     /// <summary>
     /// String编码样式的掩码
     /// </summary>
-    MaskStringStyles = StringAutoQuote | StringUnquote | StringText | StringLine,
+    MaskStringStyles = StringUnquote | StringLine | StringText | StringDsonText,
     /// <summary>
     /// Number编码样式的掩码
     /// </summary>
     MaskNumberStyles = NumberHex | NumberTyped | NumberSigned | NumberFixed
                        | NumberNoExponent3 | NumberNoExponent7,
     /// <summary>
-    /// Double4编码样式的掩码
+    /// Double4/Long4/Fxp4编码样式的掩码
     /// </summary>
-    MaskDouble4Styles = Double4AsVector | Double4AsRgba | Double4AsArray
-                        | Double4Len2 | Double4Len3
-                        | NumberNoExponent3 | NumberNoExponent7
-                        | Double4AsInt,
+    MaskDouble4Styles = Double4Len2 | Double4Len3,
+
     /// <summary>
     /// List/Map元素的序列化特征值掩码（还有部分需要手动转换）
     /// </summary>
-    MaskElementFeatures = SerializeReference | SerializeInline | WriteTypeName
-                          | EnumAsNumber | EnumAsString
-                          | NullStringAsNull | NullStringAsEmpty
-                          | MaskStringStyles | MaskNumberStyles | MaskDouble4Styles
+    MaskElementFeatures = SerializeReference | SerializeInline
+                                             | EnumAsNumber | EnumAsString
+                                             | NullStringAsNull | NullStringAsEmpty
+                                             | MaskStringStyles | MaskNumberStyles | MaskDouble4Styles
 }
 }

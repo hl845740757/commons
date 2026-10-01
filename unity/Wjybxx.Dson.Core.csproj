@@ -57,7 +57,6 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\IO\DsonIOException.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonPrinter.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\BufferedCharStream.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\Double4Style.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\ExtInt64.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonTextReader.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonNull.cs" />
@@ -74,7 +73,6 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Internal\CodedUtil.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\ExtString.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonWriterState.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\Double4Styles.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\StringCharStream.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Dsons.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\LineHead.cs" />
@@ -128,6 +126,11 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonString.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonNumber.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\UnionValue.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Fxp64.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonFxp4.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonFxp64.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Fxp4.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonLong4.cs" />
     <None Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Wjybxx.Dson.Core.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>

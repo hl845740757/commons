@@ -80,22 +80,6 @@ public sealed class DsonDouble : DsonNumber, IComparable<DsonDouble>, IEquatable
         return obj is DsonDouble other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(DsonDouble)}");
     }
 
-    public static bool operator <(DsonDouble? left, DsonDouble? right) {
-        return Comparer<DsonDouble>.Default.Compare(left, right) < 0;
-    }
-
-    public static bool operator >(DsonDouble? left, DsonDouble? right) {
-        return Comparer<DsonDouble>.Default.Compare(left, right) > 0;
-    }
-
-    public static bool operator <=(DsonDouble? left, DsonDouble? right) {
-        return Comparer<DsonDouble>.Default.Compare(left, right) <= 0;
-    }
-
-    public static bool operator >=(DsonDouble? left, DsonDouble? right) {
-        return Comparer<DsonDouble>.Default.Compare(left, right) >= 0;
-    }
-
     #endregion
 
     public override string ToString() {

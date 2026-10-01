@@ -289,14 +289,15 @@ public static class MathCommon
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LogicalShiftRight(int val, int offset) {
-        if (offset < 0) {
-            offset = 32 - Math.Abs(offset) & 31;
-        } else {
-            offset &= 31;
-        }
-        if (offset == 0) return val;
-        int mask = int.MaxValue >> (offset - 1); // 高n位为0
-        return (val >> offset) & mask;
+        return (int)((uint)val >> offset);
+        // if (offset < 0) {
+        //     offset = 32 - Math.Abs(offset) & 31;
+        // } else {
+        //     offset &= 31;
+        // }
+        // if (offset == 0) return val;
+        // int mask = int.MaxValue >> (offset - 1); // 高n位为0
+        // return (val >> offset) & mask;
     }
 
     /// <summary>
@@ -308,14 +309,15 @@ public static class MathCommon
     /// <exception cref="ArgumentException">offset非法</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long LogicalShiftRight(long val, int offset) {
-        if (offset < 0) {
-            offset = 64 - Math.Abs(offset) & 63;
-        } else {
-            offset &= 63;
-        }
-        if (offset == 0) return val;
-        long mask = long.MaxValue >> (offset - 1); // 高n位为0
-        return (val >> offset) & mask;
+        return (long)((ulong)val >> offset);
+        // if (offset < 0) {
+        //     offset = 64 - Math.Abs(offset) & 63;
+        // } else {
+        //     offset &= 63;
+        // }
+        // if (offset == 0) return val;
+        // long mask = long.MaxValue >> (offset - 1); // 高n位为0
+        // return (val >> offset) & mask;
     }
 
     #endregion

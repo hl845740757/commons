@@ -144,19 +144,19 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
 
     #region make
 
-    private DsonCodecImpl MakeArrayCodec(Type type) {
+    private static DsonCodecImpl MakeArrayCodec(Type type) {
         Type genericArrayCodecType = typeof(ArrayCodec<>).MakeGenericType(type.GetElementType()!);
         IDsonCodec codec = (IDsonCodec)Activator.CreateInstance(genericArrayCodecType)!;
         return DsonCodecImpl.CreateInstance(codec);
     }
 
-    private DsonCodecImpl MakeEnumCodec(Type type) {
+    private static DsonCodecImpl MakeEnumCodec(Type type) {
         Type enumCodecType = typeof(EnumCodec<>).MakeGenericType(type);
         IDsonCodec codec = (IDsonCodec)Activator.CreateInstance(enumCodecType)!;
         return DsonCodecImpl.CreateInstance(codec);
     }
 
-    private DsonCodecImpl MakeGenericCodec(Type type, GenericCodecInfo genericCodecInfo) {
+    private static DsonCodecImpl MakeGenericCodec(Type type, GenericCodecInfo genericCodecInfo) {
         Debug.Assert(type.GetGenericTypeDefinition() == genericCodecInfo.typeInfo);
         Type genericCodecType = genericCodecInfo.codecType.MakeGenericType(type.GenericTypeArguments);
 
@@ -199,19 +199,16 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
             return superType;
         }
         // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
-        Type castType = type.GetInterface(typeof(IList<>).Name);
+        Type castType = type.GetInterface(typeof(IDictionary<,>).Name);
         if (castType != null) return castType;
 
-        castType = type.GetInterface(typeof(ISet<>).Name);
+        castType = type.GetInterface(typeof(IReadOnlyDictionary<,>).Name);
         if (castType != null) return castType;
-
-        castType = type.GetInterface(typeof(IGenericSet<>).Name);
-        if (castType != null) return castType;
-
-        castType = type.GetInterface(typeof(IDictionary<,>).Name);
-        if (castType != null) return castType; // C#字典也是集合类型...
 
         castType = type.GetInterface(typeof(ICollection<>).Name);
+        if (castType != null) return castType;
+
+        castType = type.GetInterface(typeof(IReadOnlyCollection<>).Name);
         if (castType != null) return castType;
 
         castType = type.GetInterface(typeof(IEnumerable<>).Name);

@@ -27,14 +27,14 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 1.由于属性较多，因此属性都是get/set，但只应该初始化一次
 /// 2.由于要支持属性，因此不能关闭继承属性
 /// 3.如果是非自动属性，注解必须添加到字段上
+/// 4.该属性也表示私有字段需要序列化
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 [Serializable]
 public class DsonPropertyAttribute : Attribute
 {
     /// <summary>
-    /// 用于文档型序列化时字段名
-    /// 可用于枚举。
+    /// 用于序列化时字段名
     /// </summary>
     [StableName] public string? Name { get; set; }
 
@@ -42,11 +42,11 @@ public class DsonPropertyAttribute : Attribute
     /// 获取字段的属性或方法 -- 特殊情况下使用
     /// </summary>
     [StableName] public string? Getter { get; set; }
-
     /// <summary>
     /// 赋值字段的属性或方法 -- 特殊情况下使用
     /// </summary>
     [StableName] public string? Setter { get; set; }
+
     /// <summary>
     /// 序列化特征值
     /// </summary>
@@ -55,23 +55,29 @@ public class DsonPropertyAttribute : Attribute
     /// 反序列化特征值
     /// </summary>
     [StableName] public DeserializeFeatures DecodeFeatures { get; set; }
+    /// <summary>
+    /// Double4/Long4/Fxp4每个分量的名字
+    /// 注：每个字符代表一个分量的名字，长度2~4
+    /// </summary>
+    [StableName] public string? ElementNames { get; set; }
 
     #region 多态解析
 
     /// <summary>
-    /// 字段的实现类。
-    /// 1. 必须是具体类型，必须有public无参构造函数。
-    /// 2. 自定义类型也可以指定实现类。
-    /// 3. 实现类的泛型参数个数必须和声明类型一致，typeof时不要指定泛型参数。
-    /// 4. 使用<see cref="ReadProxy"/>时忽略该属性。
-    /// 5. 不要轻易使用该属性，这会导致总是按照固定类型解析，从而导致多态失效。
+    /// 字段的最终类型，用于指定字段解码后的类型转换。
+    ///
+    /// 1. 不可变集合更推荐直接声明为不可变类型，而不是用TargetType实现，避免不必要的复杂度。
+    /// 2. 通常用于将集合转换为不可变类型，也适用于自定义类型。
+    /// 3. 目标类型通常应该为具体类型，而不应该是抽象/接口类型。
+    /// 4. 泛型参数个数必须和声明类型一致，typeof时不要指定泛型参数。
     /// </summary>
-    [StableName] public Type? Impl { get; set; }
+    [StableName] public Type? TargetType { get; set; }
 
     /// <summary>
     /// 写代理：自定义写方法。
+    /// 
     /// 1. 如果由<see cref="DsonCodecLinkerBeanAttribute"/>配置，则表示静态方法代理，否则为普通实例方法代理。
-    /// 2. writer的类型限定为<see cref="IDsonObjectWriter"/>
+    /// 2. writer的类型限定为<see cref="IDsonObjectWriter"/>。
     /// 3. 对于需要特殊编解码的字段是很有用的。
     /// <code>
     ///  // 实例方法代理
@@ -88,8 +94,9 @@ public class DsonPropertyAttribute : Attribute
 
     /// <summary>
     /// 读代理：自定义读方法。
+    /// 
     /// 1. 如果由<see cref="DsonCodecLinkerBeanAttribute"/>配置，则表示静态方法代理，否则为普通实例方法代理。
-    /// 2. reader的类型限定为<see cref="IDsonObjectReader"/>
+    /// 2. reader的类型限定为<see cref="IDsonObjectReader"/>。
     /// 3. 对于有特殊构造过程的字段是很有帮助的，也可以进行类型转换。
     /// <code>
     ///  // 实例方法代理

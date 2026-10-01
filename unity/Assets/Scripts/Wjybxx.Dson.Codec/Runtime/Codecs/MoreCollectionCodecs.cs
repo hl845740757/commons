@@ -31,135 +31,34 @@ public static class MoreCollectionCodecs
 
     /// <summary>
     /// <see cref="Stack{T}"/>不是<see cref="ICollection{T}"/>的子类......
-    /// 具体类型不支持读取为不可变集合 —— 队列这种对象也不是拿来查询数据的。
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class StackCodec<T> : IDsonCodec<Stack<T>>
     {
         public void WriteObject(IDsonObjectWriter writer, Stack<T> inst, Type declaredType, SerializeFeatures features) {
-            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-            SerializeFeatures elementFeatures = features.GetElementFeatures();
-            // 重复编码以避免Itr装箱
-            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.Count);
-            foreach (T item in inst) {
-                writer.WriteObject(in item, elementFeatures);
-            }
-            writer.WriteEndArray();
+            EnumerableCodec<T>.WriteAsList(writer, inst, typeof(Stack<T>), declaredType, features);
         }
 
-        public Stack<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-            List<T> list = EnumerableCodec<T>.ReadAsList(reader, typeof(Stack<T>), features);
+        public Stack<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
             // Stack并未实现ICollection接口，另外我们需要保持与序列化之前相同的顺序，需要将list反向转换为Stack
-            Stack<T> result = new Stack<T>(list.Count);
-            for (int idx = list.Count - 1; idx >= 0; idx--) {
-                result.Push(list[idx]);
-            }
-            return result;
+            List<T> list = EnumerableCodec<T>.ReadAsList(reader, typeof(Stack<T>), features);
+            return CollectionUtil.ToStack(list);
         }
     }
 
     /// <summary>
     /// <see cref="Queue{T}"/>也不是<see cref="ICollection{T}"/>的子类...
-    /// 具体类型不支持读取为不可变集合 —— 队列这种对象也不是拿来查询数据的。
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class QueueCodec<T> : IDsonCodec<Queue<T>>
     {
         public void WriteObject(IDsonObjectWriter writer, Queue<T> inst, Type declaredType, SerializeFeatures features) {
-            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-            SerializeFeatures elementFeatures = features.GetElementFeatures();
-            // 重复编码以避免Itr装箱
-            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.Count);
-            foreach (T item in inst) {
-                writer.WriteObject(in item, elementFeatures);
-            }
-            writer.WriteEndArray();
+            EnumerableCodec<T>.WriteAsList(writer, inst, typeof(Stack<T>), declaredType, features);
         }
 
-        public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-            DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-            DeserializeFeatures elementFeatures = features.GetElementFeatures();
-            // Queue重复编码，避免不必要的拷贝
-            int count = reader.ReadStartArray(typeof(Queue<T>), selfFeatures).count;
-            Queue<T> result = new Queue<T>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(elementFeatures);
-                result.Enqueue(value);
-            }
-            reader.ReadEndArray();
-            return result;
-        }
-    }
-
-    public class SmallDynamicArrayCodec<T> : IDsonCodec<SmallDynamicArray<T>> where T : class
-    {
-        public void WriteObject(IDsonObjectWriter writer, SmallDynamicArray<T> inst, Type declaredType, SerializeFeatures features) {
-            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-            SerializeFeatures elementFeatures = features.GetElementFeatures();
-            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.ElementCount);
-            inst.BeginItr();
-            try {
-                for (int i = 0, len = inst.Length; i < len; i++) {
-                    T item = inst[i];
-                    if (item != null) {
-                        writer.WriteObject(item, elementFeatures);
-                    }
-                }
-            }
-            finally {
-                inst.EndItr();
-            }
-            writer.WriteEndArray();
-        }
-
-        public SmallDynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-            DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-            DeserializeFeatures elementFeatures = features.GetElementFeatures();
-            //
-            int count = reader.ReadStartArray(typeof(SmallDynamicArray<T>), selfFeatures).count;
-            SmallDynamicArray<T> result = new SmallDynamicArray<T>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(elementFeatures);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            return result;
-        }
-    }
-
-    public class DynamicArrayCodec<T> : IDsonCodec<DynamicArray<T>> where T : class
-    {
-        public void WriteObject(IDsonObjectWriter writer, DynamicArray<T> inst, Type declaredType, SerializeFeatures features) {
-            SerializeFeatures selfFeatures = features.ErasureElementFeatures();
-            SerializeFeatures elementFeatures = features.GetElementFeatures();
-            writer.WriteStartArray(inst.GetType(), declaredType, selfFeatures, inst.ElementCount);
-            inst.BeginItr();
-            try {
-                for (int i = 0, len = inst.Length; i < len; i++) {
-                    T item = inst[i];
-                    if (item != null) {
-                        writer.WriteObject(item, elementFeatures);
-                    }
-                }
-            }
-            finally {
-                inst.EndItr();
-            }
-            writer.WriteEndArray();
-        }
-
-        public DynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-            DeserializeFeatures selfFeatures = features.ErasureElementFeatures();
-            DeserializeFeatures elementFeatures = features.GetElementFeatures();
-            //
-            int count = reader.ReadStartArray(typeof(DynamicArray<T>), selfFeatures).count;
-            DynamicArray<T> result = new DynamicArray<T>(count);
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(elementFeatures);
-                result.Add(value);
-            }
-            reader.ReadEndArray();
-            return result;
+        public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+            List<T> list = EnumerableCodec<T>.ReadAsList(reader, typeof(Stack<T>), features);
+            return CollectionUtil.ToQueue(list);
         }
     }
 

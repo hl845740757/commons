@@ -109,6 +109,15 @@ public static class Dsons
         };
     }
 
+    public static DsonHeader<TName>? GetHeader<TName>(DsonValue dsonValue) {
+        return dsonValue switch
+        {
+            DsonObject<TName> dsonObject => dsonObject.Header,
+            DsonArray<TName> dsonArray => dsonArray.Header,
+            _ => null
+        };
+    }
+
     #endregion
 
     #region Check
@@ -480,6 +489,10 @@ public static class Dsons
             case DsonType.Binary:
                 writer.WriteBinary(dsonValue.AsBinary());
                 break;
+            case DsonType.Fxp64: {
+                writer.WriteFxp64(dsonValue.AsFxp64());
+                break;
+            }
             case DsonType.Pointer:
                 writer.WritePtr(dsonValue.AsPointer());
                 break;
@@ -492,6 +505,13 @@ public static class Dsons
             }
             case DsonType.Double4: {
                 writer.WriteDouble4(dsonValue.AsDouble4());
+                break;
+            }
+            case DsonType.Long4:
+                writer.WriteLong4(dsonValue.AsLong4());
+                break;
+            case DsonType.Fxp4: {
+                writer.WriteFxp4(dsonValue.AsFxp4());
                 break;
             }
             case DsonType.Header:
@@ -517,6 +537,7 @@ public static class Dsons
             case DsonType.Int64: return DsonInt64.ValueOf(reader.ReadInt64());
             case DsonType.Float: return DsonFloat.ValueOf(reader.ReadFloat());
             case DsonType.Double: return DsonDouble.ValueOf(reader.ReadDouble());
+            case DsonType.Fxp64: return new DsonFxp64(reader.ReadFxp64());
             case DsonType.Bool: return DsonBool.ValueOf(reader.ReadBool());
             case DsonType.String: return new DsonString(reader.ReadString());
             case DsonType.Null: {
@@ -528,6 +549,8 @@ public static class Dsons
             case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
             case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());
             case DsonType.Double4: return new DsonDouble4(reader.ReadDouble4());
+            case DsonType.Long4: return new DsonLong4(reader.ReadLong4());
+            case DsonType.Fxp4: return new DsonFxp4(reader.ReadFxp4());
             case DsonType.Header: {
                 DsonHeader<TName> header = new DsonHeader<TName>();
                 ReadHeader(reader, header);
@@ -605,16 +628,6 @@ public static class Dsons
     #endregion
 
     #region 快捷方法
-
-    [Obsolete("Use ToFlatDson Instead")]
-    public static string ToCollectionDson(this DsonArray<string> collection, DsonTextWriterSettings? settings = null) {
-        return ToFlatDson(collection, settings);
-    }
-
-    [Obsolete("Use FromFlatDson Instead")]
-    public static DsonArray<string> FromCollectionDson(string dsonString) {
-        return FromFlatDson(dsonString);
-    }
 
     /** 该接口用于写顶层数组容器，所有元素将被展开 */
     public static string ToFlatDson(this DsonArray<string> collection, DsonTextWriterSettings? settings = null) {
@@ -698,7 +711,7 @@ public static class Dsons
     }
 
     /** 获取dsonValue的localId -- dson的约定之一 */
-    public static long GetLocalId(DsonValue dsonValue) {
+    public static int GetLocalId(DsonValue dsonValue) {
         DsonHeader<string> header;
         if (dsonValue is DsonObject<string> dsonObject) {
             header = dsonObject.Header;
@@ -708,7 +721,7 @@ public static class Dsons
             return 0;
         }
         if (header.TryGetValue(DsonHeader.Names_LocalId, out DsonValue wrapped)) {
-            return wrapped.IsNumber ? wrapped.AsNumber().LongValue : 0;
+            return wrapped.IsNumber ? wrapped.AsNumber().IntValue : 0;
         }
         return 0;
     }

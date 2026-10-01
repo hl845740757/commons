@@ -28,58 +28,47 @@ using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
 {
-internal class DefaultDsonObjectWriter : IDsonObjectWriter
+internal class DsonObjectWriter : IDsonObjectWriter
 {
 #nullable disable
-    private DefaultDsonConverter converter;
-    private IDsonWriter<string> writer;
-
-    private readonly LinkedDictionary<object, ObjectPtr> referenceTable = new(ReferenceComparer.Inst);
-    private ObjectPtr _stack;
-    private long _nextLocalId;
+    private DsonConverter _converter;
+    private IDsonWriter<string> _writer;
     private bool _isTextWriter;
+
+    private readonly LinkedDictionary<object, int> _referenceTable = new(ReferenceComparer.Inst);
+    private int _stack;
+    private int _nextLocalId;
 #nullable restore
-    private DefaultDsonObjectWriter() {
+    private DsonObjectWriter() {
     }
 
-    private static readonly ConcurrentObjectPool<DefaultDsonObjectWriter> pool = new(
-        () => new DefaultDsonObjectWriter(), e => e.Dispose());
+    private static readonly ConcurrentObjectPool<DsonObjectWriter> POOL = new(
+        () => new DsonObjectWriter(), e => e.Dispose());
 
-    public static DefaultDsonObjectWriter GetPooled() {
-        return pool.Acquire();
+    public static DsonObjectWriter GetPooled() {
+        return POOL.Acquire();
     }
 
-    public static void Release(DefaultDsonObjectWriter reader) {
-        pool.Release(reader);
+    public static void Release(DsonObjectWriter reader) {
+        POOL.Release(reader);
     }
 
-    public void Init(DefaultDsonConverter converter, IDsonWriter<string> writer) {
-        this.converter = converter;
-        this.writer = writer;
+    public void Init(DsonConverter converter, IDsonWriter<string> writer) {
+        this._converter = converter;
+        this._writer = writer;
         this._isTextWriter = writer is DsonTextWriter;
-    }
-
-    public void AddReference(object reference, ObjectPtr ptr) {
-        if (reference == null) {
-            throw new ArgumentNullException(nameof(reference));
-        }
-        if (!ptr.HasCollection) {
-            _nextLocalId = Math.Max(_nextLocalId, ptr.LocalId);
-        }
-        referenceTable.Add(reference, ptr);
     }
 
     public ObjectPtr AddReference(object reference) {
         if (reference == null) {
             throw new ArgumentNullException(nameof(reference));
         }
-        // 如果是值类型，占用localId不影响正确性
-        if (referenceTable.TryGetValue(reference, out ObjectPtr ptr)) {
-            return ptr;
+        if (_referenceTable.TryGetValue(reference, out int localId)) {
+            return new ObjectPtr(localId);
         }
-        ptr = new ObjectPtr(++_nextLocalId);
-        referenceTable.Add(reference, ptr);
-        return ptr;
+        localId = ++_nextLocalId;
+        _referenceTable.Add(reference, localId);
+        return new ObjectPtr(localId);
     }
 
     public void AddReferences(IEnumerable collection) {
@@ -89,80 +78,88 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     public void WriteAll(Type declaredType, SerializeFeatures features) {
-        if (referenceTable.Count == 0) {
+        if (_referenceTable.Count == 0) {
             return;
         }
-        var pair = referenceTable.PeekFirst();
-        object reference = pair.Key;
+        var pair = _referenceTable.PeekFirst();
+        object current;
+        object next = pair.Key;
         _stack = pair.Value;
         do {
-            WriteObject<object>(null!, reference, declaredType, features);
+            current = next;
+            WriteObject<object>(null!, current, declaredType, features);
 
-        } while (referenceTable.NextKey(reference, out reference, out _stack));
+        } while (_referenceTable.NextKey(current, out next, out _stack));
     }
 #nullable disable
 
     #region 简单值
 
     public void WriteInt(string name, int value, SerializeFeatures features) {
-        if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteInt32(name, value, _isTextWriter ? features.ToNumberStyle() : default);
+        if (value != 0 || !_writer.IsAtName || IsWriteZeroValue(features)) {
+            _writer.WriteInt32(name, value, _isTextWriter ? features.ToNumberStyle() : default);
         }
     }
 
     public void WriteLong(string name, long value, SerializeFeatures features) {
-        if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteInt64(name, value, _isTextWriter ? features.ToNumberStyle() : default);
+        if (value != 0 || !_writer.IsAtName || IsWriteZeroValue(features)) {
+            _writer.WriteInt64(name, value, _isTextWriter ? features.ToNumberStyle() : default);
         }
     }
 
     public void WriteFloat(string name, float value, SerializeFeatures features) {
-        if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteFloat(name, value, _isTextWriter ? features.ToNumberStyle() : default);
+        if (value != 0 || !_writer.IsAtName || IsWriteZeroValue(features)) {
+            _writer.WriteFloat(name, value, _isTextWriter ? features.ToNumberStyle() : default);
         }
     }
 
     public void WriteDouble(string name, double value, SerializeFeatures features) {
-        if (value != 0 || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteDouble(name, value, _isTextWriter ? features.ToNumberStyle() : default);
+        if (value != 0 || !_writer.IsAtName || IsWriteZeroValue(features)) {
+            _writer.WriteDouble(name, value, _isTextWriter ? features.ToNumberStyle() : default);
+        }
+    }
+
+    public void WriteFxp64(string name, Fxp64 value, SerializeFeatures features) {
+        if (value.rawValue != 0 || !_writer.IsAtName || IsWriteZeroValue(features)) {
+            _writer.WriteFxp64(name, value);
         }
     }
 
     public void WriteBool(string name, bool value, SerializeFeatures features) {
-        if (value || !writer.IsAtName || IsWriteZeroValue(features)) {
-            writer.WriteBool(name, value);
+        if (value || !_writer.IsAtName || IsWriteZeroValue(features)) {
+            _writer.WriteBool(name, value);
         }
     }
 
     public void WriteString(string name, string? value, SerializeFeatures features) {
         if (value == null) {
             if (IsWriteNullStringAsEmpty(features)) {
-                writer.WriteString(name, "", StringStyle.Quote);
+                _writer.WriteString(name, "", StringStyle.Quote);
             } else {
                 WriteNull(name, features);
             }
         } else {
-            writer.WriteString(name, value, _isTextWriter ? features.ToStringStyle() : default);
+            _writer.WriteString(name, value, _isTextWriter ? features.ToStringStyle() : default);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteNull(string name, SerializeFeatures features) {
-        if (!writer.IsAtName || IsWriteNullValue(features)) {
-            writer.WriteNull(name);
+        if (!_writer.IsAtName || IsWriteNullValue(features)) {
+            _writer.WriteNull(name);
         }
     }
 
     public void WriteBytes(string name, byte[] bytes, int offset, int len) {
         if (bytes == null) throw new ArgumentNullException(nameof(bytes));
-        writer.WriteBinary(name, bytes, offset, len);
+        _writer.WriteBinary(name, bytes, offset, len);
     }
 
     public void WriteBytes(string name, byte[]? bytes, SerializeFeatures features) {
         if (bytes == null) {
             WriteNull(name, features);
         } else {
-            writer.WriteBinary(name, bytes, 0, bytes.Length);
+            _writer.WriteBinary(name, bytes, 0, bytes.Length);
         }
     }
 
@@ -170,33 +167,41 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if (binary == null) {
             WriteNull(name, features);
         } else {
-            writer.WriteBinary(name, binary);
+            _writer.WriteBinary(name, binary);
         }
     }
 
     public void WritePtr(string name, ObjectPtr objectPtr) {
-        writer.WritePtr(name, objectPtr);
+        _writer.WritePtr(name, objectPtr);
     }
 
     public void WriteDateTime(string name, DateTime dateTime) {
-        writer.WriteDateTime(name, ExtDateTime.OfDateTime(in dateTime));
+        _writer.WriteDateTime(name, ExtDateTime.OfDateTime(in dateTime));
     }
 
     public void WriteExtDateTime(string name, ExtDateTime dateTime) {
-        writer.WriteDateTime(name, dateTime);
+        _writer.WriteDateTime(name, dateTime);
     }
 
     public void WriteTimestamp(string name, Timestamp timestamp) {
-        writer.WriteTimestamp(name, timestamp);
+        _writer.WriteTimestamp(name, timestamp);
     }
 
-    public void WriteDouble4(string name, Double4 double4, SerializeFeatures features = default) {
-        writer.WriteDouble4(name, double4, _isTextWriter ? features.ToDouble4Style() : default);
+    public void WriteDouble4(string name, Double4 double4, string? elementNames = null) {
+        _writer.WriteDouble4(name, double4, elementNames);
     }
 
-    public void WriteEnum<T>(string name, T value, SerializeFeatures features = default) {
-        if (writer.IsAtName) {
-            writer.WriteName(name);
+    public void WriteLong4(string name, Long4 long4, string? elementNames = null) {
+        _writer.WriteLong4(name, long4, elementNames);
+    }
+
+    public void WriteFxp4(string name, Fxp4 fv4, string? elementNames = null) {
+        _writer.WriteFxp4(name, fv4, elementNames);
+    }
+
+    public void WriteEnum<T>(string name, T value, SerializeFeatures features = 0) where T : struct {
+        if (_writer.IsAtName) {
+            _writer.WriteName(name);
         }
         if (CodecRegistry.GetEncoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
             codecImpl.WriteObject(this, value, typeof(T), features);
@@ -210,52 +215,56 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     #region 简单值-无name版
 
     public void WriteInt(int value, SerializeFeatures features) {
-        writer.WriteInt32(value, _isTextWriter ? features.ToNumberStyle() : default);
+        _writer.WriteInt32(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
     public void WriteLong(long value, SerializeFeatures features) {
-        writer.WriteInt64(value, _isTextWriter ? features.ToNumberStyle() : default);
+        _writer.WriteInt64(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
     public void WriteFloat(float value, SerializeFeatures features) {
-        writer.WriteFloat(value, _isTextWriter ? features.ToNumberStyle() : default);
+        _writer.WriteFloat(value, _isTextWriter ? features.ToNumberStyle() : default);
     }
 
     public void WriteDouble(double value, SerializeFeatures features) {
-        writer.WriteDouble(value, _isTextWriter ? features.ToNumberStyle() : default);
+        _writer.WriteDouble(value, _isTextWriter ? features.ToNumberStyle() : default);
+    }
+
+    public void WriteFxp64(Fxp64 value, SerializeFeatures features) {
+        _writer.WriteFxp64(value);
     }
 
     public void WriteBool(bool value, SerializeFeatures features) {
-        writer.WriteBool(value);
+        _writer.WriteBool(value);
     }
 
     public void WriteString(string value, SerializeFeatures features) {
         if (value == null) {
             if (IsWriteNullStringAsEmpty(features)) {
-                writer.WriteString("", StringStyle.Quote);
+                _writer.WriteString("", StringStyle.Quote);
             } else {
                 WriteNull();
             }
         } else {
-            writer.WriteString(value, _isTextWriter ? features.ToStringStyle() : default);
+            _writer.WriteString(value, _isTextWriter ? features.ToStringStyle() : default);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteNull() {
-        writer.WriteNull();
+        _writer.WriteNull();
     }
 
     public void WriteBytes(byte[] bytes, int offset, int len) {
         if (bytes == null) throw new ArgumentNullException(nameof(bytes));
-        writer.WriteBinary(bytes, offset, len);
+        _writer.WriteBinary(bytes, offset, len);
     }
 
     public void WriteBytes(byte[]? bytes, SerializeFeatures features) {
         if (bytes == null) {
             WriteNull();
         } else {
-            writer.WriteBinary(bytes, 0, bytes.Length);
+            _writer.WriteBinary(bytes, 0, bytes.Length);
         }
     }
 
@@ -263,31 +272,39 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if (binary == null) {
             WriteNull();
         } else {
-            writer.WriteBinary(binary);
+            _writer.WriteBinary(binary);
         }
     }
 
     public void WritePtr(ObjectPtr objectPtr) {
-        writer.WritePtr(objectPtr);
+        _writer.WritePtr(objectPtr);
     }
 
     public void WriteDateTime(DateTime dateTime) {
-        writer.WriteDateTime(ExtDateTime.OfDateTime(in dateTime));
+        _writer.WriteDateTime(ExtDateTime.OfDateTime(in dateTime));
     }
 
     public void WriteExtDateTime(ExtDateTime dateTime) {
-        writer.WriteDateTime(dateTime);
+        _writer.WriteDateTime(dateTime);
     }
 
     public void WriteTimestamp(Timestamp timestamp) {
-        writer.WriteTimestamp(timestamp);
+        _writer.WriteTimestamp(timestamp);
     }
 
-    public void WriteDouble4(Double4 double4, SerializeFeatures features = default) {
-        writer.WriteDouble4(double4, _isTextWriter ? features.ToDouble4Style() : default);
+    public void WriteDouble4(Double4 double4, string? elementNames = null) {
+        _writer.WriteDouble4(double4, elementNames);
     }
 
-    public void WriteEnum<T>(T value, SerializeFeatures features = default) {
+    public void WriteLong4(Long4 long4, string? elementNames = null) {
+        _writer.WriteLong4(long4, elementNames);
+    }
+
+    public void WriteFxp4(Fxp4 fv4, string? elementNames = null) {
+        _writer.WriteFxp4(fv4, elementNames);
+    }
+
+    public void WriteEnum<T>(T value, SerializeFeatures features = 0) where T : struct {
         if (CodecRegistry.GetEncoder(typeof(T)) is DsonCodecImpl<T> codecImpl) {
             codecImpl.WriteObject(this, value, typeof(T), features);
         } else {
@@ -301,20 +318,20 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     #region object
 
-    public void WriteObject(string name, object? value, Type declaredType, SerializeFeatures features) {
-        WriteObject<object>(name, value, declaredType, features);
-    }
-
     public void WriteObject<T>(string name, in T? value, SerializeFeatures features) {
         WriteObject<T>(name, in value, typeof(T), features);
     }
 
-    public void WriteObject(object? value, Type declaredType, SerializeFeatures features) {
-        WriteObject<object>(null, value, declaredType, features);
-    }
-
     public void WriteObject<T>(in T? value, SerializeFeatures features) {
         WriteObject<T>(null, in value, typeof(T), features);
+    }
+
+    public void WriteObject(string name, object? value, Type declaredType, SerializeFeatures features) {
+        WriteObject<object>(name, value, declaredType, features);
+    }
+
+    public void WriteObject(object? value, Type declaredType, SerializeFeatures features) {
+        WriteObject<object>(null, value, declaredType, features);
     }
 
     /// <summary>
@@ -324,8 +341,8 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     private void WriteObject<T>(string? name, in T? value, Type declaredType, SerializeFeatures features) {
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
         // 处理Nullable -- 手动传入的Type参数可能是值类型，但泛型参数可能是Object
-        if (declaredType.IsValueType && typeof(T).IsValueType) {
-            DsonCodecImpl<T> castEncoder = converter.CodecRegistry.GetEncoder(declaredType) as DsonCodecImpl<T>;
+        if (typeof(T).IsValueType) {
+            DsonCodecImpl<T> castEncoder = _converter.CodecRegistry.GetEncoder(declaredType) as DsonCodecImpl<T>;
             if (castEncoder == null) {
                 throw DsonCodecException.UnsupportedType(declaredType);
             }
@@ -333,8 +350,8 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
                 WriteNull(name!, features);
                 return;
             }
-            if (writer.IsAtName) {
-                writer.WriteName(name);
+            if (_writer.IsAtName) {
+                _writer.WriteName(name);
             }
             castEncoder.WriteObject(this, in value, declaredType, features);
             return;
@@ -346,16 +363,16 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         }
         // DsonValue - DsonValue不能查询Encoder否则可能查到List/Map的编码器，除非我们显式注册相关编解码器
         if (value is DsonValue dsonValue) {
-            Dsons.WriteDsonValue(writer, dsonValue, name);
+            Dsons.WriteDsonValue(_writer, dsonValue, name);
             return;
         }
         Type runtimeType = value.GetType(); // 值类型调用GetType会装箱
-        DsonCodecImpl? encoder = converter.CodecRegistry.GetEncoder(runtimeType);
+        DsonCodecImpl? encoder = _converter.CodecRegistry.GetEncoder(runtimeType);
         if (encoder != null) {
-            if (writer.IsAtName) {
-                writer.WriteName(name);
+            if (_writer.IsAtName) {
+                _writer.WriteName(name);
             }
-            if (writer.ContextType != DsonContextType.TopLevel
+            if (_writer.ContextType != DsonContextType.TopLevel
                 && IsSerializeReference(features, encoder)) {
                 // 非顶层对象转为引用写入
                 WritePtr(AddReference(value));
@@ -376,115 +393,113 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public IDsonConverter Converter {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => converter;
+        get => _converter;
     }
     public ConverterOptions Options {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => converter.Options;
+        get => _converter.Options;
     }
     public ITypeMetaRegistry TypeMetaRegistry {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => converter.TypeMetaRegistry;
+        get => _converter.TypeMetaRegistry;
     }
     public IDsonCodecRegistry CodecRegistry {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => converter.CodecRegistry;
+        get => _converter.CodecRegistry;
+    }
+    public bool IsTextWriter {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _isTextWriter;
     }
     public string CurrentName {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => writer.CurrentName;
+        get => _writer.CurrentName;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteName(string name) {
-        writer.WriteName(name);
+        _writer.WriteName(name);
     }
 
     public void WriteStartObject(Type encoderType, SerializeFeatures features) {
-        TypeMeta? typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
+        TypeMeta? typeMeta = _converter.TypeMetaRegistry.OfType(encoderType);
         WriteStartObject(typeMeta, features);
     }
 
     public void WriteStartObject(TypeMeta? typeMeta, SerializeFeatures features) {
         ObjectStyle style = _isTextWriter ? GetObjectStyle(features, typeMeta) : default;
-        writer.WriteStartObject(style);
-        writer.Attach(typeMeta);
+        _writer.WriteStartObject(style);
+        _writer.UserContextData = typeMeta;
     }
 
     public void WriteEndObject() {
-        writer.WriteEndObject();
+        _writer.WriteEndObject();
     }
 
     public void WriteStartArray(Type encoderType, SerializeFeatures features) {
-        TypeMeta? typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
+        TypeMeta? typeMeta = _converter.TypeMetaRegistry.OfType(encoderType);
         WriteStartArray(typeMeta, features);
     }
 
     public void WriteStartArray(TypeMeta? typeMeta, SerializeFeatures features) {
         ObjectStyle style = _isTextWriter ? GetObjectStyle(features, typeMeta) : default;
-        writer.WriteStartArray(style);
-        writer.Attach(typeMeta);
+        _writer.WriteStartArray(style);
+        _writer.UserContextData = typeMeta;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteEndArray() {
-        writer.WriteEndArray();
+        _writer.WriteEndArray();
     }
 
-    public void WriteHeader(Type encoderType, Type declaredType, SerializeFeatures features,
-                            SerializeHeader header) {
-        // 顶层对象需要写入LocalId，不论是否是值类型
-        if (writer.ContextDepth == 1) {
-            header.collection = _stack.Collection;
-            header.localId = (int)_stack.LocalId;
+    public void WriteHeader(Type encoderType, Type declaredType, int count) {
+        SerializeHeader header = new SerializeHeader();
+        // 顶层元素才需要写入localId
+        if (_writer.ContextDepth == 1) {
+            header.localId = _stack;
         }
-        // count大于默认初始化空间才写入
-        if (header.count < 5) {
-            header.count = 0;
+        // count大于默认初始化空间(4)才有写入价值
+        if (count > 4) {
+            header.count = count;
         }
-        bool headerIsEmpty = header.IsEmpty;
-        bool typed = (features & SerializeFeatures.WriteTypeName) != 0
-                     || converter.TypeWriteHelper.RequireTypeName(encoderType, declaredType);
+        // 只有运行时类型和声明类型不一致时才需要写入类型名
+        bool typed = _converter.TypeWriteHelper.RequireTypeName(encoderType, declaredType);
         if (typed) {
-            TypeMeta typeMeta = (TypeMeta)writer.Attachment();
+            TypeMeta typeMeta = (TypeMeta)_writer.UserContextData
+                                ?? throw new InvalidOperationException(encoderType.FullName);
             header.clsName = typeMeta.MainName;
         }
-        if (!typed && headerIsEmpty) {
+        if (header.IsEmpty) {
             return;
         }
-        if (headerIsEmpty && writer is DsonTextWriter textWriter) {
+        // 只有clsName时写为简化Header样式：@{Vector3}
+        if (header.IsClassNameOnly && _writer is DsonTextWriter textWriter) {
             textWriter.WriteSimpleHeader(header.clsName);
             return;
         }
         // 逐项写入
-        writer.WriteStartHeader();
+        _writer.WriteStartHeader();
         if (typed) {
-            writer.WriteString(DsonHeader.Names_ClassName, header.clsName);
-        }
-        if (!string.IsNullOrEmpty(header.collection)) {
-            writer.WriteString(DsonHeader.Names_Collection, header.collection);
+            _writer.WriteString(DsonHeader.Names_ClassName, header.clsName);
         }
         if (header.localId != 0) {
-            writer.WriteInt64(DsonHeader.Names_LocalId, header.localId, NumberStyle.Simple);
+            _writer.WriteInt64(DsonHeader.Names_LocalId, header.localId, NumberStyle.Simple);
         }
         if (header.count > 0) {
-            writer.WriteInt32(DsonHeader.Names_Count, header.count, NumberStyle.Simple);
+            _writer.WriteInt32(DsonHeader.Names_Count, header.count, NumberStyle.Simple);
         }
-        if (header.version != 0) {
-            writer.WriteInt32(DsonHeader.Names_Version, header.version, NumberStyle.Simple);
-        }
-        writer.WriteEndHeader();
+        _writer.WriteEndHeader();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteValueBytes(string name, DsonType dsonType, byte[] data) {
-        writer.WriteValueBytes(name, dsonType, data);
+        _writer.WriteValueBytes(name, dsonType, data);
     }
 
-    public TypeMeta? ContainerTypeMeta => writer.Attachment() as TypeMeta;
+    public TypeMeta? ContainerTypeMeta => _writer.UserContextData as TypeMeta;
 
     public DsonCodecImpl<T>? GetInlinableCodec<T>() {
-        DsonCodecImpl encoder = converter.CodecRegistry.GetEncoder(typeof(T));
+        DsonCodecImpl encoder = _converter.CodecRegistry.GetEncoder(typeof(T));
         if (encoder is DsonCodecImpl<T> castEncoder && castEncoder.IsInlinableCodec) {
             return castEncoder;
         }
@@ -492,13 +507,13 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     public void Flush() {
-        writer.Flush();
+        _writer.Flush();
     }
 
     public void Dispose() {
-        writer.Dispose();
-        referenceTable?.Clear();
-        _stack = default;
+        _writer.Dispose();
+        _referenceTable?.Clear();
+        _stack = 0;
         _nextLocalId = 0;
         _isTextWriter = false;
     }
@@ -517,7 +532,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
             if ((features & SerializeFeatures.SkipZeroValue) != 0) return false;
             if ((features & SerializeFeatures.WriteZeroValue) != 0) return true;
         }
-        features = converter.Options.encodeFeatures;
+        features = _converter.Options.encodeFeatures;
         return (features & SerializeFeatures.SkipZeroValue) == 0;
     }
 
@@ -531,7 +546,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
             if ((features & SerializeFeatures.SkipNullValue) != 0) return false;
             if ((features & SerializeFeatures.WriteNullValue) != 0) return true;
         }
-        features = converter.Options.encodeFeatures;
+        features = _converter.Options.encodeFeatures;
         return (features & SerializeFeatures.SkipNullValue) == 0;
     }
 
@@ -545,22 +560,15 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
             if ((features & SerializeFeatures.NullStringAsEmpty) != 0) return true;
             if (((features & SerializeFeatures.NullStringAsNull) != 0)) return false;
         }
-        features = converter.Options.encodeFeatures;
+        features = _converter.Options.encodeFeatures;
         return (features & SerializeFeatures.NullStringAsEmpty) != 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsSerializeReference(SerializeFeatures features, DsonCodecImpl codecImpl) {
         if (codecImpl.DisableSerializeReference) {
             return false;
         }
-        if ((features & SerializeFeatures.SerializeInline) != 0) return false;
-        if ((features & SerializeFeatures.SerializeReference) != 0) return true;
-        TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(codecImpl.GetEncoderType());
-        if (typeMeta == null) {
-            throw DsonCodecException.UnsupportedType(codecImpl.GetEncoderType());
-        }
-        features = typeMeta.encodeFeatures;
-        if ((features & SerializeFeatures.SerializeInline) != 0) return false;
         return (features & SerializeFeatures.SerializeReference) != 0;
     }
 
@@ -568,9 +576,9 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         if ((features & SerializeFeatures.ObjectFlow) != 0) return ObjectStyle.Flow;
         if ((features & SerializeFeatures.ObjectIndent) != 0) return ObjectStyle.Indent;
         if (typeMeta != null) {
-            return (typeMeta.encodeFeatures & SerializeFeatures.ObjectFlow) != 0
-                ? ObjectStyle.Flow
-                : ObjectStyle.Indent;
+            features = typeMeta.encodeFeatures;
+            if ((features & SerializeFeatures.ObjectFlow) != 0) return ObjectStyle.Flow;
+            if ((features & SerializeFeatures.ObjectIndent) != 0) return ObjectStyle.Indent;
         }
         return ObjectStyle.Indent;
     }
@@ -580,7 +588,7 @@ internal class DefaultDsonObjectWriter : IDsonObjectWriter
         public static readonly ReferenceComparer Inst = new ReferenceComparer();
 
         public bool Equals(object? x, object? y) {
-            return x == y;
+            return x == y; // ReferenceEquals
         }
 
         public int GetHashCode(object obj) {

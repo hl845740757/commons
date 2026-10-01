@@ -17,121 +17,40 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
-using static Wjybxx.Dson.Codec.AbstractDsonCodec;
+using Wjybxx.Dson.Codec.Attributes;
 
 namespace Wjybxx.Dson.Codec
 {
-internal static class AbstractDsonCodec
-{
-    private static readonly ConcurrentDictionary<Type, int> cache = new();
-    internal const int MASK_BEFORE_ENCODE = 0x01;
-    internal const int MASK_AFTER_DECODE = 0x02;
-    internal const int MASK_WRITE_OBJECT = 0x04;
-    internal const int MASK_READ_OBJECT = 0x08;
-    internal const int MASK_READ_FIELD = 0x10;
-
-    public static int GetOverrides(Type type) {
-        if (type.IsGenericType) {
-            type = type.GetGenericTypeDefinition();
-        }
-        if (cache.TryGetValue(type, out int r)) {
-            return r;
-        }
-        r = 0XFF;
-        if (!IsOverwrite(type, "BeforeEncode")) r &= ~MASK_BEFORE_ENCODE;
-        if (!IsOverwrite(type, "AfterDecode")) r &= ~MASK_AFTER_DECODE;
-        if (!IsOverwrite(type, "WriteObject")) r &= ~MASK_WRITE_OBJECT;
-        if (!IsOverwrite(type, "ReadObject")) r &= ~MASK_READ_OBJECT;
-        if (!IsOverwrite(type, "ReadField")) r &= ~MASK_READ_FIELD;
-        cache.TryAdd(type, r);
-        return r;
-    }
-
-    private static bool IsOverwrite(Type type, string methodName) {
-        MethodInfo methodInfo = type.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-        if (methodInfo == null) throw new AssertionError(methodName);
-        Type declaringType = methodInfo.DeclaringType!;
-        if (declaringType.IsGenericType) {
-            declaringType = declaringType.GetGenericTypeDefinition();
-        }
-        return declaringType != typeof(AbstractDsonCodec<>);
-    }
-}
-
 /// <summary>
 /// 生成代码默认都会实现该类
+///
+/// <h3>生成器规则</h3>
+/// 1.非public字段，如果缺少'public getter'，则通过反射赋值；生成器会生成SetValue方法，方法名为<c>_Get{fieldName}</c>
+/// 2.非public字段，如果缺少'public setter'，则通过反射赋值；生成器会生成SetValue方法，方法名为<c>_Set{fieldName}</c>
+/// 3.值类型不可以包含需要反射读写的字段。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
 {
-    private readonly int _overrides;
-
-    protected AbstractDsonCodec() {
-        _overrides = GetOverrides(GetType());
-    }
-
     [StableName]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public virtual Type GetEncoderType() => typeof(T);
 
     #region Write
 
-    private bool IsWriteAsArray(SerializeFeatures features, TypeMeta typeMeta, ConverterOptions options) {
-        // 这一波波测试真的有点浪费开销，还好我现在不那么追求性能了...
-        return (features & SerializeFeatures.WriteAsArray) != 0
-               || (typeMeta.encodeFeatures & SerializeFeatures.WriteAsArray) != 0
-               || (options.encodeFeatures & SerializeFeatures.WriteAsArray) != 0;
-    }
-
     public void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, SerializeFeatures features) {
         Type encoderType = GetEncoderType();
-        TypeMeta typeMeta = writer.TypeMetaRegistry.OfType(encoderType);
-        if (typeMeta == null) {
-            throw DsonCodecException.UnsupportedKeyType(encoderType);
-        }
-        bool isWriteAsArray = IsWriteAsArray(features, typeMeta, writer.Options);
-        if (isWriteAsArray) {
-            writer.WriteStartArray(typeMeta, features);
-        } else {
-            writer.WriteStartObject(typeMeta, features);
-        }
-        writer.WriteHeader(encoderType, declaredType, features);
-        //
-        if ((_overrides & MASK_BEFORE_ENCODE) != 0 && writer.Options.enableBeforeEncode) {
-            BeforeEncode(writer, ref inst);
-        }
-        if ((_overrides & MASK_WRITE_OBJECT) != 0) {
-            WriteObject(writer, ref inst);
-        }
+        writer.WriteStartObject(encoderType, features);
+        writer.WriteHeader(encoderType, declaredType);
         WriteFields(writer, ref inst);
-        //
-        if (isWriteAsArray) {
-            writer.WriteEndArray();
-        } else {
-            writer.WriteEndObject();
-        }
+        writer.WriteEndObject();
     }
 
-    /// <summary>
-    /// 调用用户的BeforeEncode钩子方法
-    /// </summary>
-    [StableName]
-    protected virtual void BeforeEncode(IDsonObjectWriter writer, ref T inst) {
-    }
-
-    /// <summary>
-    /// 调用用户的WriteObject钩子方法
-    /// </summary>
-    [StableName]
-    protected virtual void WriteObject(IDsonObjectWriter writer, ref T inst) {
-    }
-
-    /// <summary>
-    /// 写入托管字段，可能是子类实例
-    /// </summary>
     [StableName]
     protected abstract void WriteFields(IDsonObjectWriter writer, ref T inst);
 
@@ -139,82 +58,67 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
 
     #region Read
 
-    [StableName]
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features, Func<object>? factory = null) {
-        DsonType containerType = reader.CurrentDsonType;
-        if (containerType == DsonType.Object) {
-            bool passiveReading = (_overrides & MASK_READ_FIELD) != 0;
-            reader.ReadStartObject(GetEncoderType(), passiveReading ? DeserializeFeatures.PassiveReading : 0);
-        } else {
-            reader.ReadStartArray(GetEncoderType());
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        SerializeHeader header = reader.ReadStartObject(GetEncoderType(), features);
+        T inst = NewInstance(reader);
+        if (header.localId != 0) {
+            reader.PublishReference(header.localId, inst);
         }
-        // cast失败则抛出异常，不能测试类型，可能隐藏错误
-        T inst = factory != null ? (T)factory() : NewInstance(reader);
-        if (!typeof(T).IsValueType) {
-            reader.PublishReference(inst);
-        }
-        if ((_overrides & MASK_READ_OBJECT) != 0) {
-            ReadObject(reader, ref inst);
-        }
-        if ((_overrides & MASK_READ_FIELD) != 0 && containerType == DsonType.Object) {
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                string name = reader.ReadName();
-                if (!ReadField(reader, ref inst, name)) {
-                    reader.SkipValue();
-                }
+        // 新版固定Switch-Case随机读
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            string name = reader.ReadName();
+            if (!ReadField(reader, ref inst, name)) {
+                reader.SkipValue();
             }
-        } else {
-            ReadFields(reader, ref inst);
         }
-        if ((_overrides & MASK_AFTER_DECODE) != 0 && reader.Options.enableAfterDecode) {
-            AfterDecode(reader, ref inst);
-        }
-        //
-        if (containerType == DsonType.Object) {
-            reader.ReadEndObject();
-        } else {
-            reader.ReadEndArray();
-        }
-        // 值类型需要在完全解码之后才可发布引用 - 由外部发布引用的开销更低
-        // if (typeof(T).IsValueType) {
-        //     reader.PublishReference(in inst);
-        // }
+        reader.ReadEndObject();
         return inst;
     }
 
     /// <summary>
     /// 创建一个实例（可以是子类实例）
     /// 1. 如果是抽象类，应当抛出异常
-    /// 2. 该方法可解决readonly字段问题。
+    /// 2. 该方法可解决readonly字段问题，但还是尽量减少readonly使用。
     /// </summary>
     [StableName]
     protected abstract T NewInstance(IDsonObjectReader reader);
 
     /// <summary>
-    /// 调用用户的ReadObject钩子方法
-    ///
-    /// 该方法与<see cref="ReadFields"/>方法分离，以方便用户重写<see cref="ReadFields"/>方法；
-    /// 同时方便Switch-Case随机读实现。
-    /// </summary>
-    [StableName]
-    protected virtual void ReadObject(IDsonObjectReader reader, ref T inst) {
-    }
-
-    /// <summary>
-    /// 读取所有字段
-    ///
-    /// 注：如果支持随机读，请重写<see cref="ReadField"/>方法。
-    /// </summary>
-    [StableName]
-    protected abstract void ReadFields(IDsonObjectReader reader, ref T inst);
-
-    /// <summary>
     /// 读取单个字段
+    /// 1.新版限定为必须通过Switch-Case解码，以简化其它设计。
+    /// 2.返回值用于判断超类是否成功读取了字段，也用于模板方法判断是否需要跳过Value。
     ///
-    /// 1.如果用户实现了该方法，则表示支持Switch-Case随机读，则由框架类完成输入流的读取。
-    /// 2.如果输入流为数组类型，则不会调用该方法；仍需要实现<see cref="ReadFields"/>方法。
-    /// 3.返回值用于判断超类是否成功读取了字段。
-    /// 4.该方法主要用于简化POJO生成代码。
+    /// <h3>普通字段</h3>
+    /// 如果普通字段声明了<see cref="SerializeReference"/>注解，
+    /// 解码时应当先调用<see cref="IDsonObjectReader.TryReadPtr"/>方法判断目标是否被编码为引用Id；
+    /// 如果字段被编码为引用Id，则调用<see cref="IDsonObjectReader.DeferReference"/>方法延迟注入引用。
+    /// <![CDATA[
+    ///     if (reader.TryReadPtr(out int ptr)) {
+    ///         reader.DeferReference(ptr, this, inst, "child"); // 字段名为dson序列化名
+    ///     } else {
+    ///         inst.child = reader.ReadObject<ChildType>();
+    ///     }
+    /// ]]>
+    /// 
+    /// <h3>List/Dictionary字段</h3>
+    /// 如果集合类型字段声明了<see cref="SerializeReference"/>注解，
+    /// 解码时，普通集合类型应当先解码为<see cref="List{T}"/>类型，而字典类型应当先解码为<see cref="Dictionary{TKey,TValue}"/>类型，
+    /// 如果字段不直接是<see cref="List{T}"/>和<see cref="Dictionary{TKey,TValue}"/>类型，
+    /// 则应当调用<see cref="IDsonObjectReader.DeferToTargetType"/>延迟转换为目标类型，生成代码固定调用重载（扩展）方法。
+    /// <![CDATA[
+    ///     List<ChildType> list = reader.ReadObject<List<ChildType>>();
+    ///     // 如果字段是List类型，则直接赋值
+    ///     inst.Children = list;
+    ///     // 如果字段不是List类型，如HashSet，则调用扩展方法转换
+    ///     reader.DeferToTargetType(this, inst, "children", (HashSet<T>)null);
+    /// ]]>
+    /// 
+    /// 如果集合字段没有声明<see cref="SerializeReference"/>注解，但属于特殊类型（不可变集合）或指定了<see cref="DsonPropertyAttribute.TargetType"/>属性，
+    /// 则也需要调用<see cref="IDsonObjectReader.DeferToTargetType"/>转换目标类型。
+    /// <![CDATA[
+    ///     List<ChildType> list = reader.ReadObject<List<ChildType>>();
+    ///     reader.DeferToTargetType(this, inst, "children", (ImmutableList<T>)null);
+    /// ]]>
     /// </summary>
     [StableName]
     protected virtual bool ReadField(IDsonObjectReader reader, ref T inst, string name) {
@@ -222,10 +126,49 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     }
 
     /// <summary>
-    /// 调用用户的AfterDecode方法
+    /// 设置字段的值
+    /// 注：除string/bytes以外的引用类型通常都需要在该方法中处理。
     /// </summary>
     [StableName]
-    protected virtual void AfterDecode(IDsonObjectReader reader, ref T inst) {
+    public virtual bool SetField(T inst, string name, object value) {
+        return false;
+    }
+
+    #endregion
+
+    #region util
+
+    // 用于生成代码反射查询字段 - 避免过于复杂的生成器逻辑
+    protected static PropertyInfo InternalGetProperty(string name) {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+        var encoderType = typeof(T);
+        while (true) {
+            PropertyInfo? propertyInfo = encoderType.GetProperty(name, flags);
+            if (propertyInfo != null) {
+                return propertyInfo;
+            }
+            encoderType = encoderType.BaseType;
+            if (encoderType == typeof(object) || encoderType == null) {
+                break;
+            }
+        }
+        throw new ArgumentException($"Property '{name}' not found.");
+    }
+
+    protected static FieldInfo InternalGetField(string name) {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+        var encoderType = typeof(T);
+        while (true) {
+            FieldInfo? fieldInfo = encoderType.GetField(name, flags);
+            if (fieldInfo != null) {
+                return fieldInfo;
+            }
+            encoderType = encoderType.BaseType;
+            if (encoderType == typeof(object) || encoderType == null) {
+                break;
+            }
+        }
+        throw new ArgumentException($"Field '{name}' not found.");
     }
 
     #endregion

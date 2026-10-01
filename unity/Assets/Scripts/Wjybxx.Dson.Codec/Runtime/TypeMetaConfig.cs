@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
@@ -186,13 +185,16 @@ public sealed class TypeMetaConfig
         config.Add(typeof(long), DsonTexts.LabelInt64, "int64", "long");
         config.Add(typeof(float), DsonTexts.LabelFloat, "float");
         config.Add(typeof(double), DsonTexts.LabelDouble, "double");
+        config.Add(typeof(Fxp64), DsonTexts.LabelFxp64, "fxp64");
         config.Add(typeof(bool), DsonTexts.LabelBool, "bool", "boolean");
         config.Add(typeof(string), DsonTexts.LabelString, "string");
         config.Add(typeof(Binary), DsonTexts.LabelBinary, "bytes");
-        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, "Pointer");
+        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, DsonTexts.LabelRef, "Pointer");
         config.Add(typeof(ExtDateTime), DsonTexts.LabelDateTime, "DateTime");
         config.Add(typeof(Timestamp), DsonTexts.LabelTimestamp, "Timestamp");
         config.Add(typeof(Double4), DsonTexts.LabelDouble4, "Double4");
+        config.Add(typeof(Long4), DsonTexts.LabelLong4, "Long4");
+        config.Add(typeof(Fxp4), DsonTexts.LabelFxp4, "Fxp4");
         // 基础类型
         config.Add(typeof(uint), DsonTexts.LabelUInt32, "uint32", "uint");
         config.Add(typeof(ulong), DsonTexts.LabelUInt64, "uint64", "ulong");
@@ -223,13 +225,11 @@ public sealed class TypeMetaConfig
             config.Add(typeof(IDictionary<,>), "IDictionary", "IDictionary`2");
             config.Add(typeof(Dictionary<,>), "Dictionary", "Dictionary`2");
             config.Add(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2");
-            config.Add(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2");
+            config.Add(typeof(SortedList<,>), "SortedList", "SortedList`2");
             // 扩展集合
             config.Add(typeof(ArrayDictionary<,>), "ArrayDictionary", "ArrayDictionary`2");
-            config.Add(typeof(ArrayDeque<>), "ArrayDeque", "ArrayDeque`1");
             config.Add(typeof(MultiChunkDeque<>), "MultiChunkDeque", "MultiChunkDeque`1");
-            config.Add(typeof(DynamicArray<>), "DynamicArray", "DynamicArray`1");
-            config.Add(typeof(SmallDynamicArray<>), "SmallDynamicArray", "SmallDynamicArray`1");
+            config.Add(typeof(ArrayDeque<>), "ArrayDeque", "ArrayDeque`1");
             // 不可变集合
             config.Add(typeof(ImmutableList<>), "ImmutableList", "ImmutableList`1");
             config.Add(typeof(ImmutableSet<>), "ImmutableSet", "ImmutableSet`1");

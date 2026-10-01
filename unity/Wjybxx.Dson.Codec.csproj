@@ -42,10 +42,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\NullableCodec.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\ListCodec.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\TypePair.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\MapStyle.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DefaultDsonObjectWriter.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\SerializeFeatures.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DeserializeFeatures.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\DictionaryCodec.cs" />
@@ -56,15 +53,12 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\StringCodec.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\AbstractDsonCodec.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\BoolCodec.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DefaultDsonConverter.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\TypeWritePolicy.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\MorePrimitiveCodecs.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DsonConverterBuilder.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Attributes\DsonCodecScanIgnoreAttribute.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DynamicCodecRegistry.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\CollectionCodec.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\TypeName.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DefaultDsonObjectReader.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\FloatCodec.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Attributes\DsonCodecLinkerAttribute.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Attributes\DsonSerializableAttribute.cs" />
@@ -108,6 +102,14 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\SerializeHeader.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Attributes\DsonCodecLinkerBeanAttribute.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\IKeyCodec.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\Fxp64Codec.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DsonObjectReader.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DsonObjectWriter.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\Long4Codec.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\Fxp4Codec.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DsonConverter.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\SerializeRefCodec.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DsonConverterExtensions.cs" />
     <None Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Wjybxx.Dson.Codec.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>

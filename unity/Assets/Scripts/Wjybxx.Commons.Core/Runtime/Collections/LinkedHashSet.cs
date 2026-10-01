@@ -66,7 +66,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     // private ReversedSequenceSetView<TKey>? _reversed;
 
     public LinkedHashSet()
-        : this(0, HashCommon.DefaultLoadFactor) {
+        : this(0) {
     }
 
     public LinkedHashSet(IEqualityComparer<TKey> comparer)
@@ -93,7 +93,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     }
 
     public LinkedHashSet(IEnumerable<TKey> src)
-        : this(CollectionUtil.PredicateCount(src) ?? 0, HashCommon.DefaultLoadFactor) {
+        : this(CollectionUtil.PredicateCount(src) ?? 0) {
         foreach (var key in src) {
             Add(key);
         }
@@ -714,7 +714,6 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     /// <summary>
     /// 删除pos位置的元素，将后续相同hash值的元素前移，才能保证线性探测法的有效性；
     /// 在调用该方法前，应当先调用 FixPointers 修正被删除节点的索引信息。
-    /// 
     /// </summary>
     /// <param name="pos"></param>
     private void ShiftKeys(int pos) {
