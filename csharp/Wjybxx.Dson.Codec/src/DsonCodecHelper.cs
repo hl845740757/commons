@@ -33,6 +33,7 @@ internal static class DsonCodecHelper
             case DsonType.Int64: return (int)reader.ReadInt64();
             case DsonType.Float: return (int)reader.ReadFloat();
             case DsonType.Double: return (int)reader.ReadDouble();
+            case DsonType.Fxp64: return (int)reader.ReadFxp64().ToInt64();
             case DsonType.Bool: return reader.ReadBool() ? 1 : 0;
             case DsonType.Null: {
                 reader.ReadNull();
@@ -50,7 +51,7 @@ internal static class DsonCodecHelper
             case DsonType.Int64: return reader.ReadInt64();
             case DsonType.Float: return (long)reader.ReadFloat();
             case DsonType.Double: return (long)reader.ReadDouble();
-            case DsonType.Fxp64: return reader.ReadFxp64().rawValue;
+            case DsonType.Fxp64: return reader.ReadFxp64().ToInt64();
             case DsonType.Bool: return reader.ReadBool() ? 1 : 0;
             case DsonType.Null: {
                 reader.ReadNull();
@@ -68,6 +69,7 @@ internal static class DsonCodecHelper
             case DsonType.Int64: return reader.ReadInt64();
             case DsonType.Float: return reader.ReadFloat();
             case DsonType.Double: return (float)reader.ReadDouble();
+            case DsonType.Fxp64: return (float)reader.ReadFxp64().ToDouble();
             case DsonType.Bool: return reader.ReadBool() ? 1 : 0;
             case DsonType.Null: {
                 reader.ReadNull();
@@ -100,11 +102,10 @@ internal static class DsonCodecHelper
         DsonType dsonType = reader.CurrentDsonType;
         switch (dsonType) {
             case DsonType.Fxp64: return reader.ReadFxp64();
-            case DsonType.Int32: return Fxp64.FromRaw(reader.ReadInt32());
-            case DsonType.Int64: return Fxp64.FromRaw(reader.ReadInt64());
+            case DsonType.Int32: return Fxp64.FromInt64(reader.ReadInt32());
+            case DsonType.Int64: return Fxp64.FromInt64(reader.ReadInt64());
             case DsonType.Float: return Fxp64.FromDouble(reader.ReadFloat());
             case DsonType.Double: return Fxp64.FromDouble(reader.ReadDouble());
-            case DsonType.String: return Fxp64.Parse(reader.ReadString());
             case DsonType.Null: {
                 reader.ReadNull();
                 return default;

@@ -437,7 +437,7 @@ public static class ArrayUtil
     /// <param name="rnd">随机种子</param>
     /// <typeparam name="T"></typeparam>
     public static void Shuffle<T>(T[] list, Random? rnd = null) {
-        rnd ??= MathCommon.SharedRandom;
+        rnd ??= MathCommon.CurrentRandom;
         int size = list.Length;
         for (int i = size; i > 1; i--) {
             Swap(list, i - 1, rnd.Next(i));
@@ -448,7 +448,7 @@ public static class ArrayUtil
     /// 洗牌算法
     /// </summary>
     public static void Shuffle<T>(Span<T> list, Random? rnd = null) {
-        rnd ??= MathCommon.SharedRandom;
+        rnd ??= MathCommon.CurrentRandom;
         int size = list.Length;
         for (int i = size; i > 1; i--) {
             Swap(list, i - 1, rnd.Next(i));
