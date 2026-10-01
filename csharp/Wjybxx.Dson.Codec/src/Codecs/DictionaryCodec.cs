@@ -28,7 +28,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// <summary>
 /// 字典通用编解码器
 /// </summary>
-public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
+public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>> where K : notnull
 {
     private readonly Type encoderType; // KV应当和encoderType的泛型参数相同，因为Codec就是根据encoderType的泛型参数构建的
     private readonly Func<IDictionary<K, V>>? factory;
@@ -179,8 +179,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 K key = reader.ReadObject<K>();
-                V value = ReadValueRef(reader, elementFeatures, result, keyArray, key);
-                result[key] = value;
+                ReadValueRef(reader, elementFeatures, result, keyArray, key);
             }
             reader.ReadEndArray();
         } else {
@@ -193,8 +192,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 //
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
                     K key = keyCodec.ReadObject(reader, typeof(K), keyFeatures);
-                    V value = ReadValueRef(reader, elementFeatures, result, keyArray, key);
-                    result[key] = value;
+                    ReadValueRef(reader, elementFeatures, result, keyArray, key);
                 }
                 reader.ReadEndArray();
             } else {
@@ -205,8 +203,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 //
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
                     K key = keyCodec.DecodeKey(reader.ReadName());
-                    V value = ReadValueRef(reader, elementFeatures, result, keyArray, key);
-                    result[key] = value;
+                    ReadValueRef(reader, elementFeatures, result, keyArray, key);
                 }
                 reader.ReadEndObject();
             }
@@ -215,14 +212,15 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     }
 
     // 走到该方法时Value通常为引用类型
-    private V ReadValueRef(IDsonObjectReader reader, DeserializeFeatures elementFeatures,
-                           Dictionary<K, V> result, List<K> keyArray, K key) {
+    private void ReadValueRef(IDsonObjectReader reader, DeserializeFeatures elementFeatures,
+                              Dictionary<K, V> result, List<K> keyArray, K key) {
         if (reader.TryReadPtr(out int ptr)) {
-            reader.DeferReference(ptr, this, result, keyArray, keyArray.Count);
+            result[key] = default; // 预填充 - 由于可能立即执行SetField，所以必须先填充
             keyArray.Add(key);
-            return default;
+            reader.DeferReference(ptr, this, result, keyArray, keyArray.Count - 1);
+        } else {
+            result[key] = reader.ReadObject<V>(elementFeatures);
         }
-        return reader.ReadObject<V>(elementFeatures);
     }
 
     public bool SetField(object inst, object keyArray, int index, object value) {
