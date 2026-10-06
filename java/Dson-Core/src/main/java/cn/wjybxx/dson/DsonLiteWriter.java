@@ -73,7 +73,7 @@ public interface DsonLiteWriter extends AutoCloseable {
 
     void writeFxp64(int name, Fxp64 value);
 
-    void writePtr(int name, ObjectPtr objectPtr);
+    void writeRefId(int name, RefId refId);
 
     void writeDateTime(int name, ExtDateTime dateTime);
 
@@ -108,7 +108,7 @@ public interface DsonLiteWriter extends AutoCloseable {
 
     void writeFxp64(Fxp64 fv4);
 
-    void writePtr(ObjectPtr objectPtr);
+    void writeRefId(RefId refId);
 
     void writeDateTime(ExtDateTime dateTime);
 

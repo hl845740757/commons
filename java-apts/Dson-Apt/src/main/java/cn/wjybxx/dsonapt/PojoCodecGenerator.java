@@ -446,7 +446,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (processor.isString(typeMirror)) return MNAME_WRITE_STRING;
         if (processor.isByteArray(typeMirror)) return MNAME_WRITE_BYTES;
         if (processor.isBinary(typeMirror)) return MNAME_WRITE_BINARY;
-        if (processor.isObjectPtr(typeMirror)) return MNAME_WRITE_PTR;
+        if (processor.isObjectRefId(typeMirror)) return MNAME_WRITE_REF_ID;
         if (processor.isLocalDateTime(typeMirror)) return MNAME_WRITE_DATETIME;
         if (processor.isTimestamp(typeMirror)) return MNAME_WRITE_TIMESTAMP;
         return MNAME_WRITE_OBJECT;
@@ -461,7 +461,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (processor.isString(typeMirror)) return MNAME_READ_STRING;
         if (processor.isByteArray(typeMirror)) return MNAME_READ_BYTES;
         if (processor.isBinary(typeMirror)) return MNAME_READ_BINARY;
-        if (processor.isObjectPtr(typeMirror)) return MNAME_READ_PTR;
+        if (processor.isObjectRefId(typeMirror)) return MNAME_READ_REF_ID;
         if (processor.isLocalDateTime(typeMirror)) return MNAME_READ_DATETIME;
         if (processor.isTimestamp(typeMirror)) return MNAME_READ_TIMESTAMP;
         return MNAME_READ_OBJECT;
@@ -476,7 +476,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private static final String MNAME_READ_OBJECT = "readObject";
 
     private static final String MNAME_READ_BINARY = "readBinary";
-    private static final String MNAME_READ_PTR = "readPtr";
+    private static final String MNAME_READ_REF_ID = "readRefId";
     private static final String MNAME_READ_DATETIME = "readDateTime";
     private static final String MNAME_READ_TIMESTAMP = "readTimestamp";
 
@@ -485,7 +485,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private static final String MNAME_WRITE_OBJECT = "writeObject";
 
     private static final String MNAME_WRITE_BINARY = "writeBinary";
-    private static final String MNAME_WRITE_PTR = "writePtr";
+    private static final String MNAME_WRITE_REF_ID = "writeRefId";
     private static final String MNAME_WRITE_DATETIME = "writeDateTime";
     private static final String MNAME_WRITE_TIMESTAMP = "writeTimestamp";
 

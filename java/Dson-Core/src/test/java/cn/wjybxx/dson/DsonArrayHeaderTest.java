@@ -17,7 +17,7 @@
 package cn.wjybxx.dson;
 
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +48,7 @@ public class DsonArrayHeaderTest {
     @Test
     void testHeaderRef() {
         DsonArray<String> array = new DsonArray<>();
-        array.add(new DsonPointer(new ObjectPtr(10001))); // 会打印类型
+        array.add(new DsonRefId(new RefId(10001))); // 会打印类型
         array.add(new DsonInt32(64));
 
         String dsonString = Dsons.toDson(array, ObjectStyle.FLOW);
@@ -62,7 +62,7 @@ public class DsonArrayHeaderTest {
     @Test
     void testHeader() {
         DsonArray<String> array = new DsonArray<>();
-        array.add(new DsonPointer(new ObjectPtr(10001))); // 会打印类型
+        array.add(new DsonRefId(new RefId(10001))); // 会打印类型
         array.add(new DsonInt32(64));
         array.getHeader().append(DsonHeader.NAMES_CLASS_NAME, new DsonString("MyArray"));
 

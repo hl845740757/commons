@@ -102,8 +102,8 @@ public struct UnionValue : IEquatable<UnionValue>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static UnionValue OfObjectPtr(in ObjectPtr value) {
-        return new UnionValue(DsonType.Pointer) { ObjectPtr = value };
+    public static UnionValue OfRefId(in RefId value) {
+        return new UnionValue(DsonType.RefId) { RefId = value };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,8 +135,8 @@ public struct UnionValue : IEquatable<UnionValue>
 
     #region converter
 
-    public ObjectPtr ObjectPtr {
-        get => new ObjectPtr((string)objValue1, (string)objValue2, iValue, v2);
+    public RefId RefId {
+        get => new RefId((string)objValue1, (string)objValue2, iValue, v2);
         set {
             objValue1 = value.Collection;
             objValue2 = value.LocalPath;
@@ -195,7 +195,7 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Fxp64: return lValue.Equals(other.lValue);
             case DsonType.Bool: return iValue == other.iValue;
             case DsonType.Null: return true;
-            case DsonType.Pointer: return ObjectPtr.Equals(other.ObjectPtr);
+            case DsonType.RefId: return RefId.Equals(other.RefId);
             case DsonType.DateTime: return DateTime.Equals(other.DateTime);
             case DsonType.Timestamp: return Timestamp.Equals(other.Timestamp);
             case DsonType.Double4: return Double4.Equals(other.Double4);
@@ -221,7 +221,7 @@ public struct UnionValue : IEquatable<UnionValue>
             DsonType.Fxp64 => lValue.GetHashCode(),
             DsonType.Bool => iValue.GetHashCode(),
             DsonType.Null => 0,
-            DsonType.Pointer => ObjectPtr.GetHashCode(),
+            DsonType.RefId => RefId.GetHashCode(),
             DsonType.DateTime => DateTime.GetHashCode(),
             DsonType.Timestamp => Timestamp.GetHashCode(),
             DsonType.Double4 => Double4.GetHashCode(),
@@ -249,7 +249,7 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Double: return $"Type: {type}, Value: {dValue}";
             case DsonType.Fxp64: return $"Type: {type}, Value: {lValue}";
             case DsonType.Bool: return $"Type: {type}, Value: {iValue != 0}";
-            case DsonType.Pointer: return $"Type: {type}, Value: {ObjectPtr}";
+            case DsonType.RefId: return $"Type: {type}, Value: {RefId}";
             case DsonType.DateTime: return $"Type: {type}, Value: {DateTime}";
             case DsonType.Timestamp: return $"Type: {type}, Value: {Timestamp}";
             case DsonType.Double4: return $"Type: {type}, Value: {Double4}";

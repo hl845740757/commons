@@ -427,9 +427,9 @@ public final class DsonTextReader extends AbstractDsonReader {
                 Binary binary = Binary.fromHexString(unquotedString);
                 pushNextValue(binary);
             }
-            case POINTER -> {
+            case REF_ID -> {
                 int localId = DsonTexts.parseInt32(unquotedString);
-                pushNextValue(new ObjectPtr(localId));
+                pushNextValue(new RefId(localId));
             }
             case DATETIME -> {
                 LocalDateTime dateTime = ExtDateTime.parseDateTime(unquotedString); // 这里其实不应该走到
@@ -453,12 +453,12 @@ public final class DsonTextReader extends AbstractDsonReader {
         // 2.object和array的className会在beginObject和beginArray的时候转换为结构体 @{}
         // 因此这里只能出现内置结构体的简写形式
         String clsName = valueToken.stringValue();
-        if (DsonTexts.LABEL_PTR.equals(clsName) || DsonTexts.LABEL_REF.equals(clsName)) {// @ptr localId
+        if (DsonTexts.LABEL_PTR.equals(clsName) || DsonTexts.LABEL_REF.equals(clsName)) {// @ref localId
             DsonToken nextToken = popToken();
             ensureStringsToken(context.contextType, nextToken);
             int localId = DsonTexts.parseInt32(nextToken.stringValue());
-            pushNextValue(new ObjectPtr(localId));
-            return DsonType.POINTER;
+            pushNextValue(new RefId(localId));
+            return DsonType.REF_ID;
         }
 
         if (DsonTexts.LABEL_DATETIME.equals(clsName)) { // @dt uuuu-MM-dd'T'HH:mm:ss
@@ -496,7 +496,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         return switch (clsName) {
             case DsonTexts.LABEL_PTR, DsonTexts.LABEL_REF -> {
                 pushNextValue(scanPtr(context));
-                yield DsonType.POINTER;
+                yield DsonType.REF_ID;
             }
             case DsonTexts.LABEL_DATETIME -> {
                 pushNextValue(scanDateTime(context));
@@ -578,7 +578,7 @@ public final class DsonTextReader extends AbstractDsonReader {
             // 跳过其他字段；marking期间skipStack保留完整token以便回放。
             switch (valueToken.type) {
                 case BEGIN_ARRAY, BEGIN_OBJECT, BEGIN_HEADER -> skipStack(1);
-                case BUILTIN_STRUCT -> scanStringUtilComma(); // @ptr/@dt/@ts的单值简写
+                case BUILTIN_STRUCT -> scanStringUtilComma(); // @ref/@dt/@ts的单值简写
             }
             checkSeparator(contextType);
         }
@@ -587,7 +587,7 @@ public final class DsonTextReader extends AbstractDsonReader {
 
     // region 内置结构体语法
 
-    private ObjectPtr scanPtr(Context context) {
+    private RefId scanPtr(Context context) {
         DsonContextType contextType = context.contextType;
         String collection = null;
         String localPath = null;
@@ -603,29 +603,29 @@ public final class DsonTextReader extends AbstractDsonReader {
             // 根据name校验
             DsonToken valueToken = popToken();
             switch (keyToken.stringValue()) {
-                case ObjectPtr.NAMES_COLLECTION -> {
+                case RefId.NAMES_COLLECTION -> {
                     ensureStringsToken(contextType, valueToken);
                     collection = valueToken.stringValue();
                 }
-                case ObjectPtr.NAMES_LOCAL_PATH -> {
+                case RefId.NAMES_LOCAL_PATH -> {
                     ensureStringsToken(contextType, valueToken);
                     localPath = valueToken.stringValue();
                 }
-                case ObjectPtr.NAMES_LOCAL_ID -> {
+                case RefId.NAMES_LOCAL_ID -> {
                     verifyTokenType(contextType, valueToken, DsonTokenType.UNQUOTE_STRING);
                     localId = DsonTexts.parseInt32(valueToken.stringValue());
                 }
-                case ObjectPtr.NAMES_TYPE -> {
+                case RefId.NAMES_TYPE -> {
                     verifyTokenType(contextType, valueToken, DsonTokenType.UNQUOTE_STRING);
                     type = DsonTexts.parseInt32(valueToken.stringValue());
                 }
                 default -> {
-                    throw new DsonIOException("invalid ptr fieldName: " + keyToken.stringValue());
+                    throw new DsonIOException("invalid refId fieldName: " + keyToken.stringValue());
                 }
             }
             checkSeparator(contextType);
         }
-        return new ObjectPtr(collection, localPath, localId, type);
+        return new RefId(collection, localPath, localId, type);
     }
 
     private Timestamp scanTimestamp(Context context) {
@@ -927,8 +927,8 @@ public final class DsonTextReader extends AbstractDsonReader {
     }
 
     @Override
-    protected ObjectPtr doReadPtr() {
-        return (ObjectPtr) Objects.requireNonNull(popNextValue());
+    protected RefId doReadRefId() {
+        return (RefId) Objects.requireNonNull(popNextValue());
     }
 
     @Override

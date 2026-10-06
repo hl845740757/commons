@@ -23,7 +23,7 @@ import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nullable;
@@ -69,7 +69,7 @@ public interface DsonObjectWriter extends AutoCloseable {
     void writeBinary(String name, Binary binary);
 
     // 内建结构体
-    void writePtr(String name, ObjectPtr objectPtr);
+    void writeRefId(String name, RefId refId);
 
     void writeDateTime(String name, LocalDateTime dateTime);
 

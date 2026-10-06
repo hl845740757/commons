@@ -530,7 +530,7 @@ public final class DsonCodecConfig {
         config.addCodec(new BooleanCodec());
         config.addCodec(new StringCodec());
         config.addCodec(new BinaryCodec());
-        config.addCodec(new ObjectPtrCodec());
+        config.addCodec(new RefIdCodec());
         config.addCodec(new ExtDateTimeCodec());
         config.addCodec(new TimestampCodec());
         // 基本类型补充

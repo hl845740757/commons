@@ -398,7 +398,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
     protected override void DoWriteFxp64(Fxp64 value) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Fxp64);
-        printer.FastPrint("@fx ");
+        printer.FastPrint("@F ");
         printer.FastPrint(value);
     }
 
@@ -434,44 +434,44 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         PrintBinary(bytes, offset, len);
     }
 
-    protected override void DoWritePtr(ObjectPtr objectPtr) {
+    protected override void DoWriteRefId(RefId refId) {
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;
-        WriteCurrentName(printer, DsonType.Pointer);
+        WriteCurrentName(printer, DsonType.RefId);
         // 只有localId时简写
-        if (objectPtr.CanBeAbbreviated) {
-            printer.FastPrint("@ptr ");
-            printer.FastPrint(objectPtr.LocalId);
+        if (refId.CanBeAbbreviated) {
+            printer.FastPrint("@ref ");
+            printer.FastPrint(refId.LocalId);
             return;
         }
 
-        printer.FastPrint("{@ptr ");
+        printer.FastPrint("{@ref ");
         // 固定打印localId
         {
-            printer.FastPrint(ObjectPtr.NamesLocalId);
+            printer.FastPrint(RefId.NamesLocalId);
             printer.FastPrint(": ");
-            printer.FastPrint(objectPtr.LocalId);
+            printer.FastPrint(refId.LocalId);
         }
-        if (objectPtr.HashLocalPath) {
+        if (refId.HashLocalPath) {
             printer.FastPrint(", ");
             printer.PrintlnIfExceed(softLineLength);
-            printer.FastPrint(ObjectPtr.NamesLocalPath);
+            printer.FastPrint(RefId.NamesLocalPath);
             printer.FastPrint(": ");
-            PrintString(printer, objectPtr.LocalPath, StringStyle.AutoQuote);
+            PrintString(printer, refId.LocalPath, StringStyle.AutoQuote);
         }
-        if (objectPtr.HasCollection) {
+        if (refId.HasCollection) {
             printer.FastPrint(", ");
             printer.PrintlnIfExceed(softLineLength);
-            printer.FastPrint(ObjectPtr.NamesCollection);
+            printer.FastPrint(RefId.NamesCollection);
             printer.FastPrint(": ");
-            PrintString(printer, objectPtr.Collection, StringStyle.AutoQuote);
+            PrintString(printer, refId.Collection, StringStyle.AutoQuote);
         }
-        if (objectPtr.Type != 0) {
+        if (refId.Type != 0) {
             printer.FastPrint(", ");
             printer.PrintlnIfExceed(softLineLength);
-            printer.FastPrint(ObjectPtr.NamesType);
+            printer.FastPrint(RefId.NamesType);
             printer.FastPrint(": ");
-            printer.FastPrint(objectPtr.Type);
+            printer.FastPrint(refId.Type);
         }
         printer.FastPrint('}');
     }
@@ -592,7 +592,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
 
     private void PrintFxp4(DsonPrinter printer, Fxp4 value, string? elementNames) {
         elementNames = GetElementNames(elementNames);
-        printer.FastPrint("{@FX4 ");
+        printer.FastPrint("{@F4 ");
         for (int index = 0; index < elementNames.Length; index++) {
             if (index != 0) {
                 printer.FastPrint(", ");

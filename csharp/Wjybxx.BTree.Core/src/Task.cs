@@ -50,7 +50,6 @@ namespace Wjybxx.BTree
 /// 
 /// <typeparam name="T">黑板的类型</typeparam>
 /// </summary>
-[SerializeReference]
 public abstract class Task<T> : ICancelTokenListener where T : class
 {
     /** 低5位记录Task重写了哪些方法 */

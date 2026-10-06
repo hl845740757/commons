@@ -239,7 +239,7 @@ public class DsonLites {
             case STRING -> writer.writeString(dsonValue.asString());
             case NULL -> writer.writeNull();
             case BINARY -> writer.writeBinary(dsonValue.asBinary());
-            case POINTER -> writer.writePtr(dsonValue.asPointer());
+            case REF_ID -> writer.writeRefId(dsonValue.asRefId());
             case DATETIME -> writer.writeDateTime(dsonValue.asDateTime());
             case TIMESTAMP -> writer.writeTimestamp(dsonValue.asTimestamp());
             case DOUBLE4 -> writer.writeDouble4(dsonValue.asDouble4());
@@ -268,7 +268,7 @@ public class DsonLites {
                 yield DsonNull.NULL;
             }
             case BINARY -> new DsonBinary(reader.readBinary());
-            case POINTER -> new DsonPointer(reader.readPtr());
+            case REF_ID -> new DsonRefId(reader.readRefId());
             case DATETIME -> new DsonDateTime(reader.readDateTime());
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp());
             case DOUBLE4 -> new DsonDouble4(reader.readDouble4());

@@ -144,7 +144,7 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     Binary ReadBinary(TName name);
 
-    ObjectPtr ReadPtr(TName name);
+    RefId ReadRefId(TName name);
 
     ExtDateTime ReadDateTime(TName name);
 
@@ -178,7 +178,7 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     Binary ReadBinary();
 
-    ObjectPtr ReadPtr();
+    RefId ReadRefId();
 
     ExtDateTime ReadDateTime();
 

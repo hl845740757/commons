@@ -206,8 +206,8 @@ public final class DsonBinaryReader extends AbstractDsonReader {
     }
 
     @Override
-    protected ObjectPtr doReadPtr() {
-        return DsonReaderUtils.readPtr(input, currentWireTypeBits);
+    protected RefId doReadRefId() {
+        return DsonReaderUtils.readRefId(input, currentWireTypeBits);
     }
 
     @Override

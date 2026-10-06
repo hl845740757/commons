@@ -22,15 +22,15 @@ import javax.annotation.concurrent.Immutable;
 import java.util.Objects;
 
 /**
- * 对象指针
+ * 对象指针(id引用)
  *
  * @author wjybxx
  * date - 2023/5/26
  */
 @Immutable
-public final class ObjectPtr {
+public final class RefId {
 
-    public static final ObjectPtr EMPTY = new ObjectPtr(0);
+    public static final RefId EMPTY = new RefId(0);
 
     public static final int MASK_COLLECTION = 1;
     public static final int MASK_LOCAL_PATH = 1 << 1;
@@ -57,11 +57,11 @@ public final class ObjectPtr {
      */
     private final int type;
 
-    public ObjectPtr(int localId) {
+    public RefId(int localId) {
         this(null, null, localId, 0);
     }
 
-    public ObjectPtr(String collection, String localPath, int localId, int type) {
+    public RefId(String collection, String localPath, int localId, int type) {
         // 空字符串转null以兼容default构建的实例
         this.collection = ObjectUtils.emptyToDef(collection, null);
         this.localPath = ObjectUtils.emptyToDef(localPath, null);
@@ -119,11 +119,11 @@ public final class ObjectPtr {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ObjectPtr objectPtr = (ObjectPtr) o;
-        return localId == objectPtr.localId
-                && type == objectPtr.type
-                && Objects.equals(localPath, objectPtr.localPath)
-                && Objects.equals(collection, objectPtr.collection);
+        RefId refId = (RefId) o;
+        return localId == refId.localId
+                && type == refId.type
+                && Objects.equals(localPath, refId.localPath)
+                && Objects.equals(collection, refId.collection);
     }
 
     @Override
@@ -137,7 +137,7 @@ public final class ObjectPtr {
 
     @Override
     public String toString() {
-        return "ObjectPtr{" +
+        return "RefId{" +
                 "localId=" + localId +
                 ", localPath='" + localPath + '\'' +
                 ", collection='" + collection + '\'' +

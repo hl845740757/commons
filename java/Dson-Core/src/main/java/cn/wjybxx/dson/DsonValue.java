@@ -58,8 +58,8 @@ public abstract class DsonValue {
         return ((DsonBinary) this).getValue();
     }
 
-    public ObjectPtr asPointer() {
-        return ((DsonPointer) this).getValue();
+    public RefId asRefId() {
+        return ((DsonRefId) this).getValue();
     }
 
     public ExtDateTime asDateTime() {

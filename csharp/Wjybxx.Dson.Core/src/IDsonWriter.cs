@@ -92,7 +92,7 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteBinary(TName name, byte[] bytes, int offset, int len);
 
-    void WritePtr(TName name, ObjectPtr objectPtr);
+    void WriteRefId(TName name, RefId refId);
 
     void WriteDateTime(TName name, ExtDateTime dateTime);
 
@@ -139,7 +139,7 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteBinary(byte[] bytes, int offset, int len);
 
-    void WritePtr(ObjectPtr objectPtr);
+    void WriteRefId(RefId refId);
 
     void WriteDateTime(ExtDateTime dateTime);
 

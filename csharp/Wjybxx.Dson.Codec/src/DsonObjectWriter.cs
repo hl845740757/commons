@@ -59,16 +59,16 @@ internal class DsonObjectWriter : IDsonObjectWriter
         this._isTextWriter = writer is DsonTextWriter;
     }
 
-    public ObjectPtr AddReference(object reference) {
+    public RefId AddReference(object reference) {
         if (reference == null) {
             throw new ArgumentNullException(nameof(reference));
         }
         if (_referenceTable.TryGetValue(reference, out int localId)) {
-            return new ObjectPtr(localId);
+            return new RefId(localId);
         }
         localId = ++_nextLocalId;
         _referenceTable.Add(reference, localId);
-        return new ObjectPtr(localId);
+        return new RefId(localId);
     }
 
     public void AddReferences(IEnumerable collection) {
@@ -171,8 +171,8 @@ internal class DsonObjectWriter : IDsonObjectWriter
         }
     }
 
-    public void WritePtr(string name, ObjectPtr objectPtr) {
-        _writer.WritePtr(name, objectPtr);
+    public void WriteRefId(string name, RefId refId) {
+        _writer.WriteRefId(name, refId);
     }
 
     public void WriteDateTime(string name, DateTime dateTime) {
@@ -276,8 +276,8 @@ internal class DsonObjectWriter : IDsonObjectWriter
         }
     }
 
-    public void WritePtr(ObjectPtr objectPtr) {
-        _writer.WritePtr(objectPtr);
+    public void WriteRefId(RefId refId) {
+        _writer.WriteRefId(refId);
     }
 
     public void WriteDateTime(DateTime dateTime) {
@@ -375,7 +375,7 @@ internal class DsonObjectWriter : IDsonObjectWriter
             if (_writer.ContextType != DsonContextType.TopLevel
                 && IsSerializeReference(features, encoder)) {
                 // 非顶层对象转为引用写入
-                WritePtr(AddReference(value));
+                WriteRefId(AddReference(value));
             } else if (encoder is DsonCodecImpl<T> castEncoder) {
                 // 避免值类型装箱
                 castEncoder.WriteObject(this, value, declaredType, features);

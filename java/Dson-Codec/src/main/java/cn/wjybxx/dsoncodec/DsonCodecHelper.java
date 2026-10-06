@@ -155,17 +155,17 @@ final class DsonCodecHelper {
         };
     }
 
-    static ObjectPtr readPtr(DsonReader reader, String name) {
+    static RefId readRefId(DsonReader reader, String name) {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
-            case INT32 -> new ObjectPtr(reader.readInt32(name));
-            case INT64 -> new ObjectPtr((int) reader.readInt64(name));
-            case POINTER -> reader.readPtr(name);
+            case INT32 -> new RefId(reader.readInt32(name));
+            case INT64 -> new RefId((int) reader.readInt64(name));
+            case REF_ID -> reader.readRefId(name);
             case NULL -> {
                 reader.readNull(name);
                 yield null;
             }
-            default -> throw DsonCodecException.incompatible(ObjectPtr.class, dsonType);
+            default -> throw DsonCodecException.incompatible(RefId.class, dsonType);
         };
     }
 
@@ -247,7 +247,7 @@ final class DsonCodecHelper {
             case BOOL -> reader.readBool(name);
             case STRING -> reader.readString(name);
             case BINARY -> reader.readBinary(name);
-            case POINTER -> reader.readPtr(name);
+            case REF_ID -> reader.readRefId(name);
             case DATETIME -> reader.readDateTime(name);
             case TIMESTAMP -> reader.readTimestamp(name);
             case DOUBLE4 -> reader.readDouble4(name);

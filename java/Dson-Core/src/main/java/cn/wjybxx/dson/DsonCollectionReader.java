@@ -18,7 +18,6 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.ext.MarkableIterator;
-import cn.wjybxx.dson.ext.SingleValueIterator;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.types.*;
 
@@ -258,8 +257,8 @@ public final class DsonCollectionReader extends AbstractDsonReader {
     }
 
     @Override
-    protected ObjectPtr doReadPtr() {
-        return popNextValue().asPointer();
+    protected RefId doReadRefId() {
+        return popNextValue().asRefId();
     }
 
     @Override

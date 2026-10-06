@@ -239,8 +239,8 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         return DsonReaderUtils.ReadBinary(_input);
     }
 
-    protected override ObjectPtr DoReadPtr() {
-        return DsonReaderUtils.ReadPtr(_input, currentWireTypeBits);
+    protected override RefId DoReadRefId() {
+        return DsonReaderUtils.ReadRefId(_input, currentWireTypeBits);
     }
 
     protected override ExtDateTime DoReadDateTime() {

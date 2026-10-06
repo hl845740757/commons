@@ -349,8 +349,8 @@ internal class PojoCodecGenerator
         // 集合类型不会被直接序列化为引用
         if (probeReference) {
             CheckDeferredField(fieldInfo);
-            codeBuilder.BeginControlFlow("if (reader.TryReadPtr(out int ptr))");
-            codeBuilder.AddStatement("reader.DeferReference(ptr, this, inst, $L)", SerialName(fieldInfo.Name));
+            codeBuilder.BeginControlFlow("if (reader.TryReadRefId(out int refId))");
+            codeBuilder.AddStatement("reader.DeferReference(refId, this, inst, $L)", SerialName(fieldInfo.Name));
             codeBuilder.NextControlFlow("else");
         }
         AddReadObjectValue(codeBuilder, fieldInfo, props,
@@ -459,7 +459,7 @@ internal class PojoCodecGenerator
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_WRITE_STRING;
         if (fieldType.IsByteArray()) return MNAME_WRITE_BYTES;
         if (fieldType.IsSameType(processor.type_Binary)) return MNAME_WRITE_BINARY;
-        if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_WRITE_PTR;
+        if (fieldType.IsSameType(processor.type_RefId)) return MNAME_WRITE_REF_ID;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_WRITE_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_WRITE_TIMESTAMP;
         if (fieldType.IsSameType(processor.type_Double4)) return MNAME_WRITE_DOUBLE4;
@@ -479,7 +479,7 @@ internal class PojoCodecGenerator
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_READ_STRING;
         if (fieldType.IsByteArray()) return MNAME_READ_BYTES;
         if (fieldType.IsSameType(processor.type_Binary)) return MNAME_READ_BINARY;
-        if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_READ_PTR;
+        if (fieldType.IsSameType(processor.type_RefId)) return MNAME_READ_REF_ID;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_READ_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_READ_TIMESTAMP;
         if (fieldType.IsSameType(processor.type_Double4)) return MNAME_READ_DOUBLE4;
@@ -499,7 +499,7 @@ internal class PojoCodecGenerator
     private const string MNAME_READ_LONG4 = "ReadLong4";
     private const string MNAME_READ_FXP64 = "ReadFxp64";
     private const string MNAME_READ_FXP4 = "ReadFxp4";
-    private const string MNAME_READ_PTR = "ReadPtr";
+    private const string MNAME_READ_REF_ID = "ReadRefId";
     private const string MNAME_READ_DATETIME = "ReadDateTime";
     private const string MNAME_READ_TIMESTAMP = "ReadTimestamp";
     private const string MNAME_READ_ENUM = "ReadEnum";
@@ -514,7 +514,7 @@ internal class PojoCodecGenerator
     private const string MNAME_WRITE_LONG4 = "WriteLong4";
     private const string MNAME_WRITE_FXP64 = "WriteFxp64";
     private const string MNAME_WRITE_FXP4 = "WriteFxp4";
-    private const string MNAME_WRITE_PTR = "WritePtr";
+    private const string MNAME_WRITE_REF_ID = "WriteRefId";
     private const string MNAME_WRITE_DATETIME = "WriteDateTime";
     private const string MNAME_WRITE_TIMESTAMP = "WriteTimestamp";
     private const string MNAME_WRITE_ENUM = "WriteEnum";

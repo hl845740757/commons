@@ -69,52 +69,52 @@ public class DsonReaderUtils {
     // endregion
 
     // region 内置结构体
-    public static int wireTypeOfPtr(ObjectPtr objectPtr) {
+    public static int wireTypeOfPtr(RefId refId) {
         int v = 0;
-        if (objectPtr.hasLocalPath()) {
-            v |= ObjectPtr.MASK_LOCAL_PATH;
+        if (refId.hasLocalPath()) {
+            v |= RefId.MASK_LOCAL_PATH;
         }
-        if (objectPtr.hasCollection()) {
-            v |= ObjectPtr.MASK_COLLECTION;
+        if (refId.hasCollection()) {
+            v |= RefId.MASK_COLLECTION;
         }
-        if (objectPtr.getType() != 0) {
-            v |= ObjectPtr.MASK_TYPE;
+        if (refId.getType() != 0) {
+            v |= RefId.MASK_TYPE;
         }
         return v;
     }
 
-    public static void writePtr(DsonOutput output, ObjectPtr objectPtr) {
-        output.writeUInt32(objectPtr.getLocalId());
-        if (objectPtr.hasCollection()) {
-            output.writeString(objectPtr.getCollection());
+    public static void writeRefId(DsonOutput output, RefId refId) {
+        output.writeUInt32(refId.getLocalId());
+        if (refId.hasCollection()) {
+            output.writeString(refId.getCollection());
         }
-        if (objectPtr.hasLocalPath()) {
-            output.writeString(objectPtr.getLocalPath());
+        if (refId.hasLocalPath()) {
+            output.writeString(refId.getLocalPath());
         }
-        if (objectPtr.getType() != 0) {
-            output.writeUInt32(objectPtr.getType());
+        if (refId.getType() != 0) {
+            output.writeUInt32(refId.getType());
         }
     }
 
-    public static ObjectPtr readPtr(DsonInput input, int wireTypeBits) {
+    public static RefId readRefId(DsonInput input, int wireTypeBits) {
         int localId = input.readUInt32();
-        String colletion = (wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0 ? input.readString() : null;
-        String localPath = (wireTypeBits & ObjectPtr.MASK_LOCAL_PATH) != 0 ? input.readString() : null;
-        int type = (wireTypeBits & ObjectPtr.MASK_TYPE) != 0 ? input.readUInt32() : 0;
-        return new ObjectPtr(colletion, localPath, localId, type);
+        String colletion = (wireTypeBits & RefId.MASK_COLLECTION) != 0 ? input.readString() : null;
+        String localPath = (wireTypeBits & RefId.MASK_LOCAL_PATH) != 0 ? input.readString() : null;
+        int type = (wireTypeBits & RefId.MASK_TYPE) != 0 ? input.readUInt32() : 0;
+        return new RefId(colletion, localPath, localId, type);
     }
 
     private static void skipPtr(DsonInput input, int wireTypeBits) {
         input.readUInt32();
-        if ((wireTypeBits & ObjectPtr.MASK_COLLECTION) != 0) {
+        if ((wireTypeBits & RefId.MASK_COLLECTION) != 0) {
             int skip = input.readUInt32(); // collection长度
             input.skipRawBytes(skip);
         }
-        if ((wireTypeBits & ObjectPtr.MASK_LOCAL_PATH) != 0) {
+        if ((wireTypeBits & RefId.MASK_LOCAL_PATH) != 0) {
             int skip = input.readUInt32(); // localPath长度
             input.skipRawBytes(skip);
         }
-        if ((wireTypeBits & ObjectPtr.MASK_TYPE) != 0) {
+        if ((wireTypeBits & RefId.MASK_TYPE) != 0) {
             input.readUInt32();
         }
     }
@@ -325,7 +325,7 @@ public class DsonReaderUtils {
             case BINARY -> {
                 skip = input.readUInt32(); // length(data)
             }
-            case POINTER -> {
+            case REF_ID -> {
                 skipPtr(input, wireTypeBits);
                 return;
             }

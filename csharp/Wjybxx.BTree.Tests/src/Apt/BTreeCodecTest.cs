@@ -43,13 +43,13 @@ public class BTreeCodecTest
 
     private static string dsonString2 = """
                                         {@{clsName: "AlwaysSuccess[string]", localId: 1}
-                                            child: @ptr 2
+                                            child: @ref 2
                                         }
                                         {@{clsName: "SimpleRandom[string]", localId: 2}
                                             p: 0.5
                                         }
                                         {@{clsName: "AlwaysFail[string]", localId: 3}
-                                            child: @ptr 2
+                                            child: @ref 2
                                         }
                                         """;
 

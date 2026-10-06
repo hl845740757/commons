@@ -78,54 +78,54 @@ public static class DsonReaderUtils
     #region 内置结构体
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WireTypeOfPtr(ObjectPtr objectPtr) {
+    public static int WireTypeOfPtr(RefId refId) {
         int v = 0;
-        if (objectPtr.HashLocalPath) {
-            v |= ObjectPtr.MaskLocalPath;
+        if (refId.HashLocalPath) {
+            v |= RefId.MaskLocalPath;
         }
-        if (objectPtr.HasCollection) {
-            v |= ObjectPtr.MaskCollection;
+        if (refId.HasCollection) {
+            v |= RefId.MaskCollection;
         }
-        if (objectPtr.Type != 0) {
-            v |= ObjectPtr.MaskType;
+        if (refId.Type != 0) {
+            v |= RefId.MaskType;
         }
         return v;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WritePtr(IDsonOutput output, ObjectPtr objectPtr) {
-        output.WriteUInt32(objectPtr.LocalId);
-        if (objectPtr.HasCollection) {
-            output.WriteString(objectPtr.Collection);
+    public static void WriteRefId(IDsonOutput output, RefId refId) {
+        output.WriteUInt32(refId.LocalId);
+        if (refId.HasCollection) {
+            output.WriteString(refId.Collection);
         }
-        if (objectPtr.HashLocalPath) {
-            output.WriteString(objectPtr.LocalPath);
+        if (refId.HashLocalPath) {
+            output.WriteString(refId.LocalPath);
         }
-        if (objectPtr.Type != 0) {
-            output.WriteUInt32(objectPtr.Type);
+        if (refId.Type != 0) {
+            output.WriteUInt32(refId.Type);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ObjectPtr ReadPtr(IDsonInput input, int wireTypeBits) {
+    public static RefId ReadRefId(IDsonInput input, int wireTypeBits) {
         int localId = input.ReadUInt32();
-        string collection = (wireTypeBits & ObjectPtr.MaskCollection) != 0 ? input.ReadString() : null;
-        string localPath = (wireTypeBits & ObjectPtr.MaskLocalPath) != 0 ? input.ReadString() : null;
-        int type = (wireTypeBits & ObjectPtr.MaskType) != 0 ? input.ReadUInt32() : 0;
-        return new ObjectPtr(collection, localPath, localId, type);
+        string collection = (wireTypeBits & RefId.MaskCollection) != 0 ? input.ReadString() : null;
+        string localPath = (wireTypeBits & RefId.MaskLocalPath) != 0 ? input.ReadString() : null;
+        int type = (wireTypeBits & RefId.MaskType) != 0 ? input.ReadUInt32() : 0;
+        return new RefId(collection, localPath, localId, type);
     }
 
     private static void SkipPtr(IDsonInput input, int wireTypeBits) {
         input.ReadUInt32();
-        if ((wireTypeBits & ObjectPtr.MaskCollection) != 0) {
+        if ((wireTypeBits & RefId.MaskCollection) != 0) {
             int len = input.ReadUInt32();
             input.SkipRawBytes(len);
         }
-        if ((wireTypeBits & ObjectPtr.MaskLocalPath) != 0) {
+        if ((wireTypeBits & RefId.MaskLocalPath) != 0) {
             int len = input.ReadUInt32();
             input.SkipRawBytes(len);
         }
-        if ((wireTypeBits & ObjectPtr.MaskType) != 0) {
+        if ((wireTypeBits & RefId.MaskType) != 0) {
             input.ReadUInt32();
         }
     }
@@ -329,7 +329,7 @@ public static class DsonReaderUtils
                 skip = input.ReadUInt32(); // length(data)
                 break;
             }
-            case DsonType.Pointer: {
+            case DsonType.RefId: {
                 SkipPtr(input, wireTypeBits); // 避免构建字符串
                 return;
             }

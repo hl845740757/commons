@@ -176,18 +176,18 @@ internal static class DsonCodecHelper
         }
     }
 
-    public static ObjectPtr ReadPtr(IDsonReader<string> reader) {
+    public static RefId ReadRefId(IDsonReader<string> reader) {
         DsonType dsonType = reader.CurrentDsonType;
         switch (dsonType) {
-            case DsonType.Int32: return new ObjectPtr(reader.ReadInt32());
-            case DsonType.Int64: return new ObjectPtr((int)reader.ReadInt64());
-            case DsonType.Pointer: return reader.ReadPtr();
+            case DsonType.Int32: return new RefId(reader.ReadInt32());
+            case DsonType.Int64: return new RefId((int)reader.ReadInt64());
+            case DsonType.RefId: return reader.ReadRefId();
             case DsonType.Null: {
                 reader.ReadNull();
                 return default;
             }
             default:
-                throw DsonCodecException.Incompatible(typeof(ObjectPtr), dsonType);
+                throw DsonCodecException.Incompatible(typeof(RefId), dsonType);
         }
     }
 
@@ -279,7 +279,7 @@ internal static class DsonCodecHelper
             case DsonType.Bool: return reader.ReadBool();
             case DsonType.String: return reader.ReadString();
             case DsonType.Binary: return reader.ReadBinary();
-            case DsonType.Pointer: return reader.ReadPtr();
+            case DsonType.RefId: return reader.ReadRefId();
             case DsonType.DateTime: return reader.ReadDateTime();
             case DsonType.Timestamp: return reader.ReadTimestamp();
             case DsonType.Double4: return reader.ReadDouble4();

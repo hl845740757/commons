@@ -24,7 +24,7 @@ namespace Wjybxx.Commons
 /// <summary>
 /// 资产对象路径(指针)
 ///
-/// 注：该对象是Dson库中的ObjectPtr的替代物，用于避免引入Dson库。
+/// 注：该对象是Dson库中的RefId的替代物，用于避免引入Dson库。
 /// </summary>
 [Serializable]
 [StructLayout(LayoutKind.Explicit)]

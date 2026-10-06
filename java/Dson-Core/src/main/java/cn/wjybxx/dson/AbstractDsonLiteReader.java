@@ -290,9 +290,9 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     }
 
     @Override
-    public ObjectPtr readPtr(int name) {
-        advanceToValueState(name, DsonType.POINTER);
-        ObjectPtr value = doReadPtr();
+    public RefId readRefId(int name) {
+        advanceToValueState(name, DsonType.REF_ID);
+        RefId value = doReadRefId();
         setNextState();
         return value;
     }
@@ -408,9 +408,9 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     }
 
     @Override
-    public ObjectPtr readPtr() {
-        ensureValueState(context, DsonType.POINTER);
-        ObjectPtr value = doReadPtr();
+    public RefId readRefId() {
+        ensureValueState(context, DsonType.REF_ID);
+        RefId value = doReadRefId();
         setNextState();
         return value;
     }
@@ -473,7 +473,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
 
     protected abstract Fxp64 doReadFxp64();
 
-    protected abstract ObjectPtr doReadPtr();
+    protected abstract RefId doReadRefId();
 
     protected abstract ExtDateTime doReadDateTime();
 

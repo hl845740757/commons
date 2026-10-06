@@ -21,7 +21,7 @@ import cn.wjybxx.dson.text.DsonTexts;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import cn.wjybxx.dson.types.Timestamp;
 
 import java.util.*;
@@ -213,7 +213,7 @@ public final class TypeMetaConfig {
         config.add(boolean.class, DsonTexts.LABEL_BOOL, "bool", "boolean");
         config.add(String.class, DsonTexts.LABEL_STRING, "string");
         config.add(Binary.class, DsonTexts.LABEL_BINARY, "bytes");
-        config.add(ObjectPtr.class, DsonTexts.LABEL_PTR, "Pointer");
+        config.add(RefId.class, DsonTexts.LABEL_REF, DsonTexts.LABEL_PTR, "RefId");
         config.add(ExtDateTime.class, DsonTexts.LABEL_DATETIME, "DateTime");
         config.add(Timestamp.class, DsonTexts.LABEL_TIMESTAMP, "Timestamp");
         // 基础类型

@@ -251,8 +251,8 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         return PopNextValue().AsBinary().DeepCopy(); // 需要拷贝
     }
 
-    protected override ObjectPtr DoReadPtr() {
-        return PopNextValue().AsPointer();
+    protected override RefId DoReadRefId() {
+        return PopNextValue().AsRefId();
     }
 
     protected override ExtDateTime DoReadDateTime() {

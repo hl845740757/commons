@@ -1,7 +1,7 @@
 package cn.wjybxx.dson;
 
 import cn.wjybxx.base.CollectionUtils;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,12 +108,12 @@ public class DsonRepository {
         if (dsonValue instanceof AbstractDsonObject<?> dsonObject) { // 支持header...
             for (Map.Entry<?, DsonValue> entry : dsonObject.entrySet()) {
                 DsonValue value = entry.getValue();
-                if (value.getDsonType() == DsonType.POINTER) {
-                    ObjectPtr objectPtr = value.asPointer();
-                    if (objectPtr.isEmpty()) {
+                if (value.getDsonType() == DsonType.REF_ID) {
+                    RefId refId = value.asRefId();
+                    if (refId.isEmpty()) {
                         continue;
                     }
-                    DsonValue targetObj = indexMap.get(objectPtr.getLocalId());
+                    DsonValue targetObj = indexMap.get(refId.getLocalId());
                     if (targetObj != null) {
                         entry.setValue(targetObj);
                     }
@@ -124,12 +124,12 @@ public class DsonRepository {
         } else if (dsonValue instanceof DsonArray<?> dsonArray) {
             for (int i = 0; i < dsonArray.size(); i++) {
                 DsonValue value = dsonArray.get(i);
-                if (value.getDsonType() == DsonType.POINTER) {
-                    ObjectPtr objectPtr = value.asPointer();
-                    if (objectPtr.isEmpty()) {
+                if (value.getDsonType() == DsonType.REF_ID) {
+                    RefId refId = value.asRefId();
+                    if (refId.isEmpty()) {
                         continue;
                     }
-                    DsonValue targetObj = indexMap.get(objectPtr.getLocalId());
+                    DsonValue targetObj = indexMap.get(refId.getLocalId());
                     if (targetObj != null) {
                         dsonArray.set(i, targetObj);
                     }
