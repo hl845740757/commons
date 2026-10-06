@@ -45,19 +45,19 @@ public static class DsonTexts
     public const string LabelBool = "b";
     public const string LabelString = "s";
     public const string LabelNull = "N";
-    public const string LabelFxp64 = "fx";
+    public const string LabelFxp64 = "F";
 
     /** 单行纯文本，字符串不需要加引号，不对内容进行转义 */
     public const string LabelStringLine = "sL";
 
     public const string LabelBinary = "bin";
-    public const string LabelPtr = "ptr";
+    public const string LabelPtr = "ptr"; // ref的别名
     public const string LabelRef = "ref"; // ptr的别名
     public const string LabelDateTime = "dt";
     public const string LabelTimestamp = "ts";
     public const string LabelDouble4 = "D4";
     public const string LabelLong4 = "L4";
-    public const string LabelFxp4 = "FX4";
+    public const string LabelFxp4 = "F4";
 
     public const string LabelBeginObject = "{";
     public const string LabelEndObject = "}";

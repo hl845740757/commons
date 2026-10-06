@@ -162,9 +162,9 @@ internal class DsonObjectReader : IDsonObjectReader
         return DsonCodecHelper.ReadBinary(_reader);
     }
 
-    public ObjectPtr ReadPtr(string name) {
+    public RefId ReadRefId(string name) {
         ReadName(name);
-        return DsonCodecHelper.ReadPtr(_reader);
+        return DsonCodecHelper.ReadRefId(_reader);
     }
 
     public DateTime ReadDateTime(string name) {
@@ -247,8 +247,8 @@ internal class DsonObjectReader : IDsonObjectReader
         return DsonCodecHelper.ReadBinary(_reader);
     }
 
-    public ObjectPtr ReadPtr() {
-        return DsonCodecHelper.ReadPtr(_reader);
+    public RefId ReadRefId() {
+        return DsonCodecHelper.ReadRefId(_reader);
     }
 
     public DateTime ReadDateTime() {
@@ -347,10 +347,10 @@ internal class DsonObjectReader : IDsonObjectReader
                 _reader.ReadNull(name);
                 return default;
             }
-            case DsonType.Pointer: {
+            case DsonType.RefId: {
                 // 可能序列化为引用的字段需要外部显示测试
-                if (declaredType != typeof(ObjectPath) && declaredType != typeof(ObjectPtr)) {
-                    throw DsonCodecException.Incompatible(declaredType, DsonType.Pointer);
+                if (declaredType != typeof(ObjectPath) && declaredType != typeof(RefId)) {
+                    throw DsonCodecException.Incompatible(declaredType, DsonType.RefId);
                 }
                 goto default;
             }
@@ -533,30 +533,30 @@ internal class DsonObjectReader : IDsonObjectReader
         }
     }
 
-    public void PublishReference(int ptr, object target) {
+    public void PublishReference(int refId, object target) {
         if (target == null) throw new ArgumentNullException(nameof(target));
-        if (ptr != 0 && _reader.ContextDepth == 1) {
-            _referenceTable[ptr] = target;
+        if (refId != 0 && _reader.ContextDepth == 1) {
+            _referenceTable[refId] = target;
         }
         // 此时其实可以注入部分引用以避免队列过大，但频繁扫描队列性能也不好（且可能导致频繁的数据拷贝）
     }
 
-    public bool TryReadPtr(out int ptr) {
+    public bool TryReadRefId(out int refId) {
         if (_reader.IsAtType) {
             _reader.ReadDsonType();
         }
-        if (_reader.CurrentDsonType == DsonType.Pointer) {
-            ptr = _reader.ReadPtr().LocalId;
+        if (_reader.CurrentDsonType == DsonType.RefId) {
+            refId = _reader.ReadRefId().LocalId;
             return true;
         }
-        ptr = 0;
+        refId = 0;
         return false;
     }
 
-    public void DeferReference(int ptr, IDsonCodec codec, object inst, string fieldName) {
+    public void DeferReference(int refId, IDsonCodec codec, object inst, string fieldName) {
         if (fieldName == null) throw new ArgumentNullException(nameof(fieldName));
         // 前向引用立即解析，后向引用末尾统一解析
-        if (_referenceTable.TryGetValue(ptr, out object target)) {
+        if (_referenceTable.TryGetValue(refId, out object target)) {
             codec.SetField(inst, fieldName, target);
             return;
         }
@@ -565,13 +565,13 @@ internal class DsonObjectReader : IDsonObjectReader
             codec = codec,
             inst = inst,
             fieldName = fieldName,
-            refId = ptr,
+            refId = refId,
         });
         _reader.UserContextFlags |= MaskHasLazyReference;
     }
 
-    public void DeferReference<T>(int ptr, IDsonCodec codec, List<T> inst, int index) {
-        if (_referenceTable.TryGetValue(ptr, out object target)) {
+    public void DeferReference<T>(int refId, IDsonCodec codec, List<T> inst, int index) {
+        if (_referenceTable.TryGetValue(refId, out object target)) {
             codec.SetField(inst, index, target);
             return;
         }
@@ -580,13 +580,13 @@ internal class DsonObjectReader : IDsonObjectReader
             codec = codec,
             inst = inst,
             index = index,
-            refId = ptr
+            refId = refId
         });
         _reader.UserContextFlags |= MaskHasLazyReference;
     }
 
-    public void DeferReference<K, V>(int ptr, IDsonCodec codec, Dictionary<K, V> inst, List<K> keyArray, int index) {
-        if (_referenceTable.TryGetValue(ptr, out object target)) {
+    public void DeferReference<K, V>(int refId, IDsonCodec codec, Dictionary<K, V> inst, List<K> keyArray, int index) {
+        if (_referenceTable.TryGetValue(refId, out object target)) {
             codec.SetField(inst, keyArray, index, target);
             return;
         }
@@ -596,7 +596,7 @@ internal class DsonObjectReader : IDsonObjectReader
             inst = inst,
             keyArray = keyArray,
             index = index,
-            refId = ptr
+            refId = refId
         });
         _reader.UserContextFlags |= MaskHasLazyReference;
     }

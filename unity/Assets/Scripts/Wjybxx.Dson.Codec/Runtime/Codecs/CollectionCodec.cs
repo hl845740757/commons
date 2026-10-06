@@ -149,9 +149,9 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         int count = reader.ReadStartArray(encoderType, selfFeatures).count;
         List<T> result = new List<T>(count);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            if (reader.TryReadPtr(out int ptr)) {
+            if (reader.TryReadRefId(out int refId)) {
                 result.Add(default); // 预填充默认值 - 由于可能立即执行SetField，所以必须先填充
-                reader.DeferReference(ptr, this, result, result.Count - 1);
+                reader.DeferReference(refId, this, result, result.Count - 1);
             } else {
                 T value = reader.ReadObject<T>(elementFeatures);
                 result.Add(value);

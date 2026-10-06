@@ -13,10 +13,14 @@ public readonly struct Fxp64 : IEquatable<Fxp64>, IComparable<Fxp64>
     public const long Scale = 10_000;
     public static Fxp64 Zero => new Fxp64(0);
     public static Fxp64 One => new Fxp64(Scale);
+    public static Fxp64 MinusOne => new Fxp64(-Scale);
+    public static Fxp64 MinValue => new Fxp64(-long.MaxValue);
+    public static Fxp64 MaxValue => new Fxp64(long.MaxValue);
 
     public readonly long rawValue;
 
     public Fxp64(long rawValue) {
+        if (rawValue == long.MinValue) throw new OverflowException();
         this.rawValue = rawValue;
     }
 
@@ -25,7 +29,7 @@ public readonly struct Fxp64 : IEquatable<Fxp64>, IComparable<Fxp64>
     /// <summary>
     /// 通过整数值构造，超出表示范围时抛出溢出异常。
     /// </summary>
-    public static Fxp64 FromInteger(long value) => new Fxp64(checked(value * Scale));
+    public static Fxp64 FromInt64(long value) => new Fxp64(checked(value * Scale));
 
     /// <summary>
     /// 通过浮点数构造，将超过四位的小数向零截断。
@@ -34,7 +38,6 @@ public readonly struct Fxp64 : IEquatable<Fxp64>, IComparable<Fxp64>
         if (double.IsNaN(value) || double.IsInfinity(value)) {
             throw new OverflowException();
         }
-
         long rawValue = checked((long)(value * Scale));
         return new Fxp64(rawValue);
     }
@@ -43,7 +46,7 @@ public readonly struct Fxp64 : IEquatable<Fxp64>, IComparable<Fxp64>
     /// 转换为整数值（小数部分被丢弃）
     /// </summary>
     /// <returns></returns>
-    public long ToInteger() => rawValue / Scale;
+    public long ToInt64() => rawValue / Scale;
 
     /// <summary>
     /// 转换为Double值
@@ -63,7 +66,15 @@ public readonly struct Fxp64 : IEquatable<Fxp64>, IComparable<Fxp64>
     /// 解析普通十进制文本，小数部分最多四位。
     /// </summary>
     public static Fxp64 Parse(string value) {
-        ReadOnlySpan<char> text = value.AsSpan();
+        return TryParse(value, out Fxp64 r) ? r : throw new FormatException(value);
+    }
+
+    public static bool TryParse(string strValue, out Fxp64 r) {
+        if (string.IsNullOrEmpty(strValue)) {
+            r = default;
+            return false;
+        }
+        ReadOnlySpan<char> text = strValue.AsSpan();
         bool negative = text[0] == '-';
         if (text[0] == '-' || text[0] == '+') {
             text = text.Slice(1);
@@ -71,22 +82,25 @@ public readonly struct Fxp64 : IEquatable<Fxp64>, IComparable<Fxp64>
 
         int index = text.IndexOf('.');
         ReadOnlySpan<char> integerPart = index == -1 ? text : text.Slice(0, index);
-        long p0 = long.Parse(integerPart, NumberStyles.None, CultureInfo.InvariantCulture);
+        if (!long.TryParse(integerPart, out long p0) || p0 > long.MaxValue / Scale) {
+            r = default;
+            return false;
+        }
         long p1 = 0;
         if (index != -1) {
             ReadOnlySpan<char> fractionPart = text.Slice(index + 1);
-            if (fractionPart.Length == 0 || fractionPart.Length > 4) {
-                throw new FormatException(value);
+            if (!long.TryParse(fractionPart, out p1) || (p1 < 0 || p1 > Scale)) {
+                r = default;
+                return false;
             }
-
-            p1 = long.Parse(fractionPart, NumberStyles.None, CultureInfo.InvariantCulture);
             for (int i = fractionPart.Length; i < 4; i++) {
                 p1 *= 10;
             }
         }
 
         long rawValue = checked(p0 * Scale + p1);
-        return new Fxp64(negative ? -rawValue : rawValue);
+        r = new Fxp64(negative ? -rawValue : rawValue);
+        return true;
     }
 
     public override string ToString() {

@@ -506,7 +506,7 @@ public sealed class DsonCodecConfig
         config.AddCodec(new BoolCodec());
         config.AddCodec(new StringCodec());
         config.AddCodec(new BinaryCodec());
-        config.AddCodec(new ObjectPtrCodec());
+        config.AddCodec(new RefIdCodec());
         config.AddCodec(new ExtDateTimeCodec());
         config.AddCodec(new TimestampCodec());
         config.AddCodec(new Double4Codec());

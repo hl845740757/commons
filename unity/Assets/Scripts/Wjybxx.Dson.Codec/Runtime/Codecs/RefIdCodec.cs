@@ -21,14 +21,14 @@ using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
-public class ObjectPtrCodec : IDsonCodec<ObjectPtr>
+public class RefIdCodec : IDsonCodec<RefId>
 {
-    public void WriteObject(IDsonObjectWriter writer, ObjectPtr inst, Type declaredType, SerializeFeatures features) {
-        writer.WritePtr(inst);
+    public void WriteObject(IDsonObjectWriter writer, RefId inst, Type declaredType, SerializeFeatures features) {
+        writer.WriteRefId(inst);
     }
 
-    public ObjectPtr ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
-        return reader.ReadPtr();
+    public RefId ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
+        return reader.ReadRefId();
     }
 }
 }

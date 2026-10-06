@@ -180,7 +180,7 @@ public enum SerializeFeatures : uint
     /// </summary>
     NumberSigned = 0x40 << 20,
     /// <summary>
-    /// int32/int64编码为固定长度16进制
+    /// int32/int64编码为固定长度16/2进制
     /// </summary>
     NumberFixed = 0x80 << 20,
 

@@ -152,12 +152,12 @@ public class DsonRepository
             dsonObject) { // 支持header...
             foreach (KeyValuePair<string, DsonValue> entry in dsonObject) {
                 DsonValue value = entry.Value;
-                if (value.DsonType == DsonType.Pointer) {
-                    ObjectPtr objectPtr = value.AsPointer();
-                    if (objectPtr.IsEmpty) {
+                if (value.DsonType == DsonType.RefId) {
+                    RefId refId = value.AsRefId();
+                    if (refId.IsEmpty) {
                         continue;
                     }
-                    if (_indexMap.TryGetValue(objectPtr.LocalId, out DsonValue targetObj)) {
+                    if (_indexMap.TryGetValue(refId.LocalId, out DsonValue targetObj)) {
                         dsonObject[entry.Key] = targetObj; // 迭代时覆盖值是安全的
                     }
                 } else if (value.DsonType.IsContainer()) {
@@ -167,12 +167,12 @@ public class DsonRepository
         } else if (dsonValue is DsonArray<string> dsonArray) {
             for (int i = 0; i < dsonArray.Count; i++) {
                 DsonValue value = dsonArray[i];
-                if (value.DsonType == DsonType.Pointer) {
-                    ObjectPtr objectPtr = value.AsPointer();
-                    if (objectPtr.IsEmpty) {
+                if (value.DsonType == DsonType.RefId) {
+                    RefId refId = value.AsRefId();
+                    if (refId.IsEmpty) {
                         continue;
                     }
-                    if (_indexMap.TryGetValue(objectPtr.LocalId, out DsonValue targetObj)) {
+                    if (_indexMap.TryGetValue(refId.LocalId, out DsonValue targetObj)) {
                         dsonArray[i] = targetObj;
                     }
                 } else if (value.DsonType.IsContainer()) {

@@ -214,10 +214,10 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>> where K : not
     // 走到该方法时Value通常为引用类型
     private void ReadValueRef(IDsonObjectReader reader, DeserializeFeatures elementFeatures,
                               Dictionary<K, V> result, List<K> keyArray, K key) {
-        if (reader.TryReadPtr(out int ptr)) {
+        if (reader.TryReadRefId(out int refId)) {
             result[key] = default; // 预填充 - 由于可能立即执行SetField，所以必须先填充
             keyArray.Add(key);
-            reader.DeferReference(ptr, this, result, keyArray, keyArray.Count - 1);
+            reader.DeferReference(refId, this, result, keyArray, keyArray.Count - 1);
         } else {
             result[key] = reader.ReadObject<V>(elementFeatures);
         }

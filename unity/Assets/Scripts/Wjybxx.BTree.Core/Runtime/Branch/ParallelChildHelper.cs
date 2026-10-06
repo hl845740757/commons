@@ -46,7 +46,7 @@ public class ParallelChildHelper<T> where T : class
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref TaskInlineHelper<T> Unwrap() => ref _inlineHelper;
+    public ref TaskInlineHelper<T> GetInlineHelper() => ref _inlineHelper;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task<T> GetInlinedChild() {

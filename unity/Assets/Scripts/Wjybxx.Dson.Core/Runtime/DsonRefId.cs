@@ -24,22 +24,22 @@ namespace Wjybxx.Dson
 /// <summary>
 /// Dson对象引用
 /// </summary>
-public class DsonPointer : DsonValue, IEquatable<DsonPointer>
+public class DsonRefId : DsonValue, IEquatable<DsonRefId>
 {
-    public static readonly DsonPointer EMPTY = new DsonPointer(default);
+    public static readonly DsonRefId EMPTY = new DsonRefId(default);
 
-    private readonly ObjectPtr _value;
+    private readonly RefId _value;
 
-    public DsonPointer(ObjectPtr value) {
+    public DsonRefId(RefId value) {
         _value = value;
     }
 
-    public override DsonType DsonType => DsonType.Pointer;
-    public ObjectPtr Value => _value;
+    public override DsonType DsonType => DsonType.RefId;
+    public RefId Value => _value;
 
     #region equals
 
-    public bool Equals(DsonPointer? other) {
+    public bool Equals(DsonRefId? other) {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
         return _value.Equals(other._value);
@@ -49,18 +49,18 @@ public class DsonPointer : DsonValue, IEquatable<DsonPointer>
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != this.GetType()) return false;
-        return Equals((DsonPointer)obj);
+        return Equals((DsonRefId)obj);
     }
 
     public override int GetHashCode() {
         return _value.GetHashCode();
     }
 
-    public static bool operator ==(DsonPointer? left, DsonPointer? right) {
+    public static bool operator ==(DsonRefId? left, DsonRefId? right) {
         return Equals(left, right);
     }
 
-    public static bool operator !=(DsonPointer? left, DsonPointer? right) {
+    public static bool operator !=(DsonRefId? left, DsonRefId? right) {
         return !Equals(left, right);
     }
 

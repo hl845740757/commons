@@ -50,7 +50,7 @@ public interface IDsonObjectReader : IDisposable
 
     Binary? ReadBinary(string name, DeserializeFeatures features = 0);
 
-    ObjectPtr ReadPtr(string name);
+    RefId ReadRefId(string name);
 
     DateTime ReadDateTime(string name);
 
@@ -93,7 +93,7 @@ public interface IDsonObjectReader : IDisposable
     Binary ReadBinary(DeserializeFeatures features = 0);
 
 
-    ObjectPtr ReadPtr();
+    RefId ReadRefId();
 
     DateTime ReadDateTime();
 
@@ -219,18 +219,18 @@ public interface IDsonObjectReader : IDisposable
     /// <summary>
     /// 发布引用
     /// </summary>
-    /// <param name="ptr">引用id</param>
+    /// <param name="refId">引用id</param>
     /// <param name="target">对象</param>
-    void PublishReference(int ptr, object target);
+    void PublishReference(int refId, object target);
 
     /// <summary>
     /// 尝试读取引用Id
     /// 
     /// 注：用于判断目标对象时是否被序列化为共享引用。
     /// </summary>
-    /// <param name="ptr">接收引用Id</param>
+    /// <param name="refId">接收引用Id</param>
     /// <returns></returns>
-    bool TryReadPtr(out int ptr);
+    bool TryReadRefId(out int refId);
 
     /// <summary>
     /// 延迟解析引用
@@ -239,15 +239,15 @@ public interface IDsonObjectReader : IDisposable
     /// 2.字段名指的是序列化name，而非真实名（反射名）。
     /// 3.如果目标引用已存在，可能立即注入。
     /// </summary>
-    /// <param name="ptr">目标指针</param>
+    /// <param name="refId">目标引用</param>
     /// <param name="codec">注入回调</param>
     /// <param name="inst">目标实例</param>
     /// <param name="fieldName">目标字段</param>
-    void DeferReference(int ptr, IDsonCodec codec, object inst, string fieldName);
+    void DeferReference(int refId, IDsonCodec codec, object inst, string fieldName);
 
-    void DeferReference<T>(int ptr, IDsonCodec codec, List<T> inst, int index);
+    void DeferReference<T>(int refId, IDsonCodec codec, List<T> inst, int index);
 
-    void DeferReference<K, V>(int ptr, IDsonCodec codec, Dictionary<K, V> inst, List<K> keyArray, int index);
+    void DeferReference<K, V>(int refId, IDsonCodec codec, Dictionary<K, V> inst, List<K> keyArray, int index);
 
     /// <summary>
     /// 延迟转换为目标类型（延迟到fieldValue引用解析完后执行）

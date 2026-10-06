@@ -437,9 +437,9 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 PushNextValue(UnionValue.OfBinary(binary));
                 break;
             }
-            case DsonType.Pointer: {
+            case DsonType.RefId: {
                 int localId = DsonTexts.ParseInt32(unquotedString);
-                PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
+                PushNextValue(UnionValue.OfRefId(new RefId(localId)));
                 break;
             }
             case DsonType.DateTime: {
@@ -466,12 +466,12 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // 2.object和array的className会在beginObject和beginArray的时候转换为结构体 @{}
         // 因此这里只能出现内置结构体的简写形式
         string clsName = valueToken.StringValue();
-        if (DsonTexts.LabelPtr == clsName || DsonTexts.LabelRef == clsName) { // @ptr localId
+        if (DsonTexts.LabelPtr == clsName || DsonTexts.LabelRef == clsName) { // @ref localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context.contextType, nextToken);
             int localId = DsonTexts.ParseInt32(nextToken.StringValue());
-            PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
-            return DsonType.Pointer;
+            PushNextValue(UnionValue.OfRefId(new RefId(localId)));
+            return DsonType.RefId;
         }
         if (DsonTexts.LabelDateTime == clsName) { // @dt uuuu-MM-dd'T'HH:mm:ss
             DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUtilComma());
@@ -507,8 +507,8 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         switch (clsName) {
             case DsonTexts.LabelPtr:
             case DsonTexts.LabelRef: {
-                PushNextValue(UnionValue.OfObjectPtr(ScanPtr(context)));
-                return DsonType.Pointer;
+                PushNextValue(UnionValue.OfRefId(ScanPtr(context)));
+                return DsonType.RefId;
             }
             case DsonTexts.LabelDateTime: {
                 PushNextValue(UnionValue.OfDateTime(ScanDateTime(context)));
@@ -607,7 +607,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         return false;
     }
 
-    private ObjectPtr ScanPtr(Context context) {
+    private RefId ScanPtr(Context context) {
         DsonContextType contextType = context.contextType;
         string collection = null;
         string localPath = null;
@@ -623,33 +623,33 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             // 根据name校验
             DsonToken valueToken = PopToken();
             switch (keyToken.StringValue()) {
-                case ObjectPtr.NamesCollection: {
+                case RefId.NamesCollection: {
                     EnsureStringsToken(contextType, valueToken);
                     collection = valueToken.StringValue();
                     break;
                 }
-                case ObjectPtr.NamesLocalPath: {
+                case RefId.NamesLocalPath: {
                     EnsureStringsToken(contextType, valueToken);
                     localPath = valueToken.StringValue();
                     break;
                 }
-                case ObjectPtr.NamesLocalId: {
+                case RefId.NamesLocalId: {
                     VerifyTokenType(contextType, valueToken, DsonTokenType.UnquoteString);
                     localId = DsonTexts.ParseInt32(valueToken.StringValue());
                     break;
                 }
-                case ObjectPtr.NamesType: {
+                case RefId.NamesType: {
                     VerifyTokenType(contextType, valueToken, DsonTokenType.UnquoteString);
                     type = DsonTexts.ParseInt32(valueToken.StringValue());
                     break;
                 }
                 default: {
-                    throw new DsonIOException("invalid ptr fieldName: " + keyToken.StringValue());
+                    throw new DsonIOException("invalid ref fieldName: " + keyToken.StringValue());
                 }
             }
             CheckSeparator(contextType);
         }
-        return new ObjectPtr(collection, localPath, localId, type);
+        return new RefId(collection, localPath, localId, type);
     }
 
     private Timestamp ScanTimestamp(Context context) {
@@ -1001,12 +1001,12 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         return (Binary)value.objValue1;
     }
 
-    protected override ObjectPtr DoReadPtr() {
+    protected override RefId DoReadRefId() {
         UnionValue value = PopNextValue();
-        if (value.type != DsonType.Pointer) {
+        if (value.type != DsonType.RefId) {
             throw new InvalidOperationException();
         }
-        return value.ObjectPtr;
+        return value.RefId;
     }
 
     protected override ExtDateTime DoReadDateTime() {

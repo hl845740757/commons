@@ -41,7 +41,6 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonPointer.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonReaderState.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\AbstractDsonReader.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonTokenType.cs" />
@@ -51,8 +50,10 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\ExtInt32.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonContextType.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonTexts.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonFxp64.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonRepository.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Double4.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Fxp4.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Timestamp.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\IO\DsonIOException.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonPrinter.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\ExtInt64.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonTextReader.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonNull.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonFxp4.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\AbstractCharStream.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonToken.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Ext\Projection.cs" />
@@ -78,12 +80,13 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\LineHead.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonHeader.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Float4.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Fxp64.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonBinary.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\ObjectPtr.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonBinaryWriter.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\NumberStyles.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\IO\IDsonInput.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\StyleOut.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonLong4.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonObject.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonTextWriter.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Long4.cs" />
@@ -126,11 +129,8 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonString.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonNumber.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\UnionValue.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Fxp64.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonFxp4.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonFxp64.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Fxp4.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonLong4.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonRefId.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\RefId.cs" />
     <None Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Wjybxx.Dson.Core.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>

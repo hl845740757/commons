@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Wjybxx.Commons
 {
@@ -28,8 +29,20 @@ public static class MathCommon
 {
     /// <summary>
     /// 解决dotnet5缺少全局共享变量的问题
+    /// (C#的Random默认不是线程安全的...)
     /// </summary>
+    [Obsolete("use CurrentRandom instead")]
     public static readonly Random SharedRandom = new Random();
+    /// <summary>
+    /// 解决dotnet5缺少全局共享变量的问题
+    /// (C#的Random默认不是线程安全的...)
+    /// </summary>
+    private static readonly ThreadLocal<Random> _localRandom = new ThreadLocal<Random>(() => new Random());
+    /// <summary>
+    /// 获取当前线程的Random
+    /// (避免发布到其它线程)
+    /// </summary>
+    public static Random CurrentRandom => _localRandom.Value;
 
     /** 测试给定的参数是否是【偶数】 */
     public static bool IsEven(int x) {

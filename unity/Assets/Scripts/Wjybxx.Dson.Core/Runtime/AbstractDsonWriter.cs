@@ -204,9 +204,9 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WritePtr(TName name, ObjectPtr objectPtr) {
+    public void WriteRefId(TName name, RefId refId) {
         AdvanceToValueState(name);
-        DoWritePtr(objectPtr);
+        DoWriteRefId(refId);
         SetNextState();
     }
 
@@ -307,9 +307,9 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WritePtr(ObjectPtr objectPtr) {
+    public void WriteRefId(RefId refId) {
         EnsureValueState(context);
-        DoWritePtr(objectPtr);
+        DoWriteRefId(refId);
         SetNextState();
     }
 
@@ -365,7 +365,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     protected abstract void DoWriteBinary(byte[] bytes, int offset, int len);
 
-    protected abstract void DoWritePtr(ObjectPtr objectPtr);
+    protected abstract void DoWriteRefId(RefId refId);
 
     protected abstract void DoWriteDateTime(ExtDateTime dateTime);
 

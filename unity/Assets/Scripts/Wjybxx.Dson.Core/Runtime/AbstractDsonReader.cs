@@ -275,9 +275,9 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
-    public ObjectPtr ReadPtr(TName name) {
-        AdvanceToValueState(name, DsonType.Pointer);
-        ObjectPtr value = DoReadPtr();
+    public RefId ReadRefId(TName name) {
+        AdvanceToValueState(name, DsonType.RefId);
+        RefId value = DoReadRefId();
         SetNextState();
         return value;
     }
@@ -381,9 +381,9 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return value;
     }
 
-    public ObjectPtr ReadPtr() {
-        EnsureValueState(context, DsonType.Pointer);
-        ObjectPtr value = DoReadPtr();
+    public RefId ReadRefId() {
+        EnsureValueState(context, DsonType.RefId);
+        RefId value = DoReadRefId();
         SetNextState();
         return value;
     }
@@ -443,7 +443,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     protected abstract Binary DoReadBinary();
 
-    protected abstract ObjectPtr DoReadPtr();
+    protected abstract RefId DoReadRefId();
 
     protected abstract ExtDateTime DoReadDateTime();
 

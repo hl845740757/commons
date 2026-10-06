@@ -55,7 +55,7 @@ public abstract class DsonValue
     public Binary AsBinary() => ((DsonBinary)this).Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ObjectPtr AsPointer() => ((DsonPointer)this).Value;
+    public RefId AsRefId() => ((DsonRefId)this).Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ExtDateTime AsDateTime() => ((DsonDateTime)this).Value;
