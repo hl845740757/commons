@@ -58,7 +58,7 @@ public interface IDsonObjectWriter : IDisposable
     void WriteBinary(string name, Binary? binary, SerializeFeatures features = 0);
 
     // 内建结构体
-    void WritePtr(string name, ObjectPtr objectPtr);
+    void WriteRefId(string name, RefId refId);
 
     void WriteDateTime(string name, DateTime dateTime);
 
@@ -107,7 +107,7 @@ public interface IDsonObjectWriter : IDisposable
 
 
     // 内建结构体
-    void WritePtr(ObjectPtr objectPtr);
+    void WriteRefId(RefId refId);
 
     void WriteDateTime(DateTime dateTime);
 
@@ -217,7 +217,7 @@ public interface IDsonObjectWriter : IDisposable
     /// 查询可用于内联编码的Codec（用于集合加速）
     /// </summary>
     DsonCodecImpl<T>? GetInlinableCodec<T>();
-    
+
     /// <summary>
     /// 写入已编码的二进制数据
     /// </summary>

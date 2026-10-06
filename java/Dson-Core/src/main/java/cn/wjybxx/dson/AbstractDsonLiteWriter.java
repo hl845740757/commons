@@ -199,10 +199,10 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
     }
 
     @Override
-    public void writePtr(int name, ObjectPtr objectPtr) {
-        Objects.requireNonNull(objectPtr);
+    public void writeRefId(int name, RefId refId) {
+        Objects.requireNonNull(refId);
         advanceToValueState(name);
-        doWritePtr(objectPtr);
+        doWriteRefId(refId);
         setNextState();
     }
 
@@ -320,10 +320,10 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
     }
 
     @Override
-    public void writePtr(ObjectPtr objectPtr) {
-        Objects.requireNonNull(objectPtr);
+    public void writeRefId(RefId refId) {
+        Objects.requireNonNull(refId);
         ensureValueState(context);
-        doWritePtr(objectPtr);
+        doWriteRefId(refId);
         setNextState();
     }
 
@@ -386,7 +386,7 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
 
     protected abstract void doWriteFxp64(Fxp64 value);
 
-    protected abstract void doWritePtr(ObjectPtr objectPtr);
+    protected abstract void doWriteRefId(RefId refId);
 
     protected abstract void doWriteDateTime(ExtDateTime dateTime);
 

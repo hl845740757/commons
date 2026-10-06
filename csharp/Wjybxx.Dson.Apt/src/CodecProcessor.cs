@@ -50,7 +50,7 @@ public class CodecProcessor : ISourceGenerator
     #region consts
 
     private const string CNAME_Binary = "Wjybxx.Dson.Types.Binary";
-    private const string CNAME_ObjectPtr = "Wjybxx.Dson.Types.ObjectPtr";
+    private const string CNAME_RefId = "Wjybxx.Dson.Types.RefId";
     private const string CNAME_Timestamp = "Wjybxx.Dson.Types.Timestamp";
     private const string CNAME_Double4 = "Wjybxx.Dson.Types.Double4";
     private const string CNAME_Long4 = "Wjybxx.Dson.Types.Long4";
@@ -125,7 +125,7 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_String;
     internal INamedTypeSymbol type_Object;
     internal INamedTypeSymbol type_Binary;
-    internal INamedTypeSymbol type_Ptr;
+    internal INamedTypeSymbol type_RefId;
     internal INamedTypeSymbol type_LocalDateTime;
     internal INamedTypeSymbol type_Timestamp;
     internal INamedTypeSymbol type_Double4;
@@ -188,7 +188,7 @@ public class CodecProcessor : ISourceGenerator
         type_Object = compilation.GetSpecialType(SpecialType.System_Object);
         type_LocalDateTime = compilation.GetSpecialType(SpecialType.System_DateTime);
         type_Binary = compilation.GetTypeByMetadataName(CNAME_Binary);
-        type_Ptr = compilation.GetTypeByMetadataName(CNAME_ObjectPtr);
+        type_RefId = compilation.GetTypeByMetadataName(CNAME_RefId);
         type_Timestamp = compilation.GetTypeByMetadataName(CNAME_Timestamp);
         type_Double4 = compilation.GetTypeByMetadataName(CNAME_Double4);
         type_Long4 = compilation.GetTypeByMetadataName(CNAME_Long4);

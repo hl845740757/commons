@@ -41,9 +41,9 @@ public enum DsonType : sbyte
     Fxp64 = 9,
 
     /// <summary>
-    /// 对象指针
+    /// ID引用
     /// </summary>
-    Pointer = 11,
+    RefId = 11,
     /// <summary>
     /// 日期时间
     /// </summary>

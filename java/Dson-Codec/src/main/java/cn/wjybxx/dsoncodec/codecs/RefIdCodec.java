@@ -18,7 +18,7 @@ package cn.wjybxx.dsoncodec.codecs;
 
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
@@ -32,12 +32,12 @@ import java.util.function.Supplier;
  * date - 2024/1/7
  */
 @DsonCodecScanIgnore
-public class ObjectPtrCodec implements DsonCodec<ObjectPtr> {
+public class RefIdCodec implements DsonCodec<RefId> {
 
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
-        return TypeInfo.of(ObjectPtr.class);
+        return TypeInfo.of(RefId.class);
     }
 
     @Override
@@ -46,12 +46,12 @@ public class ObjectPtrCodec implements DsonCodec<ObjectPtr> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ObjectPtr inst, TypeInfo declaredType, ObjectStyle style) {
-        writer.writePtr(null, inst);
+    public void writeObject(DsonObjectWriter writer, RefId inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeRefId(null, inst);
     }
 
     @Override
-    public ObjectPtr readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends ObjectPtr> factory) {
-        return reader.readPtr(null);
+    public RefId readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends RefId> factory) {
+        return reader.readRefId(null);
     }
 }

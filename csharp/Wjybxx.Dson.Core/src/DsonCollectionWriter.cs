@@ -119,8 +119,8 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
         GetContext().Add(new DsonBinary(Binary.CopyFrom(bytes, offset, len)));
     }
 
-    protected override void DoWritePtr(ObjectPtr objectPtr) {
-        GetContext().Add(new DsonPointer(objectPtr));
+    protected override void DoWriteRefId(RefId refId) {
+        GetContext().Add(new DsonRefId(refId));
     }
 
     protected override void DoWriteDateTime(ExtDateTime dateTime) {

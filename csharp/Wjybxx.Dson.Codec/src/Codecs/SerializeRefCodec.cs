@@ -17,8 +17,8 @@ public class SerializeRefCodec<T> : IDsonCodec<SerializeRef<T>> where T : class
 
     public SerializeRef<T> ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
         var box = new SerializeRef<T>();
-        if (reader.TryReadPtr(out int ptr)) {
-            reader.DeferReference(ptr, this, box, "Value");
+        if (reader.TryReadRefId(out int refId)) {
+            reader.DeferReference(refId, this, box, "Value");
         } else {
             box.Value = reader.ReadObject<T>();
         }

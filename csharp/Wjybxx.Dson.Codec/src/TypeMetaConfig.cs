@@ -189,7 +189,7 @@ public sealed class TypeMetaConfig
         config.Add(typeof(bool), DsonTexts.LabelBool, "bool", "boolean");
         config.Add(typeof(string), DsonTexts.LabelString, "string");
         config.Add(typeof(Binary), DsonTexts.LabelBinary, "bytes");
-        config.Add(typeof(ObjectPtr), DsonTexts.LabelPtr, DsonTexts.LabelRef, "Pointer");
+        config.Add(typeof(RefId), DsonTexts.LabelRef, DsonTexts.LabelPtr, "RefId");
         config.Add(typeof(ExtDateTime), DsonTexts.LabelDateTime, "DateTime");
         config.Add(typeof(Timestamp), DsonTexts.LabelTimestamp, "Timestamp");
         config.Add(typeof(Double4), DsonTexts.LabelDouble4, "Double4");

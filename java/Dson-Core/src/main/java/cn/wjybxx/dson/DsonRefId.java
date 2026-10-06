@@ -16,7 +16,7 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -25,23 +25,23 @@ import java.util.Objects;
  * @author wjybxx
  * date - 2023/5/27
  */
-public final class DsonPointer extends DsonValue {
+public final class DsonRefId extends DsonValue {
 
-    public static final DsonPointer EMPTY = new DsonPointer(ObjectPtr.EMPTY);
+    public static final DsonRefId EMPTY = new DsonRefId(RefId.EMPTY);
 
-    private final ObjectPtr value;
+    private final RefId value;
 
-    public DsonPointer(ObjectPtr value) {
+    public DsonRefId(RefId value) {
         this.value = Objects.requireNonNull(value);
     }
 
     @Nonnull
     @Override
     public DsonType getDsonType() {
-        return DsonType.POINTER;
+        return DsonType.REF_ID;
     }
 
-    public ObjectPtr getValue() {
+    public RefId getValue() {
         return value;
     }
 
@@ -52,7 +52,7 @@ public final class DsonPointer extends DsonValue {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        DsonPointer that = (DsonPointer) o;
+        DsonRefId that = (DsonRefId) o;
 
         return value.equals(that.value);
     }
@@ -66,7 +66,7 @@ public final class DsonPointer extends DsonValue {
 
     @Override
     public String toString() {
-        return "DsonPointer{" +
+        return "DsonRefId{" +
                 "value=" + value +
                 '}';
     }

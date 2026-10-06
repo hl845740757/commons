@@ -24,7 +24,7 @@ import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nullable;
@@ -126,11 +126,11 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writePtr(String name, ObjectPtr objectPtr) {
-        if (objectPtr == null) {
+    public void writeRefId(String name, RefId refId) {
+        if (refId == null) {
             writeNull(name);
         } else {
-            writer.writePtr(name, objectPtr);
+            writer.writeRefId(name, refId);
         }
     }
 

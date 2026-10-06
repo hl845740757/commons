@@ -19,7 +19,7 @@ package cn.wjybxx.dsoncodec.codecs;
 import cn.wjybxx.base.ObjectPath;
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
@@ -46,13 +46,13 @@ public class ObjectPathCodec implements DsonCodec<ObjectPath> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, ObjectPath inst, TypeInfo declaredType, ObjectStyle style) {
-        ObjectPtr ptr = new ObjectPtr(inst.collection, inst.localPath, inst.localId, inst.type);
-        writer.writePtr(null, ptr);
+        RefId refId = new RefId(inst.collection, inst.localPath, inst.localId, inst.type);
+        writer.writeRefId(null, refId);
     }
 
     @Override
     public ObjectPath readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends ObjectPath> factory) {
-        ObjectPtr ptr = reader.readPtr(null);
-        return ptr == null ? null : new ObjectPath(ptr.getCollection(), ptr.getLocalPath(), ptr.getLocalId(), ptr.getType());
+        RefId refId = reader.readRefId(null);
+        return refId == null ? null : new ObjectPath(refId.getCollection(), refId.getLocalPath(), refId.getLocalId(), refId.getType());
     }
 }

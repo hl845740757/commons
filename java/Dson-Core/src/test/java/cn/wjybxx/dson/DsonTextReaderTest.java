@@ -41,17 +41,17 @@ public class DsonTextReaderTest {
               age: 28,
               介绍: "这是一段中文而且非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常长",
               intro: "hello world",
-              ptr1: @ptr 10001,
-              ptr2: {@ptr coll: 16148b3b4e7b8923d398, localId: 10001},
+              ptr1: @ref 10001,
+              ptr2: {@ref coll: 16148b3b4e7b8923d398, localId: 10001},
               bin: @bin "35DF2E75E6A4BE9E6F4571C64CB6D08B0D6BC46C1754F6E9EB4A6E57E2FD53",
               bin2: @bin ""
             },
             {@{MyStruct}
               name: wjybxx,
               intro: "hello world",
-              ptr1: @ptr 10001,
-              ptr2: {@ptr coll: 16148b3b4e7b8923d398, localId: 10001},
-              ptr: @ptr 0,
+              ptr1: @ref 10001,
+              ptr2: {@ref coll: 16148b3b4e7b8923d398, localId: 10001},
+              ptr: @ref 0,
               intDecimal: @i 10001,
               intHex: @i 0xFF,
               intBinary: @i 0b10010001,
@@ -59,7 +59,7 @@ public class DsonTextReaderTest {
               intFlags: @i "0x01 | 0x02 | 0x10 | 0x20",
               longValue: @L 987654321,
               floatValue: @f 1.05,
-              fx4Value: @fx -0.5,
+              fx4Value: @F -0.5,
               boolTrue: @b true,
               boolNumeric: @b 1,
               nullValue: @N null,
@@ -69,8 +69,8 @@ public class DsonTextReaderTest {
               dateTimeObject: {@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100},
               dq1: {@D4 x: 1, y: 1, z: 1, w: 0},
               dq2: {@D4 x: 1, y: 1, z: 1, w: 1},
-              fv1: {@FX4 x: 1.2345, y: -1.2345, z: 0.0001, w: 0},
-              fv2: {@FX4 x: 1.2345, y: -1.2345, z: 0.0001, w: 0}
+              fv1: {@F4 x: 1.2345, y: -1.2345, z: 0.0001, w: 0},
+              fv2: {@F4 x: 1.2345, y: -1.2345, z: 0.0001, w: 0}
             },
             [@{localId: 10001}
               @bin "FFFA",

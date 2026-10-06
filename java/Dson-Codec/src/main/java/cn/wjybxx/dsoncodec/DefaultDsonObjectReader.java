@@ -23,7 +23,7 @@ import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.text.DsonTexts;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nonnull;
@@ -91,8 +91,8 @@ final class DefaultDsonObjectReader implements DsonObjectReader {
     }
 
     @Override
-    public ObjectPtr readPtr(String name) {
-        return readName(name) ? DsonCodecHelper.readPtr(reader, name) : null;
+    public RefId readRefId(String name) {
+        return readName(name) ? DsonCodecHelper.readRefId(reader, name) : null;
     }
 
     @Override

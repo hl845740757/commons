@@ -22,7 +22,7 @@ import cn.wjybxx.dson.DsonContextType;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dson.types.ExtDateTime;
-import cn.wjybxx.dson.types.ObjectPtr;
+import cn.wjybxx.dson.types.RefId;
 import cn.wjybxx.dson.types.Timestamp;
 
 import javax.annotation.Nullable;
@@ -62,7 +62,7 @@ public interface DsonObjectReader extends AutoCloseable {
 
     Binary readBinary(String name);
 
-    ObjectPtr readPtr(String name);
+    RefId readRefId(String name);
 
     LocalDateTime readDateTime(String name);
 

@@ -128,7 +128,7 @@ public interface DsonReader extends AutoCloseable {
 
     Fxp64 readFxp64(String name);
 
-    ObjectPtr readPtr(String name);
+    RefId readRefId(String name);
 
     ExtDateTime readDateTime(String name);
 
@@ -162,7 +162,7 @@ public interface DsonReader extends AutoCloseable {
 
     Fxp64 readFxp64();
 
-    ObjectPtr readPtr();
+    RefId readRefId();
 
     ExtDateTime readDateTime();
 

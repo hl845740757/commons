@@ -169,10 +169,10 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWritePtr(ObjectPtr objectPtr) {
+    protected void doWriteRefId(RefId refId) {
         DsonOutput output = this.output;
-        writeFullTypeAndCurrentName(output, DsonType.POINTER, DsonReaderUtils.wireTypeOfPtr(objectPtr));
-        DsonReaderUtils.writePtr(output, objectPtr);
+        writeFullTypeAndCurrentName(output, DsonType.REF_ID, DsonReaderUtils.wireTypeOfPtr(refId));
+        DsonReaderUtils.writeRefId(output, refId);
     }
 
     @Override

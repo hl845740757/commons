@@ -90,11 +90,11 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     ///
     /// <h3>普通字段</h3>
     /// 如果普通字段声明了<see cref="SerializeReference"/>注解，
-    /// 解码时应当先调用<see cref="IDsonObjectReader.TryReadPtr"/>方法判断目标是否被编码为引用Id；
+    /// 解码时应当先调用<see cref="IDsonObjectReader.TryReadRefId"/>方法判断目标是否被编码为引用Id；
     /// 如果字段被编码为引用Id，则调用<see cref="IDsonObjectReader.DeferReference"/>方法延迟注入引用。
     /// <![CDATA[
-    ///     if (reader.TryReadPtr(out int ptr)) {
-    ///         reader.DeferReference(ptr, this, inst, "child"); // 字段名为dson序列化名
+    ///     if (reader.TryReadRefId(out int refId)) {
+    ///         reader.DeferReference(refId, this, inst, "child"); // 字段名为dson序列化名
     ///     } else {
     ///         inst.child = reader.ReadObject<ChildType>();
     ///     }

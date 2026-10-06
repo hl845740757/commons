@@ -25,13 +25,13 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class ObjectPathCodec : IDsonCodec<ObjectPath>
 {
     public void WriteObject(IDsonObjectWriter writer, ObjectPath inst, Type declaredType, SerializeFeatures features) {
-        ObjectPtr obj = new ObjectPtr(inst.collection, inst.localPath, inst.localId, inst.type);
-        writer.WritePtr(obj);
+        RefId refId = new RefId(inst.collection, inst.localPath, inst.localId, inst.type);
+        writer.WriteRefId(refId);
     }
 
     public ObjectPath ReadObject(IDsonObjectReader reader, Type declaredType, DeserializeFeatures features) {
-        ObjectPtr objectPtr = reader.ReadPtr();
-        return new ObjectPath(objectPtr.Collection, objectPtr.LocalPath, objectPtr.LocalId, objectPtr.Type);
+        RefId refId = reader.ReadRefId();
+        return new ObjectPath(refId.Collection, refId.LocalPath, refId.LocalId, refId.Type);
     }
 }
 }

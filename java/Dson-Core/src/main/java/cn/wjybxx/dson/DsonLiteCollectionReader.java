@@ -233,8 +233,8 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
     }
 
     @Override
-    protected ObjectPtr doReadPtr() {
-        return popNextValue().asPointer();
+    protected RefId doReadRefId() {
+        return popNextValue().asRefId();
     }
 
     @Override

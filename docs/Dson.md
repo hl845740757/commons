@@ -65,26 +65,26 @@ ps: 当@作用于普通值类型和内置简单结构体时，我们称`@`声明
 
 Dson支持的值类型和内置结构体包括：
 
-| 标签  | 类型        | 枚举 | 含义         | 内置结构体                                                                                  | 格式或示例                                                                                                             |
-|-----|-----------|----|------------|----------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| i   | int32     | 1  | 32位整型      |                                                                                        | @i 123 <br> @i  0xFF                                                                                              |
-| L   | int64     | 2  | 64位长整型，大写L |                                                                                        | @L 123 <br> @L 0xFF                                                                                               |
-| f   | float     | 3  | 32位浮点数     |                                                                                        | @f 1.0                                                                                                            |
-| d   | double    | 4  | 64位浮点数     |                                                                                        | @d 1.5  <br> 1.5                                                                                                  |
-| b   | bool      | 5  | bool值      |                                                                                        | @b true <br> true <br/> @b 1                                                                                      |
-| s   | string    | 6  | 字符串        |                                                                                        | "10"   <br>  abc                                                                                                  |
-| N   | null      | 7  | null，大写N   |                                                                                        | @N null <br> null                                                                                                 |
-| bin | binary    | 8  | 二进制        |                                                                                        | 十六进制编码<br>@bin "cafebabe" <br> @bin ""                                                                                |
-| fx  | Fxp64     | 9  | 64位定点数（万分比） |                                                                                        | @fx 12.3456                                                                                                       |
-| ptr | pointer   | 11 | 指针         | {<br> string collection;<br> long localId;<br> string localPath;<br> int32 type;<br> } | 单值或object结构<br/> @ptr 10001 <br> {@ptr localId: 10001, coll : global, type: 1 }                                   |
-| dt  | datetime  | 13 | 日期时间       | { <br>  int64 seconds; <br> int32 nanos;<br> int32 offset;<br> int32 enables; <br> }   | 单值或object结构<br/> @dt 2023-06-17T18:37:00 <br/>{@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100} |
-| ts  | timestamp | 14 | 时间戳        | { <br>  int64 seconds; <br> int32 nanos;<br> }                                         | 单值或object结构<br/> @ts 1715659200 <br/>{@ts seconds: 1715659200, nanos: 100}                                        |
-| D4  | Double4   | 15 | 4元双精度浮点数 | { <br> double v0;<br> double v1;<br> double v2; <br> double v3;<br> }                  | object结构<br/> {@D4 x: 1, y: 2, z: 1, w: 0}                                                                     |
-| L4  | Long4     | 16 | 4元64位整型    | { <br> long v0;<br> long v1;<br> long v2; <br> long v3;<br> }                          | object结构<br/> {@L4 x: 1, y: 2, z: 1, w: 0}                                                                      |
-| FX4 | Fxp4      | 17 | 4元定点数      | { <br> Fxp64 v0;<br> Fxp64 v1;<br> Fxp64 v2; <br> Fxp64 v3;<br> }                      | object结构<br/> {@FX4 x: 1.25, y: 2, z: 1, w: 0}                                                                 |
-|     | header    | 29 | 对象头        |                                                                                        | 对象形式： @{clsName: Vector3 } <br/> 简写形式： @{Vector3}                                                                 |
-|     | array     | 30 | 数组         |                                                                                        | \[ 1, 2, 3, 4, 5 ]                                                                                                |
-|     | object    | 31 | 对象/结构体     |                                                                                        | { name: wjybxx, age: 28 }                                                                                         |
+| 标签  | 类型        | 枚举 | 含义          | 内置结构体                                                                                  | 格式或示例                                                                                                             |
+|-----|-----------|----|-------------|----------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| i   | int32     | 1  | 32位整型       |                                                                                        | @i 123 <br> @i  0xFF                                                                                              |
+| L   | int64     | 2  | 64位长整型，大写L  |                                                                                        | @L 123 <br> @L 0xFF                                                                                               |
+| f   | float     | 3  | 32位浮点数      |                                                                                        | @f 1.0                                                                                                            |
+| d   | double    | 4  | 64位浮点数      |                                                                                        | @d 1.5  <br> 1.5                                                                                                  |
+| b   | bool      | 5  | bool值       |                                                                                        | @b true <br> true <br/> @b 1                                                                                      |
+| s   | string    | 6  | 字符串         |                                                                                        | "10"   <br>  abc                                                                                                  |
+| N   | null      | 7  | null，大写N    |                                                                                        | @N null <br> null                                                                                                 |
+| bin | binary    | 8  | 二进制         |                                                                                        | 十六进制编码<br>@bin "cafebabe" <br> @bin ""                                                                            |
+| F   | Fxp64     | 9  | 64位定点数（万分比） |                                                                                        | @F 12.3456                                                                                                        |
+| ptr | pointer   | 11 | 指针          | {<br> string collection;<br> long localId;<br> string localPath;<br> int32 type;<br> } | 单值或object结构<br/> @ptr 10001 <br> {@ptr localId: 10001, coll : global, type: 1 }                                   |
+| dt  | datetime  | 13 | 日期时间        | { <br>  int64 seconds; <br> int32 nanos;<br> int32 offset;<br> int32 enables; <br> }   | 单值或object结构<br/> @dt 2023-06-17T18:37:00 <br/>{@dt date: 2023-06-17, time: 18:37:00, offset: +08:00, millis: 100} |
+| ts  | timestamp | 14 | 时间戳         | { <br>  int64 seconds; <br> int32 nanos;<br> }                                         | 单值或object结构<br/> @ts 1715659200 <br/>{@ts seconds: 1715659200, nanos: 100}                                        |
+| D4  | Double4   | 15 | 4元双精度浮点数    | { <br> double v0;<br> double v1;<br> double v2; <br> double v3;<br> }                  | object结构<br/> {@D4 x: 1, y: 2, z: 1, w: 0}                                                                        |
+| L4  | Long4     | 16 | 4元64位整型     | { <br> long v0;<br> long v1;<br> long v2; <br> long v3;<br> }                          | object结构<br/> {@L4 x: 1, y: 2, z: 1, w: 0}                                                                        |
+| F4  | Fxp4      | 17 | 4元定点数       | { <br> Fxp64 v0;<br> Fxp64 v1;<br> Fxp64 v2; <br> Fxp64 v3;<br> }                      | object结构<br/> {@F4 x: 1.25, y: 2, z: 1, w: 0}                                                                     |
+|     | header    | 29 | 对象头         |                                                                                        | 对象形式： @{clsName: Vector3 } <br/> 简写形式： @{Vector3}                                                                 |
+|     | array     | 30 | 数组          |                                                                                        | \[ 1, 2, 3, 4, 5 ]                                                                                                |
+|     | object    | 31 | 对象/结构体      |                                                                                        | { name: wjybxx, age: 28 }                                                                                         |
 
 ### 特殊类型
 
@@ -137,16 +137,16 @@ ps: 我去除了顶层不能是header的限制，因此可以用顶层的header�
    }
 ```
 
-### 定点数\(fx)
+### 定点数\(F)
 
-1. `@fx` 表示`Fxp64`，它是缩放系数为`10_000`的64位定点数；使用普通十进制文本输入。
+1. `@F` 表示`Fxp64`，它是缩放系数为`10_000`的64位定点数；使用普通十进制文本输入。
 2. 可使用正负号和下划线分隔数字，小数部分最多四位；出现小数点时，小数部分必须为一至四位。
-3. `fx`不支持科学计数法、十六进制、二进制、NaN和Infinity。
+3. `F`不支持科学计数法、十六进制、二进制、NaN和Infinity。
 
 ```
-   @fx 12.3456
-   @fx -1.2
-   @fx 10_000.0001
+   @F 12.3456
+   @F -1.2
+   @F 10_000.0001
 ```
 
 ### bool值
@@ -332,10 +332,10 @@ PS：对于配置文件，指针的最大作用是复用和减少嵌套。
    {@ts seconds: 1715659200, nanos: 100_000_000}
 ```
 
-### 四分量结构体\(D4、L4、FX4)
+### 四分量结构体\(D4、L4、F4)
 
 1. 四分量用于减少内存中的DsonObject和DsonArray对象。
-2. `D4`表示四个`double`分量，`L4`表示四个`long`分量，`FX4`表示四个`Fxp64`分量。
+2. `D4`表示四个`double`分量，`L4`表示四个`long`分量，`F4`表示四个`Fxp64`分量。
 3. 三者只支持object结构形式，不支持数组形式。
 4. Writer可通过`elementNames`指定输出字段名；未提供时默认使用`xyzw`。该字符串长度必须为2至4，Writer按其长度输出前N个分量。
 5. Reader忽略object中的字段名，按出现顺序依次填入`v0`、`v1`、`v2`、`v3`；字段名不用于绑定或重排序。
@@ -343,7 +343,7 @@ PS：对于配置文件，指针的最大作用是复用和减少嵌套。
 ```
    {@D4 x: 1, y: 2, z: 3, w: 4}
    {@L4 x: 1, y: 2, z: 3, w: 4}
-   {@FX4 x: 1.25, y: 2, z: 3, w: 4}
+   {@F4 x: 1.25, y: 2, z: 3, w: 4}
 
    // 使用两个字段名时，只输出前两个分量
    {@D4 r: 1, g: 2}

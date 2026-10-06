@@ -24,10 +24,10 @@ using Wjybxx.Commons;
 namespace Wjybxx.Dson.Types
 {
 /// <summary>
-/// 对象指针
+/// 对象id引用
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
-public readonly struct ObjectPtr : IEquatable<ObjectPtr>
+public readonly struct RefId : IEquatable<RefId>
 {
     public const int MaskCollection = 1;
     public const int MaskLocalPath = 1 << 1;
@@ -57,14 +57,14 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     /// </summary>
     [FieldOffset(20)] private readonly int type;
 
-    public ObjectPtr(int localId) {
+    public RefId(int localId) {
         this.localId = localId;
         this.collection = null;
         this.localPath = null;
         this.type = 0;
     }
 
-    public ObjectPtr(string collection, string localPath, int localId, int type = 0) {
+    public RefId(string collection, string localPath, int localId, int type = 0) {
         // 空字符串转null以兼容default构建的实例
         this.collection = ObjectUtil.EmptyToDef(collection, null);
         this.localPath = ObjectUtil.EmptyToDef(localPath, null);
@@ -93,7 +93,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
 
     #region equals
 
-    public bool Equals(ObjectPtr other) {
+    public bool Equals(RefId other) {
         return localId == other.localId
                && localPath == other.localPath
                && collection == other.collection
@@ -101,7 +101,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     }
 
     public override bool Equals(object? obj) {
-        return obj is ObjectPtr other && Equals(other);
+        return obj is RefId other && Equals(other);
     }
 
     public override int GetHashCode() {
@@ -112,11 +112,11 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
         return hashCode;
     }
 
-    public static bool operator ==(ObjectPtr left, ObjectPtr right) {
+    public static bool operator ==(RefId left, RefId right) {
         return left.Equals(right);
     }
 
-    public static bool operator !=(ObjectPtr left, ObjectPtr right) {
+    public static bool operator !=(RefId left, RefId right) {
         return !left.Equals(right);
     }
 

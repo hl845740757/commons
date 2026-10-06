@@ -493,8 +493,8 @@ public static class Dsons
                 writer.WriteFxp64(dsonValue.AsFxp64());
                 break;
             }
-            case DsonType.Pointer:
-                writer.WritePtr(dsonValue.AsPointer());
+            case DsonType.RefId:
+                writer.WriteRefId(dsonValue.AsRefId());
                 break;
             case DsonType.DateTime:
                 writer.WriteDateTime(dsonValue.AsDateTime());
@@ -545,7 +545,7 @@ public static class Dsons
                 return DsonNull.NULL;
             }
             case DsonType.Binary: return new DsonBinary(reader.ReadBinary());
-            case DsonType.Pointer: return new DsonPointer(reader.ReadPtr());
+            case DsonType.RefId: return new DsonRefId(reader.ReadRefId());
             case DsonType.DateTime: return new DsonDateTime(reader.ReadDateTime());
             case DsonType.Timestamp: return new DsonTimestamp(reader.ReadTimestamp());
             case DsonType.Double4: return new DsonDouble4(reader.ReadDouble4());

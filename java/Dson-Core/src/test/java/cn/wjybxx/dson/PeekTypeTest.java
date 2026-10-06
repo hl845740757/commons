@@ -209,7 +209,7 @@ public class PeekTypeTest {
             }
             case BINARY -> new DsonBinary(reader.readBinary(name));
             case FXP64 -> new DsonFxp64(reader.readFxp64(name));
-            case POINTER -> new DsonPointer(reader.readPtr(name));
+            case REF_ID -> new DsonRefId(reader.readRefId(name));
             case DATETIME -> new DsonDateTime(reader.readDateTime(name));
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp(name));
             case DOUBLE4 -> new DsonDouble4(reader.readDouble4(name));

@@ -102,8 +102,8 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
     }
 
     @Override
-    protected void doWritePtr(ObjectPtr objectPtr) {
-        getContext().add(new DsonPointer(objectPtr));
+    protected void doWriteRefId(RefId refId) {
+        getContext().add(new DsonRefId(refId));
     }
 
     @Override

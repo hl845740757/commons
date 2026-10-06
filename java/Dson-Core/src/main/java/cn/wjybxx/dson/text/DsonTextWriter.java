@@ -446,49 +446,49 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     protected void doWriteFxp64(Fxp64 value) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.FXP64);
-        printer.fastPrint("@fx ");
+        printer.fastPrint("@F ");
         printer.fastPrint(value);
     }
 
     @Override
-    protected void doWritePtr(ObjectPtr objectPtr) {
+    protected void doWriteRefId(RefId refId) {
         DsonPrinter printer = this.printer;
         int softLineLength = this.settings.softLineLength;
-        writeCurrentName(printer, DsonType.POINTER);
+        writeCurrentName(printer, DsonType.REF_ID);
         // 只有localId时简写
-        if (objectPtr.canBeAbbreviated()) {
-            printer.fastPrint("@ptr ");
-            printer.fastPrint(objectPtr.getLocalId());
+        if (refId.canBeAbbreviated()) {
+            printer.fastPrint("@ref ");
+            printer.fastPrint(refId.getLocalId());
             return;
         }
 
-        printer.fastPrint("{@ptr ");
+        printer.fastPrint("{@ref ");
         // 固定打印localId
         {
-            printer.fastPrint(ObjectPtr.NAMES_LOCAL_ID);
+            printer.fastPrint(RefId.NAMES_LOCAL_ID);
             printer.fastPrint(": ");
-            printer.fastPrint(objectPtr.getLocalId());
+            printer.fastPrint(refId.getLocalId());
         }
-        if (objectPtr.hasLocalPath()) {
+        if (refId.hasLocalPath()) {
             printer.fastPrint(", ");
             printer.printlnIfExceed(softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_LOCAL_PATH);
+            printer.fastPrint(RefId.NAMES_LOCAL_PATH);
             printer.fastPrint(": ");
-            printString(printer, objectPtr.getLocalPath(), StringStyle.AUTO_QUOTE);
+            printString(printer, refId.getLocalPath(), StringStyle.AUTO_QUOTE);
         }
-        if (objectPtr.hasCollection()) {
+        if (refId.hasCollection()) {
             printer.fastPrint(", ");
             printer.printlnIfExceed(softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_COLLECTION);
+            printer.fastPrint(RefId.NAMES_COLLECTION);
             printer.fastPrint(": ");
-            printString(printer, objectPtr.getCollection(), StringStyle.AUTO_QUOTE);
+            printString(printer, refId.getCollection(), StringStyle.AUTO_QUOTE);
         }
-        if (objectPtr.getType() != 0) {
+        if (refId.getType() != 0) {
             printer.fastPrint(", ");
             printer.printlnIfExceed(softLineLength);
-            printer.fastPrint(ObjectPtr.NAMES_TYPE);
+            printer.fastPrint(RefId.NAMES_TYPE);
             printer.fastPrint(": ");
-            printer.fastPrint(objectPtr.getType());
+            printer.fastPrint(refId.getType());
         }
         printer.print('}');
     }
@@ -597,7 +597,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
 
     private void printFxp4(DsonPrinter printer, Fxp4 value, String elementNames) {
         elementNames = getElementNames(elementNames);
-        printer.fastPrint("{@FX4 ");
+        printer.fastPrint("{@F4 ");
         for (int index = 0; index < elementNames.length(); index++) {
             if (index != 0) printer.fastPrint(", ");
             printer.fastPrint(elementNames.charAt(index));

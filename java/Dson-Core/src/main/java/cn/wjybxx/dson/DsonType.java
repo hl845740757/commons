@@ -38,8 +38,8 @@ public enum DsonType {
     /** 4位定点数 */
     FXP64(9),
 
-    /** 对象指针 */
-    POINTER(11),
+    /** ID引用 */
+    REF_ID(11),
     /** 日期时间 */
     DATETIME(13),
     /** 时间戳 */
