@@ -52,15 +52,6 @@ public class EventSpec : ISpecification
         initializer = builder.initializer;
         adder = builder.adder;
         remover = builder.remover;
-
-        if (adder != null || remover != null) {
-            if (adder == null || remover == null) {
-                throw new InvalidOperationException("add and remove accessors must be paired");
-            }
-            if (initializer != null) {
-                throw new InvalidOperationException("event with accessors cannot have an initializer");
-            }
-        }
     }
 
     public string Name => name;

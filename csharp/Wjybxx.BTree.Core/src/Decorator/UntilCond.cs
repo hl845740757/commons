@@ -29,12 +29,12 @@ public class UntilCond<T> : LoopDecorator<T> where T : class
 {
     /** 循环条件 -- 不能直接使用child的guard，意义不同 */
     [SerializeReference]
-    private Task<T>? cond;
+    private object? cond;
 
     public override void Reset() {
         base.Reset();
-        if (cond != null) {
-            cond.Reset();
+        if (cond is Task<T> task) {
+            task.Reset();
         }
     }
 
@@ -60,7 +60,7 @@ public class UntilCond<T> : LoopDecorator<T> where T : class
     /// <summary>
     /// 子节点的循条件
     /// </summary>
-    public Task<T>? Cond {
+    public object? Cond {
         get => cond;
         set => cond = value;
     }

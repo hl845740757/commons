@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Text;
 
 namespace Wjybxx.Dson.Types
@@ -53,6 +52,10 @@ public readonly struct Fxp64 : IEquatable<Fxp64>, IComparable<Fxp64>
     /// </summary>
     public double ToDouble() => rawValue / (double)Scale;
 
+    /// <summary>
+    /// 符号部分
+    /// </summary>
+    public int Sign => rawValue < 0 ? -1 : 1;
     /// <summary>
     /// 整数部分（固定正数，以避免负0问题）
     /// </summary>

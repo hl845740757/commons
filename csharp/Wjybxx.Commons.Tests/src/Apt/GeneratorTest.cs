@@ -156,8 +156,10 @@ public class GeneratorTest
                 .Build())
             .AddSpec(PropertySpec.NewBuilder(TypeName.BOOL, "IsOnline", Modifiers.Private)
                 .Initializer("$L", false)
-                .Build()
-            )
+                .Build())
+            .AddSpec(PropertySpec.NewBuilder(TypeName.INT, "Uid", Modifiers.Public)
+                .InitOnly(true)
+                .Build())
             // 普通方法
             .AddSpec(MethodSpec.NewMethodBuilder("Sum")
                 .AddDocument("求int的和")
