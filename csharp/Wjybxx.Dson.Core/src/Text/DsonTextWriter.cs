@@ -610,16 +610,16 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         PrintDouble4(printer, double4, elementNames);
     }
 
-    protected override void DoWriteFxp4(Fxp4 fv4, string? elementNames) {
-        DsonPrinter printer = this._printer;
-        WriteCurrentName(printer, DsonType.Fxp4);
-        PrintFxp4(printer, fv4, elementNames);
-    }
-
     protected override void DoWriteLong4(Long4 fv4, string? elementNames) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Long4);
         PrintLong4(printer, fv4, elementNames);
+    }
+    
+    protected override void DoWriteFxp4(Fxp4 fv4, string? elementNames) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Fxp4);
+        PrintFxp4(printer, fv4, elementNames);
     }
 
     #endregion

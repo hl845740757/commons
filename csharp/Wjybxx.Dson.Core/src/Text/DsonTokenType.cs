@@ -65,7 +65,7 @@ public enum DsonTokenType
     /** 显式声明 '@bin' */
     Binary,
 
-    /** 内建结构体 */
+    /** 内建结构体 - 简写形式 */
     BuiltinStruct,
     /** 无引号字符串，scan的时候不解析，使得返回后可以根据上下文推断其类型 */
     UnquoteString,

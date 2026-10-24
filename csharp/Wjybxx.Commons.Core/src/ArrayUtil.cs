@@ -291,6 +291,11 @@ public static class ArrayUtil
         return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, comparer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BinarySearch<T, U>(T[] array, U key, Func<T, U, int> comparer) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Length, key, comparer);
+    }
+
     #endregion
 
 #nullable disable
@@ -373,6 +378,11 @@ public static class ArrayUtil
         int copyLen = Math.Min(src.Length - offset, len);
         Array.Copy(src, offset, result, 0, copyLen);
         return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Clear<T>(this T[] list) {
+        Array.Clear(list, 0, list.Length);
     }
 
     /// <summary>

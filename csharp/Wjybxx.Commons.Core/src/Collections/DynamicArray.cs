@@ -66,6 +66,10 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
         }
     }
 
+    public void Repair() {
+        recursionDepth = 0;
+    }
+
     #endregion
 
     #region update

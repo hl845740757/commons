@@ -30,19 +30,19 @@ internal static class ArraySortHelper
     /// 如果元素不存在，则返回(-(insertion point) - 1)
     /// 即： (index + 1) * -1 可得应当插入的下标。 
     /// </summary>
-    /// <param name="array"></param>
+    /// <param name="a"></param>
     /// <param name="fromIndex">inclusive</param>
     /// <param name="toIndex">exclusive</param>
     /// <param name="key">要查找的元素</param>
     /// <returns></returns>
-    public static int BinarySearch(int[] array, int fromIndex, int toIndex,
+    public static int BinarySearch(int[] a, int fromIndex, int toIndex,
                                    int key) {
         int low = fromIndex;
         int high = toIndex - 1;
 
         while (low <= high) {
             int mid = low + (high - low) / 2; // 防溢出
-            int midVal = array[mid];
+            int midVal = a[mid];
 
             if (midVal < key)
                 low = mid + 1;
@@ -67,6 +67,25 @@ internal static class ArraySortHelper
             int mid = low + (high - low) / 2; // 防溢出
             T midVal = a[mid];
             int cmp = c.Compare(midVal, key);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    public static int BinarySearch<T, U>(T[] a, int fromIndex, int toIndex,
+                                         U key, Func<T, U, int> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = low + (high - low) / 2; // 防溢出
+            T midVal = a[mid];
+            int cmp = c.Invoke(midVal, key);
             if (cmp < 0)
                 low = mid + 1;
             else if (cmp > 0)
@@ -116,7 +135,26 @@ internal static class ArraySortHelper
         while (low <= high) {
             int mid = low + (high - low) / 2; // 防溢出
             T midVal = a[mid];
-            int cmp = c.Compare(midVal, key);
+            int cmp = c.Compare(midVal, key); // mid与目标比较
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    public static int BinarySearch<T, U>(IList<T> a, int fromIndex, int toIndex,
+                                         U key, Func<T, U, int> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = low + (high - low) / 2; // 防溢出
+            T midVal = a[mid];
+            int cmp = c.Invoke(midVal, key); // mid与目标比较
             if (cmp < 0)
                 low = mid + 1;
             else if (cmp > 0)
@@ -139,7 +177,7 @@ internal static class ArraySortHelper
         while (low <= high) {
             int mid = low + (high - low) / 2; // 防溢出
             T midVal = a[mid];
-            int cmp = c.Invoke(midVal);
+            int cmp = c.Invoke(midVal); // mid与目标比较
             if (cmp < 0)
                 low = mid + 1;
             else if (cmp > 0)

@@ -474,7 +474,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             return DsonType.RefId;
         }
         if (DsonTexts.LabelDateTime == clsName) { // @dt uuuu-MM-dd'T'HH:mm:ss
-            DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUtilComma());
+            DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUntilComma());
             PushNextValue(UnionValue.OfDateTime(ExtDateTime.OfDateTime(in dateTime)));
             return DsonType.DateTime;
         }
@@ -591,13 +591,16 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 clsName = valueToken.StringValue();
                 return true;
             }
-            // 跳过Value
+            // 跳过Value - @ref/@dt/@ts的缩写形式需要特殊跳过
             switch (valueToken.type) {
                 case DsonTokenType.BeginArray:
                 case DsonTokenType.BeginObject:
-                case DsonTokenType.BeginHeader:
-                case DsonTokenType.BuiltinStruct: {
+                case DsonTokenType.BeginHeader: {
                     SkipStack(1);
+                    break;
+                }
+                case DsonTokenType.BuiltinStruct: {
+                    SkipStringUntilComma();
                     break;
                 }
             }
@@ -711,19 +714,19 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             // 根据name校验
             switch (keyToken.StringValue()) {
                 case ExtDateTime.NamesDate: {
-                    string dateString = ScanStringUtilComma();
+                    string dateString = ScanStringUntilComma();
                     date = ExtDateTime.ParseDate(dateString);
                     enables |= ExtDateTime.MaskDate;
                     break;
                 }
                 case ExtDateTime.NamesTime: {
-                    string timeString = ScanStringUtilComma();
+                    string timeString = ScanStringUntilComma();
                     time = ExtDateTime.ParseTime(timeString);
                     enables |= ExtDateTime.MaskTime;
                     break;
                 }
                 case ExtDateTime.NamesOffset: {
-                    string offsetString = ScanStringUtilComma();
+                    string offsetString = ScanStringUntilComma();
                     offset = ExtDateTime.ParseOffset(offsetString);
                     enables |= ExtDateTime.MaskOffset;
                     break;
@@ -827,7 +830,22 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     /** 扫描string，直到遇见逗号或结束符 */
-    private string ScanStringUtilComma() {
+    private void SkipStringUntilComma() {
+        while (true) {
+            DsonToken valueToken = PopToken();
+            switch (valueToken.type) {
+                case DsonTokenType.Comma:
+                case DsonTokenType.EndObject:
+                case DsonTokenType.EndArray: {
+                    PushToken(valueToken);
+                    return;
+                }
+            }
+        }
+    }
+
+    /** 扫描string，直到遇见逗号或结束符 */
+    private string ScanStringUntilComma() {
         if (_sb == null) {
             _sb = new StringBuilder();
         } else {
@@ -1112,8 +1130,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             switch (token.type) {
                 case DsonTokenType.BeginArray:
                 case DsonTokenType.BeginObject:
-                case DsonTokenType.BeginHeader:
-                case DsonTokenType.BuiltinStruct: {
+                case DsonTokenType.BeginHeader: {
                     stack++;
                     break;
                 }

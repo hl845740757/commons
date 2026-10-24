@@ -776,6 +776,11 @@ public class CodecProcessor : ISourceGenerator
             || fieldInfo.GetAttribute(CNAME_UNITY_SERIALIZE_FIELD) != null) {
             return true;
         }
+        // 有SerializeReference也表示需要序列化为引用- 非必须
+        // if (fieldInfo.GetAttribute(CNAME_SERIALIZE_REFERENCES) != null
+        //     || fieldInfo.GetAttribute(CNAME_UNITY_SERIALIZE_REFERENCES) != null) {
+        //     return true;
+        // }
         // 判断public和getter/setter
         if (fieldInfo.IsPublic) {
             return true;

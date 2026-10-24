@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -50,6 +51,7 @@ namespace Wjybxx.Commons.Collections
 /// 
 /// </summary>
 /// <typeparam name="E"></typeparam>
+[NotThreadSafe]
 public interface IDynamicArray<E> where E : class
 {
     /// <summary>
@@ -67,6 +69,11 @@ public interface IDynamicArray<E> where E : class
     /// </summary>
     void EndItr();
 
+    /// <summary>
+    /// 修复迭代状态异常
+    /// </summary>
+    void Repair();
+    
     /// <summary>
     /// 获取指定位置的元素
     /// </summary>
@@ -229,5 +236,21 @@ public interface IDynamicArray<E> where E : class
     /// </summary>
     /// <returns></returns>
     ReadOnlySpan<E?> AsSpan();
+
+    /// <summary>
+    /// 工具类：用于减少缩进
+    /// </summary>
+    public readonly struct Scope : IDisposable
+    {
+        private readonly IDynamicArray<E> _array;
+
+        public Scope(IDynamicArray<E> array) {
+            _array = array ?? throw new ArgumentNullException(nameof(array));
+        }
+
+        public void Dispose() {
+            _array.EndItr();
+        }
+    }
 }
 }

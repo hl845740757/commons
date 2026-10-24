@@ -565,7 +565,7 @@ internal class DsonObjectWriter : IDsonObjectWriter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool IsSerializeReference(SerializeFeatures features, DsonCodecImpl codecImpl) {
+    private static bool IsSerializeReference(SerializeFeatures features, DsonCodecImpl codecImpl) {
         if (codecImpl.DisableSerializeReference) {
             return false;
         }

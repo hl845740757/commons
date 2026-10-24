@@ -66,7 +66,8 @@ internal class DsonObjectReader : IDsonObjectReader
     public object ReadFirst(Type declaredType, DeserializeFeatures features) {
         object? r = null;
         while (_reader.ReadDsonType() != DsonType.EndOfObject) {
-            r ??= ReadObject<object>(name: null, declaredType, features);
+            object root = ReadObject<object>(name: null, declaredType, features);
+            r ??= root; // 不能`??= ReadObject`，否则短路导致跳过后续读~
         }
         ResolveReferences();
         return r ?? throw new DsonCodecException("input is empty");
