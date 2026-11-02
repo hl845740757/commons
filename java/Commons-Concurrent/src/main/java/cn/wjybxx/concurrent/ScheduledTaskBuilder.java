@@ -22,8 +22,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 该对象为临时对象，应避免共享
@@ -54,10 +52,6 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     private ScheduledTaskBuilder(int type, Object task) {
         super(type, task);
-    }
-
-    private ScheduledTaskBuilder(int type, Object task, Object ctx) {
-        super(type, task, ctx);
     }
 
     public ScheduledTaskBuilder(TaskBuilder<? extends V> taskBuilder) {
@@ -249,8 +243,8 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     @Override
-    public ScheduledTaskBuilder<V> setCtx(Object ctx) {
-        super.setCtx(ctx);
+    public ScheduledTaskBuilder<V> setCancelToken(ICancelToken cancelToken) {
+        super.setCancelToken(cancelToken);
         return this;
     }
     // endregion
@@ -262,11 +256,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     public static ScheduledTaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
-        return new ScheduledTaskBuilder<>(TYPE_ACTION, task, cancelToken);
-    }
-
-    public static ScheduledTaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_ACTION_STATE, task, ctx);
+        return new ScheduledTaskBuilder<>(TYPE_ACTION, task).setCancelToken(cancelToken);
     }
 
     public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task) {
@@ -274,11 +264,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNC, task, cancelToken);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNC_STATE, task, ctx);
+        return new ScheduledTaskBuilder<V>(TYPE_FUNC, task).setCancelToken(cancelToken);
     }
 
     /** 适用于禁止初始延迟小于0的情况 */

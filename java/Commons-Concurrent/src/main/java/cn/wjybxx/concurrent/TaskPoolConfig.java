@@ -47,8 +47,7 @@ public class TaskPoolConfig {
             return Math.max(0, func.applyAsInt(poolType));
         }
         if (poolType == TaskPoolType.PROMISE_TASK
-                || poolType == TaskPoolType.SCHEDULED_PROMISE_TASK
-                || poolType == TaskPoolType.CTS_COMPLETION) {
+                || poolType == TaskPoolType.SCHEDULED_PROMISE_TASK) {
             return 8192;
         }
         return 100;

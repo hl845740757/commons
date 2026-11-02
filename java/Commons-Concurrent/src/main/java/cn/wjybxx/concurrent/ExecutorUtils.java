@@ -17,7 +17,6 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
-import cn.wjybxx.base.function.TriFunction;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.base.time.CachedTimeProvider;
 
@@ -27,8 +26,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -37,7 +34,7 @@ import java.util.function.Supplier;
  */
 public class ExecutorUtils {
 
-    private static final TriFunction<Object, Object, Throwable, Object> EXCEPTION_TO_NULL = (ctx, o, throwable) -> {
+    private static final BiFunction<Object, Throwable, Object> EXCEPTION_TO_NULL = (o, throwable) -> {
         if (throwable != null) {
             return null;
         } else {
@@ -104,7 +101,7 @@ public class ExecutorUtils {
 
     public static <V> CompletableFuture<V> toJDKFuture(ICompletionStage<V> stage) {
         CompletableFuture<V> future = new CompletableFuture<>();
-        stage.whenComplete(((ctx, v, throwable) -> {
+        stage.whenComplete(((v, throwable) -> {
             if (throwable != null) {
                 future.completeExceptionally(throwable);
             } else {
@@ -118,14 +115,13 @@ public class ExecutorUtils {
 
     public static <V> void setPromise(IPromise<? super V> output, ICompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
-        input.whenComplete((ctx, v, throwable) -> {
-            @SuppressWarnings("unchecked") IPromise<V> promise = (IPromise<V>) ctx;
+        input.whenComplete((v, throwable) -> {
             if (throwable != null) {
-                promise.trySetException(throwable);
+                output.trySetException(throwable);
             } else {
-                promise.trySetResult(v);
+                output.trySetResult(v);
             }
-        }, output, 0); // 避免lambda捕获
+        });
     }
 
     public static <V> void setPromise(IPromise<? super V> output, CompletionStage<V> input) {
@@ -146,14 +142,13 @@ public class ExecutorUtils {
     public static <V> void setPromiseAsync(Executor executor, IPromise<? super V> output, ICompletionStage<V> input, int options) {
         Objects.requireNonNull(output, "output");
         Objects.requireNonNull(executor, "executor");
-        input.whenCompleteAsync(executor, (ctx, v, throwable) -> {
-            @SuppressWarnings("unchecked") IPromise<V> promise = (IPromise<V>) ctx;
+        input.whenCompleteAsync(executor, (v, throwable) -> {
             if (throwable != null) {
-                promise.trySetException(throwable);
+                output.trySetException(throwable);
             } else {
-                promise.trySetResult(v);
+                output.trySetResult(v);
             }
-        }, output, options); // 避免lambda捕获
+        }, options, null);
     }
 
     public static <V> void setPromiseAsync(Executor executor, IPromise<? super V> output, CompletionStage<V> input) {
@@ -180,14 +175,13 @@ public class ExecutorUtils {
 
     public static <V> void setPromise(CompletableFuture<? super V> output, ICompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
-        input.whenComplete((ctx, v, throwable) -> {
-            @SuppressWarnings("unchecked") CompletableFuture<? super V> promise = (CompletableFuture<? super V>) ctx;
+        input.whenComplete((v, throwable) -> {
             if (throwable != null) {
-                promise.completeExceptionally(throwable);
+                output.completeExceptionally(throwable);
             } else {
-                promise.complete(v);
+                output.complete(v);
             }
-        }, output, 0);
+        });
     }
 
     public static <V> void setPromiseAsync(Executor executor, CompletableFuture<? super V> output, CompletionStage<V> input) {
@@ -205,14 +199,13 @@ public class ExecutorUtils {
     }
 
     public static <V> void setPromiseAsync(Executor executor, CompletableFuture<? super V> output, ICompletionStage<V> input, int options) {
-        input.whenCompleteAsync(executor, ((ctx, v, throwable) -> {
-            @SuppressWarnings("unchecked") CompletableFuture<? super V> promise = (CompletableFuture<? super V>) ctx;
+        input.whenCompleteAsync(executor, ((v, throwable) -> {
             if (throwable != null) {
-                promise.completeExceptionally(throwable);
+                output.completeExceptionally(throwable);
             } else {
-                promise.complete(v);
+                output.complete(v);
             }
-        }), output, options);
+        }), options, null);
     }
 
     /** 由{@link IEventLoop}通知返回的{@link IPromise} */
@@ -386,21 +379,9 @@ public class ExecutorUtils {
         return promise;
     }
 
-    public static <T> IFuture<T> submitFunc(IExecutor executor, Callable<? extends T> task, ICancelToken cancelToken, int options) {
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Callable<? extends T> task, int options, ICancelToken cancelToken) {
         IPromise<T> promise = newPromise(executor);
         executor.execute(PromiseTask.ofFunction(task, cancelToken, options, promise));
-        return promise;
-    }
-
-    public static <T> IFuture<T> submitFunc(Executor executor, Function<Object, ? extends T> task, Object ctx) {
-        IPromise<T> promise = newPromise(executor);
-        executor.execute(PromiseTask.ofFunction(task, ctx, 0, promise));
-        return promise;
-    }
-
-    public static <T> IFuture<T> submitFunc(IExecutor executor, Function<Object, ? extends T> task, Object ctx, int options) {
-        IPromise<T> promise = newPromise(executor);
-        executor.execute(PromiseTask.ofFunction(task, ctx, options, promise));
         return promise;
     }
     // endregion
@@ -424,21 +405,9 @@ public class ExecutorUtils {
         return promise;
     }
 
-    public static IFuture<?> submitAction(IExecutor executor, Runnable action, ICancelToken cancelToken, int options) {
+    public static IFuture<?> submitAction(IExecutor executor, Runnable action, int options, ICancelToken cancelToken) {
         IPromise<Object> promise = newPromise(executor);
         executor.execute(PromiseTask.ofAction(action, cancelToken, options, promise));
-        return promise;
-    }
-
-    public static IFuture<?> submitAction(Executor executor, Consumer<Object> task, Object ctx) {
-        IPromise<Object> promise = newPromise(executor);
-        executor.execute(PromiseTask.ofAction(task, ctx, 0, promise));
-        return promise;
-    }
-
-    public static IFuture<?> submitAction(IExecutor executor, Consumer<Object> task, Object ctx, int options) {
-        IPromise<Object> promise = newPromise(executor);
-        executor.execute(PromiseTask.ofAction(task, ctx, options, promise));
         return promise;
     }
     //endregion
@@ -446,22 +415,12 @@ public class ExecutorUtils {
     // region execute
 
     public static void execute(Executor executor, Runnable action, ICancelToken cancelToken) {
-        ITask futureTask = toTask(action, cancelToken, 0);
+        ITask futureTask = toTask(action, 0, cancelToken);
         executor.execute(futureTask);
     }
 
-    public static void execute(Executor executor, Runnable action, ICancelToken cancelToken, int options) {
-        ITask futureTask = toTask(action, cancelToken, options);
-        executor.execute(futureTask);
-    }
-
-    public static void execute(Executor executor, Consumer<Object> action, Object ctx) {
-        ITask futureTask = toTask(action, ctx, 0);
-        executor.execute(futureTask);
-    }
-
-    public static void execute(IExecutor executor, Consumer<Object> action, Object ctx, int options) {
-        ITask futureTask = toTask(action, ctx, options);
+    public static void execute(Executor executor, Runnable action, int options, ICancelToken cancelToken) {
+        ITask futureTask = toTask(action, options, cancelToken);
         executor.execute(futureTask);
     }
 
@@ -495,35 +454,7 @@ public class ExecutorUtils {
 
     // endregion
 
-    // cancel-token
-
-    /** 获取上下文中的取消令牌 */
-    public static ICancelToken getCancelToken(Object ctx, int options) {
-        if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
-            return ICancelToken.NONE;
-        }
-        if (ctx instanceof ICancelToken cancelToken) {
-            return cancelToken;
-        }
-        if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken();
-        }
-        return ICancelToken.NONE;
-    }
-
-    /** 获取上下文中的取消信号 */
-    public static boolean isCancelRequested(Object ctx, int options) {
-        if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
-            return false;
-        }
-        if (ctx instanceof ICancelToken cancelToken) {
-            return cancelToken.isRequested();
-        }
-        if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken().isRequested();
-        }
-        return false;
-    }
+    // region inline
 
     /** 判断是否可以不提交任务，而是立即执行 */
     public static boolean isInlinable(@Nullable Executor e, int options) {
@@ -543,14 +474,9 @@ public class ExecutorUtils {
         return new Task1(action, options);
     }
 
-    public static ITask toTask(Runnable action, ICancelToken cancelToken, int options) {
+    public static ITask toTask(Runnable action, int options, ICancelToken cancelToken) {
         Objects.requireNonNull(action, "action");
-        return new Task2(action, cancelToken, options);
-    }
-
-    public static ITask toTask(Consumer<Object> action, Object ctx, int options) {
-        Objects.requireNonNull(action, "action");
-        return new Task3(action, ctx, options);
+        return new Task2(action, options, cancelToken);
     }
 
     // endregion
@@ -588,7 +514,7 @@ public class ExecutorUtils {
         private ICancelToken cancelToken;
         private final int options;
 
-        public Task2(Runnable action, ICancelToken cancelToken, int options) {
+        public Task2(Runnable action, int options, ICancelToken cancelToken) {
             this.action = action;
             this.cancelToken = cancelToken;
             this.options = options;
@@ -611,38 +537,6 @@ public class ExecutorUtils {
                 return; // 抛出异常没有意义，检测信号即可
             }
             action.run();
-        }
-    }
-
-    private static class Task3 implements ITask {
-
-        private Consumer<Object> action;
-        private Object ctx;
-        private final int options;
-
-        public Task3(Consumer<Object> action, Object ctx, int options) {
-            this.action = action;
-            this.ctx = ctx;
-            this.options = options;
-        }
-
-        @Override
-        public int getOptions() {
-            return options;
-        }
-
-        @Override
-        public void run() {
-            Consumer<Object> action = this.action;
-            Object ctx = this.ctx;
-            {
-                this.action = null;
-                this.ctx = null;
-            }
-            if (isCancelRequested(ctx, options)) {
-                return;
-            }
-            action.accept(ctx);
         }
     }
 

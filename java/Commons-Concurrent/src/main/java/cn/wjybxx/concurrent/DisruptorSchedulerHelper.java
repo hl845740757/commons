@@ -24,7 +24,6 @@ import cn.wjybxx.base.time.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
 
 /**
  * @author wjybxx
@@ -34,12 +33,10 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
 
     private final IDisruptorEventLoop<?> eventLoop;
     private final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue;
-    private final BiConsumer<ICancelToken, Object> _onCancelRequested;
 
     public DisruptorSchedulerHelper(IDisruptorEventLoop<?> eventLoop) {
         this.eventLoop = eventLoop;
         this.taskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
-        this._onCancelRequested = this::onCancelRequested;
     }
 
     // region core
@@ -94,7 +91,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
             return;
         }
         if (cancelToken.canBeCancelled() && needListenCancelToken(futureTask)) {
-            IRegistration registration = cancelToken.thenAccept(_onCancelRequested, new Canceller(futureTask, futureTask.getId()));
+            IRegistration registration = cancelToken.thenNotify(new Canceller(futureTask, futureTask.getId()));
             futureTask.setCancelRegistration(registration);
         }
 
@@ -123,28 +120,6 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
         return (futureTask.getOptions() & TaskOptions.LISTEN_CANCEL_TOKEN) != 0
                 || futureTask.getTriggerTime() - eventLoop.tickTime() > 5 * TimeUtils.NANOS_PER_SECOND
                 || futureTask.getPeriod() > 5 * TimeUtils.NANOS_PER_SECOND;
-    }
-
-    private void onCancelRequested(ICancelToken cancelToken, Object ctx) {
-        Canceller canceller = (Canceller) ctx;
-        if (canceller.futureTask.getId() != canceller.taskId) {
-            return;
-        }
-        if (eventLoop.inEventLoop()) {
-            cancel(canceller.futureTask, canceller.taskId, cancelToken.cancelCode());
-        } else {
-            // 如果在其它线程，尝试发布一个删除任务（能收到取消信号，通常证明Task还未结束）
-            long sequence = eventLoop.tryNextSequence(1);
-            if (sequence < 0) {
-                return; // TODO 可通过GlobalEventLoop不断重试
-            }
-            IAgentEvent event = eventLoop.getEvent(sequence);
-            event.setType(DisruptorEventLoop.TYPE_REMOVE_SCHEDULE);
-            event.setObj1(canceller.futureTask);
-            event.setLongVal1(canceller.taskId);
-            event.setLongVal2(cancelToken.cancelCode());
-            eventLoop.publish(sequence);
-        }
     }
 
     public void cancel(ScheduledPromiseTask<?> futureTask, long taskId, int cancelCode) {
@@ -210,7 +185,11 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
      */
     private static final AtomicLong idGenerator = new AtomicLong();
 
-    private static class Canceller {
+    /**
+     * 定时任务的取消监听器
+     * 非静态内部类，以访问外部的调度器实例。
+     */
+    private class Canceller implements ICancelTokenListener {
 
         final ScheduledPromiseTask<?> futureTask;
         final long taskId;
@@ -218,6 +197,28 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
         public Canceller(ScheduledPromiseTask<?> futureTask, long taskId) {
             this.futureTask = futureTask;
             this.taskId = taskId;
+        }
+
+        @Override
+        public void onCancelRequested(ICancelToken cancelToken) {
+            if (futureTask.getId() != taskId) {
+                return;
+            }
+            if (eventLoop.inEventLoop()) {
+                cancel(futureTask, taskId, cancelToken.cancelCode());
+            } else {
+                // 如果在其它线程，尝试发布一个删除任务（能收到取消信号，通常证明Task还未结束）
+                long sequence = eventLoop.tryNextSequence(1);
+                if (sequence < 0) {
+                    return; // TODO 可通过GlobalEventLoop不断重试
+                }
+                IAgentEvent event = eventLoop.getEvent(sequence);
+                event.setType(DisruptorEventLoop.TYPE_REMOVE_SCHEDULE);
+                event.setObj1(futureTask);
+                event.setLongVal1(taskId);
+                event.setLongVal2(cancelToken.cancelCode());
+                eventLoop.publish(sequence);
+            }
         }
     }
 }

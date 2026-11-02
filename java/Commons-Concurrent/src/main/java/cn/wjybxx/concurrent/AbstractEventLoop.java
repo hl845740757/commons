@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * @author wjybxx
@@ -152,16 +151,9 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options) {
+    public <T> IFuture<T> submitFunc(Callable<? extends T> task, int options, ICancelToken cancelToken) {
         IPromise<T> promise = newPromise();
         execute(PromiseTask.ofFunction(task, cancelToken, options, promise));
-        return promise;
-    }
-
-    @Override
-    public <T> IFuture<T> submitFunc(Function<Object, ? extends T> task, Object ctx, int options) {
-        IPromise<T> promise = newPromise();
-        execute(PromiseTask.ofFunction(task, ctx, options, promise));
         return promise;
     }
 
@@ -178,16 +170,9 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options) {
+    public IFuture<?> submitAction(Runnable task, int options, ICancelToken cancelToken) {
         IPromise<Object> promise = newPromise();
         execute(PromiseTask.ofAction(task, cancelToken, options, promise));
-        return promise;
-    }
-
-    @Override
-    public IFuture<?> submitAction(Consumer<Object> task, Object ctx, int options) {
-        IPromise<Object> promise = newPromise();
-        execute(PromiseTask.ofAction(task, ctx, options, promise));
         return promise;
     }
 
@@ -264,29 +249,9 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAction(Consumer<Object> task, Object ctx, long delay, TimeUnit unit) {
-        IScheduledPromise<Object> promise = newScheduledPromise();
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, ctx, 0, promise);
-        initTriggerTime(promiseTask, delay, unit);
-
-        execute(promiseTask);
-        return promise;
-    }
-
-    @Override
     public <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         IScheduledPromise<V> promise = newScheduledPromise();
         ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise);
-        initTriggerTime(promiseTask, delay, unit);
-
-        execute(promiseTask);
-        return promise;
-    }
-
-    @Override
-    public <V> IScheduledFuture<V> scheduleFunc(Function<Object, V> task, Object ctx, long delay, TimeUnit unit) {
-        IScheduledPromise<V> promise = newScheduledPromise();
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, ctx, 0, promise);
         initTriggerTime(promiseTask, delay, unit);
 
         execute(promiseTask);

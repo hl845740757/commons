@@ -20,8 +20,6 @@ import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 默认的实现仅仅是简单的将任务分配给某个{@link IEventLoop}执行
@@ -64,13 +62,8 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
     }
 
     @Override
-    public <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options) {
-        return select().submitFunc(task, cancelToken, options);
-    }
-
-    @Override
-    public <T> IFuture<T> submitFunc(Function<Object, ? extends T> task, Object ctx, int options) {
-        return select().submitFunc(task, ctx, options);
+    public <T> IFuture<T> submitFunc(Callable<? extends T> task, int options, ICancelToken cancelToken) {
+        return select().submitFunc(task, options, cancelToken);
     }
 
     @Override
@@ -84,13 +77,8 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
     }
 
     @Override
-    public IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options) {
-        return select().submitAction(task, cancelToken, options);
-    }
-
-    @Override
-    public IFuture<?> submitAction(Consumer<Object> task, Object ctx, int options) {
-        return select().submitAction(task, ctx, options);
+    public IFuture<?> submitAction(Runnable task, int options, ICancelToken cancelToken) {
+        return select().submitAction(task, options, cancelToken);
     }
 
     @Deprecated
@@ -133,18 +121,8 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAction(Consumer<Object> task, Object ctx, long delay, TimeUnit unit) {
-        return select().scheduleAction(task, ctx, delay, unit);
-    }
-
-    @Override
     public <T> IScheduledFuture<T> scheduleFunc(Callable<T> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         return select().scheduleFunc(task, delay, unit, cancelToken);
-    }
-
-    @Override
-    public <V> IScheduledFuture<V> scheduleFunc(Function<Object, V> task, Object ctx, long delay, TimeUnit unit) {
-        return select().scheduleFunc(task, ctx, delay, unit);
     }
 
     @Nonnull

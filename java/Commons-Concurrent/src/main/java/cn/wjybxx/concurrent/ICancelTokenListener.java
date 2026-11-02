@@ -28,8 +28,7 @@ public interface ICancelTokenListener {
      * 该方法在取消令牌收到取消信号时执行
      *
      * @param cancelToken 收到取消信号的令牌
-     * @param ctx         回调上下文，如果是{@link ICancelToken}和{@link IContext}，则默认会检查取消信号
      */
-    void onCancelRequested(ICancelToken cancelToken, Object ctx);
+    void onCancelRequested(ICancelToken cancelToken);
 
 }
