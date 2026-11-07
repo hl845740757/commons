@@ -629,7 +629,7 @@ public sealed class CodeWriter
                     Emit(" ");
                     EmitModifiers(propertySpec.setterModifiers, indent: false);
                 }
-                Emit(" set;");
+                Emit(propertySpec.initOnly ? " init;" : " set;");
             }
             Emit(" }");
             if (!CodeBlock.IsNullOrEmpty(propertySpec.initializer)) {

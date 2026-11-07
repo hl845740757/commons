@@ -65,6 +65,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\AbstractCharStream.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\DsonToken.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Ext\Projection.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonRefId.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonTimestamp.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\NumberStyle.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Binary.cs" />
@@ -105,6 +106,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonDateTime.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonReaderGuide.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\IO\DsonInputs.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\RefId.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonBool.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\CharBuffer.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\Integer4.cs" />
@@ -129,8 +131,6 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonString.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonNumber.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Text\UnionValue.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\DsonRefId.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Types\RefId.cs" />
     <None Include="Assets\Scripts\Wjybxx.Dson.Core\Runtime\Wjybxx.Dson.Core.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>

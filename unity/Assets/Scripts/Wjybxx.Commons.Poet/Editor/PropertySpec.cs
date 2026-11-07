@@ -42,6 +42,7 @@ public class PropertySpec : ISpecification
     public readonly Modifiers getterModifiers; // getter修饰符
     public readonly Modifiers setterModifiers; // setter修饰符
 
+    public readonly bool initOnly; // 是否只读
     public readonly bool hasGetter; // 是否有getter
     public readonly bool hasSetter; // 是否有setter
 
@@ -59,6 +60,7 @@ public class PropertySpec : ISpecification
         setter = builder.setter;
         getterModifiers = builder.getterModifiers;
         setterModifiers = builder.setterModifiers;
+        initOnly = builder.initOnly;
 
         hasGetter = builder.hasGetter;
         hasSetter = builder.hasSetter;
@@ -173,6 +175,7 @@ public class PropertySpec : ISpecification
         public Modifiers getterModifiers;
         public Modifiers setterModifiers;
 
+        public bool initOnly;
         public bool hasGetter = true;
         public bool hasSetter = true;
 
@@ -272,6 +275,11 @@ public class PropertySpec : ISpecification
 
         public Builder RemoveSetter() {
             this.hasSetter = false;
+            return this;
+        }
+
+        public Builder InitOnly(bool value) {
+            this.initOnly = value;
             return this;
         }
 

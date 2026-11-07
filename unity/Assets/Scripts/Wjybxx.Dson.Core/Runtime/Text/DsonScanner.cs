@@ -164,7 +164,7 @@ public sealed class DsonScanner : IDisposable
             buffer.Unread();
             return new DsonToken(DsonTokenType.String, ScanDsonText(skipValue), Position);
         }
-        // '@' 对应的是内建值类型，@i @L ...
+        // '@' 对应的是内建值类型，@i @L 和内置结构的简写形式
         return ScanBuiltinValue(firstChar, skipValue);
     }
 

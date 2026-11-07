@@ -62,6 +62,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DsonConverterBuilder.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DynamicCodecRegistry.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\DsonConverter.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\RefIdCodec.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\CollectionCodec.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\TypeName.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\FloatCodec.cs" />
@@ -109,7 +110,6 @@
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\SerializeHeader.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Attributes\DsonCodecLinkerBeanAttribute.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\IKeyCodec.cs" />
-    <Compile Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Codecs\RefIdCodec.cs" />
     <None Include="Assets\Scripts\Wjybxx.Dson.Codec\Runtime\Wjybxx.Dson.Codec.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>

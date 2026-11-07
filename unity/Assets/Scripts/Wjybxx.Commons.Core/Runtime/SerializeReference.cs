@@ -50,6 +50,8 @@ public sealed class SerializeRef<T> : IEquatable<SerializeRef<T>> where T : clas
 {
     public T? Value { get; set; }
 
+    public bool HasValue => Value != null;
+
     public bool Equals(SerializeRef<T>? other) {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;

@@ -196,6 +196,7 @@
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Collections\ISequencedCollection.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Mutable\IMutable.cs" />
     <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Fx\ComponentDefineAttribute.cs" />
+    <Compile Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\ReferenceEqualityComparer.cs" />
     <None Include="Assets\Scripts\Wjybxx.Commons.Core\Runtime\Wjybxx.Commons.Core.asmdef" />
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\github-mine\commons\unity\Library\PackageCache\com.unity.collab-proxy@2.9.2\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>

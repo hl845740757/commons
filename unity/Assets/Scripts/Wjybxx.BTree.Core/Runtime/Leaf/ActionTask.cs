@@ -60,5 +60,11 @@ public abstract class ActionTask<T> : LeafTask<T> where T : class
     /// </summary>
     /// <returns>状态码</returns>
     protected abstract int ExecuteImpl();
+
+    /// <summary>
+    /// 同步Action通常也不需要处理事件
+    /// </summary>
+    protected override void OnEventImpl(object _) {
+    }
 }
 }
