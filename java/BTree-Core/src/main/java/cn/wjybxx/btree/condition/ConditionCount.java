@@ -44,7 +44,7 @@ public class ConditionCount<T> extends ConditionGroup<T> {
             return TaskStatus.INSUFF_CHILD;
         }
         int count = 0;
-        int errorCode = TaskStatus.ERROR; // 可能没有失败子节点
+        int errorCode = 0; // 可能没有失败子节点
         for (ICondition<T> child : children) {
             int code = child.test(blackboard);
             if (code == 0) {
@@ -52,12 +52,12 @@ public class ConditionCount<T> extends ConditionGroup<T> {
                     return 0;
                 }
             } else {
-                if (errorCode == TaskStatus.ERROR) {
+                if (errorCode == 0) {
                     errorCode = code;
                 }
             }
         }
-        return errorCode;
+        return errorCode == 0 ? TaskStatus.ERROR : errorCode;
     }
 
     public int getRequired() {

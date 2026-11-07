@@ -31,7 +31,8 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     /** 下一个状态 -- 序列化库需要支持对象图 */
     [SerializeReference]
     private Task<T> nextState;
-    /** 下一个状态的属性 */
+    /** 下一个状态的属性 -- 需要支持读Ref对象 */
+    [SerializeReference]
     private object stateProps;
 #nullable restore
     /** 目标状态机的名字，以允许切换更顶层的状态机 */

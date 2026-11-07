@@ -221,7 +221,7 @@ public class DsonOutputs {
 
         @Override
         public void setFixedInt16(int pos, int value) {
-            ByteBufferUtils.checkBuffer(rawLimit - rawOffset, pos, 4);
+            ByteBufferUtils.checkBuffer(rawLimit - rawOffset, pos, 2);
             int bufferPos = rawOffset + pos;
             CodedUtils.writeFixed16(buffer, bufferPos, (short) value);
         }

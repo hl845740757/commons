@@ -65,18 +65,10 @@ public final class TaskOptions {
      */
     public static final int STAGE_TRY_INLINE = 1 << 23;
     /**
-     * 默认情况下，Stage会在触发回调之前检测ctx否为{@link IContext}或{@link ICancelToken}类型，并检测取消信号。
-     * 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
-     *
-     * @deprecated 新版本切割用户上下文和调度上下文，不再使用该参数
-     */
-    @Deprecated
-    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 24;
-    /**
-     * 监听用户上下文中包含的取消令牌
+     * 主动监听任务绑定的取消令牌
      * <p>
      * 1.该选项用于延时任务或监听器列表管理。
-     * 2.如果调度器默认不会监听CTX中的取消令牌，那么应当响应用户的该选项。
+     * 2.如果调度器默认不监听任务的取消令牌（例如只在任务触发时才检测取消信号），那么应当响应用户的该选项。
      */
     public static final int LISTEN_CANCEL_TOKEN = 1 << 25;
 

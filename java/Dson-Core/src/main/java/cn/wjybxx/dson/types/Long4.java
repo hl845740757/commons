@@ -60,15 +60,15 @@ public class Long4 {
         if (o == null || getClass() != o.getClass()) return false;
 
         Long4 that = (Long4) o;
-        return Double.compare(v0, that.v0) == 0 && Double.compare(v1, that.v1) == 0 && Double.compare(v2, that.v2) == 0 && Double.compare(v3, that.v3) == 0;
+        return v0 == that.v0 && v1 == that.v1 && v2 == that.v2 && v3 == that.v3;
     }
 
     @Override
     public int hashCode() {
-        int result = Double.hashCode(v0);
-        result = 31 * result + Double.hashCode(v1);
-        result = 31 * result + Double.hashCode(v2);
-        result = 31 * result + Double.hashCode(v3);
+        int result = Long.hashCode(v0);
+        result = 31 * result + Long.hashCode(v1);
+        result = 31 * result + Long.hashCode(v2);
+        result = 31 * result + Long.hashCode(v3);
         return result;
     }
 

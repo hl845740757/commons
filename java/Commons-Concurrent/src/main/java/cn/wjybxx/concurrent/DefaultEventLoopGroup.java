@@ -16,7 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.function.TriConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +23,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -75,7 +75,7 @@ public class DefaultEventLoopGroup extends AbstractEventLoopGroup implements IEv
 
     @Override
     public IFuture<?> terminationFuture() {
-        return terminationFuture.asReadonly();
+        return terminationFuture;
     }
 
     @Override
@@ -155,7 +155,7 @@ public class DefaultEventLoopGroup extends AbstractEventLoopGroup implements IEv
     //
 
     /** 子节点终结状态监听器 */
-    private class ChildrenTerminateListener implements TriConsumer<Object, Object, Throwable> {
+    private class ChildrenTerminateListener implements BiConsumer<Object, Throwable> {
 
         /** 已关闭的子节点数量 */
         private final AtomicInteger terminatedChildren = new AtomicInteger(0);
@@ -165,7 +165,7 @@ public class DefaultEventLoopGroup extends AbstractEventLoopGroup implements IEv
         }
 
         @Override
-        public void accept(Object ctx, Object o, Throwable throwable) {
+        public void accept(Object o, Throwable throwable) {
             if (terminatedChildren.incrementAndGet() == children.length) {
                 try {
                     invokeTerminationHook();

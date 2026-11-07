@@ -239,7 +239,14 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         for (int i = 0, length = text.length(); i < length; i++) {
             char c = text.charAt(i);
             // 要执行文本中的换行符
-            if (c == '\n' || (c == '\r' && i + 1 < length && text.charAt(i + 1) == '\n')) {
+            if (c == '\n') {
+                printer.println();
+                printer.printSpaces(headIndent);
+                printer.fastPrint("@| ");
+                continue;
+            }
+            if (c == '\r' && i + 1 < length && text.charAt(i + 1) == '\n') {
+                i++;
                 printer.println();
                 printer.printSpaces(headIndent);
                 printer.fastPrint("@| ");
@@ -280,7 +287,13 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         for (int i = 0, length = text.length(); i < length; i++) {
             char c = text.charAt(i);
             // 要执行文本中的换行符
-            if (c == '\n' || (c == '\r' && i + 1 < length && text.charAt(i + 1) == '\n')) {
+            if (c == '\n') {
+                printer.println();
+                printer.printSpaces(headIndent);
+                continue;
+            }
+            if (c == '\r' && i + 1 < length && text.charAt(i + 1) == '\n') {
+                i++;
                 printer.println();
                 printer.printSpaces(headIndent);
                 continue;

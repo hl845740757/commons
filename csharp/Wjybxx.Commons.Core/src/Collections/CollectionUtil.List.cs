@@ -179,6 +179,11 @@ public static partial class CollectionUtil
         return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, comparer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BinarySearch<T, U>(IList<T> array, U key, Func<T, U, int> comparer) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Count, key, comparer);
+    }
+
     #endregion
 
 #nullable restore

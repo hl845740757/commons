@@ -22,7 +22,6 @@ import cn.wjybxx.base.Registration;
 import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.concurrent.CancelCodeBuilder;
 import cn.wjybxx.base.concurrent.CancelCodes;
-import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandles;
@@ -32,7 +31,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -88,9 +86,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
      * 将Token置为取消状态
      *
      * @param cancelCode 取消码；reason部分需大于0；辅助类{@link CancelCodeBuilder}
-     * @return 如果Token已被取消，则返回旧值（大于0）；如果Token尚未被取消，则将Token更新为取消状态，并返回0。
-     * @throws IllegalArgumentException      如果code小于等于0；或reason部分为0
-     * @throws UnsupportedOperationException 如果context是只读的
+     * @return 如果Token尚未被取消，则将其更新为取消状态并返回true；否则返回false。
+     * @throws IllegalArgumentException 如果code小于等于0；或reason部分为0
      */
     @Override
     public boolean cancel(int cancelCode) {
@@ -161,7 +158,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
                 JDKCanceller canceller = new JDKCanceller(this, cancelCode);
                 canceller.future = executor.schedule(canceller, delay, timeUnit);
-                this.thenNotify(canceller, null);
+                this.thenNotify(canceller);
             }
         }
     }
@@ -199,7 +196,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
 
         @Override
-        public void onCancelRequested(ICancelToken cancelToken, Object ctx) {
+        public void onCancelRequested(ICancelToken cancelToken) {
             future.cancel(false);
         }
     }
@@ -263,48 +260,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
                                     int options) {
         Objects.requireNonNull(action);
         if (isRequested() && executor == null) {
-            Completion.fireNow(this, TYPE_ACCEPT, action, null);
+            Completion.fireNow(this, TYPE_ACCEPT, action);
             return Registration.CLOSED;
         }
-        Completion completion = getCompletion(executor, options, this, TYPE_ACCEPT, action, null);
-        return pushCompletion(completion);
-    }
-
-    // endregion
-
-    // region uni-accept-ctx
-
-    @Override
-    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
-        return uniAcceptCtx(null, action, ctx, options);
-    }
-
-    @Override
-    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx) {
-        return uniAcceptCtx(null, action, ctx, 0);
-    }
-
-    @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx) {
-        Objects.requireNonNull(executor, "executor");
-        return uniAcceptCtx(executor, action, ctx, 0);
-    }
-
-    @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
-        Objects.requireNonNull(executor, "executor");
-        return uniAcceptCtx(executor, action, ctx, options);
-    }
-
-    private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super ICancelToken, Object> action,
-                                       Object ctx, int options) {
-        Objects.requireNonNull(action);
-        if (isRequested() && executor == null) {
-            Completion.fireNow(this, TYPE_ACCEPT_CTX, action, ctx);
-            return Registration.CLOSED;
-        }
-        Completion completion = getCompletion(executor, options, this, TYPE_ACCEPT_CTX, action, ctx);
-        return pushCompletion(completion);
+        return pushCompletion(new Completion(executor, options, this, TYPE_ACCEPT, action));
     }
 
     // endregion
@@ -336,47 +295,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniRun(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(action);
         if (isRequested() && executor == null) {
-            Completion.fireNow(this, TYPE_RUN, action, null);
+            Completion.fireNow(this, TYPE_RUN, action);
             return Registration.CLOSED;
         }
-        Completion completion = getCompletion(executor, options, this, TYPE_RUN, action, null);
-        return pushCompletion(completion);
-    }
-
-    // endregion
-
-    // region uni-run-ctx
-
-    @Override
-    public IRegistration thenRun(Consumer<Object> action, Object ctx, int options) {
-        return uniRunCtx(null, action, ctx, options);
-    }
-
-    @Override
-    public IRegistration thenRun(Consumer<Object> action, Object ctx) {
-        return uniRunCtx(null, action, ctx, 0);
-    }
-
-    @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx) {
-        Objects.requireNonNull(executor, "executor");
-        return uniRunCtx(executor, action, ctx, 0);
-    }
-
-    @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx, int options) {
-        Objects.requireNonNull(executor, "executor");
-        return uniRunCtx(executor, action, ctx, options);
-    }
-
-    private IRegistration uniRunCtx(Executor executor, Consumer<Object> action, Object ctx, int options) {
-        Objects.requireNonNull(action);
-        if (isRequested() && executor == null) {
-            Completion.fireNow(this, TYPE_RUN_CTX, action, ctx);
-            return Registration.CLOSED;
-        }
-        Completion completion = getCompletion(executor, options, this, TYPE_RUN_CTX, action, ctx);
-        return pushCompletion(completion);
+        return pushCompletion(new Completion(executor, options, this, TYPE_RUN, action));
     }
 
     // endregion
@@ -384,35 +306,34 @@ public final class CancelTokenSource implements ICancelTokenSource {
     // region uni-notify
 
     @Override
-    public IRegistration thenNotify(ICancelTokenListener action, Object ctx, int options) {
-        return uniNotify(null, action, ctx, options);
+    public IRegistration thenNotify(ICancelTokenListener action, int options) {
+        return uniNotify(null, action, options);
     }
 
     @Override
-    public IRegistration thenNotify(ICancelTokenListener action, Object ctx) {
-        return uniNotify(null, action, ctx, 0);
+    public IRegistration thenNotify(ICancelTokenListener action) {
+        return uniNotify(null, action, 0);
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action) {
         Objects.requireNonNull(executor, "executor");
-        return uniNotify(executor, action, ctx, 0);
+        return uniNotify(executor, action, 0);
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx, int options) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options) {
         Objects.requireNonNull(executor, "executor");
-        return uniNotify(executor, action, ctx, options);
+        return uniNotify(executor, action, options);
     }
 
-    private IRegistration uniNotify(Executor executor, ICancelTokenListener listener, Object ctx, int options) {
+    private IRegistration uniNotify(Executor executor, ICancelTokenListener listener, int options) {
         Objects.requireNonNull(listener, "listener");
         if (isRequested() && executor == null) {
-            Completion.fireNow(this, TYPE_NOTIFY, listener, ctx);
+            Completion.fireNow(this, TYPE_NOTIFY, listener);
             return Registration.CLOSED;
         }
-        Completion completion = getCompletion(executor, options, this, TYPE_NOTIFY, listener, ctx);
-        return pushCompletion(completion);
+        return pushCompletion(new Completion(executor, options, this, TYPE_NOTIFY, listener));
     }
 
     // endregion
@@ -458,11 +379,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     private Registration pushCompletion(Completion newHead) {
-        ICancelToken cancelToken = ExecutorUtils.getCancelToken(newHead.ctx, newHead.options);
-        if (cancelToken.isRequested()) {
-            POOL.release(newHead);
-            return Registration.CLOSED;
-        }
         if (isRequested()) {
             newHead.tryFire(SYNC);
             return Registration.CLOSED;
@@ -485,18 +401,13 @@ public final class CancelTokenSource implements ICancelTokenSource {
             if (_tail == null) {
                 _tail = newHead;
             }
-            registration = new Registration(newHead, newHead.rid);
+            // 对象不复用，reentryId不再有意义，固定为0
+            registration = new Registration(newHead, 0);
         } finally {
             exitLock();
         }
         if (!registration.hasResource()) {
             newHead.tryFire(SYNC);
-        } else {
-            // 如果目标令牌是池化的对象，可能添加到目标CTS新的生命周期，导致内存泄漏...不过，并发库的CTS是不能重用的
-            if (cancelToken.canBeCancelled() &&
-                    TaskOptions.isEnabled(newHead.options, TaskOptions.LISTEN_CANCEL_TOKEN)) {
-                cancelToken.thenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);
-            }
         }
         return registration;
     }
@@ -582,46 +493,16 @@ public final class CancelTokenSource implements ICancelTokenSource {
     // region completion
 
     private static final int TYPE_ACCEPT = 0;
-    private static final int TYPE_ACCEPT_CTX = 1;
-    private static final int TYPE_RUN = 2;
-    private static final int TYPE_RUN_CTX = 3;
-    private static final int TYPE_NOTIFY = 4;
+    private static final int TYPE_RUN = 1;
+    private static final int TYPE_NOTIFY = 2;
 
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
     private static final int MASK_TASK_TYPE = 0x0F;
-    /** 已加入异步队列 -- 不能被立即销毁；必须由TryFire销毁 */
-    private static final int MASK_ASYNC_FIRING = 0x10;
-
-    private static final ConcurrentObjectPool<Completion> POOL = new ConcurrentObjectPool<>(Completion::new,
-            Completion::reset, TaskPoolConfig.getPoolSize(TaskPoolType.CTS_COMPLETION));
-
-    /** 申请一个{@link Completion}对象 */
-    private static Completion getCompletion(Executor executor, int options, CancelTokenSource source,
-                                            int type, Object action, Object ctx) {
-        // 去除用户的低位，记录type
-        options &= (~TaskOptions.MASK_CTL_RESERVED);
-        options |= type;
-
-        Completion completion = POOL.acquire();
-        completion.rid++; // 从池中取出时也加1
-        completion.executor = executor;
-        completion.options = options;
-        completion.source = source;
-        completion.action = action;
-        completion.ctx = ctx;
-        return completion;
-    }
-
-    /** 用于关闭监听器 */
-    private static final Consumer<Object> INVOKER = ctx -> {
-        Registration registration = (Registration) ctx;
-        registration.close();
-    };
 
     /**
-     * 回收的时机：
-     * 1.如果已进入异步派发阶段，则由{@code tryFire(ASYNC)}负责回收
-     * 2.如果尚未进入异步派发阶段，则由{@link #removeCompletion(Completion)}成功的一方负责回收。
+     * 生命周期：
+     * 1.close()会将action置空并尝试从监听器列表删除，之后的tryFire变为空操作；
+     * 2.tryFire在执行用户回调前会将action消费置空，之后的close()变为空操作。
      */
     private static class Completion implements ITask, IPooledCloseable {
 
@@ -629,27 +510,20 @@ public final class CancelTokenSource implements ICancelTokenSource {
         Completion prev;
         Completion next;
 
-        /** 重入id -- 只增不减 */
-        int rid;
-        /** 互斥锁 -- reset不清理 */
+        /** 互斥锁 */
         int lock;
 
         CancelTokenSource source;
         Executor executor;
         int options; // 包含任务类型信息
         Object action;
-        Object ctx;
 
-        protected void reset() {
-            assert prev == null && next == null;
-//            assert lock == 1; // Push失败时不需要加锁
-
-            rid++; // 池化时+1，volatile安全
-            source = null;
-            executor = null;
-            options = 0;
-            action = null;
-            ctx = null;
+        Completion(Executor executor, int options, CancelTokenSource source, int type, Object action) {
+            // 去除用户的低位，记录type
+            this.executor = executor;
+            this.options = (options & (~TaskOptions.MASK_CTL_RESERVED)) | type;
+            this.source = source;
+            this.action = action;
         }
 
         @Override
@@ -663,22 +537,19 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
 
         public void tryFire(int mode) {
-            // 如果走到这里，当前Completion一定未被回收，但action可能已被清理，即已收到取消信号
+            // 如果走到这里，action可能已被close清理，即已收到取消信号
             CancelTokenSource source;
             Executor executor;
             int options;
             Object action;
-            Object ctx;
 
             enterLock();
             boolean fire; // 没有goto，我们使用bool标记
             try {
                 options = this.options;
                 action = this.action;
-                ctx = this.ctx;
-                // 如果已收到取消信号，则直接回收
-                if (action == null || ExecutorUtils.isCancelRequested(ctx, options)) {
-                    POOL.release(this);
+                // 如果已被关闭，则直接结束
+                if (action == null) {
                     return;
                 }
                 source = this.source;
@@ -686,12 +557,11 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
                 // 如果是同步模式，需要claim -- 与Future的实现不同，我们在锁外提交任务以避免阻塞，但需要先标记
                 if (mode <= 0 && !ExecutorUtils.isInlinable(executor, options)) {
-                    this.options |= MASK_ASYNC_FIRING;
                     this.executor = null;
                     fire = false;
                 } else {
-                    // 数据已拷贝到临时变量；在锁内回收，锁外执行
-                    POOL.release(this);
+                    // 数据已拷贝到临时变量；消费action，之后的close将变为空操作
+                    this.action = null;
                     fire = true;
                 }
             } finally {
@@ -699,7 +569,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             }
             // 在锁外执行回调和提交任务
             if (fire) {
-                fireNow(source, options, action, ctx);
+                fireNow(source, options, action);
                 return;
             }
             try {
@@ -711,7 +581,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         @SuppressWarnings("unchecked")
         private static void fireNow(CancelTokenSource source,
-                                    int options, Object rawAction, Object ctx) {
+                                    int options, Object rawAction) {
             int type = options & MASK_TASK_TYPE;
             try {
                 switch (type) {
@@ -719,21 +589,13 @@ public final class CancelTokenSource implements ICancelTokenSource {
                         Consumer<ICancelToken> action = (Consumer<ICancelToken>) rawAction;
                         action.accept(source);
                     }
-                    case TYPE_ACCEPT_CTX -> {
-                        BiConsumer<ICancelToken, Object> action = (BiConsumer<ICancelToken, Object>) rawAction;
-                        action.accept(source, ctx);
-                    }
                     case TYPE_RUN -> {
                         Runnable action = (Runnable) rawAction;
                         action.run();
                     }
-                    case TYPE_RUN_CTX -> {
-                        Consumer<Object> action = (Consumer<Object>) rawAction;
-                        action.accept(ctx);
-                    }
                     case TYPE_NOTIFY -> {
                         ICancelTokenListener action = (ICancelTokenListener) rawAction;
-                        action.onCancelRequested(source, ctx);
+                        action.onCancelRequested(source);
                     }
                     default -> {
                         throw new IllegalStateException();
@@ -746,9 +608,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         @Override
         public boolean isClosed(long reentryId) {
+            // 对象不复用，reentryId不再有意义
             enterLock();
             try {
-                return rid != reentryId || this.action == null;
+                return this.action == null;
             } finally {
                 exitLock();
             }
@@ -758,16 +621,13 @@ public final class CancelTokenSource implements ICancelTokenSource {
         public final void close(long reentryId) {
             enterLock();
             try {
-                // 只有rid匹配时，才能保证数据有效性 -- action为null表示已执行回调
-                if (rid != reentryId || this.action == null) {
+                // action为null表示已执行回调或已关闭
+                if (this.action == null) {
                     return;
                 }
                 this.action = null;
-                this.ctx = null;
-                // 如果当前未进入异步执行，尝试立即回收 -- 可能正处于TryFire等待锁的状态，因此删除可能会失败
-                if ((options & MASK_ASYNC_FIRING) == 0 && source.removeCompletion(this)) {
-                    POOL.release(this);
-                }
+                // 从监听器列表删除 -- 节点可能已被通知流程摘除（不在列表中），此时删除会安全失败
+                source.removeCompletion(this);
             } finally {
                 exitLock();
             }

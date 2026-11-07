@@ -24,7 +24,6 @@ import cn.wjybxx.base.concurrent.CancelCodes;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -65,9 +64,7 @@ import java.util.function.Consumer;
  * 2. async表示目标action需要异步执行，方法的首个参数为executor；
  *
  * <h3>监听器管理</h3>
- * 用户除了可以通过返回的{@link Registration}删除监听器外，
- * 还可以通过调度选项{@link TaskOptions#LISTEN_CANCEL_TOKEN}要求当前取消令牌监听用户上下文中的取消令牌，
- * 以及时删除不再需要执行的回调 -- 可以实现批量删除。
+ * 用户可以通过返回的{@link Registration}及时删除不再需要的监听器。
  * <p>
  * 差异的源头：
  * 取消令牌可能永远不会收到取消信号，而这可能是正常的需求，因此用户的监听器必须及时从监听器列表删除；
@@ -150,31 +147,6 @@ public interface ICancelToken {
 
     // endregion
 
-    // region accept-ctx
-
-    /**
-     * 添加的action将在Token收到取消信号时执行
-     * 1.如果已收到取消请求，则给定的action会立即执行。
-     * 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
-     * 3.如果不期望检测ctx中潜在的取消信号，可通过{@link TaskOptions#STAGE_UNCANCELLABLE_CTX}关闭。
-     *
-     * @param action  回调任务
-     * @param ctx     上下文
-     * @param options 调度选项
-     * @return 取消句柄
-     */
-    IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options);
-
-    IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx);
-
-    IRegistration thenAcceptAsync(Executor executor,
-                                  BiConsumer<? super ICancelToken, Object> action, Object ctx);
-
-    IRegistration thenAcceptAsync(Executor executor,
-                                  BiConsumer<? super ICancelToken, Object> action, Object ctx, int options);
-
-    // endregion
-
     // region run
 
     IRegistration thenRun(Runnable action, int options);
@@ -187,33 +159,19 @@ public interface ICancelToken {
 
     // endregion
 
-    // region run-ctx
-
-    IRegistration thenRun(Consumer<Object> action, Object ctx, int options);
-
-    IRegistration thenRun(Consumer<Object> action, Object ctx);
-
-    IRegistration thenRunAsync(Executor executor,
-                               Consumer<Object> action, Object ctx);
-
-    IRegistration thenRunAsync(Executor executor,
-                               Consumer<Object> action, Object ctx, int options);
-
-    // endregion
-
     // region notify
 
     /**
      * 添加一个特定类型的监听器
      * (用于特殊需求时避免额外的闭包 - task经常需要监听取消令牌)
      */
-    IRegistration thenNotify(ICancelTokenListener action, Object ctx, int options);
+    IRegistration thenNotify(ICancelTokenListener action, int options);
 
-    IRegistration thenNotify(ICancelTokenListener action, Object ctx);
+    IRegistration thenNotify(ICancelTokenListener action);
 
-    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx);
+    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action);
 
-    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx, int options);
+    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options);
 
     // endregion
 

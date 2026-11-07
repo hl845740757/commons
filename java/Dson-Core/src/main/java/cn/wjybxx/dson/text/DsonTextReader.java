@@ -462,7 +462,7 @@ public final class DsonTextReader extends AbstractDsonReader {
         }
 
         if (DsonTexts.LABEL_DATETIME.equals(clsName)) { // @dt uuuu-MM-dd'T'HH:mm:ss
-            LocalDateTime dateTime = ExtDateTime.parseDateTime(scanStringUtilComma());
+            LocalDateTime dateTime = ExtDateTime.parseDateTime(scanStringUntilComma());
             pushNextValue(ExtDateTime.ofDateTime(dateTime));
             return DsonType.DATETIME;
         }
@@ -578,7 +578,7 @@ public final class DsonTextReader extends AbstractDsonReader {
             // 跳过其他字段；marking期间skipStack保留完整token以便回放。
             switch (valueToken.type) {
                 case BEGIN_ARRAY, BEGIN_OBJECT, BEGIN_HEADER -> skipStack(1);
-                case BUILTIN_STRUCT -> scanStringUtilComma(); // @ref/@dt/@ts的单值简写
+                case BUILTIN_STRUCT -> scanStringUntilComma(); // @ref/@dt/@ts的单值简写
             }
             checkSeparator(contextType);
         }
@@ -684,17 +684,17 @@ public final class DsonTextReader extends AbstractDsonReader {
             // 根据name校验
             switch (keyToken.stringValue()) {
                 case ExtDateTime.NAMES_DATE -> {
-                    String dateString = scanStringUtilComma();
+                    String dateString = scanStringUntilComma();
                     date = ExtDateTime.parseDate(dateString);
                     enables |= ExtDateTime.MASK_DATE;
                 }
                 case ExtDateTime.NAMES_TIME -> {
-                    String timeString = scanStringUtilComma();
+                    String timeString = scanStringUntilComma();
                     time = ExtDateTime.parseTime(timeString);
                     enables |= ExtDateTime.MASK_TIME;
                 }
                 case ExtDateTime.NAMES_OFFSET -> {
-                    String offsetString = scanStringUtilComma();
+                    String offsetString = scanStringUntilComma();
                     offset = ExtDateTime.parseOffset(offsetString);
                     enables |= ExtDateTime.MASK_OFFSET;
                 }
@@ -785,7 +785,7 @@ public final class DsonTextReader extends AbstractDsonReader {
     }
 
     /** 扫描string，直到遇见逗号或结束符 */
-    private String scanStringUtilComma() {
+    private String scanStringUntilComma() {
         if (_sb == null) {
             _sb = new StringBuilder(16);
         } else {

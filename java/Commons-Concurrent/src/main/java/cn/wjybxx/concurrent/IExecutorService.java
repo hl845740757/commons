@@ -20,8 +20,6 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 命名：我们使用清晰的命名后缀，以免使用lambda时的语义不清。
@@ -55,9 +53,8 @@ public interface IExecutorService extends IExecutor {
 
     /**
      * 返回Future将在Executor终止时进入完成状态。
-     * 1. 返回Future应当是只读的，{@link IFuture#asReadonly()}
-     * 2. 用户可以在该Future上等待。
-     * 3. 不保证回调线程，建议监听时指定回调线程。
+     * 1. 用户可以在该Future上等待。
+     * 2. 不保证回调线程，建议监听时指定回调线程。
      */
     IFuture<?> terminationFuture();
 
@@ -112,17 +109,13 @@ public interface IExecutorService extends IExecutor {
 
     <T> IFuture<T> submitFunc(Callable<? extends T> task, int options);
 
-    <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options);
-
-    <T> IFuture<T> submitFunc(Function<Object, ? extends T> task, Object ctx, int options);
+    <T> IFuture<T> submitFunc(Callable<? extends T> task, int options, ICancelToken cancelToken);
 
     IFuture<?> submitAction(Runnable task);
 
     IFuture<?> submitAction(Runnable task, int options);
 
-    IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options);
-
-    IFuture<?> submitAction(Consumer<Object> task, Object ctx, int options);
+    IFuture<?> submitAction(Runnable task, int options, ICancelToken cancelToken);
 
     // endregion
 }

@@ -166,23 +166,6 @@ public class CancelTokenTest {
     }
 
     @RepeatedTest(4)
-    void testThenAcceptCtx() {
-        ICancelTokenSource cts = newTokenSource();
-        Object rootCtx = "root";
-        {
-            final MutableObject<String> signal = new MutableObject<>();
-            cts.thenAccept((token, ctx) -> {
-                Assertions.assertSame(rootCtx, ctx);
-                Assertions.assertSame(cts, token);
-                signal.setValue("cancelled");
-            }, rootCtx);
-            Assertions.assertNull(signal.getValue());
-            cts.cancel(1);
-            Assertions.assertNotNull(signal.getValue());
-        }
-    }
-
-    @RepeatedTest(4)
     void testThenRun() {
         ICancelTokenSource cts = newTokenSource();
         {
@@ -197,30 +180,14 @@ public class CancelTokenTest {
     }
 
     @RepeatedTest(4)
-    void testThenRunCtx() {
-        ICancelTokenSource cts = newTokenSource();
-        Object rootCtx = "root";
-        {
-            final MutableObject<String> signal = new MutableObject<>();
-            cts.thenRun((ctx) -> {
-                Assertions.assertSame(rootCtx, ctx);
-                signal.setValue("cancelled");
-            }, rootCtx);
-            Assertions.assertNull(signal.getValue());
-            cts.cancel(1);
-            Assertions.assertNotNull(signal.getValue());
-        }
-    }
-
-    @RepeatedTest(4)
     void testNotify() {
         ICancelTokenSource cts = newTokenSource();
         {
             final MutableObject<String> signal = new MutableObject<>();
-            cts.thenNotify((token, ctx) -> {
+            cts.thenNotify(token -> {
                 Assertions.assertSame(cts, token);
                 signal.setValue("cancelled");
-            }, null);
+            });
             Assertions.assertNull(signal.getValue());
             cts.cancel(1);
             Assertions.assertNotNull(signal.getValue());
@@ -250,26 +217,6 @@ public class CancelTokenTest {
     }
 
     @Test
-    void testThenAcceptCtxAsync() {
-        ICancelTokenSource cts = newTokenSource();
-        Object rootCtx = "root";
-        {
-            final Promise<String> signal = new Promise<>();
-            cts.thenAcceptAsync(globalEventLoop, (token, ctx) -> {
-                Assertions.assertTrue(globalEventLoop.inEventLoop());
-                Assertions.assertSame(rootCtx, ctx);
-                Assertions.assertSame(cts, token);
-                signal.trySetResult("cancelled");
-            }, rootCtx);
-
-            Assertions.assertFalse(signal.isDone());
-            cts.cancel(1);
-            signal.awaitUninterruptibly();
-            Assertions.assertNotNull(signal.resultNow());
-        }
-    }
-
-    @Test
     void testThenRunAsync() {
         ICancelTokenSource cts = newTokenSource();
         {
@@ -278,25 +225,6 @@ public class CancelTokenTest {
                 Assertions.assertTrue(globalEventLoop.inEventLoop());
                 signal.trySetResult("cancelled");
             });
-
-            Assertions.assertFalse(signal.isDone());
-            cts.cancel(1);
-            signal.awaitUninterruptibly();
-            Assertions.assertNotNull(signal.resultNow());
-        }
-    }
-
-    @Test
-    void testThenRunCtxAsync() {
-        ICancelTokenSource cts = newTokenSource();
-        Object rootCtx = "root";
-        {
-            final Promise<String> signal = new Promise<>();
-            cts.thenRunAsync(globalEventLoop, (ctx) -> {
-                Assertions.assertTrue(globalEventLoop.inEventLoop());
-                Assertions.assertSame(rootCtx, ctx);
-                signal.trySetResult("cancelled");
-            }, rootCtx);
 
             Assertions.assertFalse(signal.isDone());
             cts.cancel(1);

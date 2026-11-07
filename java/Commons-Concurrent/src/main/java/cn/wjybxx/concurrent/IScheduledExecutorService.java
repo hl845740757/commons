@@ -21,8 +21,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 不继承{@link ScheduledExecutorService}，JDK的{@link ScheduledFuture}设计有问题。
@@ -64,29 +62,11 @@ public interface IScheduledExecutorService extends IExecutorService {
     /**
      * 延迟指定时间后执行给定的任务
      *
-     * @param task 要执行的任务
-     * @param ctx  任务上下文，注意{@link IContext}类型
-     */
-    IScheduledFuture<?> scheduleAction(Consumer<Object> task, Object ctx,
-                                       long delay, TimeUnit unit);
-
-    /**
-     * 延迟指定时间后执行给定的任务
-     *
      * @param task        要执行的任务
      * @param cancelToken 取消令牌
      */
     <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit,
                                          @Nullable ICancelToken cancelToken);
-
-    /**
-     * 延迟指定时间后执行给定的任务
-     *
-     * @param task 要执行的任务
-     * @param ctx  任务上下文，注意{@link IContext}类型
-     */
-    <V> IScheduledFuture<V> scheduleFunc(Function<Object, V> task, Object ctx,
-                                         long delay, TimeUnit unit);
 
     /**
      * 以固定延迟执行给定的任务(少执行了就少执行了)

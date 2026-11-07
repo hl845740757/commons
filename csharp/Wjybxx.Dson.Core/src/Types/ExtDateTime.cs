@@ -25,9 +25,9 @@ namespace Wjybxx.Dson.Types
 {
 /// <summary>
 /// 日期时间
-/// 为提高辨识度，我们命名为'ExtDateTime'
+/// 注：为提高辨识度，我们命名为'ExtDateTime'
 /// </summary>
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Auto)]
 public readonly struct ExtDateTime : IEquatable<ExtDateTime>
 {
     public const int MaskDate = 1;
@@ -39,13 +39,13 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
     public const int MaskAll = MaskDatetimeOffset;
 
     /** 纪元时间-秒 */
-    [field: FieldOffset(0)] public long Seconds { get; }
+    public long Seconds { get; }
     /** 纪元时间的纳秒部分 */
-    [field: FieldOffset(8)] public int Nanos { get; }
+    public int Nanos { get; }
     /** 时区偏移-秒 */
-    [field: FieldOffset(12)] public int Offset { get; }
+    public int Offset { get; }
     /** 哪些字段有效 */
-    [field: FieldOffset(16)] public int Enables { get; }
+    public int Enables { get; } // TODO 考虑简化为HasOffset
 
     /// <summary>
     /// 

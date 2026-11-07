@@ -232,7 +232,14 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         for (int i = 0, length = text.Length; i < length; i++) {
             char c = text[i];
             // 要执行文本中的换行符
-            if (c == '\n' || (c == '\r' && i + 1 < length && text[i + 1] == '\n')) {
+            if (c == '\n') {
+                printer.Println();
+                printer.PrintSpaces(headIndent);
+                printer.FastPrint("@| ");
+                continue;
+            }
+            if (c == '\r' && i + 1 < length && text[i + 1] == '\n') {
+                i++;
                 printer.Println();
                 printer.PrintSpaces(headIndent);
                 printer.FastPrint("@| ");
@@ -273,7 +280,13 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         for (int i = 0, length = text.Length; i < length; i++) {
             char c = text[i];
             // 要执行文本中的换行符
-            if (c == '\n' || (c == '\r' && i + 1 < length && text[i + 1] == '\n')) {
+            if (c == '\n') {
+                printer.Println();
+                printer.PrintSpaces(headIndent);
+                continue;
+            }
+            if (c == '\r' && i + 1 < length && text[i + 1] == '\n') {
+                i++;
                 printer.Println();
                 printer.PrintSpaces(headIndent);
                 continue;
@@ -610,16 +623,16 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         PrintDouble4(printer, double4, elementNames);
     }
 
-    protected override void DoWriteFxp4(Fxp4 fv4, string? elementNames) {
-        DsonPrinter printer = this._printer;
-        WriteCurrentName(printer, DsonType.Fxp4);
-        PrintFxp4(printer, fv4, elementNames);
-    }
-
     protected override void DoWriteLong4(Long4 fv4, string? elementNames) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Long4);
         PrintLong4(printer, fv4, elementNames);
+    }
+    
+    protected override void DoWriteFxp4(Fxp4 fv4, string? elementNames) {
+        DsonPrinter printer = this._printer;
+        WriteCurrentName(printer, DsonType.Fxp4);
+        PrintFxp4(printer, fv4, elementNames);
     }
 
     #endregion

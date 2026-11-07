@@ -64,6 +64,9 @@ public interface DynamicArray<E> {
     /** 迭代结束 -- 特殊情况下可以反复调用该接口修复状态。 */
     void endItr();
 
+    /** 修复迭代状态异常 */
+    void repair();
+
     /**
      * 获取指定位置的元素
      *

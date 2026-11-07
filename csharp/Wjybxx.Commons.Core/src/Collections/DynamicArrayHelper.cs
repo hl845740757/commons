@@ -36,15 +36,10 @@ internal static class DynamicArrayHelper
         return ((bitCount - 1) >> ADDRESS_BITS_PER_WORD) + 1; // -1右移仍为-1
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsCompressionNeeded(float nullFactor, int len, int elementCount) {
-        if (nullFactor == 0f) return true;
-        if (nullFactor > 1f) return false;
-
         int nullCount = len - elementCount;
-        if (nullFactor == 1f) {
-            return nullCount == len;
-        }
-        return nullCount > 0 && nullCount >= len * nullFactor;
+        return nullCount > 0 && nullCount >= (int)(len * nullFactor);
     }
 
     #region index-null

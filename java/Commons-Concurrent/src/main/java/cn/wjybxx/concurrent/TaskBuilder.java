@@ -16,11 +16,10 @@
 
 package cn.wjybxx.concurrent;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 任务构建器
@@ -33,15 +32,15 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     public static final int TYPE_EMPTY = 0;
     public static final int TYPE_ACTION = 1;
-    public static final int TYPE_ACTION_STATE = 2;
+    // 编号2原为TYPE_ACTION_STATE，已删除 -- 保留编号以维持与C#的兼容
     public static final int TYPE_FUNC = 3;
-    public static final int TYPE_FUNC_STATE = 4;
+    // 编号4原为TYPE_FUNC_STATE，已删除 -- 保留编号以维持与C#的兼容
     @Deprecated
     private static final int TYPE_TASK = 5; // java端不使用，用于C#
 
     private final int type;
     private final Object task;
-    private Object ctx;
+    private ICancelToken cancelToken;
     protected int options;
 
     protected TaskBuilder(int type, Object task) {
@@ -49,16 +48,10 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         this.type = type;
     }
 
-    protected TaskBuilder(int type, Object task, Object ctx) {
-        this.task = Objects.requireNonNull(task);
-        this.type = type;
-        this.ctx = ctx;
-    }
-
     protected TaskBuilder(TaskBuilder<? extends V> taskBuilder) {
         this.task = taskBuilder.task;
         this.type = taskBuilder.type;
-        this.ctx = taskBuilder.ctx;
+        this.cancelToken = taskBuilder.cancelToken;
         this.options = taskBuilder.options;
     }
 
@@ -74,14 +67,17 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return task;
     }
 
-    /** 任务的上下文 */
-    public Object getCtx() {
-        return ctx;
+    /** 获取任务绑定的取消令牌 */
+    public ICancelToken getCancelToken() {
+        return cancelToken;
     }
 
-    /** 设置上下文 */
-    public TaskBuilder<V> setCtx(Object ctx) {
-        this.ctx = ctx;
+    /**
+     * 设置任务绑定的取消令牌
+     * 任务在开始执行前会检测取消信号，任务执行过程中也可主动检测取消信号。
+     */
+    public TaskBuilder<V> setCancelToken(@Nullable ICancelToken cancelToken) {
+        this.cancelToken = cancelToken;
         return this;
     }
     // endregion
@@ -124,11 +120,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     }
 
     public static TaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
-        return new TaskBuilder<>(TYPE_ACTION, task, cancelToken);
-    }
-
-    public static TaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
-        return new TaskBuilder<>(TYPE_ACTION_STATE, task, ctx);
+        return new TaskBuilder<>(TYPE_ACTION, task).setCancelToken(cancelToken);
     }
 
     public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task) {
@@ -136,11 +128,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     }
 
     public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
-        return new TaskBuilder<>(TYPE_FUNC, task, cancelToken);
-    }
-
-    public static <V> TaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
-        return new TaskBuilder<>(TYPE_FUNC_STATE, task, ctx);
+        return new TaskBuilder<V>(TYPE_FUNC, task).setCancelToken(cancelToken);
     }
 
     public ScheduledTaskBuilder<V> toScheduledBuilder() {

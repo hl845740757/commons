@@ -90,9 +90,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
 
     private final IPromise<Void> runningPromise = new Promise<>(this);
     private final IPromise<Void> terminationPromise = new Promise<>(this);
-    // future 缓存
-    private final IFuture<Void> runningFuture = runningPromise.asReadonly();
-    private final IFuture<Void> terminationFuture = terminationPromise.asReadonly();
 
     public DisruptorEventLoop(EventLoopBuilder.DisruptorBuilder<T> builder) {
         this(builder, true);
@@ -178,12 +175,12 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
 
     @Override
     public final IFuture<?> runningFuture() {
-        return runningFuture;
+        return runningPromise;
     }
 
     @Override
     public IFuture<?> terminationFuture() {
-        return terminationFuture;
+        return terminationPromise;
     }
 
     @Override
@@ -369,7 +366,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     @Override
     public IFuture<?> start() {
         ensureThreadStarted();
-        return runningFuture;
+        return runningPromise;
     }
 
     @Override

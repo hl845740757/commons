@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
@@ -80,14 +81,13 @@ public final class ExecutorServiceAdapter extends AbstractExecutorService {
         return new RunnableFutureAdapter<>(eventLoop.newPromise(), callable);
     }
 
-    /** 继承{@link ForwardFuture}可以少实现方法 */
-    private static class RunnableFutureAdapter<V> extends ForwardFuture<V> implements RunnableFuture<V> {
+    /** 适配JDK的RunnableFuture -- 直接转发内部的promise */
+    private static class RunnableFutureAdapter<V> implements RunnableFuture<V> {
 
         final IPromise<V> promise;
         final Callable<? extends V> task;
 
         public RunnableFutureAdapter(IPromise<V> promise, Callable<? extends V> task) {
-            super(promise);
             this.promise = promise;
             this.task = task;
         }
@@ -103,6 +103,32 @@ public final class ExecutorServiceAdapter extends AbstractExecutorService {
                     promise.trySetException(e);
                 }
             }
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return promise.cancel(mayInterruptIfRunning);
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return promise.isCancelled();
+        }
+
+        @Override
+        public boolean isDone() {
+            return promise.isDone();
+        }
+
+        @Override
+        public V get() throws InterruptedException, ExecutionException {
+            return promise.get();
+        }
+
+        @Override
+        public V get(long timeout, @Nonnull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            return promise.get(timeout, unit);
         }
     }
 }

@@ -77,9 +77,6 @@ internal class AptClassProps
         {
             if (AptUtils.GetAttributeValue(attributeData, "NameStyle", out TypedConstant attributeValue)) {
                 props.nameStyle = (int)attributeValue.Value!;
-                if (props.nameStyle < 0 || props.nameStyle > 2) { // DsonNameStyle
-                    throw new System.ArgumentException($"Invalid NameStyle: {props.nameStyle}");
-                }
             }
         }
         // 解析不自动读字段

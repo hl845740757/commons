@@ -83,11 +83,10 @@ public class ExtString implements Comparable<ExtString> {
         if (value != null && that.value != null) {
             return value.compareTo(that.value);
         }
-        if (value == null) {
-            return -1;
-        } else {
-            return 1;
+        if (value == null && that.value == null) {
+            return 0;
         }
+        return value == null ? -1 : 1;
     }
     // endregion
 

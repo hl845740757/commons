@@ -19,7 +19,6 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.IRegistration;
 
 import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -86,26 +85,6 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
-        return TOMBSTONE;
-    }
-
-    @Override
     public IRegistration thenRun(Runnable action, int options) {
         return TOMBSTONE;
     }
@@ -126,42 +105,22 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenRun(Consumer<Object> action, Object ctx, int options) {
+    public IRegistration thenNotify(ICancelTokenListener action, int options) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenRun(Consumer<Object> action, Object ctx) {
+    public IRegistration thenNotify(ICancelTokenListener action) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx, int options) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenNotify(ICancelTokenListener action, Object ctx, int options) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenNotify(ICancelTokenListener action, Object ctx) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx, int options) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options) {
         return TOMBSTONE;
     }
 

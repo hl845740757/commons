@@ -52,7 +52,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
         if (producerBarrier.sequence() < sequence || !producerBarrier.isPublished(sequence)) {
             blocker.lock();
             try {
-                if (producerBarrier.sequence() < sequence || !producerBarrier.isPublished(sequence)) {
+                while (producerBarrier.sequence() < sequence || !producerBarrier.isPublished(sequence)) {
                     barrier.checkAlert();
                     nanos = blocker.awaitNanos(nanos);
                     if (nanos <= 0) {

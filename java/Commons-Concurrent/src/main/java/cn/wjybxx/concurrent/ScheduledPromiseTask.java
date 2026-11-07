@@ -27,8 +27,6 @@ import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 定时任务的Task抽象
@@ -367,9 +365,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             ScheduledPromiseTask::new, ScheduledPromiseTask::reset,
             TaskPoolConfig.getPoolSize(TaskPoolType.SCHEDULED_PROMISE_TASK));
 
-    private static <V> ScheduledPromiseTask<V> acquire(int taskType, Object task, Object ctx, int options, IScheduledPromise<V> promise) {
+    private static <V> ScheduledPromiseTask<V> acquire(int taskType, Object task, ICancelToken cancelToken, int options, IScheduledPromise<V> promise) {
         @SuppressWarnings("unchecked") ScheduledPromiseTask<V> promiseTask = (ScheduledPromiseTask<V>) POOL.acquire();
-        promiseTask.init(taskType, task, ctx, options, promise);
+        promiseTask.init(taskType, task, cancelToken, options, promise);
         return promiseTask;
     }
 
@@ -387,23 +385,13 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         return acquire(TaskBuilder.TYPE_ACTION, action, cancelToken, options, promise);
     }
 
-    public static ScheduledPromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options,
-                                                   IScheduledPromise<?> promise) {
-        return acquire(TaskBuilder.TYPE_ACTION_STATE, action, ctx, options, promise);
-    }
-
     public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options,
                                                          IScheduledPromise<V> promise) {
         return acquire(TaskBuilder.TYPE_FUNC, action, cancelToken, options, promise);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options,
-                                                         IScheduledPromise<V> promise) {
-        return acquire(TaskBuilder.TYPE_FUNC_STATE, action, ctx, options, promise);
-    }
-
     public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {
-        return acquire(builder.getType(), builder.getTask(), builder.getCtx(), builder.getOptions(), promise);
+        return acquire(builder.getType(), builder.getTask(), builder.getCancelToken(), builder.getOptions(), promise);
     }
 
     // endregion

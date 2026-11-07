@@ -50,14 +50,11 @@ public class FutureTest {
     // region basic
 
     @Test
-    void testCtx() {
+    void testSubmit() {
         IExecutor executor = immediateExecutor;
-        String rootCtx = "efg";
-        ExecutorUtils.submitFunc(executor, (ctx -> {
-                    Assertions.assertSame(rootCtx, ctx);
-                    return (String) ctx;
-                }), rootCtx)
+        String result = ExecutorUtils.submitFunc(executor, () -> "efg")
                 .resultNow();
+        Assertions.assertEquals("efg", result);
     }
 
     @Test
@@ -65,7 +62,7 @@ public class FutureTest {
         CancelTokenSource cts = new CancelTokenSource(1);
 
         IExecutor executor = immediateExecutor;
-        IFuture<String> future = ExecutorUtils.submitFunc(executor, ctx -> "hello", cts);
+        IFuture<String> future = ExecutorUtils.submitFunc(executor, () -> "hello", cts);
         Assertions.assertTrue(future.isCancelled());
     }
 
@@ -98,7 +95,7 @@ public class FutureTest {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
         ExecutorUtils.submitFunc(executor, () -> first, 0)
-                .thenAccept((context, r) -> {
+                .thenAccept(r -> {
                     Assertions.assertEquals(first, r);
                 })
                 .resultNow();
@@ -108,7 +105,7 @@ public class FutureTest {
     void testAcceptAsync() {
         final String first = "abc";
         globalEventLoop.submitFunc(() -> first)
-                .thenAcceptAsync(globalEventLoop, (context, r) -> {
+                .thenAcceptAsync(globalEventLoop, r -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
                 })
@@ -120,10 +117,10 @@ public class FutureTest {
     void testAcceptAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         globalEventLoop.submitFunc(() -> first)
-                .thenAcceptAsync(globalEventLoop, (context, r) -> {
+                .thenAcceptAsync(globalEventLoop, r -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
-                }, null, TaskOptions.STAGE_TRY_INLINE)
+                }, TaskOptions.STAGE_TRY_INLINE, null)
                 .awaitUninterruptibly()
                 .resultNow();
     }
@@ -136,7 +133,7 @@ public class FutureTest {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
         String r2 = ExecutorUtils.submitFunc(executor, () -> first, 0)
-                .thenApply((ctx, r) -> StringUtils.reverse(r))
+                .thenApply(StringUtils::reverse)
                 .resultNow();
         Assertions.assertEquals(StringUtils.reverse(first), r2);
     }
@@ -145,7 +142,7 @@ public class FutureTest {
     void testApplyAsync() {
         final String first = "abc";
         globalEventLoop.submitFunc(() -> first)
-                .thenApplyAsync(globalEventLoop, (context, r) -> {
+                .thenApplyAsync(globalEventLoop, r -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
                     return StringUtils.reverse(r);
@@ -158,11 +155,11 @@ public class FutureTest {
     void testApplyAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         globalEventLoop.submitFunc(() -> first)
-                .thenApplyAsync(globalEventLoop, (context, r) -> {
+                .thenApplyAsync(globalEventLoop, r -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
                     return StringUtils.reverse(r);
-                }, null, TaskOptions.STAGE_TRY_INLINE)
+                }, TaskOptions.STAGE_TRY_INLINE, null)
                 .awaitUninterruptibly()
                 .resultNow();
     }
@@ -175,8 +172,8 @@ public class FutureTest {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
         ExecutorUtils.submitFunc(executor, () -> {throw new RuntimeException();})
-                .catching(RuntimeException.class, (ctx, ex) -> first)
-                .thenAccept((ctx, s) -> {
+                .catching(RuntimeException.class, ex -> first)
+                .thenAccept(s -> {
                     Assertions.assertEquals(first, s);
                 });
     }
@@ -187,11 +184,11 @@ public class FutureTest {
         globalEventLoop.submitFunc(() -> {
                     throw new RuntimeException();
                 })
-                .catchingAsync(globalEventLoop, RuntimeException.class, (ctx, ex) -> {
+                .catchingAsync(globalEventLoop, RuntimeException.class, ex -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     return first;
                 })
-                .thenAccept((ctx, r) -> {
+                .thenAccept(r -> {
                     Assertions.assertEquals(first, r);
                 })
                 .awaitUninterruptibly()
@@ -204,11 +201,11 @@ public class FutureTest {
         globalEventLoop.submitFunc(() -> {
                     throw new RuntimeException();
                 })
-                .catchingAsync(globalEventLoop, RuntimeException.class, (ctx, ex) -> {
+                .catchingAsync(globalEventLoop, RuntimeException.class, ex -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     return first;
-                }, null, TaskOptions.STAGE_TRY_INLINE)
-                .thenAccept((ctx, r) -> {
+                }, TaskOptions.STAGE_TRY_INLINE, null)
+                .thenAccept(r -> {
                     Assertions.assertEquals(first, r);
                 })
                 .awaitUninterruptibly()
@@ -224,8 +221,8 @@ public class FutureTest {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
         ExecutorUtils.submitFunc(executor, () -> first, 0)
-                .whenComplete((k, v, s) -> {})
-                .thenAccept((iContext, s) -> {
+                .whenComplete((v, ex) -> {})
+                .thenAccept(s -> {
                     Assertions.assertEquals(first, s);
                 });
     }
@@ -234,11 +231,11 @@ public class FutureTest {
     void testWhenCompleteAsync() {
         final String first = "abc";
         globalEventLoop.submitFunc(() -> first)
-                .whenCompleteAsync(globalEventLoop, (ctx, r, ex) -> {
+                .whenCompleteAsync(globalEventLoop, (r, ex) -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
                 })
-                .thenAccept((ctx, r) -> {
+                .thenAccept(r -> {
                     Assertions.assertEquals(first, r);
                 })
                 .awaitUninterruptibly()
@@ -249,11 +246,11 @@ public class FutureTest {
     void testWhenCompleteAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         globalEventLoop.submitFunc(() -> first)
-                .whenCompleteAsync(globalEventLoop, (ctx, r, ex) -> {
+                .whenCompleteAsync(globalEventLoop, (r, ex) -> {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
-                }, null, TaskOptions.STAGE_TRY_INLINE)
-                .thenAccept((ctx, r) -> {
+                }, TaskOptions.STAGE_TRY_INLINE, null)
+                .thenAccept(r -> {
                     Assertions.assertEquals(first, r);
                 })
                 .awaitUninterruptibly()
@@ -307,13 +304,13 @@ public class FutureTest {
         final String fallbackResult = "fallback:" + first;
         IExecutor executor = immediateExecutor;
         ExecutorUtils.submitFunc(executor, () -> first, 0)
-                .handle((ctx, v, ex) -> {
+                .handle((v, ex) -> {
                     if (ex != null) {
                         return fallbackResult;
                     }
                     return v;
                 })
-                .thenAccept((ctx, v) -> {
+                .thenAccept(v -> {
                     Assertions.assertEquals(first, v);
                 })
                 .join();
@@ -321,13 +318,13 @@ public class FutureTest {
         ExecutorUtils.submitFunc(executor, () -> {
                     throw new RuntimeException();
                 }, 0)
-                .handle((ctx, v, ex) -> {
+                .handle((v, ex) -> {
                     if (ex != null) {
                         return fallbackResult;
                     }
                     return v;
                 })
-                .thenAccept((ctx, v) -> {
+                .thenAccept(v -> {
                     Assertions.assertEquals(fallbackResult, v);
                 })
                 .join();

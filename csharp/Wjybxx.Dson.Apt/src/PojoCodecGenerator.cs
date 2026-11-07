@@ -458,13 +458,13 @@ internal class PojoCodecGenerator
         if (fieldType.TypeKind == TypeKind.Enum) return MNAME_WRITE_ENUM;
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_WRITE_STRING;
         if (fieldType.IsByteArray()) return MNAME_WRITE_BYTES;
+        if (fieldType.IsSameType(processor.type_Fxp64)) return MNAME_WRITE_FXP64;
         if (fieldType.IsSameType(processor.type_Binary)) return MNAME_WRITE_BINARY;
         if (fieldType.IsSameType(processor.type_RefId)) return MNAME_WRITE_REF_ID;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_WRITE_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_WRITE_TIMESTAMP;
         if (fieldType.IsSameType(processor.type_Double4)) return MNAME_WRITE_DOUBLE4;
         if (fieldType.IsSameType(processor.type_Long4)) return MNAME_WRITE_LONG4;
-        if (fieldType.IsSameType(processor.type_Fxp64)) return MNAME_WRITE_FXP64;
         if (fieldType.IsSameType(processor.type_Fxp4)) return MNAME_WRITE_FXP4;
         return MNAME_WRITE_OBJECT;
     }
@@ -478,13 +478,13 @@ internal class PojoCodecGenerator
         if (fieldType.TypeKind == TypeKind.Enum) return MNAME_READ_ENUM;
         if (fieldType.SpecialType == SpecialType.System_String) return MNAME_READ_STRING;
         if (fieldType.IsByteArray()) return MNAME_READ_BYTES;
+        if (fieldType.IsSameType(processor.type_Fxp64)) return MNAME_READ_FXP64;
         if (fieldType.IsSameType(processor.type_Binary)) return MNAME_READ_BINARY;
         if (fieldType.IsSameType(processor.type_RefId)) return MNAME_READ_REF_ID;
         if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_READ_DATETIME;
         if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_READ_TIMESTAMP;
         if (fieldType.IsSameType(processor.type_Double4)) return MNAME_READ_DOUBLE4;
         if (fieldType.IsSameType(processor.type_Long4)) return MNAME_READ_LONG4;
-        if (fieldType.IsSameType(processor.type_Fxp64)) return MNAME_READ_FXP64;
         if (fieldType.IsSameType(processor.type_Fxp4)) return MNAME_READ_FXP4;
         return MNAME_READ_OBJECT;
     }

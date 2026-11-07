@@ -18,6 +18,9 @@
 
 using System;
 using System.Runtime.CompilerServices;
+#if UNITY_2021_3_OR_NEWER
+using ILogger = Wjybxx.Commons.Logger.ILogger;
+#endif
 
 namespace Wjybxx.Commons.Logger
 {

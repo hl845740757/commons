@@ -20,8 +20,6 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * ps：
@@ -59,8 +57,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 用户的任务 */
     private Object task;
-    /** 任务上下文 */
-    private Object ctx;
+    /** 任务绑定的取消令牌 */
+    private ICancelToken cancelToken;
     /** 调度选项 */
     protected int options;
     /** 任务关联的promise */
@@ -74,10 +72,10 @@ public class PromiseTask<V> implements IFutureTask<V> {
     // region init
 
     /** 用于池化 */
-    protected final void init(int taskType, Object task, Object ctx, int options, IPromise<V> promise) {
+    protected final void init(int taskType, Object task, ICancelToken cancelToken, int options, IPromise<V> promise) {
         if (task == null && taskType != 0) throw new NullPointerException("task");
         this.task = task;
-        this.ctx = ctx;
+        this.cancelToken = cancelToken == null ? ICancelToken.NONE : cancelToken;
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
 
@@ -88,7 +86,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
     protected void reset() {
         task = null;
-        ctx = null;
+        cancelToken = null;
         options = 0;
         promise = null;
         ctl = 0;
@@ -124,7 +122,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 获取关联的取消令牌 */
     public final ICancelToken getCancelToken() {
-        return ExecutorUtils.getCancelToken(ctx, options);
+        return cancelToken;
     }
 
     /** 运行其它类型任务 */
@@ -140,18 +138,9 @@ public class PromiseTask<V> implements IFutureTask<V> {
                 task.run();
                 return null;
             }
-            case TaskBuilder.TYPE_ACTION_STATE -> {
-                Consumer<Object> task = (Consumer<Object>) this.task;
-                task.accept(ctx);
-                return null;
-            }
             case TaskBuilder.TYPE_FUNC -> {
                 Callable<V> task = (Callable<V>) this.task;
                 return task.call();
-            }
-            case TaskBuilder.TYPE_FUNC_STATE -> {
-                Function<Object, V> task = (Function<Object, V>) this.task;
-                return task.apply(ctx);
             }
             default -> {
                 throw new AssertionError("type: " + type);
@@ -197,15 +186,15 @@ public class PromiseTask<V> implements IFutureTask<V> {
      * 申请一个PromiseTask对象，Task在进入完成状态后会自动回收。
      * 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
      *
-     * @param taskType 任务类型 -- 注意上下文的类型
-     * @param task     用户的任务，支持的类型见{@link TaskBuilder}
-     * @param ctx      任务关联的上下文
-     * @param options  任务的调度选项
-     * @param promise  任务关联的promise
+     * @param taskType   任务类型，见{@link TaskBuilder}中的TYPE_常量
+     * @param task       用户的任务，支持的类型见{@link TaskBuilder}
+     * @param cancelToken 任务关联的取消令牌
+     * @param options    任务的调度选项
+     * @param promise    任务关联的promise
      */
-    private static <V> PromiseTask<V> acquire(int taskType, Object task, Object ctx, int options, IPromise<V> promise) {
+    private static <V> PromiseTask<V> acquire(int taskType, Object task, ICancelToken cancelToken, int options, IPromise<V> promise) {
         @SuppressWarnings("unchecked") PromiseTask<V> promiseTask = (PromiseTask<V>) POOL.acquire();
-        promiseTask.init(taskType, task, ctx, options, promise);
+        promiseTask.init(taskType, task, cancelToken, options, promise);
         return promiseTask;
     }
 
@@ -217,20 +206,12 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return acquire(TaskBuilder.TYPE_ACTION, action, cancelToken, options, promise);
     }
 
-    public static PromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options, IPromise<?> promise) {
-        return acquire(TaskBuilder.TYPE_ACTION_STATE, action, ctx, options, promise);
-    }
-
     public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options, IPromise<V> promise) {
         return acquire(TaskBuilder.TYPE_FUNC, action, cancelToken, options, promise);
     }
 
-    public static <V> PromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options, IPromise<V> promise) {
-        return acquire(TaskBuilder.TYPE_FUNC_STATE, action, ctx, options, promise);
-    }
-
     public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {
-        return acquire(builder.getType(), builder.getTask(), builder.getCtx(), builder.getOptions(), promise);
+        return acquire(builder.getType(), builder.getTask(), builder.getCancelToken(), builder.getOptions(), promise);
     }
     // endregion
 

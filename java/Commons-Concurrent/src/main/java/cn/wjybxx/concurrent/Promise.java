@@ -19,8 +19,6 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.concurrent.CancelCodes;
-import cn.wjybxx.base.function.TriConsumer;
-import cn.wjybxx.base.function.TriFunction;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,6 +32,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * 声明{@link IFuture}接口加快instanceof测试
@@ -146,18 +145,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     // endregion
 
-    // region ctx
+    // region executor
 
     /** 允许重写 */
     @Nullable
     @Override
     public Executor executor() {
         return _executor;
-    }
-
-    @Override
-    public IFuture<T> asReadonly() {
-        return new ReadOnlyFuture<>(this);
     }
 
     @Nonnull
@@ -604,33 +598,33 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region compose-apply
 
     @Override
-    public <U> Promise<U> composeApply(BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options) {
-        return uniComposeApply(null, fn, ctx, options);
+    public <U> Promise<U> composeApply(Function<? super T, ? extends ICompletionStage<U>> fn, int options, @Nullable ICancelToken cancelToken) {
+        return uniComposeApply(null, fn, options, cancelToken);
     }
 
     @Override
-    public <U> Promise<U> composeApply(BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn) {
-        return uniComposeApply(null, fn, null, 0);
+    public <U> Promise<U> composeApply(Function<? super T, ? extends ICompletionStage<U>> fn) {
+        return uniComposeApply(null, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> composeApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeApplyAsync(Executor executor, Function<? super T, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeApply(executor, fn, null, 0);
+        return uniComposeApply(executor, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> composeApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options) {
+    public <U> Promise<U> composeApplyAsync(Executor executor, Function<? super T, ? extends ICompletionStage<U>> fn, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeApply(executor, fn, ctx, options);
+        return uniComposeApply(executor, fn, options, cancelToken);
     }
 
     private <U> Promise<U> uniComposeApply(Executor executor,
-                                           BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn,
-                                           @Nullable Object ctx, int options) {
+                                           Function<? super T, ? extends ICompletionStage<U>> fn,
+                                           int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(fn);
         Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeApply<>(executor, ctx, options, this, promise, fn));
+        pushCompletion(new UniComposeApply<>(executor, options, cancelToken, this, promise, fn));
         return promise;
     }
 
@@ -639,35 +633,35 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region compose-call
 
     @Override
-    public <U> Promise<U> composeCall(Function<Object, ? extends ICompletionStage<U>> fn,
-                                      @Nullable Object ctx, int options) {
-        return uniComposeCall(null, fn, ctx, options);
+    public <U> Promise<U> composeCall(Supplier<? extends ICompletionStage<U>> fn,
+                                      int options, @Nullable ICancelToken cancelToken) {
+        return uniComposeCall(null, fn, options, cancelToken);
     }
 
     @Override
-    public <U> Promise<U> composeCall(Function<Object, ? extends ICompletionStage<U>> fn) {
-        return uniComposeCall(null, fn, null, 0);
+    public <U> Promise<U> composeCall(Supplier<? extends ICompletionStage<U>> fn) {
+        return uniComposeCall(null, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> composeCallAsync(Executor executor, Function<Object, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeCallAsync(Executor executor, Supplier<? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeCall(executor, fn, null, 0);
+        return uniComposeCall(executor, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> composeCallAsync(Executor executor, Function<Object, ? extends ICompletionStage<U>> fn,
-                                           @Nullable Object ctx, int options) {
+    public <U> Promise<U> composeCallAsync(Executor executor, Supplier<? extends ICompletionStage<U>> fn,
+                                           int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeCall(executor, fn, ctx, options);
+        return uniComposeCall(executor, fn, options, cancelToken);
     }
 
     private <U> Promise<U> uniComposeCall(Executor executor,
-                                          Function<Object, ? extends ICompletionStage<U>> fn,
-                                          @Nullable Object ctx, int options) {
+                                          Supplier<? extends ICompletionStage<U>> fn,
+                                          int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(fn);
         Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeCall<>(executor, ctx, options, this, promise, fn));
+        pushCompletion(new UniComposeCall<>(executor, options, cancelToken, this, promise, fn));
         return promise;
     }
 
@@ -677,39 +671,39 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     @Override
     public <X extends Throwable> Promise<T> composeCatching(Class<X> exceptionType,
-                                                            BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback,
-                                                            @Nullable Object ctx, int options) {
-        return uniComposeCatching(null, exceptionType, fallback, ctx, options);
+                                                            Function<? super X, ? extends ICompletionStage<T>> fallback,
+                                                            int options, @Nullable ICancelToken cancelToken) {
+        return uniComposeCatching(null, exceptionType, fallback, options, cancelToken);
     }
 
     @Override
     public <X extends Throwable> Promise<T> composeCatching(Class<X> exceptionType,
-                                                            BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback) {
-        return uniComposeCatching(null, exceptionType, fallback, null, 0);
+                                                            Function<? super X, ? extends ICompletionStage<T>> fallback) {
+        return uniComposeCatching(null, exceptionType, fallback, 0, null);
     }
 
     @Override
     public <X extends Throwable> Promise<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                                                 BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback) {
+                                                                 Function<? super X, ? extends ICompletionStage<T>> fallback) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeCatching(executor, exceptionType, fallback, null, 0);
+        return uniComposeCatching(executor, exceptionType, fallback, 0, null);
     }
 
     @Override
     public <X extends Throwable> Promise<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                                                 BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback,
-                                                                 @Nullable Object ctx, int options) {
+                                                                 Function<? super X, ? extends ICompletionStage<T>> fallback,
+                                                                 int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeCatching(executor, exceptionType, fallback, ctx, options);
+        return uniComposeCatching(executor, exceptionType, fallback, options, cancelToken);
     }
 
     private <X extends Throwable> Promise<T> uniComposeCatching(Executor executor, Class<X> exceptionType,
-                                                                BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback,
-                                                                @Nullable Object ctx, int options) {
+                                                                Function<? super X, ? extends ICompletionStage<T>> fallback,
+                                                                int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(exceptionType);
         Objects.requireNonNull(fallback);
         Promise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeCatching<>(executor, ctx, options, this, promise, exceptionType, fallback));
+        pushCompletion(new UniComposeCatching<>(executor, options, cancelToken, this, promise, exceptionType, fallback));
         return promise;
     }
 
@@ -718,35 +712,35 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region compose-handle
 
     @Override
-    public <U> Promise<U> composeHandle(TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                        @Nullable Object ctx, int options) {
-        return uniComposeHandle(null, fn, ctx, options);
+    public <U> Promise<U> composeHandle(BiFunction<? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                        int options, @Nullable ICancelToken cancelToken) {
+        return uniComposeHandle(null, fn, options, cancelToken);
     }
 
     @Override
-    public <U> Promise<U> composeHandle(TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
-        return uniComposeHandle(null, fn, null, 0);
+    public <U> Promise<U> composeHandle(BiFunction<? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+        return uniComposeHandle(null, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> composeHandleAsync(Executor executor, TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeHandleAsync(Executor executor, BiFunction<? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeHandle(executor, fn, null, 0);
+        return uniComposeHandle(executor, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> composeHandleAsync(Executor executor, TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                             @Nullable Object ctx, int options) {
+    public <U> Promise<U> composeHandleAsync(Executor executor, BiFunction<? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                             int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniComposeHandle(executor, fn, ctx, options);
+        return uniComposeHandle(executor, fn, options, cancelToken);
     }
 
     private <U> Promise<U> uniComposeHandle(Executor executor,
-                                            TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                            @Nullable Object ctx, int options) {
+                                            BiFunction<? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                            int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(fn);
         Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeHandle<>(executor, ctx, options, this, promise, fn));
+        pushCompletion(new UniComposeHandle<>(executor, options, cancelToken, this, promise, fn));
         return promise;
     }
 
@@ -755,32 +749,32 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-apply
 
     @Override
-    public <U> Promise<U> thenApply(BiFunction<Object, ? super T, ? extends U> fn, @Nullable Object ctx, int options) {
-        return uniApply(null, fn, ctx, options);
+    public <U> Promise<U> thenApply(Function<? super T, ? extends U> fn, int options, @Nullable ICancelToken cancelToken) {
+        return uniApply(null, fn, options, cancelToken);
     }
 
     @Override
-    public <U> Promise<U> thenApply(BiFunction<Object, ? super T, ? extends U> fn) {
-        return uniApply(null, fn, null, 0);
+    public <U> Promise<U> thenApply(Function<? super T, ? extends U> fn) {
+        return uniApply(null, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> thenApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends U> fn) {
+    public <U> Promise<U> thenApplyAsync(Executor executor, Function<? super T, ? extends U> fn) {
         Objects.requireNonNull(executor, "executor");
-        return uniApply(executor, fn, null, 0);
+        return uniApply(executor, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> thenApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends U> fn, @Nullable Object ctx, int options) {
+    public <U> Promise<U> thenApplyAsync(Executor executor, Function<? super T, ? extends U> fn, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniApply(executor, fn, ctx, options);
+        return uniApply(executor, fn, options, cancelToken);
     }
 
-    private <U> Promise<U> uniApply(Executor executor, BiFunction<Object, ? super T, ? extends U> fn,
-                                    @Nullable Object ctx, int options) {
+    private <U> Promise<U> uniApply(Executor executor, Function<? super T, ? extends U> fn,
+                                    int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(fn);
         Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniApply<>(executor, ctx, options, this, promise, fn));
+        pushCompletion(new UniApply<>(executor, options, cancelToken, this, promise, fn));
         return promise;
     }
     // endregion
@@ -788,32 +782,32 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-accept
 
     @Override
-    public Promise<Void> thenAccept(BiConsumer<Object, ? super T> action, @Nullable Object ctx, int options) {
-        return uniAccept(null, action, ctx, options);
+    public Promise<Void> thenAccept(Consumer<? super T> action, int options, @Nullable ICancelToken cancelToken) {
+        return uniAccept(null, action, options, cancelToken);
     }
 
     @Override
-    public Promise<Void> thenAccept(BiConsumer<Object, ? super T> action) {
-        return uniAccept(null, action, null, 0);
+    public Promise<Void> thenAccept(Consumer<? super T> action) {
+        return uniAccept(null, action, 0, null);
     }
 
     @Override
-    public Promise<Void> thenAcceptAsync(Executor executor, BiConsumer<Object, ? super T> action) {
+    public Promise<Void> thenAcceptAsync(Executor executor, Consumer<? super T> action) {
         Objects.requireNonNull(executor, "executor");
-        return uniAccept(executor, action, null, 0);
+        return uniAccept(executor, action, 0, null);
     }
 
     @Override
-    public Promise<Void> thenAcceptAsync(Executor executor, BiConsumer<Object, ? super T> action, @Nullable Object ctx, int options) {
+    public Promise<Void> thenAcceptAsync(Executor executor, Consumer<? super T> action, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniAccept(executor, action, ctx, options);
+        return uniAccept(executor, action, options, cancelToken);
     }
 
-    private Promise<Void> uniAccept(Executor executor, BiConsumer<Object, ? super T> action,
-                                    @Nullable Object ctx, int options) {
+    private Promise<Void> uniAccept(Executor executor, Consumer<? super T> action,
+                                    int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(action);
         Promise<Void> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniAccept<>(executor, ctx, options, this, promise, action));
+        pushCompletion(new UniAccept<>(executor, options, cancelToken, this, promise, action));
         return promise;
     }
     // endregion
@@ -822,31 +816,31 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-call
 
     @Override
-    public <U> Promise<U> thenCall(Function<Object, ? extends U> fn, @Nullable Object ctx, int options) {
-        return uniCall(null, fn, ctx, options);
+    public <U> Promise<U> thenCall(Supplier<? extends U> fn, int options, @Nullable ICancelToken cancelToken) {
+        return uniCall(null, fn, options, cancelToken);
     }
 
     @Override
-    public <U> Promise<U> thenCall(Function<Object, ? extends U> fn) {
-        return uniCall(null, fn, null, 0);
+    public <U> Promise<U> thenCall(Supplier<? extends U> fn) {
+        return uniCall(null, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> thenCallAsync(Executor executor, Function<Object, ? extends U> fn) {
+    public <U> Promise<U> thenCallAsync(Executor executor, Supplier<? extends U> fn) {
         Objects.requireNonNull(executor, "executor");
-        return uniCall(executor, fn, null, 0);
+        return uniCall(executor, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> thenCallAsync(Executor executor, Function<Object, ? extends U> fn, @Nullable Object ctx, int options) {
+    public <U> Promise<U> thenCallAsync(Executor executor, Supplier<? extends U> fn, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniCall(executor, fn, ctx, options);
+        return uniCall(executor, fn, options, cancelToken);
     }
 
-    private <U> Promise<U> uniCall(Executor executor, Function<Object, ? extends U> fn, @Nullable Object ctx, int options) {
+    private <U> Promise<U> uniCall(Executor executor, Supplier<? extends U> fn, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(fn);
         Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniCall<>(executor, ctx, options, this, promise, fn));
+        pushCompletion(new UniCall<>(executor, options, cancelToken, this, promise, fn));
         return promise;
     }
 
@@ -855,31 +849,31 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-run
 
     @Override
-    public Promise<Void> thenRun(Consumer<Object> action, @Nullable Object ctx, int options) {
-        return uniRun(null, action, ctx, options);
+    public Promise<Void> thenRun(Runnable action, int options, @Nullable ICancelToken cancelToken) {
+        return uniRun(null, action, options, cancelToken);
     }
 
     @Override
-    public Promise<Void> thenRun(Consumer<Object> action) {
-        return uniRun(null, action, null, 0);
+    public Promise<Void> thenRun(Runnable action) {
+        return uniRun(null, action, 0, null);
     }
 
     @Override
-    public Promise<Void> thenRunAsync(Executor executor, Consumer<Object> action) {
+    public Promise<Void> thenRunAsync(Executor executor, Runnable action) {
         Objects.requireNonNull(executor, "executor");
-        return uniRun(executor, action, null, 0);
+        return uniRun(executor, action, 0, null);
     }
 
     @Override
-    public Promise<Void> thenRunAsync(Executor executor, Consumer<Object> action, @Nullable Object ctx, int options) {
+    public Promise<Void> thenRunAsync(Executor executor, Runnable action, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniRun(executor, action, ctx, options);
+        return uniRun(executor, action, options, cancelToken);
     }
 
-    private Promise<Void> uniRun(Executor executor, Consumer<Object> action, @Nullable Object ctx, int options) {
+    private Promise<Void> uniRun(Executor executor, Runnable action, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(action);
         Promise<Void> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniRun<>(executor, ctx, options, this, promise, action));
+        pushCompletion(new UniRun<>(executor, options, cancelToken, this, promise, action));
         return promise;
     }
     // endregion
@@ -888,39 +882,39 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     @Override
     public <X extends Throwable> Promise<T> catching(Class<X> exceptionType,
-                                                     BiFunction<Object, ? super X, ? extends T> fallback,
-                                                     @Nullable Object ctx, int options) {
-        return uniCatching(null, exceptionType, fallback, ctx, options);
+                                                     Function<? super X, ? extends T> fallback,
+                                                     int options, @Nullable ICancelToken cancelToken) {
+        return uniCatching(null, exceptionType, fallback, options, cancelToken);
     }
 
     @Override
     public <X extends Throwable> Promise<T> catching(Class<X> exceptionType,
-                                                     BiFunction<Object, ? super X, ? extends T> fallback) {
-        return uniCatching(null, exceptionType, fallback, null, 0);
+                                                     Function<? super X, ? extends T> fallback) {
+        return uniCatching(null, exceptionType, fallback, 0, null);
     }
 
     @Override
     public <X extends Throwable> Promise<T> catchingAsync(Executor executor, Class<X> exceptionType,
-                                                          BiFunction<Object, ? super X, ? extends T> fallback) {
+                                                          Function<? super X, ? extends T> fallback) {
         Objects.requireNonNull(executor, "executor");
-        return uniCatching(executor, exceptionType, fallback, null, 0);
+        return uniCatching(executor, exceptionType, fallback, 0, null);
     }
 
     @Override
     public <X extends Throwable> Promise<T> catchingAsync(Executor executor, Class<X> exceptionType,
-                                                          BiFunction<Object, ? super X, ? extends T> fallback,
-                                                          @Nullable Object ctx, int options) {
+                                                          Function<? super X, ? extends T> fallback,
+                                                          int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniCatching(executor, exceptionType, fallback, ctx, options);
+        return uniCatching(executor, exceptionType, fallback, options, cancelToken);
     }
 
     private <X extends Throwable> Promise<T> uniCatching(Executor executor, Class<X> exceptionType,
-                                                         BiFunction<Object, ? super X, ? extends T> fallback,
-                                                         @Nullable Object ctx, int options) {
+                                                         Function<? super X, ? extends T> fallback,
+                                                         int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(exceptionType, "exceptionType");
         Objects.requireNonNull(fallback, "fallback");
         Promise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniCathing<>(executor, ctx, options, this, promise, exceptionType, fallback));
+        pushCompletion(new UniCathing<>(executor, options, cancelToken, this, promise, exceptionType, fallback));
         return promise;
     }
     // endregion
@@ -928,35 +922,35 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-handle
 
     @Override
-    public <U> Promise<U> handle(TriFunction<Object, ? super T, Throwable, ? extends U> fn,
-                                 @Nullable Object ctx, int options) {
-        return uniHandle(null, fn, ctx, options);
+    public <U> Promise<U> handle(BiFunction<? super T, Throwable, ? extends U> fn,
+                                 int options, @Nullable ICancelToken cancelToken) {
+        return uniHandle(null, fn, options, cancelToken);
     }
 
     @Override
-    public <U> Promise<U> handle(TriFunction<Object, ? super T, Throwable, ? extends U> fn) {
-        return uniHandle(null, fn, null, 0);
+    public <U> Promise<U> handle(BiFunction<? super T, Throwable, ? extends U> fn) {
+        return uniHandle(null, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> handleAsync(Executor executor, TriFunction<Object, ? super T, Throwable, ? extends U> fn) {
+    public <U> Promise<U> handleAsync(Executor executor, BiFunction<? super T, Throwable, ? extends U> fn) {
         Objects.requireNonNull(executor, "executor");
-        return uniHandle(executor, fn, null, 0);
+        return uniHandle(executor, fn, 0, null);
     }
 
     @Override
-    public <U> Promise<U> handleAsync(Executor executor, TriFunction<Object, ? super T, Throwable, ? extends U> fn,
-                                      @Nullable Object ctx, int options) {
+    public <U> Promise<U> handleAsync(Executor executor, BiFunction<? super T, Throwable, ? extends U> fn,
+                                      int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniHandle(executor, fn, ctx, options);
+        return uniHandle(executor, fn, options, cancelToken);
     }
 
     private <U> Promise<U> uniHandle(Executor executor,
-                                     TriFunction<Object, ? super T, Throwable, ? extends U> fn,
-                                     @Nullable Object ctx, int options) {
+                                     BiFunction<? super T, Throwable, ? extends U> fn,
+                                     int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(fn);
         Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniHandle<>(executor, ctx, options, this, promise, fn));
+        pushCompletion(new UniHandle<>(executor, options, cancelToken, this, promise, fn));
         return promise;
     }
     // endregion
@@ -964,33 +958,33 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-when
 
     @Override
-    public Promise<T> whenComplete(TriConsumer<Object, ? super T, ? super Throwable> action, @Nullable Object ctx, int options) {
-        return uniWhenComplete(null, action, ctx, options);
+    public Promise<T> whenComplete(BiConsumer<? super T, ? super Throwable> action, int options, @Nullable ICancelToken cancelToken) {
+        return uniWhenComplete(null, action, options, cancelToken);
     }
 
     @Override
-    public Promise<T> whenComplete(TriConsumer<Object, ? super T, ? super Throwable> action) {
-        return uniWhenComplete(null, action, null, 0);
+    public Promise<T> whenComplete(BiConsumer<? super T, ? super Throwable> action) {
+        return uniWhenComplete(null, action, 0, null);
     }
 
     @Override
-    public Promise<T> whenCompleteAsync(Executor executor, TriConsumer<Object, ? super T, ? super Throwable> action) {
+    public Promise<T> whenCompleteAsync(Executor executor, BiConsumer<? super T, ? super Throwable> action) {
         Objects.requireNonNull(executor, "executor");
-        return uniWhenComplete(executor, action, null, 0);
+        return uniWhenComplete(executor, action, 0, null);
     }
 
     @Override
-    public Promise<T> whenCompleteAsync(Executor executor, TriConsumer<Object, ? super T, ? super Throwable> action, @Nullable Object ctx, int options) {
+    public Promise<T> whenCompleteAsync(Executor executor, BiConsumer<? super T, ? super Throwable> action, int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(executor, "executor");
-        return uniWhenComplete(executor, action, ctx, options);
+        return uniWhenComplete(executor, action, options, cancelToken);
     }
 
     private Promise<T> uniWhenComplete(Executor executor,
-                                       TriConsumer<Object, ? super T, ? super Throwable> action,
-                                       @Nullable Object ctx, int options) {
+                                       BiConsumer<? super T, ? super Throwable> action,
+                                       int options, @Nullable ICancelToken cancelToken) {
         Objects.requireNonNull(action);
         Promise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
-        pushCompletion(new UniWhenComplete<>(executor, ctx, options, this, promise, action));
+        pushCompletion(new UniWhenComplete<>(executor, options, cancelToken, this, promise, action));
         return promise;
     }
     // endregion
@@ -1437,14 +1431,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     private static abstract class UniCompletion<V, U> extends Completion {
 
         Executor executor;
-        Object ctx;
+        ICancelToken cancelToken;
         int options;
         Promise<V> input;
         Promise<U> output;
 
-        public UniCompletion(Executor executor, Object ctx, int options, Promise<V> input, Promise<U> output) {
+        public UniCompletion(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<U> output) {
             this.executor = executor;
-            this.ctx = ctx;
+            this.cancelToken = cancelToken == null ? ICancelToken.NONE : cancelToken;
             this.input = input;
             this.output = output;
             this.options = options;
@@ -1569,11 +1563,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniComposeApply<V, U> extends UniCompletion<V, U> {
 
-        BiFunction<Object, ? super V, ? extends ICompletionStage<U>> fn;
+        Function<? super V, ? extends ICompletionStage<U>> fn;
 
-        public UniComposeApply(Executor executor, Object ctx, int options, Promise<V> input, Promise<U> output,
-                               BiFunction<Object, ? super V, ? extends ICompletionStage<U>> fn) {
-            super(executor, ctx, options, input, output);
+        public UniComposeApply(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<U> output,
+                               Function<? super V, ? extends ICompletionStage<U>> fn) {
+            super(executor, options, cancelToken, input, output);
             this.fn = fn;
         }
 
@@ -1581,7 +1575,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1589,7 +1583,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1603,7 +1596,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(ctx, input.decodeValue(r)).toFuture();
+                    IFuture<U> relay = fn.apply(input.decodeValue(r)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1613,7 +1606,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1623,11 +1616,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniComposeCall<V, U> extends UniCompletion<V, U> {
 
-        Function<Object, ? extends ICompletionStage<U>> fn;
+        Supplier<? extends ICompletionStage<U>> fn;
 
-        public UniComposeCall(Executor executor, Object ctx, int options, Promise<V> input, Promise<U> output,
-                              Function<Object, ? extends ICompletionStage<U>> fn) {
-            super(executor, ctx, options, input, output);
+        public UniComposeCall(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<U> output,
+                              Supplier<? extends ICompletionStage<U>> fn) {
+            super(executor, options, cancelToken, input, output);
             this.fn = fn;
         }
 
@@ -1635,7 +1628,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1643,7 +1636,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1657,7 +1649,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(ctx).toFuture();
+                    IFuture<U> relay = fn.get().toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1667,7 +1659,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1678,11 +1670,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     private static class UniComposeCatching<X extends Throwable, V> extends UniCompletion<V, V> {
 
         Class<X> exceptionType;
-        BiFunction<Object, ? super X, ? extends ICompletionStage<V>> fallback;
+        Function<? super X, ? extends ICompletionStage<V>> fallback;
 
-        public UniComposeCatching(Executor executor, Object ctx, int options, Promise<V> input, Promise<V> output,
-                                  Class<X> exceptionType, BiFunction<Object, ? super X, ? extends ICompletionStage<V>> fallback) {
-            super(executor, ctx, options, input, output);
+        public UniComposeCatching(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<V> output,
+                                  Class<X> exceptionType, Function<? super X, ? extends ICompletionStage<V>> fallback) {
+            super(executor, options, cancelToken, input, output);
             this.exceptionType = exceptionType;
             this.fallback = fallback;
         }
@@ -1691,7 +1683,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<V> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1699,7 +1691,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1713,7 +1704,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<V> relay = fallback.apply(ctx, exceptionType.cast(altResult.cause)).toFuture();
+                    IFuture<V> relay = fallback.apply(exceptionType.cast(altResult.cause)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1723,7 +1714,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.exceptionType = null;
@@ -1734,11 +1725,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniComposeHandle<V, U> extends UniCompletion<V, U> {
 
-        TriFunction<Object, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn;
+        BiFunction<? super V, ? super Throwable, ? extends ICompletionStage<U>> fn;
 
-        public UniComposeHandle(Executor executor, Object ctx, int options, Promise<V> input, Promise<U> output,
-                                TriFunction<Object, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
-            super(executor, ctx, options, input, output);
+        public UniComposeHandle(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<U> output,
+                                BiFunction<? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+            super(executor, options, cancelToken, input, output);
             this.fn = fn;
         }
 
@@ -1746,7 +1737,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1754,7 +1745,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1766,9 +1756,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     IFuture<U> relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(ctx, null, altResult.cause).toFuture();
+                        relay = fn.apply(null, altResult.cause).toFuture();
                     } else {
-                        relay = fn.apply(ctx, input.decodeValue(r), null).toFuture();
+                        relay = fn.apply(input.decodeValue(r), null).toFuture();
                     }
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
@@ -1779,7 +1769,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1793,11 +1783,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniApply<V, U> extends UniCompletion<V, U> {
 
-        BiFunction<Object, ? super V, ? extends U> fn;
+        Function<? super V, ? extends U> fn;
 
-        public UniApply(Executor executor, Object ctx, int options, Promise<V> input, Promise<U> output,
-                        BiFunction<Object, ? super V, ? extends U> fn) {
-            super(executor, ctx, options, input, output);
+        public UniApply(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<U> output,
+                        Function<? super V, ? extends U> fn) {
+            super(executor, options, cancelToken, input, output);
             this.fn = fn;
         }
 
@@ -1805,7 +1795,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1813,7 +1803,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1827,13 +1816,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(ctx, input.decodeValue(r)));
+                    setCompleted = output.completeValue(fn.apply(input.decodeValue(r)));
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1843,11 +1832,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniAccept<V> extends UniCompletion<V, Void> {
 
-        BiConsumer<Object, ? super V> action;
+        Consumer<? super V> action;
 
-        public UniAccept(Executor executor, Object ctx, int options, Promise<V> input, Promise<Void> output,
-                         BiConsumer<Object, ? super V> action) {
-            super(executor, ctx, options, input, output);
+        public UniAccept(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<Void> output,
+                         Consumer<? super V> action) {
+            super(executor, options, cancelToken, input, output);
             this.action = action;
         }
 
@@ -1855,7 +1844,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<Void> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1863,7 +1852,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1877,14 +1865,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(ctx, input.decodeValue(r));
+                    action.accept(input.decodeValue(r));
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.action = null;
@@ -1894,11 +1882,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniCall<V, U> extends UniCompletion<V, U> {
 
-        Function<Object, ? extends U> fn;
+        Supplier<? extends U> fn;
 
-        public UniCall(Executor executor, Object ctx, int options, Promise<V> input, Promise<U> output,
-                       Function<Object, ? extends U> fn) {
-            super(executor, ctx, options, input, output);
+        public UniCall(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<U> output,
+                       Supplier<? extends U> fn) {
+            super(executor, options, cancelToken, input, output);
             this.fn = fn;
         }
 
@@ -1906,7 +1894,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1914,7 +1902,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1928,13 +1915,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(ctx));
+                    setCompleted = output.completeValue(fn.get());
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1944,11 +1931,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniRun<V> extends UniCompletion<V, Void> {
 
-        Consumer<Object> action;
+        Runnable action;
 
-        public UniRun(Executor executor, Object ctx, int options, Promise<V> input, Promise<Void> output,
-                      Consumer<Object> action) {
-            super(executor, ctx, options, input, output);
+        public UniRun(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<Void> output,
+                      Runnable action) {
+            super(executor, options, cancelToken, input, output);
             this.action = action;
         }
 
@@ -1956,7 +1943,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<Void> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -1964,7 +1951,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1978,14 +1964,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(ctx);
+                    action.run();
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.action = null;
@@ -1996,11 +1982,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     private static class UniCathing<X extends Throwable, V> extends UniCompletion<V, V> {
 
         Class<X> exceptionType;
-        BiFunction<Object, ? super X, ? extends V> fallback;
+        Function<? super X, ? extends V> fallback;
 
-        public UniCathing(Executor executor, Object ctx, int options, Promise<V> input, Promise<V> output,
-                          Class<X> exceptionType, BiFunction<Object, ? super X, ? extends V> fallback) {
-            super(executor, ctx, options, input, output);
+        public UniCathing(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<V> output,
+                          Class<X> exceptionType, Function<? super X, ? extends V> fallback) {
+            super(executor, options, cancelToken, input, output);
             this.exceptionType = exceptionType;
             this.fallback = fallback;
         }
@@ -2009,7 +1995,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<V> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -2017,7 +2003,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -2031,14 +2016,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    V fr = fallback.apply(ctx, exceptionType.cast(altResult.cause));
+                    V fr = fallback.apply(exceptionType.cast(altResult.cause));
                     setCompleted = output.completeValue(fr);
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.exceptionType = null;
@@ -2049,11 +2034,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniHandle<V, U> extends UniCompletion<V, U> {
 
-        TriFunction<Object, ? super V, ? super Throwable, ? extends U> fn;
+        BiFunction<? super V, Throwable, ? extends U> fn;
 
-        public UniHandle(Executor executor, Object ctx, int options, Promise<V> input, Promise<U> output,
-                         TriFunction<Object, ? super V, ? super Throwable, ? extends U> fn) {
-            super(executor, ctx, options, input, output);
+        public UniHandle(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<U> output,
+                         BiFunction<? super V, Throwable, ? extends U> fn) {
+            super(executor, options, cancelToken, input, output);
             this.fn = fn;
         }
 
@@ -2061,7 +2046,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -2069,7 +2054,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -2081,9 +2065,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     U relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(ctx, null, altResult.cause);
+                        relay = fn.apply(null, altResult.cause);
                     } else {
-                        relay = fn.apply(ctx, input.decodeValue(r), null);
+                        relay = fn.apply(input.decodeValue(r), null);
                     }
                     setCompleted = output.completeValue(relay);
                 } catch (Throwable e) {
@@ -2091,7 +2075,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -2101,11 +2085,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniWhenComplete<V> extends UniCompletion<V, V> {
 
-        TriConsumer<Object, ? super V, ? super Throwable> action;
+        BiConsumer<? super V, ? super Throwable> action;
 
-        public UniWhenComplete(Executor executor, Object ctx, int options, Promise<V> input, Promise<V> output,
-                               TriConsumer<Object, ? super V, ? super Throwable> action) {
-            super(executor, ctx, options, input, output);
+        public UniWhenComplete(Executor executor, int options, ICancelToken cancelToken, Promise<V> input, Promise<V> output,
+                               BiConsumer<? super V, ? super Throwable> action) {
+            super(executor, options, cancelToken, input, output);
             this.action = action;
         }
 
@@ -2113,7 +2097,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<V> output = this.output;
-            final Object ctx = this.ctx;
+            final ICancelToken cancelToken = this.cancelToken;
             boolean setCompleted;
             tryComplete:
             {
@@ -2122,7 +2106,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -2138,9 +2121,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 Object r = input.result;
                 try {
                     if (r instanceof AltResult altResult) {
-                        action.accept(ctx, null, altResult.cause);
+                        action.accept(null, altResult.cause);
                     } else {
-                        action.accept(ctx, input.decodeValue(r), null);
+                        action.accept(input.decodeValue(r), null);
                     }
                     setCompleted = output.completeRelay(r);
                 } catch (Throwable e) {
@@ -2149,7 +2132,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
-            this.ctx = null;
+            this.cancelToken = null;
             this.input = null;
             this.output = null;
             this.action = null;
@@ -2204,15 +2187,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         @Override
         Promise<?> tryFire(int mode) {
             final Promise<T> input = this.input;
-            tryComplete:
-            {
-                if (ExecutorUtils.isCancelRequested(ctx, options)) {
-                    break tryComplete;
-                }
-                // 异步模式下已经claim
-                if (!fireNow(input, action, ctx, mode > 0 ? null : this)) {
-                    return null;
-                }
+            // 异步模式下已经claim
+            if (!fireNow(input, action, ctx, mode > 0 ? null : this)) {
+                return null; // 已提交到executor执行
             }
             // help gc
             this.executor = null;
