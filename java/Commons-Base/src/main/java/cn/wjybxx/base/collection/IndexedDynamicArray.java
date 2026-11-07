@@ -83,6 +83,11 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
             removeNullElements();
         }
     }
+
+    @Override
+    public void repair() {
+        recursionDepth = 0;
+    }
     // endregion
 
     // region update

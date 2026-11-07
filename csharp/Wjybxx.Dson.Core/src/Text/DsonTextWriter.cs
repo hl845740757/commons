@@ -232,7 +232,14 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         for (int i = 0, length = text.Length; i < length; i++) {
             char c = text[i];
             // 要执行文本中的换行符
-            if (c == '\n' || (c == '\r' && i + 1 < length && text[i + 1] == '\n')) {
+            if (c == '\n') {
+                printer.Println();
+                printer.PrintSpaces(headIndent);
+                printer.FastPrint("@| ");
+                continue;
+            }
+            if (c == '\r' && i + 1 < length && text[i + 1] == '\n') {
+                i++;
                 printer.Println();
                 printer.PrintSpaces(headIndent);
                 printer.FastPrint("@| ");
@@ -273,7 +280,13 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         for (int i = 0, length = text.Length; i < length; i++) {
             char c = text[i];
             // 要执行文本中的换行符
-            if (c == '\n' || (c == '\r' && i + 1 < length && text[i + 1] == '\n')) {
+            if (c == '\n') {
+                printer.Println();
+                printer.PrintSpaces(headIndent);
+                continue;
+            }
+            if (c == '\r' && i + 1 < length && text[i + 1] == '\n') {
+                i++;
                 printer.Println();
                 printer.PrintSpaces(headIndent);
                 continue;

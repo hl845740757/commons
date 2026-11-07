@@ -43,7 +43,7 @@ public class Join<T> : ParallelBranch<T> where T : class
         base.Reset();
         completedCount = 0;
         succeededCount = 0;
-        policy.Reset();
+        policy?.Reset(); // 可能尚未初始化
     }
 
     protected override void BeforeEnter() {

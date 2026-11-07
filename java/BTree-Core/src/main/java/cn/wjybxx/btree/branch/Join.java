@@ -43,7 +43,9 @@ public class Join<T> extends ParallelBranch<T> {
         super.reset();
         completedCount = 0;
         succeededCount = 0;
-        policy.resetForRestart();
+        if (policy != null) { // 可能尚未初始化
+            policy.resetForRestart();
+        }
     }
 
     @Override

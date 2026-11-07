@@ -82,6 +82,11 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
             removeNullElements();
         }
     }
+
+    @Override
+    public void repair() {
+        recursionDepth = 0;
+    }
     // endregion
 
     // region update

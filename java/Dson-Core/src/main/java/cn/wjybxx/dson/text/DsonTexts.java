@@ -327,7 +327,7 @@ public class DsonTexts {
             throw new NumberFormatException(rawStr);
         }
         if (str.indexOf('|') > 0) { // A | B | C
-            return parseInt32Flags(rawStr);
+            return parseInt32Flags(str);
         }
         int lookOffset;
         int sign;
@@ -360,7 +360,7 @@ public class DsonTexts {
             throw new NumberFormatException(rawStr);
         }
         if (str.indexOf('|') > 0) { // A | B | C
-            return parseInt64Flags(rawStr);
+            return parseInt64Flags(str);
         }
         int lookOffset;
         int sign;
@@ -389,13 +389,13 @@ public class DsonTexts {
 
     private static final Pattern SPLIT_PATTERN = Pattern.compile("\\|");
 
-    private static int parseInt32Flags(String rawStr) {
+    private static int parseInt32Flags(String str) {
         int value = 0;
-        for (String e : SPLIT_PATTERN.split(rawStr)) {
+        for (String e : SPLIT_PATTERN.split(str)) {
             int start = ObjectUtils.indexOfNonWhitespace(e);
             int end = ObjectUtils.lastIndexOfNonWhitespace(e);
             int v;
-            if (start + 2 < end && e.charAt(start) == '0' && e.charAt(start + 1) == 'x') {
+            if (start + 2 <= end && e.charAt(start) == '0' && e.charAt(start + 1) == 'x') {
                 v = Integer.parseUnsignedInt(e, start + 2, end + 1, 16);
             } else {
                 v = Integer.parseUnsignedInt(e, start, end + 1, 10);
@@ -405,13 +405,13 @@ public class DsonTexts {
         return value;
     }
 
-    private static long parseInt64Flags(String rawStr) {
+    private static long parseInt64Flags(String str) {
         long value = 0;
-        for (String e : SPLIT_PATTERN.split(rawStr)) {
+        for (String e : SPLIT_PATTERN.split(str)) {
             int start = ObjectUtils.indexOfNonWhitespace(e);
             int end = ObjectUtils.lastIndexOfNonWhitespace(e);
             long v;
-            if (start + 2 < end && e.charAt(start) == '0' && e.charAt(start + 1) == 'x') {
+            if (start + 2 <= end && e.charAt(start) == '0' && e.charAt(start + 1) == 'x') {
                 v = Long.parseUnsignedLong(e, start + 2, end + 1, 16);
             } else {
                 v = Long.parseUnsignedLong(e, start, end + 1, 10);

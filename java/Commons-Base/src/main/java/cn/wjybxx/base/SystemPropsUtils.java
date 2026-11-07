@@ -170,9 +170,10 @@ public class SystemPropsUtils {
         if (resource == null) {
             throw new FileNotFoundException(path);
         }
-        try (InputStream inputStream = resource.openStream()) {
+        try (InputStream inputStream = resource.openStream();
+             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
             Properties properties = new Properties();
-            properties.load(inputStream);
+            properties.load(inputStreamReader);
             return properties;
         }
     }

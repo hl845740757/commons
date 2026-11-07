@@ -60,7 +60,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     @Override
     public T acquire() {
         T result = value;
-        if (VH_VALUE.compareAndSet(this, result, null)) {
+        if (result != null && VH_VALUE.compareAndSet(this, result, null)) {
             return result;
         }
         return factory.get();

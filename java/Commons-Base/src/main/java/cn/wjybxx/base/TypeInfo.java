@@ -295,7 +295,7 @@ public final class TypeInfo {
 
     /** 用于继承其它类型的泛型参数 */
     public static TypeInfo of(Class<?> rawType, List<TypeInfo> typeArgs, TypeInfo typeArg1) {
-        TypeInfo[] newTypeInfo = new TypeInfo[typeArgs.size() + 2];
+        TypeInfo[] newTypeInfo = new TypeInfo[typeArgs.size() + 1];
         typeArgs.toArray(newTypeInfo);
         newTypeInfo[typeArgs.size()] = Objects.requireNonNull(typeArg1);
         return new TypeInfo(rawType, List.of(newTypeInfo)); // 会多一次拷贝，但不想依赖外部库
